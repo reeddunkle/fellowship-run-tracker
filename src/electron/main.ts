@@ -15,9 +15,12 @@ import { shutdownElectronApplication } from "./application/shutdown-electron-app
 
 const currentDirectoryPath = path.dirname(fileURLToPath(import.meta.url));
 
-const rendererDevServerUrl = app.isPackaged
-  ? undefined
-  : `http://${env.electronRenderer.host}:${env.electronRenderer.port}`;
+const useRendererDevServer =
+  !app.isPackaged && process.argv.includes("--renderer-dev-server");
+
+const rendererDevServerUrl = useRendererDevServer
+  ? `http://${env.electronRenderer.host}:${env.electronRenderer.port}`
+  : undefined;
 
 let isShuttingDown = false;
 

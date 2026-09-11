@@ -21,7 +21,7 @@
     "electron:build:renderer": "vite build",
     "electron:build": "run-s electron:build:main electron:build:preload",
     "electron:dev:renderer": "vite",
-    "electron:dev:start": "wait-on tcp:127.0.0.1:5173 && electron .",
+    "electron:dev:start": "wait-on tcp:127.0.0.1:5173 && electron . --renderer-dev-server",
     "format:db-sql:biome": "biome check --write src/db",
     "format:db-sql:prettier": "prettier --write \"src/db/**/*.ts\"",
     "format:db-sql": "run-s format:db-sql:prettier format:db-sql:biome",
