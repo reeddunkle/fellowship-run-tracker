@@ -74,3 +74,18 @@ pnpm start
 pnpm cli:dev
 pnpm docs:layers
 ```
+
+## Manual testing
+
+Use the replay CLI to simulate a real Fellowship log file without running a dungeon.
+
+Example:
+
+```bash
+pnpm test:replay-log-file --input "./test-logs/everdawn-grove-64-timed.txt" --output "./test-combat-logs/CombatLogReplay.txt" --speed 65
+```
+
+* `--input` — Existing Fellowship log file to replay.
+* `--output` — Destination for the replayed log. This can be the real Fellowship log directory or a temporary directory. If using another directory, point the app's setting to it.
+* `--speed` — Replay speed multiplier.
+* `--max-delay` — Maximum delay, in milliseconds, between replayed log lines.
