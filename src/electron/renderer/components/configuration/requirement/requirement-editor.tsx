@@ -9,7 +9,6 @@ import {
   FieldError,
   FieldGroup,
   FieldLabel,
-  FieldTitle,
 } from "@/electron/renderer/components/ui/field.tsx";
 import { Input } from "@/electron/renderer/components/ui/input.tsx";
 import {
@@ -180,98 +179,87 @@ export function RequirementEditor({
                   requirementPath={requirementPath}
                 />
                 {showOccurrenceFields && (
-                  <FieldGroup className="gap-2">
-                    <FieldTitle>Count</FieldTitle>
-                    <FieldGroup className="grid grid-cols-2 gap-3">
-                      <form.Field
-                        name={`${requirementPath}.startOccurrence` as const}
-                      >
-                        {(startOccurrenceField) => {
-                          const isInvalid =
-                            !startOccurrenceField.state.meta.isValid;
-                          const showError =
-                            isInvalid &&
-                            startOccurrenceField.state.meta.isBlurred;
+                  <FieldGroup className="grid grid-cols-2 gap-3">
+                    <form.Field
+                      name={`${requirementPath}.startOccurrence` as const}
+                    >
+                      {(startOccurrenceField) => {
+                        const isInvalid =
+                          !startOccurrenceField.state.meta.isValid;
+                        const showError =
+                          isInvalid &&
+                          startOccurrenceField.state.meta.isBlurred;
 
-                          return (
-                            <Field data-invalid={showError}>
-                              <FieldLabel
-                                className="text-xs font-normal text-muted-foreground"
-                                htmlFor={startOccurrenceField.name}
-                              >
-                                From
-                              </FieldLabel>
-                              <Input
-                                aria-invalid={isInvalid}
-                                id={startOccurrenceField.name}
-                                inputMode="numeric"
-                                min={1}
-                                name={startOccurrenceField.name}
-                                onBlur={startOccurrenceField.handleBlur}
-                                onChange={(event) => {
-                                  startOccurrenceField.handleChange(
-                                    event.target.value,
-                                  );
-                                }}
-                                type="number"
-                                value={startOccurrenceField.state.value}
+                        return (
+                          <Field data-invalid={showError}>
+                            <FieldLabel htmlFor={startOccurrenceField.name}>
+                              Start at
+                            </FieldLabel>
+                            <Input
+                              aria-invalid={isInvalid}
+                              id={startOccurrenceField.name}
+                              inputMode="numeric"
+                              min={1}
+                              name={startOccurrenceField.name}
+                              onBlur={startOccurrenceField.handleBlur}
+                              onChange={(event) => {
+                                startOccurrenceField.handleChange(
+                                  event.target.value,
+                                );
+                              }}
+                              type="number"
+                              value={startOccurrenceField.state.value}
+                            />
+
+                            {showError && (
+                              <FieldError
+                                errors={startOccurrenceField.state.meta.errors}
                               />
+                            )}
+                          </Field>
+                        );
+                      }}
+                    </form.Field>
 
-                              {showError && (
-                                <FieldError
-                                  errors={
-                                    startOccurrenceField.state.meta.errors
-                                  }
-                                />
-                              )}
-                            </Field>
-                          );
-                        }}
-                      </form.Field>
-                      <form.Field
-                        name={`${requirementPath}.requiredCount` as const}
-                      >
-                        {(requiredCountField) => {
-                          const isInvalid =
-                            !requiredCountField.state.meta.isValid;
-                          const showError =
-                            isInvalid &&
-                            requiredCountField.state.meta.isBlurred;
+                    <form.Field
+                      name={`${requirementPath}.requiredCount` as const}
+                    >
+                      {(requiredCountField) => {
+                        const isInvalid =
+                          !requiredCountField.state.meta.isValid;
+                        const showError =
+                          isInvalid && requiredCountField.state.meta.isBlurred;
 
-                          return (
-                            <Field data-invalid={showError}>
-                              <FieldLabel
-                                className="text-xs font-normal text-muted-foreground"
-                                htmlFor={requiredCountField.name}
-                              >
-                                To
-                              </FieldLabel>
-                              <Input
-                                aria-invalid={isInvalid}
-                                id={requiredCountField.name}
-                                inputMode="numeric"
-                                min={1}
-                                name={requiredCountField.name}
-                                onBlur={requiredCountField.handleBlur}
-                                onChange={(event) => {
-                                  requiredCountField.handleChange(
-                                    event.target.value,
-                                  );
-                                }}
-                                type="number"
-                                value={requiredCountField.state.value}
+                        return (
+                          <Field data-invalid={showError}>
+                            <FieldLabel htmlFor={requiredCountField.name}>
+                              Count
+                            </FieldLabel>
+                            <Input
+                              aria-invalid={isInvalid}
+                              id={requiredCountField.name}
+                              inputMode="numeric"
+                              min={1}
+                              name={requiredCountField.name}
+                              onBlur={requiredCountField.handleBlur}
+                              onChange={(event) => {
+                                requiredCountField.handleChange(
+                                  event.target.value,
+                                );
+                              }}
+                              type="number"
+                              value={requiredCountField.state.value}
+                            />
+
+                            {showError && (
+                              <FieldError
+                                errors={requiredCountField.state.meta.errors}
                               />
-
-                              {showError && (
-                                <FieldError
-                                  errors={requiredCountField.state.meta.errors}
-                                />
-                              )}
-                            </Field>
-                          );
-                        }}
-                      </form.Field>
-                    </FieldGroup>
+                            )}
+                          </Field>
+                        );
+                      }}
+                    </form.Field>
                   </FieldGroup>
                 )}
               </>
