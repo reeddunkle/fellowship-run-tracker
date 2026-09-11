@@ -1,0 +1,61 @@
+{
+  "dungeonId": "6",
+  "dungeonLevel": 64,
+  "milestones": [
+    {
+      "label": "2x Acolyte of Sinnari Killed",
+      "requirements": [
+        {
+          "requiredCount": 2,
+          "startOccurrence": 1,
+          "type": "UNIT_DEATH",
+          "unitTypeId": "173"
+        }
+      ]
+    },
+    {
+      "label": "4x Acolyte of Sinnari Killed",
+      "requirements": [
+        {
+          "requiredCount": 4,
+          "startOccurrence": 1,
+          "type": "UNIT_DEATH",
+          "unitTypeId": "173"
+        }
+      ]
+    },
+    {
+      "label": "Large Chicken",
+      "requirements": [
+        {
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "UNIT_DEATH",
+          "unitTypeId": "278"
+        }
+      ]
+    },
+    {
+      "label": "Sin-Magir Pull",
+      "requirements": [
+        {
+          "encounterId": "31",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_START"
+        }
+      ]
+    },
+    {
+      "label": "Sin-Magir Defeated",
+      "requirements": [
+        {
+          "encounterId": "31",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_END"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "dungeonId": "31",
+  "dungeonLevel": 64,
+  "milestones": [
+    {
+      "label": "Disciple 1",
+      "requirements": [
+        {
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "UNIT_DEATH",
+          "unitTypeId": "331"
+        }
+      ]
+    },
+    {
+      "label": "Ghorn Defeated",
+      "requirements": [
+        {
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "UNIT_DEATH",
+          "unitTypeId": "280"
+        }
+      ]
+    },
+    {
+      "label": "Disciple 2",
+      "requirements": [
+        {
+          "requiredCount": 1,
+          "startOccurrence": 2,
+          "type": "UNIT_DEATH",
+          "unitTypeId": "331"
+        }
+      ]
+    },
+    {
+      "label": "Varux Pulled",
+      "requirements": [
+        {
+          "encounterId": "36",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_START"
+        }
+      ]
+    },
+    {
+      "label": "Varux Defeated",
+      "requirements": [
+        {
+          "encounterId": "36",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_END"
+        }
+      ]
+    }
+  ]
+}

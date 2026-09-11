@@ -1,0 +1,72 @@
+{
+  "dungeonId": "23",
+  "dungeonLevel": 64,
+  "milestones": [
+    {
+      "label": "Fodir Pull",
+      "requirements": [
+        {
+          "encounterId": "20",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_START"
+        }
+      ]
+    },
+    {
+      "label": "Fodir Defeated",
+      "requirements": [
+        {
+          "encounterId": "20",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_END"
+        }
+      ]
+    },
+    {
+      "label": "Auga Pull",
+      "requirements": [
+        {
+          "encounterId": "22",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_START"
+        }
+      ]
+    },
+    {
+      "label": "Auga Defeated",
+      "requirements": [
+        {
+          "encounterId": "22",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_END"
+        }
+      ]
+    },
+    {
+      "label": "Chilgar Pull",
+      "requirements": [
+        {
+          "encounterId": "21",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_START"
+        }
+      ]
+    },
+    {
+      "label": "Chilgar Defeated",
+      "requirements": [
+        {
+          "encounterId": "21",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_END"
+        }
+      ]
+    }
+  ]
+}

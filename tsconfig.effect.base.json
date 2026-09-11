@@ -1,0 +1,64 @@
+{
+  "$schema": "./node_modules/@effect/tsgo/schema.json",
+  "compilerOptions": {
+    "plugins": [
+      {
+        "name": "@effect/language-service",
+        "noExternal": false,
+        "layerGraphFollowDepth": 3,
+        "completions": true,
+        "namespaceImportPackages": ["effect"],
+        "topLevelNamedReexports": "follow",
+        "diagnosticSeverity": {},
+        "overrides": [
+          {
+            "include": ["src/**/*.ts", "src/**/*.tsx"],
+            "options": {
+              "diagnosticSeverity": {
+                "abortControllerInEffect": "warning",
+                "asyncFunction": "warning",
+                "cryptoRandomUUID": "warning",
+                "cryptoRandomUUIDInEffect": "warning",
+                "deterministicKeys": "warning",
+                "extendsNativeError": "warning",
+                "globalConsole": "warning",
+                "globalConsoleInEffect": "warning",
+                "globalDate": "warning",
+                "globalDateInEffect": "warning",
+                "globalFetch": "warning",
+                "globalFetchInEffect": "warning",
+                "globalRandom": "warning",
+                "globalRandomInEffect": "warning",
+                "globalTimers": "warning",
+                "globalTimersInEffect": "warning",
+                "instanceOfSchema": "warning",
+                "missedPipeableOpportunity": "suggestion",
+                "newPromise": "warning",
+                "nodeBuiltinImport": "warning",
+                "preferSchemaOverJson": "warning",
+                "processEnv": "warning",
+                "processEnvInEffect": "warning",
+                "schemaSync": "warning",
+                "serviceNotAsClass": "warning",
+                "strictBooleanExpressions": "warning",
+                "strictEffectProvide": "warning",
+
+                "missingPipeableSignature": "off",
+                "lazyEffect": "off"
+              }
+            }
+          },
+          {
+            "include": ["src/tests/**/*.ts", "src/tests/**/*.tsx"],
+            "options": {
+              "diagnosticSeverity": {
+                "asyncFunction": "off",
+                "strictEffectProvide": "off"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

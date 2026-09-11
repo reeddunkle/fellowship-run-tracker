@@ -1,0 +1,14 @@
+.env
+
+data/
+dist/
+external/
+generated/
+logs/
+node_modules/
+test-combat-logs/
+test-logs/
+
+.tanstack/
+
+.effect-tsgo-lsp-*/

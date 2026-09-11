@@ -1,0 +1,21 @@
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["vite/client"],
+    "noEmit": true,
+    "jsx": "react-jsx"
+  },
+  "include": [
+    "../../electron/**/*.ts",
+    "../../services/api/**/*.ts",
+    "../../types/vite-env.d.ts",
+    "../../util/**/*.ts",
+    "../../validation/**/*.ts",
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "exclude": []
+}

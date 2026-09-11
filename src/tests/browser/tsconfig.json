@@ -1,0 +1,11 @@
+{
+  "extends": "../../electron/renderer/tsconfig.json",
+  "compilerOptions": {
+    "types": ["vite/client", "vitest/browser"]
+  },
+  "include": [
+    "../../electron/renderer/electron-api.d.ts",
+    "./**/*.ts",
+    "./**/*.tsx"
+  ]
+}

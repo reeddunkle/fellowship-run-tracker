@@ -1,0 +1,83 @@
+{
+  "dungeonId": "13",
+  "dungeonLevel": 64,
+  "milestones": [
+    {
+      "label": "Ghorn Defeated",
+      "requirements": [
+        {
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "UNIT_DEATH",
+          "unitTypeId": "280"
+        }
+      ]
+    },
+    {
+      "label": "Deathless Katrine Pull",
+      "requirements": [
+        {
+          "encounterId": "15",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_START"
+        }
+      ]
+    },
+    {
+      "label": "Deathless Katrine Defeated",
+      "requirements": [
+        {
+          "encounterId": "15",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_END"
+        }
+      ]
+    },
+    {
+      "label": "Bael'Aurum Pull",
+      "requirements": [
+        {
+          "encounterId": "14",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_START"
+        }
+      ]
+    },
+    {
+      "label": "Bael'Aurum Defeated",
+      "requirements": [
+        {
+          "encounterId": "14",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_END"
+        }
+      ]
+    },
+    {
+      "label": "First Mate Marrow Pull",
+      "requirements": [
+        {
+          "encounterId": "13",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_START"
+        }
+      ]
+    },
+    {
+      "label": "First Mate Marrow Defeated",
+      "requirements": [
+        {
+          "encounterId": "13",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_END"
+        }
+      ]
+    }
+  ]
+}

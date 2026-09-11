@@ -1,0 +1,28 @@
+{
+  "dungeonId": "24",
+  "dungeonLevel": 64,
+  "milestones": [
+    {
+      "label": "Vexira Pull",
+      "requirements": [
+        {
+          "encounterId": "33",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_START"
+        }
+      ]
+    },
+    {
+      "label": "Vexira Kill",
+      "requirements": [
+        {
+          "encounterId": "33",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_END"
+        }
+      ]
+    }
+  ]
+}

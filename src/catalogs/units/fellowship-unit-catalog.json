@@ -1,0 +1,1338 @@
+[
+  {
+    "dungeonIds": ["11"],
+    "groupKey": null,
+    "id": "CM_RubiliteTriggerstone",
+    "name": "Rubilite Triggerstone",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["24"],
+    "groupKey": null,
+    "id": "SH_QuiveringEggSac",
+    "name": "Quivering Egg Sac",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["5", "12", "23"],
+    "groupKey": null,
+    "id": "10",
+    "name": "Ashen Arsonist",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["23"],
+    "groupKey": null,
+    "id": "11",
+    "name": "Icebite Reaver",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["5", "12", "23"],
+    "groupKey": null,
+    "id": "12",
+    "name": "Raging Pillager",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["21", "23", "24"],
+    "groupKey": null,
+    "id": "13",
+    "name": "Frenzied Looter",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["23"],
+    "groupKey": null,
+    "id": "14",
+    "name": "Craven Hiisi",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["23", "31"],
+    "groupKey": null,
+    "id": "15",
+    "name": "Coldbrine Fiend",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["23"],
+    "groupKey": null,
+    "id": "18",
+    "name": "Auga Handhafi the Blind",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["23"],
+    "groupKey": null,
+    "id": "22",
+    "name": "Kaldurson Isilagður",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["23"],
+    "groupKey": null,
+    "id": "23",
+    "name": "Kaldurson Eldsupptok",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["23"],
+    "groupKey": null,
+    "id": "25",
+    "name": "Fodir Kaldur",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["23"],
+    "groupKey": null,
+    "id": "28",
+    "name": "Chilgar the Drowned",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["23"],
+    "groupKey": null,
+    "id": "29",
+    "name": "Nightmist Whisperer",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["23"],
+    "groupKey": null,
+    "id": "30",
+    "name": "Shadow of Ulmorgat",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["5", "12", "23"],
+    "groupKey": null,
+    "id": "32",
+    "name": "Nightmist Cutthroat",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["23"],
+    "groupKey": null,
+    "id": "33",
+    "name": "Bleakfrost Slaver",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["23"],
+    "groupKey": null,
+    "id": "34",
+    "name": "Bleakfrost Mystic",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["21"],
+    "groupKey": null,
+    "id": "36",
+    "name": "Urrak Witch",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["21"],
+    "groupKey": null,
+    "id": "37",
+    "name": "Urrak Slaver",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["21"],
+    "groupKey": null,
+    "id": "38",
+    "name": "Slavebind Totem",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["11", "21"],
+    "groupKey": null,
+    "id": "39",
+    "name": "Outrunner",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["11", "21"],
+    "groupKey": null,
+    "id": "40",
+    "name": "Horned Seer",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["11", "21"],
+    "groupKey": null,
+    "id": "41",
+    "name": "Gorestained Butcher",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["11", "21"],
+    "groupKey": null,
+    "id": "42",
+    "name": "Desecrator",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["21"],
+    "groupKey": null,
+    "id": "43",
+    "name": "Slavetrader Brull",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["21"],
+    "groupKey": null,
+    "id": "44",
+    "name": "Drazhul the Fleshbroker",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["12", "13", "15"],
+    "groupKey": null,
+    "id": "48",
+    "name": "Dire Rat",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["6"],
+    "groupKey": null,
+    "id": "87",
+    "name": "Sin-Magir",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["24"],
+    "groupKey": null,
+    "id": "89",
+    "name": "Spiderling",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["24"],
+    "groupKey": null,
+    "id": "90",
+    "name": "Rotheart Recluse",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["24"],
+    "groupKey": null,
+    "id": "91",
+    "name": "Gravesnare Kidnapper",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["24"],
+    "groupKey": null,
+    "id": "92",
+    "name": "Vexira, Mother of Nightmares",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["6", "15"],
+    "groupKey": null,
+    "id": "94",
+    "name": "Water Elemental",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["15"],
+    "groupKey": null,
+    "id": "97",
+    "name": "Hollowed Corsair",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["15"],
+    "groupKey": null,
+    "id": "98",
+    "name": "Fading Raider",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["15"],
+    "groupKey": null,
+    "id": "99",
+    "name": "Deepbound Magi",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["6", "13", "15"],
+    "groupKey": null,
+    "id": "100",
+    "name": "Lost Soul",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["15"],
+    "groupKey": null,
+    "id": "102",
+    "name": "Tormented Spectre",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["15"],
+    "groupKey": null,
+    "id": "103",
+    "name": "Vengeful Shade",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["15"],
+    "groupKey": null,
+    "id": "104",
+    "name": "Witchreef Lasher",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["15"],
+    "groupKey": null,
+    "id": "105",
+    "name": "Sinthara",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["13"],
+    "groupKey": null,
+    "id": "107",
+    "name": "Tide Witch",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["13"],
+    "groupKey": null,
+    "id": "109",
+    "name": "Jungle Stalker",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["13"],
+    "groupKey": null,
+    "id": "110",
+    "name": "Bleachbone Brute",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["13"],
+    "groupKey": null,
+    "id": "114",
+    "name": "Saltsworn Scallywag",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["6", "13"],
+    "groupKey": null,
+    "id": "115",
+    "name": "Greedspawn Sentinel",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["6", "13"],
+    "groupKey": null,
+    "id": "116",
+    "name": "Gravescythe",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["6", "13"],
+    "groupKey": null,
+    "id": "118",
+    "name": "Greedbound Prism",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["13"],
+    "groupKey": null,
+    "id": "119",
+    "name": "Scuttlejack Cannoneer",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["13"],
+    "groupKey": null,
+    "id": "121",
+    "name": "Bael'Aurum",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["13"],
+    "groupKey": null,
+    "id": "124",
+    "name": "Deathless Katrine",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["13"],
+    "groupKey": null,
+    "id": "125",
+    "name": "First Mate Marrow",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["13"],
+    "groupKey": null,
+    "id": "126",
+    "name": "Soulpowder Buccaneer",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["13"],
+    "groupKey": null,
+    "id": "127",
+    "name": "Bilgerat",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["5", "6", "13", "21"],
+    "groupKey": null,
+    "id": "128",
+    "name": "Barbarous Lasher",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["12"],
+    "groupKey": null,
+    "id": "129",
+    "name": "Stormscreamer",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["12", "24"],
+    "groupKey": null,
+    "id": "130",
+    "name": "Shinchopper",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["12", "24"],
+    "groupKey": null,
+    "id": "131",
+    "name": "Facestabber",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["12", "24"],
+    "groupKey": null,
+    "id": "132",
+    "name": "Bully Basher",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["12"],
+    "groupKey": null,
+    "id": "133",
+    "name": "Warlord Brogg",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["5", "12", "21"],
+    "groupKey": null,
+    "id": "134",
+    "name": "Mancatcher",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["11", "25"],
+    "groupKey": null,
+    "id": "136",
+    "name": "Skittershard",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["11", "21"],
+    "groupKey": null,
+    "id": "137",
+    "name": "Mangy Brute",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["11"],
+    "groupKey": null,
+    "id": "138",
+    "name": "Corrupted Totemic",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["11"],
+    "groupKey": null,
+    "id": "139",
+    "name": "Bloodstone Goliath",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["11"],
+    "groupKey": null,
+    "id": "140",
+    "name": "Akari the Everdawn Lord",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["11"],
+    "groupKey": null,
+    "id": "141",
+    "name": "Malgut the Fetid",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["11"],
+    "groupKey": null,
+    "id": "142",
+    "name": "Blighted Dawnbloom",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["8"],
+    "groupKey": null,
+    "id": "151",
+    "name": "Expedition Lookout",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["8", "31"],
+    "groupKey": null,
+    "id": "152",
+    "name": "Ice Shardling",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["7", "8"],
+    "groupKey": null,
+    "id": "153",
+    "name": "Eldrin Chronomancer",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["7", "8", "31"],
+    "groupKey": null,
+    "id": "154",
+    "name": "Greater Ice Elemental",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["7", "8", "23", "31"],
+    "groupKey": null,
+    "id": "155",
+    "name": "Frozen Remnant",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["8"],
+    "groupKey": null,
+    "id": "156",
+    "name": "Apostate Veras",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["7", "8"],
+    "groupKey": null,
+    "id": "157",
+    "name": "Coldheart Assassin",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["7", "8", "31"],
+    "groupKey": null,
+    "id": "160",
+    "name": "Spellbound Golem",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["7", "31"],
+    "groupKey": null,
+    "id": "161",
+    "name": "Ice Shardling",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["7", "8", "31"],
+    "groupKey": null,
+    "id": "162",
+    "name": "Tundra Stalker",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["7", "8", "31"],
+    "groupKey": null,
+    "id": "163",
+    "name": "Deceitful Scholar",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["7", "8", "31"],
+    "groupKey": null,
+    "id": "164",
+    "name": "Eldrin Sentinel",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["7", "8", "31"],
+    "groupKey": null,
+    "id": "165",
+    "name": "Eldrin Recruit",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["7", "8", "31"],
+    "groupKey": null,
+    "id": "166",
+    "name": "Blade of Cithrel",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["7", "31"],
+    "groupKey": null,
+    "id": "167",
+    "name": "Corrupter",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["7"],
+    "groupKey": null,
+    "id": "168",
+    "name": "Noor, The Betrayer",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["7"],
+    "groupKey": null,
+    "id": "169",
+    "name": "Ancient Koros",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["7"],
+    "groupKey": null,
+    "id": "170",
+    "name": "Cithrel",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["25"],
+    "groupKey": null,
+    "id": "172",
+    "name": "Godfall Titan",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["6"],
+    "groupKey": null,
+    "id": "173",
+    "name": "Acolyte of Sinnari",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["6"],
+    "groupKey": null,
+    "id": "174",
+    "name": "Nightbound Magi",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["6"],
+    "groupKey": null,
+    "id": "175",
+    "name": "Tombguard Reaver",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["6"],
+    "groupKey": null,
+    "id": "176",
+    "name": "Sandsworn Husk",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["6"],
+    "groupKey": null,
+    "id": "177",
+    "name": "Gravebreaker Brute",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["6"],
+    "groupKey": null,
+    "id": "179",
+    "name": "Dunesnare Hunter",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["5", "21"],
+    "groupKey": null,
+    "id": "182",
+    "name": "Slaughtervine",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["5", "6", "13", "21"],
+    "groupKey": null,
+    "id": "183",
+    "name": "Ruins Lasher",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["5", "21"],
+    "groupKey": null,
+    "id": "185",
+    "name": "Bloodfang Raider",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["5"],
+    "groupKey": null,
+    "id": "186",
+    "name": "Hulking Bulgore",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["5", "12"],
+    "groupKey": null,
+    "id": "189",
+    "name": "Executioner",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["5"],
+    "groupKey": null,
+    "id": "190",
+    "name": "Sickle",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["5", "21"],
+    "groupKey": null,
+    "id": "191",
+    "name": "Hellcaller",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["5", "21"],
+    "groupKey": null,
+    "id": "192",
+    "name": "Initiate",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["5", "12"],
+    "groupKey": null,
+    "id": "193",
+    "name": "Profane Invoker",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["5"],
+    "groupKey": null,
+    "id": "198",
+    "name": "Moar'gore, Master of Sacrifice",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["5"],
+    "groupKey": null,
+    "id": "199",
+    "name": "Vun’Kahr, the Thorned Maw",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["5"],
+    "groupKey": null,
+    "id": "200",
+    "name": "Prophet Ez'rath",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["5", "21"],
+    "groupKey": null,
+    "id": "201",
+    "name": "Bloodfang",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["25"],
+    "groupKey": null,
+    "id": "241",
+    "name": "Godfall Wardstone",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["25"],
+    "groupKey": null,
+    "id": "243",
+    "name": "Task Master",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["25"],
+    "groupKey": null,
+    "id": "244",
+    "name": "Nezari Bolter",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["25"],
+    "groupKey": null,
+    "id": "245",
+    "name": "Quarry Stalker",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["21", "25"],
+    "groupKey": null,
+    "id": "246",
+    "name": "Dredge",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["25"],
+    "groupKey": null,
+    "id": "247",
+    "name": "Enforcer",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["25"],
+    "groupKey": null,
+    "id": "248",
+    "name": "Arcane Warden",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["25"],
+    "groupKey": null,
+    "id": "249",
+    "name": "Enraged Earth Elemental",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["24"],
+    "groupKey": null,
+    "id": "266",
+    "name": "Venomdrinker",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["24"],
+    "groupKey": null,
+    "id": "267",
+    "name": "Eggbearer",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["24"],
+    "groupKey": null,
+    "id": "268",
+    "name": "Carrion Horror",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["25"],
+    "groupKey": null,
+    "id": "270",
+    "name": "Vaerith Vorn",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": [
+      "5",
+      "6",
+      "7",
+      "8",
+      "11",
+      "12",
+      "13",
+      "15",
+      "21",
+      "23",
+      "24",
+      "25",
+      "29",
+      "30",
+      "31"
+    ],
+    "groupKey": null,
+    "id": "274",
+    "name": "Emissary of the Shadow Lord",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": [
+      "5",
+      "6",
+      "7",
+      "8",
+      "11",
+      "12",
+      "13",
+      "15",
+      "21",
+      "23",
+      "24",
+      "25",
+      "29",
+      "30",
+      "31"
+    ],
+    "groupKey": "CHICKEN",
+    "id": "276",
+    "name": "Chicken",
+    "status": "ACTIVE",
+    "variant": "Small"
+  },
+  {
+    "dungeonIds": [
+      "5",
+      "6",
+      "7",
+      "8",
+      "11",
+      "12",
+      "13",
+      "15",
+      "21",
+      "23",
+      "24",
+      "25",
+      "29",
+      "30",
+      "31"
+    ],
+    "groupKey": "CHICKEN",
+    "id": "277",
+    "name": "Chicken",
+    "status": "ACTIVE",
+    "variant": "Medium"
+  },
+  {
+    "dungeonIds": [
+      "5",
+      "6",
+      "7",
+      "8",
+      "11",
+      "12",
+      "13",
+      "15",
+      "21",
+      "23",
+      "24",
+      "25",
+      "29",
+      "30",
+      "31"
+    ],
+    "groupKey": "CHICKEN",
+    "id": "278",
+    "name": "Chicken",
+    "status": "ACTIVE",
+    "variant": "Large"
+  },
+  {
+    "dungeonIds": [
+      "5",
+      "6",
+      "7",
+      "8",
+      "11",
+      "12",
+      "13",
+      "15",
+      "21",
+      "23",
+      "24",
+      "25",
+      "29",
+      "30",
+      "31"
+    ],
+    "groupKey": null,
+    "id": "280",
+    "name": "Ghorn the Avalanche",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": [
+      "5",
+      "6",
+      "7",
+      "8",
+      "11",
+      "12",
+      "13",
+      "15",
+      "21",
+      "23",
+      "24",
+      "25",
+      "29",
+      "30",
+      "31"
+    ],
+    "groupKey": null,
+    "id": "281",
+    "name": "Eira the White Witch",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": [
+      "5",
+      "6",
+      "7",
+      "8",
+      "11",
+      "12",
+      "13",
+      "15",
+      "21",
+      "23",
+      "24",
+      "25",
+      "29",
+      "30",
+      "31"
+    ],
+    "groupKey": null,
+    "id": "282",
+    "name": "Krumbug the Naughty",
+    "status": "INACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": [
+      "5",
+      "6",
+      "7",
+      "8",
+      "11",
+      "12",
+      "13",
+      "15",
+      "21",
+      "23",
+      "24",
+      "25",
+      "29",
+      "30",
+      "31"
+    ],
+    "groupKey": null,
+    "id": "283",
+    "name": "Winter Trickster Rat",
+    "status": "INACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": [
+      "5",
+      "6",
+      "7",
+      "8",
+      "11",
+      "12",
+      "13",
+      "15",
+      "21",
+      "23",
+      "24",
+      "25",
+      "29",
+      "30",
+      "31"
+    ],
+    "groupKey": null,
+    "id": "284",
+    "name": "Ghorn the Giant",
+    "status": "INACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": [
+      "5",
+      "6",
+      "7",
+      "8",
+      "11",
+      "12",
+      "13",
+      "15",
+      "21",
+      "23",
+      "24",
+      "25",
+      "29",
+      "30",
+      "31"
+    ],
+    "groupKey": null,
+    "id": "286",
+    "name": "Anomalous Orb",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["23", "31"],
+    "groupKey": null,
+    "id": "313",
+    "name": "Glacial Bear",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["12", "23", "31"],
+    "groupKey": null,
+    "id": "314",
+    "name": "Dire Wolf",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["31"],
+    "groupKey": null,
+    "id": "315",
+    "name": "Overlord Varux",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["29", "30"],
+    "groupKey": null,
+    "id": "316",
+    "name": "Sanguine Echo",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["30", "31"],
+    "groupKey": null,
+    "id": "317",
+    "name": "Sanguine Crusher",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["30"],
+    "groupKey": null,
+    "id": "318",
+    "name": "Xul’vorith, Sentinel of the Bloodbound Gate",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["30"],
+    "groupKey": null,
+    "id": "319",
+    "name": "Han-Eth, Sentry of Xul",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["30"],
+    "groupKey": null,
+    "id": "321",
+    "name": "Vel’korath the Sanctified, Vision of the Covenant",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["29", "30"],
+    "groupKey": null,
+    "id": "326",
+    "name": "Heart of Rot",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["29"],
+    "groupKey": null,
+    "id": "327",
+    "name": "Undying Champion",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["29"],
+    "groupKey": null,
+    "id": "328",
+    "name": "Meandering Acolyte",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["29"],
+    "groupKey": null,
+    "id": "329",
+    "name": "Restless Protector",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["29"],
+    "groupKey": null,
+    "id": "330",
+    "name": "Xurath, Fist of the Warden",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["29", "30", "31"],
+    "groupKey": null,
+    "id": "331",
+    "name": "Sanguine Disciple",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["29", "30", "31"],
+    "groupKey": null,
+    "id": "332",
+    "name": "Stalking Grim",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["29", "30", "31"],
+    "groupKey": null,
+    "id": "333",
+    "name": "Heskyr Zealot",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["29", "30", "31"],
+    "groupKey": null,
+    "id": "334",
+    "name": "Heskyr Brood",
+    "status": "ACTIVE",
+    "variant": null
+  },
+  {
+    "dungeonIds": ["29", "30", "31"],
+    "groupKey": null,
+    "id": "336",
+    "name": "Heskyr Magus",
+    "status": "ACTIVE",
+    "variant": null
+  }
+]

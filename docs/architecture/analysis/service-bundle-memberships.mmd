@@ -1,0 +1,40 @@
+flowchart LR
+  FellowshipTrackerWithDependenciesLive["FellowshipTrackerWithDependenciesLive"]
+  ApiRuntimeLive["ApiRuntimeLive"]
+  ApiServicesLive["ApiServicesLive"]
+  ApiServicesWithDependenciesLive["ApiServicesWithDependenciesLive"]
+  FellowshipTracker["FellowshipTracker"]
+  AbilityApiService["AbilityApiService"]
+  AppSettingsApiService["AppSettingsApiService"]
+  ConfigurationApiService["ConfigurationApiService"]
+  DungeonApiService["DungeonApiService"]
+  DungeonRunApiService["DungeonRunApiService"]
+  EncounterApiService["EncounterApiService"]
+  LiveSplitApiService["LiveSplitApiService"]
+  UnitApiService["UnitApiService"]
+  FellowshipTrackerWithDependenciesLive -.-> FellowshipTracker
+  ApiRuntimeLive -.-> FellowshipTracker
+  ApiServicesLive -.-> AbilityApiService
+  ApiServicesWithDependenciesLive -.-> AbilityApiService
+  ApiRuntimeLive -.-> AbilityApiService
+  ApiServicesLive -.-> AppSettingsApiService
+  ApiServicesWithDependenciesLive -.-> AppSettingsApiService
+  ApiRuntimeLive -.-> AppSettingsApiService
+  ApiServicesLive -.-> ConfigurationApiService
+  ApiServicesWithDependenciesLive -.-> ConfigurationApiService
+  ApiRuntimeLive -.-> ConfigurationApiService
+  ApiServicesLive -.-> DungeonApiService
+  ApiServicesWithDependenciesLive -.-> DungeonApiService
+  ApiRuntimeLive -.-> DungeonApiService
+  ApiServicesLive -.-> DungeonRunApiService
+  ApiServicesWithDependenciesLive -.-> DungeonRunApiService
+  ApiRuntimeLive -.-> DungeonRunApiService
+  ApiServicesLive -.-> EncounterApiService
+  ApiServicesWithDependenciesLive -.-> EncounterApiService
+  ApiRuntimeLive -.-> EncounterApiService
+  ApiServicesLive -.-> LiveSplitApiService
+  ApiServicesWithDependenciesLive -.-> LiveSplitApiService
+  ApiRuntimeLive -.-> LiveSplitApiService
+  ApiServicesLive -.-> UnitApiService
+  ApiServicesWithDependenciesLive -.-> UnitApiService
+  ApiRuntimeLive -.-> UnitApiService

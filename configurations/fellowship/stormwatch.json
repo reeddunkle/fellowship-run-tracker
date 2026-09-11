@@ -1,0 +1,50 @@
+{
+  "dungeonId": "12",
+  "dungeonLevel": 64,
+  "milestones": [
+    {
+      "label": "Eira Defeated",
+      "requirements": [
+        {
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "UNIT_DEATH",
+          "unitTypeId": "281"
+        }
+      ]
+    },
+    {
+      "label": "Stormy Retreat Completed",
+      "requirements": [
+        {
+          "abilityId": "634",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ABILITY_ACTIVATED"
+        }
+      ]
+    },
+    {
+      "label": "Warlord Brogg Pull",
+      "requirements": [
+        {
+          "encounterId": "26",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_START"
+        }
+      ]
+    },
+    {
+      "label": "Warlord Brogg Kill",
+      "requirements": [
+        {
+          "encounterId": "26",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_END"
+        }
+      ]
+    }
+  ]
+}

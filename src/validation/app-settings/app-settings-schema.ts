@@ -1,0 +1,29 @@
+import * as Schema from "effect/Schema";
+
+import {
+  HostSchema,
+  NonEmptyStringSchema,
+  PortSchema,
+} from "@/validation/common-schemas.ts";
+
+export const AppSettingsIdSchema = Schema.Literal(1).pipe(
+  Schema.brand("AppSettingsId"),
+);
+
+export const LiveSplitHostSchema = HostSchema.pipe(
+  Schema.brand("LiveSplitHost"),
+);
+
+export type LiveSplitHost = typeof LiveSplitHostSchema.Type;
+
+export const LiveSplitPortSchema = PortSchema.pipe(
+  Schema.brand("LiveSplitPort"),
+);
+
+export type LiveSplitPort = typeof LiveSplitPortSchema.Type;
+
+export const FellowshipLogDirectorySchema = NonEmptyStringSchema.pipe(
+  Schema.brand("FellowshipLogDirectory"),
+);
+
+export type FellowshipLogDirectory = typeof FellowshipLogDirectorySchema.Type;

@@ -1,0 +1,72 @@
+{
+  "dungeonId": "5",
+  "dungeonLevel": 64,
+  "milestones": [
+    {
+      "label": "Moar'gore, Master of Sacrifice Pull",
+      "requirements": [
+        {
+          "encounterId": "10",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_START"
+        }
+      ]
+    },
+    {
+      "label": "Moar'gore, Master of Sacrifice Defeated",
+      "requirements": [
+        {
+          "encounterId": "10",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_END"
+        }
+      ]
+    },
+    {
+      "label": "Vun'Kahr, the Thorned Maw Pull",
+      "requirements": [
+        {
+          "encounterId": "11",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_START"
+        }
+      ]
+    },
+    {
+      "label": "Vun'Kahr, the Thorned Maw Defeated",
+      "requirements": [
+        {
+          "encounterId": "11",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_END"
+        }
+      ]
+    },
+    {
+      "label": "Prophet Ez'rath Pull",
+      "requirements": [
+        {
+          "encounterId": "12",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_START"
+        }
+      ]
+    },
+    {
+      "label": "Prophet Ez'rath Defeated",
+      "requirements": [
+        {
+          "encounterId": "12",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_END"
+        }
+      ]
+    }
+  ]
+}

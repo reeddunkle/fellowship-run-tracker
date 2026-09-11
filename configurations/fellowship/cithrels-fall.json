@@ -1,0 +1,83 @@
+{
+  "dungeonId": "7",
+  "dungeonLevel": 64,
+  "milestones": [
+    {
+      "label": "Ghorn Defeated",
+      "requirements": [
+        {
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "UNIT_DEATH",
+          "unitTypeId": "280"
+        }
+      ]
+    },
+    {
+      "label": "Noor Pull",
+      "requirements": [
+        {
+          "encounterId": "1",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_START"
+        }
+      ]
+    },
+    {
+      "label": "Noor Defeated",
+      "requirements": [
+        {
+          "encounterId": "1",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_END"
+        }
+      ]
+    },
+    {
+      "label": "Koros Pull",
+      "requirements": [
+        {
+          "encounterId": "2",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_START"
+        }
+      ]
+    },
+    {
+      "label": "Koros Defeated",
+      "requirements": [
+        {
+          "encounterId": "2",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_END"
+        }
+      ]
+    },
+    {
+      "label": "Cithrel Pull",
+      "requirements": [
+        {
+          "encounterId": "3",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_START"
+        }
+      ]
+    },
+    {
+      "label": "Cithrel Defeated",
+      "requirements": [
+        {
+          "encounterId": "3",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_END"
+        }
+      ]
+    }
+  ]
+}

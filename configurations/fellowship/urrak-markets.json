@@ -1,0 +1,28 @@
+{
+  "dungeonId": "21",
+  "dungeonLevel": 64,
+  "milestones": [
+    {
+      "label": "Drazhul the Fleshbroker and Slavetrader Brull Pull",
+      "requirements": [
+        {
+          "encounterId": "32",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_START"
+        }
+      ]
+    },
+    {
+      "label": "Drazhul the Fleshbroker and Slavetrader Brull Kill",
+      "requirements": [
+        {
+          "encounterId": "32",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_END"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,647 @@
+flowchart TB
+  subgraph 2 ["`TrackingWebSocketBroadcasterLive`"]
+    subgraph 2_wrap[" "]
+      subgraph 2_provides [Provides]
+        2_provides_0["TrackingWebSocketBroadcaster"]
+      end
+      style 2_provides stroke:none
+    end
+    style 2_wrap fill:transparent
+    style 2_wrap stroke:none
+  end
+  style 2 fill:transparent
+  subgraph 4 ["`LiveSplitWebSocketBroadcasterLive`"]
+    subgraph 4_wrap[" "]
+      subgraph 4_provides [Provides]
+        4_provides_0["LiveSplitWebSocketBroadcaster"]
+      end
+      style 4_provides stroke:none
+    end
+    style 4_wrap fill:transparent
+    style 4_wrap stroke:none
+  end
+  style 4 fill:transparent
+  subgraph 6 ["`DungeonRunWebSocketBroadcasterLive`"]
+    subgraph 6_wrap[" "]
+      subgraph 6_provides [Provides]
+        6_provides_0["DungeonRunWebSocketBroadcaster"]
+      end
+      style 6_provides stroke:none
+    end
+    style 6_wrap fill:transparent
+    style 6_wrap stroke:none
+  end
+  style 6 fill:transparent
+  subgraph 10 ["`AppSettingsWithDependenciesLive`"]
+    subgraph 10_wrap[" "]
+      subgraph 10_provides [Provides]
+        10_provides_0["AppSettings"]
+      end
+      style 10_provides stroke:none
+    end
+    style 10_wrap fill:transparent
+    style 10_wrap stroke:none
+  end
+  style 10 fill:transparent
+  subgraph 12 ["`LiveSplitServicesLive`"]
+    subgraph 12_wrap[" "]
+      subgraph 12_requires [Requires]
+        12_requires_0["AppSettings"]
+      end
+      style 12_requires stroke:none
+      subgraph 12_provides [Provides]
+        12_provides_0["LiveSplit"]
+      end
+      style 12_provides stroke:none
+    end
+    style 12_wrap fill:transparent
+    style 12_wrap stroke:none
+  end
+  style 12 fill:transparent
+  subgraph 13 ["`LiveSplitWithDependenciesLive`"]
+    subgraph 13_wrap[" "]
+      subgraph 13_provides [Provides]
+        13_provides_0["LiveSplit"]
+      end
+      style 13_provides stroke:none
+    end
+    style 13_wrap fill:transparent
+    style 13_wrap stroke:none
+  end
+  style 13 fill:transparent
+  subgraph 17 ["`FellowshipServicesLive`"]
+    subgraph 17_wrap[" "]
+      subgraph 17_requires [Requires]
+        17_requires_0["AppSettings"]
+      end
+      style 17_requires stroke:none
+      subgraph 17_provides [Provides]
+        17_provides_0["Fellowship"]
+      end
+      style 17_provides stroke:none
+    end
+    style 17_wrap fill:transparent
+    style 17_wrap stroke:none
+  end
+  style 17 fill:transparent
+  subgraph 18 ["`FellowshipWithDependenciesLive`"]
+    subgraph 18_wrap[" "]
+      subgraph 18_provides [Provides]
+        18_provides_0["Fellowship"]
+      end
+      style 18_provides stroke:none
+    end
+    style 18_wrap fill:transparent
+    style 18_wrap stroke:none
+  end
+  style 18 fill:transparent
+  subgraph 20 ["`PersistenceLive`"]
+    subgraph 20_wrap[" "]
+      subgraph 20_provides [Provides]
+        20_provides_0["AbilityDAO"]
+        20_provides_1["AppSettingsDAO"]
+        20_provides_2["ConfigurationDAO"]
+        20_provides_3["DungeonDAO"]
+        20_provides_4["DungeonRunDAO"]
+        20_provides_5["DungeonRunObservationDAO"]
+        20_provides_6["EncounterDAO"]
+        20_provides_7["UnitDAO"]
+      end
+      style 20_provides stroke:none
+    end
+    style 20_wrap fill:transparent
+    style 20_wrap stroke:none
+  end
+  style 20 fill:transparent
+  subgraph 24 ["`FellowshipTrackerLive`"]
+    subgraph 24_wrap[" "]
+      subgraph 24_requires [Requires]
+        24_requires_0["ConfigurationDAO"]
+        24_requires_1["DungeonRunDAO"]
+        24_requires_2["DungeonRunObservationDAO"]
+        24_requires_3["DungeonRunWebSocketBroadcaster"]
+        24_requires_4["Fellowship"]
+        24_requires_5["LiveSplit"]
+      end
+      style 24_requires stroke:none
+      subgraph 24_provides [Provides]
+        24_provides_0["FellowshipTracker"]
+      end
+      style 24_provides stroke:none
+    end
+    style 24_wrap fill:transparent
+    style 24_wrap stroke:none
+  end
+  style 24 fill:transparent
+  subgraph 26 ["`FellowshipTrackerWithDependenciesLive`"]
+    subgraph 26_wrap[" "]
+      subgraph 26_provides [Provides]
+        26_provides_0["FellowshipTracker"]
+      end
+      style 26_provides stroke:none
+    end
+    style 26_wrap fill:transparent
+    style 26_wrap stroke:none
+  end
+  style 26 fill:transparent
+  subgraph 32 ["`AppSettingsLive`"]
+    subgraph 32_wrap[" "]
+      subgraph 32_requires [Requires]
+        32_requires_0["AppSettingsDAO"]
+      end
+      style 32_requires stroke:none
+      subgraph 32_provides [Provides]
+        32_provides_0["AppSettings"]
+      end
+      style 32_provides stroke:none
+    end
+    style 32_wrap fill:transparent
+    style 32_wrap stroke:none
+  end
+  style 32 fill:transparent
+  subgraph 39 ["`UnitApiServiceLive`"]
+    subgraph 39_wrap[" "]
+      subgraph 39_requires [Requires]
+        39_requires_0["UnitDAO"]
+      end
+      style 39_requires stroke:none
+      subgraph 39_provides [Provides]
+        39_provides_0["UnitApiService"]
+      end
+      style 39_provides stroke:none
+    end
+    style 39_wrap fill:transparent
+    style 39_wrap stroke:none
+  end
+  style 39 fill:transparent
+  subgraph 40 ["`LiveSplitApiServiceLive`"]
+    subgraph 40_wrap[" "]
+      subgraph 40_requires [Requires]
+        40_requires_0["LiveSplit"]
+      end
+      style 40_requires stroke:none
+      subgraph 40_provides [Provides]
+        40_provides_0["LiveSplitApiService"]
+      end
+      style 40_provides stroke:none
+    end
+    style 40_wrap fill:transparent
+    style 40_wrap stroke:none
+  end
+  style 40 fill:transparent
+  subgraph 41 ["`EncounterApiServiceLive`"]
+    subgraph 41_wrap[" "]
+      subgraph 41_requires [Requires]
+        41_requires_0["EncounterDAO"]
+      end
+      style 41_requires stroke:none
+      subgraph 41_provides [Provides]
+        41_provides_0["EncounterApiService"]
+      end
+      style 41_provides stroke:none
+    end
+    style 41_wrap fill:transparent
+    style 41_wrap stroke:none
+  end
+  style 41 fill:transparent
+  subgraph 42 ["`DungeonRunApiServiceLive`"]
+    subgraph 42_wrap[" "]
+      subgraph 42_requires [Requires]
+        42_requires_0["ConfigurationDAO"]
+        42_requires_1["DungeonRunObservationDAO"]
+      end
+      style 42_requires stroke:none
+      subgraph 42_provides [Provides]
+        42_provides_0["DungeonRunApiService"]
+      end
+      style 42_provides stroke:none
+    end
+    style 42_wrap fill:transparent
+    style 42_wrap stroke:none
+  end
+  style 42 fill:transparent
+  subgraph 43 ["`DungeonApiServiceLive`"]
+    subgraph 43_wrap[" "]
+      subgraph 43_requires [Requires]
+        43_requires_0["DungeonDAO"]
+      end
+      style 43_requires stroke:none
+      subgraph 43_provides [Provides]
+        43_provides_0["DungeonApiService"]
+      end
+      style 43_provides stroke:none
+    end
+    style 43_wrap fill:transparent
+    style 43_wrap stroke:none
+  end
+  style 43 fill:transparent
+  subgraph 44 ["`ConfigurationApiServiceLive`"]
+    subgraph 44_wrap[" "]
+      subgraph 44_requires [Requires]
+        44_requires_0["ConfigurationDAO"]
+      end
+      style 44_requires stroke:none
+      subgraph 44_provides [Provides]
+        44_provides_0["ConfigurationApiService"]
+      end
+      style 44_provides stroke:none
+    end
+    style 44_wrap fill:transparent
+    style 44_wrap stroke:none
+  end
+  style 44 fill:transparent
+  subgraph 45 ["`AppSettingsApiServiceLive`"]
+    subgraph 45_wrap[" "]
+      subgraph 45_requires [Requires]
+        45_requires_0["AppSettings"]
+      end
+      style 45_requires stroke:none
+      subgraph 45_provides [Provides]
+        45_provides_0["AppSettingsApiService"]
+      end
+      style 45_provides stroke:none
+    end
+    style 45_wrap fill:transparent
+    style 45_wrap stroke:none
+  end
+  style 45 fill:transparent
+  subgraph 46 ["`AbilityApiServiceLive`"]
+    subgraph 46_wrap[" "]
+      subgraph 46_requires [Requires]
+        46_requires_0["AbilityDAO"]
+      end
+      style 46_requires stroke:none
+      subgraph 46_provides [Provides]
+        46_provides_0["AbilityApiService"]
+      end
+      style 46_provides stroke:none
+    end
+    style 46_wrap fill:transparent
+    style 46_wrap stroke:none
+  end
+  style 46 fill:transparent
+  subgraph 47 ["`ApiServicesLive`"]
+    subgraph 47_wrap[" "]
+      subgraph 47_requires [Requires]
+        47_requires_0["AbilityDAO"]
+        47_requires_1["AppSettings"]
+        47_requires_2["ConfigurationDAO"]
+        47_requires_3["DungeonDAO"]
+        47_requires_4["DungeonRunObservationDAO"]
+        47_requires_5["EncounterDAO"]
+        47_requires_6["LiveSplit"]
+        47_requires_7["UnitDAO"]
+      end
+      style 47_requires stroke:none
+      subgraph 47_provides [Provides]
+        47_provides_0["AbilityApiService"]
+        47_provides_1["AppSettingsApiService"]
+        47_provides_2["ConfigurationApiService"]
+        47_provides_3["DungeonApiService"]
+        47_provides_4["DungeonRunApiService"]
+        47_provides_5["EncounterApiService"]
+        47_provides_6["LiveSplitApiService"]
+        47_provides_7["UnitApiService"]
+      end
+      style 47_provides stroke:none
+    end
+    style 47_wrap fill:transparent
+    style 47_wrap stroke:none
+  end
+  style 47 fill:transparent
+  subgraph 49 ["`ApiServicesWithDependenciesLive`"]
+    subgraph 49_wrap[" "]
+      subgraph 49_provides [Provides]
+        49_provides_0["AbilityApiService"]
+        49_provides_1["AppSettingsApiService"]
+        49_provides_2["ConfigurationApiService"]
+        49_provides_3["DungeonApiService"]
+        49_provides_4["DungeonRunApiService"]
+        49_provides_5["EncounterApiService"]
+        49_provides_6["LiveSplitApiService"]
+        49_provides_7["UnitApiService"]
+      end
+      style 49_provides stroke:none
+    end
+    style 49_wrap fill:transparent
+    style 49_wrap stroke:none
+  end
+  style 49 fill:transparent
+  subgraph 51 ["`ApiRuntimeLive`"]
+    subgraph 51_wrap[" "]
+      subgraph 51_provides [Provides]
+        51_provides_0["AbilityApiService"]
+        51_provides_1["AppSettingsApiService"]
+        51_provides_3["ConfigurationApiService"]
+        51_provides_5["DungeonApiService"]
+        51_provides_6["DungeonRunApiService"]
+        51_provides_7["DungeonRunWebSocketBroadcaster"]
+        51_provides_8["EncounterApiService"]
+        51_provides_9["FellowshipTracker"]
+        51_provides_14["LiveSplitApiService"]
+        51_provides_15["LiveSplitWebSocketBroadcaster"]
+        51_provides_19["TrackingWebSocketBroadcaster"]
+        51_provides_20["UnitApiService"]
+      end
+      style 51_provides stroke:none
+    end
+    style 51_wrap fill:transparent
+    style 51_wrap stroke:none
+  end
+  style 51 fill:transparent
+  subgraph 54 ["`ApiLifecycleLive`"]
+    subgraph 54_wrap[" "]
+      subgraph 54_requires [Requires]
+        54_requires_0["FellowshipTracker"]
+        54_requires_2["LiveSplitApiService"]
+        54_requires_3["LiveSplitWebSocketBroadcaster"]
+        54_requires_4["TrackingWebSocketBroadcaster"]
+      end
+      style 54_requires stroke:none
+    end
+    style 54_wrap fill:transparent
+    style 54_wrap stroke:none
+  end
+  style 54 fill:transparent
+  subgraph 59 ["`TrackingRoutes`"]
+    subgraph 59_wrap[" "]
+      subgraph 59_requires [Requires]
+        59_requires_3["TrackingWebSocketBroadcaster"]
+      end
+      style 59_requires stroke:none
+    end
+    style 59_wrap fill:transparent
+    style 59_wrap stroke:none
+  end
+  style 59 fill:transparent
+  subgraph 60 ["`LiveSplitRoutes`"]
+    subgraph 60_wrap[" "]
+      subgraph 60_requires [Requires]
+        60_requires_3["LiveSplitWebSocketBroadcaster"]
+      end
+      style 60_requires stroke:none
+    end
+    style 60_wrap fill:transparent
+    style 60_wrap stroke:none
+  end
+  style 60 fill:transparent
+  subgraph 61 ["`DungeonRunEventsRoutes`"]
+    subgraph 61_wrap[" "]
+      subgraph 61_requires [Requires]
+        61_requires_3["DungeonRunWebSocketBroadcaster"]
+      end
+      style 61_requires stroke:none
+    end
+    style 61_wrap fill:transparent
+    style 61_wrap stroke:none
+  end
+  style 61 fill:transparent
+  subgraph 62 ["`WebsocketRoutes`"]
+    subgraph 62_wrap[" "]
+      subgraph 62_requires [Requires]
+        62_requires_3["DungeonRunWebSocketBroadcaster"]
+        62_requires_4["LiveSplitWebSocketBroadcaster"]
+        62_requires_5["TrackingWebSocketBroadcaster"]
+      end
+      style 62_requires stroke:none
+    end
+    style 62_wrap fill:transparent
+    style 62_wrap stroke:none
+  end
+  style 62 fill:transparent
+  subgraph 64 ["`UnitsApiLive`"]
+    subgraph 64_wrap[" "]
+      subgraph 64_requires [Requires]
+        64_requires_0["UnitApiService"]
+      end
+      style 64_requires stroke:none
+    end
+    style 64_wrap fill:transparent
+    style 64_wrap stroke:none
+  end
+  style 64 fill:transparent
+  subgraph 66 ["`TrackingApiLive`"]
+    subgraph 66_wrap[" "]
+      subgraph 66_requires [Requires]
+        66_requires_0["FellowshipTracker"]
+      end
+      style 66_requires stroke:none
+    end
+    style 66_wrap fill:transparent
+    style 66_wrap stroke:none
+  end
+  style 66 fill:transparent
+  subgraph 68 ["`LiveSplitApiLive`"]
+    subgraph 68_wrap[" "]
+      subgraph 68_requires [Requires]
+        68_requires_0["LiveSplitApiService"]
+      end
+      style 68_requires stroke:none
+    end
+    style 68_wrap fill:transparent
+    style 68_wrap stroke:none
+  end
+  style 68 fill:transparent
+  subgraph 70 ["`EncountersApiLive`"]
+    subgraph 70_wrap[" "]
+      subgraph 70_requires [Requires]
+        70_requires_0["EncounterApiService"]
+      end
+      style 70_requires stroke:none
+    end
+    style 70_wrap fill:transparent
+    style 70_wrap stroke:none
+  end
+  style 70 fill:transparent
+  subgraph 72 ["`DungeonsApiLive`"]
+    subgraph 72_wrap[" "]
+      subgraph 72_requires [Requires]
+        72_requires_0["DungeonApiService"]
+      end
+      style 72_requires stroke:none
+    end
+    style 72_wrap fill:transparent
+    style 72_wrap stroke:none
+  end
+  style 72 fill:transparent
+  subgraph 74 ["`DungeonRunsApiLive`"]
+    subgraph 74_wrap[" "]
+      subgraph 74_requires [Requires]
+        74_requires_0["DungeonRunApiService"]
+      end
+      style 74_requires stroke:none
+    end
+    style 74_wrap fill:transparent
+    style 74_wrap stroke:none
+  end
+  style 74 fill:transparent
+  subgraph 76 ["`ConfigurationsApiLive`"]
+    subgraph 76_wrap[" "]
+      subgraph 76_requires [Requires]
+        76_requires_0["ConfigurationApiService"]
+      end
+      style 76_requires stroke:none
+    end
+    style 76_wrap fill:transparent
+    style 76_wrap stroke:none
+  end
+  style 76 fill:transparent
+  subgraph 78 ["`AppSettingsApiLive`"]
+    subgraph 78_wrap[" "]
+      subgraph 78_requires [Requires]
+        78_requires_0["AppSettingsApiService"]
+      end
+      style 78_requires stroke:none
+    end
+    style 78_wrap fill:transparent
+    style 78_wrap stroke:none
+  end
+  style 78 fill:transparent
+  subgraph 80 ["`AbilitiesApiLive`"]
+    subgraph 80_wrap[" "]
+      subgraph 80_requires [Requires]
+        80_requires_0["AbilityApiService"]
+      end
+      style 80_requires stroke:none
+    end
+    style 80_wrap fill:transparent
+    style 80_wrap stroke:none
+  end
+  style 80 fill:transparent
+  subgraph 83 ["`HttpApiRoutes`"]
+    subgraph 83_wrap[" "]
+      subgraph 83_requires [Requires]
+        83_requires_0["AbilityApiService"]
+        83_requires_1["AppSettingsApiService"]
+        83_requires_2["ConfigurationApiService"]
+        83_requires_3["DungeonApiService"]
+        83_requires_4["DungeonRunApiService"]
+        83_requires_5["EncounterApiService"]
+        83_requires_6["FellowshipTracker"]
+        83_requires_11["LiveSplitApiService"]
+        83_requires_13["UnitApiService"]
+      end
+      style 83_requires stroke:none
+    end
+    style 83_wrap fill:transparent
+    style 83_wrap stroke:none
+  end
+  style 83 fill:transparent
+  subgraph 86 ["`ApiRoutes`"]
+    subgraph 86_wrap[" "]
+      subgraph 86_requires [Requires]
+        86_requires_0["AbilityApiService"]
+        86_requires_1["AppSettingsApiService"]
+        86_requires_2["ConfigurationApiService"]
+        86_requires_3["DungeonApiService"]
+        86_requires_4["DungeonRunApiService"]
+        86_requires_5["EncounterApiService"]
+        86_requires_6["FellowshipTracker"]
+        86_requires_11["LiveSplitApiService"]
+        86_requires_15["DungeonRunWebSocketBroadcaster"]
+        86_requires_16["LiveSplitWebSocketBroadcaster"]
+        86_requires_17["TrackingWebSocketBroadcaster"]
+        86_requires_18["UnitApiService"]
+      end
+      style 86_requires stroke:none
+    end
+    style 86_wrap fill:transparent
+    style 86_wrap stroke:none
+  end
+  style 86 fill:transparent
+  subgraph 88 ["`ApiServer`"]
+    subgraph 88_wrap[" "]
+      subgraph 88_requires [Requires]
+        88_requires_0["AbilityApiService"]
+        88_requires_1["AppSettingsApiService"]
+        88_requires_2["ConfigurationApiService"]
+        88_requires_3["DungeonApiService"]
+        88_requires_4["DungeonRunApiService"]
+        88_requires_5["DungeonRunWebSocketBroadcaster"]
+        88_requires_6["EncounterApiService"]
+        88_requires_7["FellowshipTracker"]
+        88_requires_12["LiveSplitApiService"]
+        88_requires_13["LiveSplitWebSocketBroadcaster"]
+        88_requires_15["TrackingWebSocketBroadcaster"]
+        88_requires_16["UnitApiService"]
+      end
+      style 88_requires stroke:none
+    end
+    style 88_wrap fill:transparent
+    style 88_wrap stroke:none
+  end
+  style 88 fill:transparent
+  47_requires_0 -.-> 46_requires_0
+  47_provides_0 -.-> 46_provides_0
+  47_requires_1 -.-> 45_requires_0
+  47_provides_1 -.-> 45_provides_0
+  47_requires_2 -.-> 44_requires_0
+  47_provides_2 -.-> 44_provides_0
+  47_requires_3 -.-> 43_requires_0
+  47_provides_3 -.-> 43_provides_0
+  47_requires_2 -.-> 42_requires_0
+  47_requires_4 -.-> 42_requires_1
+  47_provides_4 -.-> 42_provides_0
+  47_requires_5 -.-> 41_requires_0
+  47_provides_5 -.-> 41_provides_0
+  47_requires_6 -.-> 40_requires_0
+  47_provides_6 -.-> 40_provides_0
+  47_requires_7 -.-> 39_requires_0
+  47_provides_7 -.-> 39_provides_0
+  51_provides_0 -.-> 49_provides_0
+  51_provides_1 -.-> 49_provides_1
+  51_provides_3 -.-> 49_provides_2
+  51_provides_5 -.-> 49_provides_3
+  51_provides_6 -.-> 49_provides_4
+  51_provides_8 -.-> 49_provides_5
+  51_provides_14 -.-> 49_provides_6
+  51_provides_20 -.-> 49_provides_7
+  51_provides_9 -.-> 26_provides_0
+  51_provides_7 -.-> 6_provides_0
+  51_provides_15 -.-> 4_provides_0
+  51_provides_19 -.-> 2_provides_0
+  62_requires_3 -.-> 61_requires_3
+  62_requires_4 -.-> 60_requires_3
+  62_requires_5 -.-> 59_requires_3
+  88_requires_0 -.-> 86_requires_0
+  88_requires_1 -.-> 86_requires_1
+  88_requires_2 -.-> 86_requires_2
+  88_requires_3 -.-> 86_requires_3
+  88_requires_4 -.-> 86_requires_4
+  88_requires_6 -.-> 86_requires_5
+  88_requires_7 -.-> 86_requires_6
+  88_requires_12 -.-> 86_requires_11
+  88_requires_16 -.-> 86_requires_18
+  13_provides_0 -.-> 12_provides_0
+  18_provides_0 -.-> 17_provides_0
+  26_provides_0 -.-> 24_provides_0
+  10_provides_0 -.-> 32_provides_0
+  49_provides_0 -.-> 47_provides_0
+  49_provides_1 -.-> 47_provides_1
+  49_provides_2 -.-> 47_provides_2
+  49_provides_3 -.-> 47_provides_3
+  49_provides_4 -.-> 47_provides_4
+  49_provides_5 -.-> 47_provides_5
+  49_provides_6 -.-> 47_provides_6
+  49_provides_7 -.-> 47_provides_7
+  83_requires_13 -.-> 64_requires_0
+  83_requires_6 -.-> 66_requires_0
+  83_requires_11 -.-> 68_requires_0
+  83_requires_5 -.-> 70_requires_0
+  83_requires_3 -.-> 72_requires_0
+  83_requires_4 -.-> 74_requires_0
+  83_requires_2 -.-> 76_requires_0
+  83_requires_1 -.-> 78_requires_0
+  83_requires_0 -.-> 80_requires_0
+  86_requires_0 -.-> 83_requires_0
+  86_requires_1 -.-> 83_requires_1
+  86_requires_2 -.-> 83_requires_2
+  86_requires_3 -.-> 83_requires_3
+  86_requires_4 -.-> 83_requires_4
+  86_requires_5 -.-> 83_requires_5
+  86_requires_6 -.-> 83_requires_6
+  86_requires_11 -.-> 83_requires_11
+  86_requires_18 -.-> 83_requires_13
+  86_requires_15 -.-> 62_requires_3
+  86_requires_16 -.-> 62_requires_4
+  86_requires_17 -.-> 62_requires_5

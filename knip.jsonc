@@ -1,0 +1,18 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema-jsonc.json",
+  "entry": [
+    "src/**/*.test.{ts,tsx}",
+    "src/application/**/*.{ts,tsx}",
+    "src/electron/**/*.{ts,tsx}"
+  ],
+  "project": [
+    "src/**/*.{ts,tsx,css}",
+    "!src/services/fellowship/constants/all-fellowship-events.ts"
+  ],
+  "ignoreDependencies": [
+    "@effect/tsgo-win32-x64",
+    "@fontsource-variable/geist",
+    "@mermaid-js/mermaid-cli",
+    "@playwright/browser-chromium"
+  ]
+}

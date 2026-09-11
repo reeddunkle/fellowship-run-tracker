@@ -1,0 +1,61 @@
+{
+  "dungeonId": "29",
+  "dungeonLevel": 65,
+  "milestones": [
+    {
+      "label": "Disciple 1",
+      "requirements": [
+        {
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "UNIT_DEATH",
+          "unitTypeId": "331"
+        }
+      ]
+    },
+    {
+      "label": "Disciple 2",
+      "requirements": [
+        {
+          "requiredCount": 1,
+          "startOccurrence": 2,
+          "type": "UNIT_DEATH",
+          "unitTypeId": "331"
+        }
+      ]
+    },
+    {
+      "label": "Disciple 3",
+      "requirements": [
+        {
+          "requiredCount": 1,
+          "startOccurrence": 3,
+          "type": "UNIT_DEATH",
+          "unitTypeId": "331"
+        }
+      ]
+    },
+    {
+      "label": "Xurath Pulled",
+      "requirements": [
+        {
+          "encounterId": "35",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_START"
+        }
+      ]
+    },
+    {
+      "label": "Xurath Defeated",
+      "requirements": [
+        {
+          "encounterId": "35",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_END"
+        }
+      ]
+    }
+  ]
+}

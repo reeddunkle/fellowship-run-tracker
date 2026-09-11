@@ -1,0 +1,50 @@
+{
+  "dungeonId": "25",
+  "dungeonLevel": 64,
+  "milestones": [
+    {
+      "label": "5x Task Masters",
+      "requirements": [
+        {
+          "requiredCount": 5,
+          "startOccurrence": 1,
+          "type": "UNIT_DEATH",
+          "unitTypeId": "243"
+        }
+      ]
+    },
+    {
+      "label": "Ghorn Defeated",
+      "requirements": [
+        {
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "UNIT_DEATH",
+          "unitTypeId": "280"
+        }
+      ]
+    },
+    {
+      "label": "Godfall Titan Pull",
+      "requirements": [
+        {
+          "encounterId": "34",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_START"
+        }
+      ]
+    },
+    {
+      "label": "Godfall Titan Kill",
+      "requirements": [
+        {
+          "encounterId": "34",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_END"
+        }
+      ]
+    }
+  ]
+}

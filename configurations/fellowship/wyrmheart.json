@@ -1,0 +1,61 @@
+{
+  "dungeonId": "8",
+  "dungeonLevel": 64,
+  "milestones": [
+    {
+      "label": "Spellbound Golem",
+      "requirements": [
+        {
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "UNIT_DEATH",
+          "unitTypeId": "160"
+        }
+      ]
+    },
+    {
+      "label": "Coldheart Assassin",
+      "requirements": [
+        {
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "UNIT_DEATH",
+          "unitTypeId": "157"
+        }
+      ]
+    },
+    {
+      "label": "Ghorn Defeated",
+      "requirements": [
+        {
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "UNIT_DEATH",
+          "unitTypeId": "280"
+        }
+      ]
+    },
+    {
+      "label": "Apostate Veras Pull",
+      "requirements": [
+        {
+          "encounterId": "27",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_START"
+        }
+      ]
+    },
+    {
+      "label": "Apostate Veras Kill",
+      "requirements": [
+        {
+          "encounterId": "27",
+          "requiredCount": 1,
+          "startOccurrence": 1,
+          "type": "ENCOUNTER_END"
+        }
+      ]
+    }
+  ]
+}

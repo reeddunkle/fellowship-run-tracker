@@ -1,0 +1,62 @@
+{
+  "biome.enabled": true,
+  "biome.requireConfiguration": true,
+  "biome.runFromTemporaryLocation": false,
+
+  "prettier.requireConfig": true,
+
+  "editor.defaultFormatter": "biomejs.biome",
+  "editor.formatOnSave": true,
+
+  "editor.codeActionsOnSave": {
+    "source.fixAll.biome": "explicit",
+    "source.organizeImports.biome": "explicit"
+  },
+
+  "editor.quickSuggestions": {
+    "strings": "on"
+  },
+
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+
+  "json.schemas": [
+    {
+      "fileMatch": ["/configurations/fellowship/*.json"],
+      "url": "./generated/schemas/milestone-configuration.json"
+    }
+  ],
+
+  // "js/ts.tsdk.promptToUseWorkspaceVersion": true,
+  "js/ts.preferences.importModuleSpecifier": "non-relative",
+  "js/ts.preferences.importModuleSpecifierEnding": "js",
+
+  // "js/ts.updateImportsOnPaste.enabled": false,
+  // "js/ts.tsdk.additionalLocations": ["./node_modules/typescript/bin"],
+  // "js/ts.tsdk.path": "./node_modules/typescript/bin",
+  // "js/ts.experimental.useTsgo": true
+
+  "[javascript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[css]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "js/ts.experimental.useTsgo": false
+}
