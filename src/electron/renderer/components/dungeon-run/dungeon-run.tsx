@@ -27,6 +27,7 @@ import {
 } from "@/electron/renderer/components/ui/dropdown-menu.tsx";
 import { Separator } from "@/electron/renderer/components/ui/separator";
 import { Spinner } from "@/electron/renderer/components/ui/spinner.tsx";
+import { comparisonByValue } from "@/electron/renderer/constants/comparison-options.ts";
 import {
   useConfigurationById,
   useSelectedConfigurationId,
@@ -119,11 +120,9 @@ export function DungeonRun() {
         dungeonRun.startedAtMilliseconds;
 
   const comparisonStatus =
-    comparison === "CUSTOM"
-      ? "Custom comparison"
-      : hasMatchingHistory
-        ? "Historical comparison"
-        : "No historical data loaded";
+    hasMatchingHistory || comparison === "CUSTOM"
+      ? `Comparing against "${comparisonByValue[comparison].label}"`
+      : "No historical data loaded";
 
   return (
     <section className="grid min-w-105 w-fit gap-3">

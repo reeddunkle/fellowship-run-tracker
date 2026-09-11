@@ -122,15 +122,17 @@ function RequirementRow({
           <span className="px-1">·</span>
           {row.requirement.type}
         </div>
-        <div className="truncate text-[10px] text-muted-foreground/70">
-          occurrence {row.requirement.startOccurrence}
-          {row.requirement.requiredCount > 1 &&
-            `–${
-              row.requirement.startOccurrence +
-              row.requirement.requiredCount -
-              1
-            }`}
-        </div>
+        {row.requirement.type === "UNIT_DEATH" ? (
+          <div className="truncate text-[10px] text-muted-foreground/70">
+            occurrence {row.requirement.startOccurrence}
+            {row.requirement.requiredCount > 1 &&
+              `–${
+                row.requirement.startOccurrence +
+                row.requirement.requiredCount -
+                1
+              }`}
+          </div>
+        ) : null}
       </DungeonRunTableLabelCell>
       <DungeonRunTableTimeCells
         comparisonElapsedMilliseconds={comparisonElapsedMilliseconds}

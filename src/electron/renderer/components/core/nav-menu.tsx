@@ -15,7 +15,7 @@ export function NavMenu() {
         className={navigationMenuTriggerStyle()}
         to="/"
       >
-        Configurations
+        Dashboard
       </Link>
       <Link
         activeProps={{
