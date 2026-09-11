@@ -66,4 +66,6 @@ export type DungeonRunDAOShape = {
 export class DungeonRunDAO extends Context.Service<
   DungeonRunDAO,
   DungeonRunDAOShape
->()("fellowship-run-tracker/db/daos/dungeon-run/dungeon-run-dao/DungeonRunDAO") {}
+>()(
+  "fellowship-run-tracker/db/daos/dungeon-run/dungeon-run-dao/DungeonRunDAO",
+) {}
