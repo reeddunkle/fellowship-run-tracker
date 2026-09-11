@@ -2,11 +2,14 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as E from "effect/Effect";
+import type * as Path from "effect/Path";
 import { app, BrowserWindow } from "electron";
 
+import { appConfig } from "@/app-config.ts";
 import { configureWindowIpc } from "@/electron/application/configure-window-ipc.ts";
+import { type AppStateStorage } from "@/electron/storage/app-state/app-state-storage.ts";
 import { getAppStateStorageDirectory } from "@/electron/storage/app-state/get-app-state-storage-directory.ts";
-import { env } from "@/env.ts";
+import { logCause } from "@/logging/log-cause.ts";
 import { makeElectronRuntime } from "@/runtimes/electron-runtime.ts";
 
 import { createWindow } from "./application/create-window.ts";
@@ -15,70 +18,81 @@ import { shutdownElectronApplication } from "./application/shutdown-electron-app
 
 const currentDirectoryPath = path.dirname(fileURLToPath(import.meta.url));
 
-const useRendererDevServer =
-  !app.isPackaged && process.argv.includes("--renderer-dev-server");
+function runElectronMain() {
+  return E.gen(function* () {
+    const databaseFilename = yield* appConfig.databaseFilename;
+    const electronRendererHost = yield* appConfig.electronRendererHost;
+    const electronRendererPort = yield* appConfig.electronRendererPort;
 
-const rendererDevServerUrl = useRendererDevServer
-  ? `http://${env.electronRenderer.host}:${env.electronRenderer.port}`
-  : undefined;
+    yield* E.promise(() => app.whenReady());
 
-let isShuttingDown = false;
-
-const windowOptions = {
-  currentDirectoryPath,
-  rendererDevServerUrl,
-};
-
-void app.whenReady().then(() => {
-  const electronRuntime = makeElectronRuntime({
-    appStateStorageDirectory: getAppStateStorageDirectory(),
-    databaseFilename: env.databaseFilename,
-  });
-
-  configureWindowIpc(electronRuntime);
-
-  electronRuntime.runFork(
-    runElectronApplication(windowOptions).pipe(
-      E.catch((error) => {
-        return E.gen(function* () {
-          yield* E.logError("Electron application failed.", {
-            error,
-          });
-
-          yield* E.sync(() => {
-            app.quit();
-          });
-        });
-      }),
-    ),
-  );
-
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      void electronRuntime.runPromise(createWindow(windowOptions));
-    }
-  });
-
-  app.on("before-quit", (event) => {
-    if (isShuttingDown) {
-      return;
-    }
-
-    event.preventDefault();
-    isShuttingDown = true;
-
-    void E.runPromise(
-      shutdownElectronApplication({
-        runtime: electronRuntime,
-      }),
-    ).finally(() => {
-      app.quit();
+    const electronRuntime = makeElectronRuntime({
+      appStateStorageDirectory: getAppStateStorageDirectory(),
+      databaseFilename,
     });
-  });
-});
 
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
-});
+    const useRendererDevServer =
+      !app.isPackaged && process.argv.includes("--renderer-dev-server");
+
+    const rendererDevServerUrl = useRendererDevServer
+      ? `http://${electronRendererHost}:${electronRendererPort}`
+      : undefined;
+
+    const windowOptions = {
+      currentDirectoryPath,
+      rendererDevServerUrl,
+    };
+
+    const runProgram = <A, ProgramError>(
+      effect: E.Effect<A, ProgramError, Path.Path | AppStateStorage>,
+    ) => {
+      electronRuntime.runFork(
+        effect.pipe(
+          E.catchCause((cause) => {
+            return logCause(cause);
+          }),
+        ),
+      );
+    };
+
+    configureWindowIpc(electronRuntime);
+
+    app.on("activate", () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        runProgram(createWindow(windowOptions));
+      }
+    });
+
+    app.once("before-quit", (event) => {
+      event.preventDefault();
+
+      runProgram(
+        shutdownElectronApplication({
+          runtime: electronRuntime,
+        }).pipe(
+          E.ensuring(
+            E.sync(() => {
+              app.quit();
+            }),
+          ),
+        ),
+      );
+    });
+
+    app.on("window-all-closed", () => {
+      if (process.platform !== "darwin") {
+        app.quit();
+      }
+    });
+
+    runProgram(runElectronApplication(windowOptions));
+  });
+}
+
+E.runFork(
+  runElectronMain().pipe(
+    E.catchCause((cause) => {
+      return logCause(cause);
+    }),
+  ),
+);

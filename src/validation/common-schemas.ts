@@ -51,6 +51,8 @@ export const JsonIntegerArraySchema = Schema.Int.pipe(
 
 export const UUID7Schema = Schema.String.check(Schema.isUUID(7));
 
+export const FilePathSchema = Schema.String.check(Schema.isMinLength(1));
+
 export const PortSchema = Schema.Int.check(
   Schema.isBetween({ maximum: 65535, minimum: 1 }),
 );

@@ -1,10 +1,6 @@
 import * as Schema from "effect/Schema";
 
-import {
-  HostSchema,
-  NonEmptyStringSchema,
-  PortSchema,
-} from "./common-schemas.ts";
+import { FilePathSchema, HostSchema, PortSchema } from "./common-schemas.ts";
 
 export const ElectronRendererHostSchema = HostSchema.pipe(
   Schema.brand("ElectronRendererHost"),
@@ -15,7 +11,7 @@ export const ElectronRendererPortSchema = Schema.FiniteFromString.pipe(
   Schema.brand("ElectronRendererPort"),
 );
 
-export const DatabaseFilenameSchema = NonEmptyStringSchema.pipe(
+export const DatabaseFilenameSchema = FilePathSchema.pipe(
   Schema.brand("DatabaseFilename"),
 );
 

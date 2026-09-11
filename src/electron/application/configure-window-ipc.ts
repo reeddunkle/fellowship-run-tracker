@@ -1,16 +1,19 @@
+import * as A from "effect/Array";
 import * as E from "effect/Effect";
 import type * as ManagedRuntime from "effect/ManagedRuntime";
 import * as Path from "effect/Path";
+import * as Schema from "effect/Schema";
 import { BrowserWindow, ipcMain, nativeTheme } from "electron";
 
 import { ELECTRON_IPC_CHANNEL } from "@/electron/ipc/electron-ipc-channel.ts";
-import { type AppState } from "@/electron/storage/app-state/app-state-schema.ts";
+import { AppStateSchema } from "@/electron/storage/app-state/app-state-schema.ts";
 import { AppStateStorage } from "@/electron/storage/app-state/app-state-storage.ts";
+import { FilePathSchema } from "@/validation/common-schemas.ts";
 
-type GetDirectoryPathArgs = {
-  readonly filePath: string;
-  readonly relativePath: string;
-};
+const GetDirectoryPathArgsSchema = Schema.Struct({
+  filePath: FilePathSchema,
+  relativePath: FilePathSchema,
+});
 
 export function configureWindowIpc(
   runtime: ManagedRuntime.ManagedRuntime<AppStateStorage | Path.Path, unknown>,
@@ -33,10 +36,13 @@ export function configureWindowIpc(
 
   ipcMain.handle(
     ELECTRON_IPC_CHANNEL.APP_STATE_SET,
-    (_event, appState: AppState) => {
+    (_event, input: unknown) => {
       return runtime.runPromise(
         E.gen(function* () {
           const appStateStorage = yield* AppStateStorage;
+
+          const appState =
+            yield* Schema.decodeUnknownEffect(AppStateSchema)(input);
 
           yield* appStateStorage.set(appState);
 
@@ -50,22 +56,26 @@ export function configureWindowIpc(
 
   ipcMain.handle(
     ELECTRON_IPC_CHANNEL.FILE_GET_DIRECTORY_PATH,
-    (_event, { filePath, relativePath }: GetDirectoryPathArgs) => {
+    (_event, input: unknown) => {
       return runtime.runPromise(
         E.gen(function* () {
           const path = yield* Path.Path;
 
+          const { filePath, relativePath } = yield* Schema.decodeUnknownEffect(
+            GetDirectoryPathArgsSchema,
+          )(input);
+
           const relativePathParts = relativePath.split("/");
 
-          let directoryPath = filePath;
-
-          for (
-            let parentIndex = 1;
-            parentIndex < relativePathParts.length;
-            parentIndex += 1
-          ) {
-            directoryPath = path.dirname(directoryPath);
-          }
+          const directoryPath = A.reduce(
+            relativePathParts,
+            filePath,
+            (currentDirectoryPath, _relativePathPart, index) => {
+              return index === 0
+                ? currentDirectoryPath
+                : path.dirname(currentDirectoryPath);
+            },
+          );
 
           return directoryPath;
         }),
