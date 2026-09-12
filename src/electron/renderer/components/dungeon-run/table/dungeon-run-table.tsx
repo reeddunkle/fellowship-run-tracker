@@ -244,7 +244,7 @@ export function DungeonRunTableTimeHeaders() {
       {A.map(visibleTimeColumns, (timeColumn) => {
         return (
           <th
-            className="min-w-[10ch] whitespace-nowrap px-2 text-right font-normal"
+            className="min-w-[12ch] whitespace-nowrap px-2 text-right font-normal"
             key={timeColumn.value}
             scope="col"
           >
