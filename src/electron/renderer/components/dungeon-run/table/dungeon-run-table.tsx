@@ -1,22 +1,31 @@
+import {
+  type ColumnDef,
+  columnOrderingFeature,
+  columnVisibilityFeature,
+  type Table,
+  tableFeatures,
+  useTable,
+} from "@tanstack/react-table";
 import * as A from "effect/Array";
 import { pipe } from "effect/Function";
 import * as Match from "effect/Match";
 import * as Option from "effect/Option";
 import * as Order from "effect/Order";
 import {
-  type ButtonHTMLAttributes,
-  type CSSProperties,
   createContext,
+  type HTMLAttributes,
   type ReactNode,
-  type Ref,
+  type TdHTMLAttributes,
   useContext,
   useMemo,
 } from "react";
 
+import { type DungeonRunComparisonElapsedMilliseconds } from "@/electron/renderer/components/dungeon-run/helpers/dungeon-run-milestone-rows.ts";
+import { type DungeonRunTableRow as DungeonRunTableRowData } from "@/electron/renderer/components/dungeon-run/helpers/dungeon-run-table-row.ts";
 import {
   formatDuration,
   formatSignedDuration,
-} from "@/electron/renderer/components/dungeon-run/helpers/dungeon-run-time";
+} from "@/electron/renderer/components/dungeon-run/helpers/dungeon-run-time.ts";
 import { useDungeonRunAppStore } from "@/electron/renderer/stores/app-state-store/use-app-store.ts";
 import {
   DUNGEON_RUN_TIME_COLUMN,
@@ -25,56 +34,61 @@ import {
 import { ReactContextError } from "@/errors/react-context-error.ts";
 import { cn } from "@/util/class-names.ts";
 
-const TIME_COLUMN_WIDTH = "4.25rem";
+const LABEL_COLUMN_ID = "label";
+
+const DungeonRunTableFeatures = tableFeatures({
+  columnOrderingFeature,
+  columnVisibilityFeature,
+});
 
 export const DUNGEON_RUN_TIME_COLUMNS = [
   {
     label: "Best",
     value: DUNGEON_RUN_TIME_COLUMN.BEST_DELTA,
-    width: TIME_COLUMN_WIDTH,
   },
   {
     label: "Average",
     value: DUNGEON_RUN_TIME_COLUMN.AVERAGE_DELTA,
-    width: TIME_COLUMN_WIDTH,
   },
   {
     label: "Median",
     value: DUNGEON_RUN_TIME_COLUMN.MEDIAN_DELTA,
-    width: TIME_COLUMN_WIDTH,
   },
   {
     label: "Goal",
     value: DUNGEON_RUN_TIME_COLUMN.GOAL_DELTA,
-    width: TIME_COLUMN_WIDTH,
   },
   {
     label: "Segment",
     value: DUNGEON_RUN_TIME_COLUMN.SEGMENT,
-    width: TIME_COLUMN_WIDTH,
   },
   {
     label: "Total",
     value: DUNGEON_RUN_TIME_COLUMN.TOTAL,
-    width: TIME_COLUMN_WIDTH,
   },
 ] as const satisfies ReadonlyArray<{
   readonly label: string;
   readonly value: DungeonRunTimeColumn;
-  readonly width: string;
 }>;
 
 type DungeonRunTimeColumnDefinition = (typeof DUNGEON_RUN_TIME_COLUMNS)[number];
 
-type DungeonRunComparisonElapsedMilliseconds = {
-  readonly average: number | undefined;
-  readonly best: number | undefined;
-  readonly goal: number | undefined;
-  readonly median: number | undefined;
-};
+const columns: Array<
+  ColumnDef<typeof DungeonRunTableFeatures, DungeonRunTableRowData>
+> = [
+  {
+    id: LABEL_COLUMN_ID,
+  },
+  ...A.map(DUNGEON_RUN_TIME_COLUMNS, (timeColumn) => {
+    return {
+      header: timeColumn.label,
+      id: timeColumn.value,
+    };
+  }),
+];
 
 type DungeonRunTableContextValue = {
-  readonly gridTemplateColumns: string;
+  readonly table: Table<typeof DungeonRunTableFeatures, DungeonRunTableRowData>;
   readonly visibleTimeColumns: ReadonlyArray<DungeonRunTimeColumnDefinition>;
 };
 
@@ -88,7 +102,7 @@ const TimeColumnDisplayOrder = Order.mapInput(
   },
 );
 
-function useDungeonRunTable() {
+export function useDungeonRunTable() {
   const context = useContext(DungeonRunTableContext);
 
   if (context === null) {
@@ -103,124 +117,122 @@ function useDungeonRunTable() {
 
 type DungeonRunTableProps = {
   readonly children: ReactNode;
+  readonly rows: Array<DungeonRunTableRowData>;
 };
 
-export function DungeonRunTable({ children }: DungeonRunTableProps) {
+export function DungeonRunTable({ children, rows }: DungeonRunTableProps) {
   const { timeColumns } = useDungeonRunAppStore();
+
+  const orderedTimeColumns = useMemo(() => {
+    return pipe(timeColumns, A.sort(TimeColumnDisplayOrder));
+  }, [timeColumns]);
+
+  const columnOrder = useMemo(() => {
+    return [
+      LABEL_COLUMN_ID,
+      ...A.map(orderedTimeColumns, (timeColumn) => {
+        return timeColumn.column;
+      }),
+    ];
+  }, [orderedTimeColumns]);
+
+  const columnVisibility = useMemo(() => {
+    return Object.fromEntries(
+      A.map(timeColumns, (timeColumn) => {
+        return [timeColumn.column, timeColumn.isVisible] as const;
+      }),
+    );
+  }, [timeColumns]);
+
+  const table = useTable({
+    columns,
+    data: rows,
+    features: DungeonRunTableFeatures,
+    state: {
+      columnOrder,
+      columnVisibility,
+    },
+  });
 
   const contextValue = useMemo(() => {
     const visibleTimeColumns = pipe(
-      timeColumns,
-      A.filter((timeColumn) => {
-        return timeColumn.isVisible;
+      table.getVisibleLeafColumns(),
+      A.filter((column) => {
+        return column.id !== LABEL_COLUMN_ID;
       }),
-      A.sort(TimeColumnDisplayOrder),
-      A.map((timeColumn) => {
-        return A.findFirst(
-          DUNGEON_RUN_TIME_COLUMNS,
-          (column) => column.value === timeColumn.column,
-        ).pipe(Option.getOrThrow);
+      A.map((column) => {
+        return A.findFirst(DUNGEON_RUN_TIME_COLUMNS, (timeColumn) => {
+          return timeColumn.value === column.id;
+        }).pipe(Option.getOrThrow);
       }),
     );
 
-    const gridTemplateColumns = [
-      "minmax(0, 1fr)",
-      ...A.map(visibleTimeColumns, (column) => {
-        return column.width;
-      }),
-    ].join(" ");
-
     return {
-      gridTemplateColumns,
+      table,
       visibleTimeColumns,
     } satisfies DungeonRunTableContextValue;
-  }, [timeColumns]);
+  }, [table]);
 
   return (
     <DungeonRunTableContext value={contextValue}>
-      {children}
+      <table className="w-full table-auto border-separate border-spacing-0">
+        {children}
+      </table>
     </DungeonRunTableContext>
   );
 }
 
-type DungeonRunTableRowProps = {
-  readonly children: ReactNode;
-  readonly className?: string;
-};
+type DungeonRunTableTrProps = HTMLAttributes<HTMLTableRowElement>;
 
-export function DungeonRunTableRow({
+export function DungeonRunTableTr({
   children,
   className,
-}: DungeonRunTableRowProps) {
-  const { gridTemplateColumns } = useDungeonRunTable();
-
-  const style = {
-    gridTemplateColumns,
-  } satisfies CSSProperties;
-
-  return (
-    <div className={cn("grid min-w-0 gap-x-2", className)} style={style}>
-      {children}
-    </div>
-  );
-}
-
-type DungeonRunTableTriggerRowProps =
-  ButtonHTMLAttributes<HTMLButtonElement> & {
-    readonly ref?: Ref<HTMLButtonElement>;
-  };
-
-export function DungeonRunTableTriggerRow({
-  children,
-  className,
-  ref,
-  style,
   ...props
-}: DungeonRunTableTriggerRowProps) {
-  const { gridTemplateColumns } = useDungeonRunTable();
-
+}: DungeonRunTableTrProps) {
   return (
-    <button
-      {...props}
-      className={cn("grid min-w-0 gap-x-2", className)}
-      ref={ref}
-      style={{
-        ...style,
-        gridTemplateColumns,
-      }}
-    >
+    <tr {...props} className={className}>
       {children}
-    </button>
+    </tr>
   );
 }
 
-type DungeonRunTableLabelCellProps = {
-  readonly children: ReactNode;
-  readonly className?: string;
-};
+type DungeonRunTableLabelCellProps = TdHTMLAttributes<HTMLTableCellElement>;
 
 export function DungeonRunTableLabelCell({
   children,
   className,
+  ...props
 }: DungeonRunTableLabelCellProps) {
   return (
-    <div className={cn("min-w-0 overflow-hidden", className)}>{children}</div>
+    <td
+      {...props}
+      className={cn(
+        "w-50 min-w-50 max-w-50 overflow-hidden align-middle",
+        className,
+      )}
+    >
+      <div className="min-w-0 overflow-hidden">{children}</div>
+    </td>
   );
 }
 
-type DungeonRunTableTimeCellProps = {
-  readonly children: ReactNode;
-  readonly className?: string;
-};
+type DungeonRunTableTimeCellProps = TdHTMLAttributes<HTMLTableCellElement>;
 
 export function DungeonRunTableTimeCell({
   children,
   className,
+  ...props
 }: DungeonRunTableTimeCellProps) {
   return (
-    <div className={cn("min-w-0 text-right font-mono tabular-nums", className)}>
+    <td
+      {...props}
+      className={cn(
+        "min-w-[10ch] whitespace-nowrap px-2 text-right align-middle font-mono tabular-nums",
+        className,
+      )}
+    >
       {children}
-    </div>
+    </td>
   );
 }
 
@@ -229,11 +241,15 @@ export function DungeonRunTableTimeHeaders() {
 
   return (
     <>
-      {A.map(visibleTimeColumns, (column) => {
+      {A.map(visibleTimeColumns, (timeColumn) => {
         return (
-          <div className="text-right" key={column.value}>
-            {column.label}
-          </div>
+          <th
+            className="min-w-[10ch] whitespace-nowrap px-2 text-right font-normal"
+            key={timeColumn.value}
+            scope="col"
+          >
+            {timeColumn.label}
+          </th>
         );
       })}
     </>
@@ -274,7 +290,7 @@ export function DungeonRunTableTimeCells({
   };
 
   const renderDeltaCell = (
-    column: DungeonRunTimeColumnDefinition,
+    timeColumn: DungeonRunTimeColumnDefinition,
     delta: number | undefined,
   ) => {
     return (
@@ -283,7 +299,7 @@ export function DungeonRunTableTimeCells({
           "text-red-500": delta !== undefined && delta > 0,
           "text-yellow-500": delta !== undefined && delta < 0,
         })}
-        key={column.value}
+        key={timeColumn.value}
       >
         {formatSignedDuration(delta, {
           fractionalDigits: 2,
@@ -297,30 +313,30 @@ export function DungeonRunTableTimeCells({
 
   return (
     <>
-      {A.map(visibleTimeColumns, (column) => {
-        return Match.value(column.value).pipe(
+      {A.map(visibleTimeColumns, (timeColumn) => {
+        return Match.value(timeColumn.value).pipe(
           Match.when(DUNGEON_RUN_TIME_COLUMN.BEST_DELTA, () => {
-            return renderDeltaCell(column, deltaMilliseconds.best);
+            return renderDeltaCell(timeColumn, deltaMilliseconds.best);
           }),
           Match.when(DUNGEON_RUN_TIME_COLUMN.AVERAGE_DELTA, () => {
-            return renderDeltaCell(column, deltaMilliseconds.average);
+            return renderDeltaCell(timeColumn, deltaMilliseconds.average);
           }),
           Match.when(DUNGEON_RUN_TIME_COLUMN.MEDIAN_DELTA, () => {
-            return renderDeltaCell(column, deltaMilliseconds.median);
+            return renderDeltaCell(timeColumn, deltaMilliseconds.median);
           }),
           Match.when(DUNGEON_RUN_TIME_COLUMN.GOAL_DELTA, () => {
-            return renderDeltaCell(column, deltaMilliseconds.goal);
+            return renderDeltaCell(timeColumn, deltaMilliseconds.goal);
           }),
           Match.when(DUNGEON_RUN_TIME_COLUMN.SEGMENT, () => {
             return (
-              <DungeonRunTableTimeCell key={column.value}>
+              <DungeonRunTableTimeCell key={timeColumn.value}>
                 {formatDuration(segmentMilliseconds)}
               </DungeonRunTableTimeCell>
             );
           }),
           Match.when(DUNGEON_RUN_TIME_COLUMN.TOTAL, () => {
             return (
-              <DungeonRunTableTimeCell key={column.value}>
+              <DungeonRunTableTimeCell key={timeColumn.value}>
                 {formatDuration(totalMilliseconds)}
               </DungeonRunTableTimeCell>
             );

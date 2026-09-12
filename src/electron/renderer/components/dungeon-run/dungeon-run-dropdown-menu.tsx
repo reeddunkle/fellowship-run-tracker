@@ -80,7 +80,6 @@ export function DungeonRunDropdownMenu() {
             setTimeColumns(nextTimeColumns);
           }}
         />
-
         <span>{option.label}</span>
       </Label>
     );
@@ -107,7 +106,6 @@ export function DungeonRunDropdownMenu() {
               renderOption,
             )}
           </div>
-
           <div className="flex items-center gap-2">
             {A.map(
               A.filter(TIME_COLUMN_OPTIONS, (option) => {

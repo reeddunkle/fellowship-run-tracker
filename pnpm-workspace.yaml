@@ -53,6 +53,7 @@ catalogs:
   tanstack:
     "@tanstack/react-form": "^1.33.5"
     "@tanstack/react-router": "^1.170.32"
+    "@tanstack/react-table": "^9.2.4"
     "@tanstack/router-plugin": "^1.168.35"
   testing:
     # Match versions

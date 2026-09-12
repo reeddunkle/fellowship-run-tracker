@@ -83,6 +83,8 @@ function resizeDetachedWindowToContent({
   readonly childWindow: Window;
 }) {
   return E.gen(function* () {
+    yield* waitForAnimationFrame(childWindow);
+
     const childDocument = childWindow.document;
 
     childDocument.documentElement.style.overflowY = "hidden";
@@ -120,7 +122,7 @@ function observeDetachedWindowContent({
         isActive: true,
       };
 
-      const resizeObserver = new ResizeObserver(() => {
+      const scheduleResize = () => {
         if (!resizeState.isActive) {
           return;
         }
@@ -140,16 +142,26 @@ function observeDetachedWindowContent({
             resizeToContent.pipe(E.catchCause(E.logError)),
           );
         });
-      });
+      };
+
+      const resizeObserver = new ResizeObserver(scheduleResize);
+
+      const mutationObserver = new MutationObserver(scheduleResize);
 
       resizeObserver.observe(childContainer);
 
+      mutationObserver.observe(childContainer, {
+        childList: true,
+        subtree: true,
+      });
+
       return {
+        mutationObserver,
         resizeObserver,
         resizeState,
       };
     }),
-    ({ resizeObserver, resizeState }) => {
+    ({ mutationObserver, resizeObserver, resizeState }) => {
       return E.sync(() => {
         resizeState.isActive = false;
 
@@ -157,6 +169,7 @@ function observeDetachedWindowContent({
           childWindow.cancelAnimationFrame(resizeState.animationFrameId);
         }
 
+        mutationObserver.disconnect();
         resizeObserver.disconnect();
       });
     },
@@ -214,8 +227,6 @@ function DetachedWindow({ children, onClose }: DetachedWindowProps) {
           yield* E.promise(() => {
             return childDocument.fonts.ready;
           });
-
-          yield* waitForAnimationFrame(childWindow);
 
           yield* resizeToContent;
 

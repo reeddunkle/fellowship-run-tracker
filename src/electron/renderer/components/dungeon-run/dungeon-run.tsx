@@ -9,38 +9,38 @@ import {
 } from "lucide-react";
 import { useMemo } from "react";
 
-import { useDetachedWindow } from "@/electron/renderer/components/detached-window/detached-window-provider";
+import { useDetachedWindow } from "@/electron/renderer/components/detached-window/detached-window-provider.tsx";
 import { DungeonRunDropdownMenu } from "@/electron/renderer/components/dungeon-run/dungeon-run-dropdown-menu.tsx";
-import { DungeonRunMilestone } from "@/electron/renderer/components/dungeon-run/dungeon-run-milestone.tsx";
+import { DungeonRunTimer } from "@/electron/renderer/components/dungeon-run/dungeon-run-timer.tsx";
+import { createDungeonRunMilestoneRows } from "@/electron/renderer/components/dungeon-run/helpers/dungeon-run-milestone-rows.ts";
+import { createDungeonRunTableRows } from "@/electron/renderer/components/dungeon-run/helpers/dungeon-run-table-row.ts";
+import { DungeonRunMilestone } from "@/electron/renderer/components/dungeon-run/table/dungeon-run-milestone.tsx";
 import {
   DungeonRunTable,
-  DungeonRunTableLabelCell,
-  DungeonRunTableRow,
   DungeonRunTableTimeHeaders,
-} from "@/electron/renderer/components/dungeon-run/dungeon-run-table.tsx";
-import { DungeonRunTimer } from "@/electron/renderer/components/dungeon-run/dungeon-run-timer.tsx";
-import { createDungeonRunMilestoneRows } from "@/electron/renderer/components/dungeon-run/helpers/dungeon-run-milestone-rows";
+  DungeonRunTableTr,
+} from "@/electron/renderer/components/dungeon-run/table/dungeon-run-table.tsx";
 import { Button } from "@/electron/renderer/components/ui/button.tsx";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
 } from "@/electron/renderer/components/ui/dropdown-menu.tsx";
-import { Separator } from "@/electron/renderer/components/ui/separator";
+import { Separator } from "@/electron/renderer/components/ui/separator.tsx";
 import { Spinner } from "@/electron/renderer/components/ui/spinner.tsx";
 import {
   useConfigurationById,
   useSelectedConfigurationId,
-} from "@/electron/renderer/stores/configurations-store/configurations-store";
+} from "@/electron/renderer/stores/configurations-store/configurations-store.tsx";
 import {
   useDungeonRunDisplayState,
   useDungeonRunInterpretationState,
   useDungeonRunServerState,
-} from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-provider";
+} from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-provider.tsx";
 import {
   useTrackingActionState,
   useTrackingActions,
   useTrackingServerState,
-} from "@/electron/renderer/stores/tracking-store/tracking-store";
+} from "@/electron/renderer/stores/tracking-store/tracking-store.tsx";
 import { isNil } from "@/util/is-nil.ts";
 
 export function DungeonRun() {
@@ -75,14 +75,17 @@ export function DungeonRun() {
     return createDungeonRunMilestoneRows({
       milestones: configuration.milestones,
       observations,
-      startedAtMilliseconds: dungeonRun?.startedAtMilliseconds,
+      startedAtMilliseconds: dungeonRun?.startedAtMilliseconds ?? undefined,
     });
   }, [configuration, dungeonRun?.startedAtMilliseconds, observations]);
+  const tableRows = useMemo(() => {
+    return createDungeonRunTableRows(milestoneRows);
+  }, [milestoneRows]);
 
   const areAllMilestonesExpanded =
-    milestoneRows.length > 0 &&
-    A.every(milestoneRows, (milestone) => {
-      return isMilestoneExpanded(String(milestone.milestoneIndex));
+    tableRows.length > 0 &&
+    A.every(tableRows, (tableRow) => {
+      return isMilestoneExpanded(String(tableRow.milestone.milestoneIndex));
     });
 
   if (configuration === undefined) {
@@ -136,11 +139,9 @@ export function DungeonRun() {
             <ChevronsUpDownIcon />
           )}
         </Button>
-
         <Button onClick={resizeToContent} size="icon" variant="outline">
           <SquareDashedBottomIcon />
         </Button>
-
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger
             render={
@@ -149,47 +150,41 @@ export function DungeonRun() {
               </Button>
             }
           />
-
           <DungeonRunDropdownMenu />
         </DropdownMenu>
       </div>
-
       <header className="grid w-full gap-1">
         <h2 className="truncate text-sm font-semibold">
           {configuration.label}
         </h2>
-
         <p className="text-xs text-muted-foreground">
           {isTracking ? "Live run" : historyStatus}
         </p>
       </header>
-
-      <DungeonRunTable>
-        <DungeonRunTableRow className="px-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-          <DungeonRunTableLabelCell>Milestone</DungeonRunTableLabelCell>
-          <DungeonRunTableTimeHeaders />
-        </DungeonRunTableRow>
-
-        <div className="grid gap-1">
-          {A.map(milestoneRows, (milestone) => {
-            return (
-              <DungeonRunMilestone
-                key={`${configuration.id}:${milestone.milestoneIndex}`}
-                milestone={milestone}
-              />
-            );
-          })}
-        </div>
+      <DungeonRunTable rows={tableRows}>
+        <thead>
+          <DungeonRunTableTr className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            <th className="px-3 text-left font-medium" scope="col">
+              Milestone
+            </th>
+            <DungeonRunTableTimeHeaders />
+          </DungeonRunTableTr>
+        </thead>
+        {A.map(tableRows, (tableRow) => {
+          return (
+            <DungeonRunMilestone
+              key={`${configuration.id}:${tableRow.milestone.milestoneIndex}`}
+              row={tableRow}
+            />
+          );
+        })}
       </DungeonRunTable>
-
       <Separator />
-
       <DungeonRunTimer
         className="justify-self-end text-end"
         initialElapsedMilliseconds={timerStartTimeMilliseconds}
         isRunning={isTimerRunning}
       />
-
       <Button
         className="min-w-32 bg-green-600 text-white hover:bg-green-700"
         disabled={
@@ -220,7 +215,6 @@ export function DungeonRun() {
           </>
         )}
       </Button>
-
       <Button
         className="min-w-32"
         disabled={!isTracking || isPending}

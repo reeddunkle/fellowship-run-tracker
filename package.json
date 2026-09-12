@@ -55,6 +55,7 @@
     "@fontsource-variable/geist": "catalog:ui",
     "@tanstack/react-form": "catalog:tanstack",
     "@tanstack/react-router": "catalog:tanstack",
+    "@tanstack/react-table": "catalog:tanstack",
     "class-variance-authority": "catalog:tailwind",
     "clsx": "catalog:tailwind",
     "date-fns": "catalog:util",

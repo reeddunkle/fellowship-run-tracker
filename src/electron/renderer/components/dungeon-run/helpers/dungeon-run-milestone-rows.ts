@@ -1,105 +1,121 @@
 import * as A from "effect/Array";
 import { pipe } from "effect/Function";
-import * as Order from "effect/Order";
-import * as Predicate from "effect/Predicate";
+import * as Option from "effect/Option";
 
-import { type DungeonRunMilestoneRow } from "@/electron/renderer/components/dungeon-run/dungeon-run-milestone.tsx";
 import { getComparisonElapsedMilliseconds } from "@/electron/renderer/components/dungeon-run/helpers/dungeon-run-time.ts";
 import { type DungeonRunObservationInterpretation } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-provider.tsx";
-import { isNil } from "@/util/is-nil.ts";
+import { type ConfigurationApiConfiguration } from "@/services/api/configuration/configuration-api-schema.ts";
 
-const UndefinedLastNumberOrder = Order.make<number | undefined>(
-  (left, right) => {
-    if (left === undefined && right === undefined) {
-      return 0;
-    }
+type Milestone = ConfigurationApiConfiguration["milestones"][number];
 
-    if (left === undefined) {
-      return 1;
-    }
+type Requirement = Milestone["requirements"][number];
 
-    if (right === undefined) {
-      return -1;
-    }
+export type DungeonRunComparisonElapsedMilliseconds = {
+  readonly average: number | undefined;
+  readonly best: number | undefined;
+  readonly goal: number | undefined;
+  readonly median: number | undefined;
+};
 
-    return Order.Number(left, right);
-  },
-);
+export type DungeonRunRequirementRow = {
+  readonly completedObservation:
+    | DungeonRunObservationInterpretation
+    | undefined;
+  readonly matchingObservations: ReadonlyArray<DungeonRunObservationInterpretation>;
+  readonly requirement: Requirement;
+};
 
-const MilestoneCompletionOrder = Order.mapInput(
-  UndefinedLastNumberOrder,
-  (milestone: DungeonRunMilestoneRow) => {
-    return milestone.completedAtMilliseconds;
-  },
-);
-
-type CreateDungeonRunMilestoneRowsOptions = {
-  readonly milestones: ReadonlyArray<DungeonRunMilestoneRow["milestone"]>;
-  readonly observations: ReadonlyArray<DungeonRunObservationInterpretation>;
-  readonly startedAtMilliseconds: number | null | undefined;
+export type DungeonRunMilestoneRow = {
+  readonly comparisonElapsedMilliseconds: DungeonRunComparisonElapsedMilliseconds;
+  readonly completedAtMilliseconds: number | undefined;
+  readonly elapsedMilliseconds: number | undefined;
+  readonly isCompleted: boolean;
+  readonly milestone: Milestone;
+  readonly milestoneIndex: number;
+  readonly requirementRows: ReadonlyArray<DungeonRunRequirementRow>;
+  readonly segmentElapsedMilliseconds: number | undefined;
+  readonly segmentStartedAtMilliseconds: number | undefined;
 };
 
 export function createDungeonRunMilestoneRows({
   milestones,
   observations,
   startedAtMilliseconds,
-}: CreateDungeonRunMilestoneRowsOptions): ReadonlyArray<DungeonRunMilestoneRow> {
-  const milestoneRows = A.map(milestones, (milestone, milestoneIndex) => {
-    const requirementRows = A.map(milestone.requirements, (requirement) => {
-      const matchingObservations = A.filter(observations, (observation) => {
-        return A.every(
-          [
-            observation.observation.type === requirement.type,
-            observation.observation.targetId === requirement.targetId,
-            observation.occurrence >= requirement.startOccurrence,
-            observation.occurrence <
-              requirement.startOccurrence + requirement.requiredCount,
-          ],
-          Boolean,
-        );
-      });
+}: {
+  readonly milestones: ReadonlyArray<Milestone>;
+  readonly observations: ReadonlyArray<DungeonRunObservationInterpretation>;
+  readonly startedAtMilliseconds: number | undefined;
+}): ReadonlyArray<DungeonRunMilestoneRow> {
+  let previousCompletedAtMilliseconds = startedAtMilliseconds;
 
-      const completedObservation =
-        matchingObservations.length < requirement.requiredCount
-          ? undefined
-          : matchingObservations.at(-1);
+  return A.map(milestones, (milestone, milestoneIndex) => {
+    const requirementRows = A.map(
+      milestone.requirements,
+      (requirement): DungeonRunRequirementRow => {
+        const occurrenceEnd =
+          requirement.startOccurrence + requirement.requiredCount;
 
-      return {
-        completedObservation,
-        matchingObservations,
-        requirement,
-      };
-    });
+        const matchingObservations = A.filter(observations, (observation) => {
+          return (
+            observation.observation.type === requirement.type &&
+            observation.observation.targetId === requirement.targetId &&
+            observation.occurrence >= requirement.startOccurrence &&
+            observation.occurrence < occurrenceEnd
+          );
+        });
 
-    const completedRequirementObservations = pipe(
-      requirementRows,
-      A.map((requirementRow) => {
-        return requirementRow.completedObservation;
-      }),
-      A.filter(
-        (observation): observation is DungeonRunObservationInterpretation => {
-          return observation !== undefined;
-        },
-      ),
+        const completedObservation =
+          matchingObservations.length === requirement.requiredCount
+            ? Option.getOrUndefined(A.last(matchingObservations))
+            : undefined;
+
+        return {
+          completedObservation,
+          matchingObservations,
+          requirement,
+        };
+      },
     );
 
-    const isCompleted =
-      requirementRows.length > 0 &&
-      completedRequirementObservations.length === requirementRows.length;
+    const isCompleted = A.every(requirementRows, (requirementRow) => {
+      return requirementRow.completedObservation !== undefined;
+    });
 
-    const completedAtMilliseconds = isCompleted
-      ? Math.max(
-          ...A.map(completedRequirementObservations, (observation) => {
-            return observation.observation.timestampMilliseconds;
-          }),
-        )
-      : undefined;
+    const completedObservationTimestamps = pipe(
+      requirementRows,
+      A.filter(
+        (
+          requirementRow,
+        ): requirementRow is DungeonRunRequirementRow & {
+          readonly completedObservation: DungeonRunObservationInterpretation;
+        } => {
+          return requirementRow.completedObservation !== undefined;
+        },
+      ),
+      A.map((requirementRow) => {
+        return requirementRow.completedObservation.observation
+          .timestampMilliseconds;
+      }),
+    );
+
+    const completedAtMilliseconds =
+      isCompleted && completedObservationTimestamps.length > 0
+        ? Math.max(...completedObservationTimestamps)
+        : undefined;
 
     const elapsedMilliseconds =
-      Predicate.isUndefined(completedAtMilliseconds) ||
-      isNil(startedAtMilliseconds)
+      completedAtMilliseconds === undefined ||
+      startedAtMilliseconds === undefined
         ? undefined
         : completedAtMilliseconds - startedAtMilliseconds;
+
+    const segmentStartedAtMilliseconds = previousCompletedAtMilliseconds;
+
+    const segmentElapsedMilliseconds =
+      completedAtMilliseconds === undefined ||
+      segmentStartedAtMilliseconds === undefined
+        ? undefined
+        : completedAtMilliseconds - segmentStartedAtMilliseconds;
 
     const comparisonElapsedMilliseconds = {
       average: getComparisonElapsedMilliseconds({
@@ -117,6 +133,10 @@ export function createDungeonRunMilestoneRows({
       }),
     };
 
+    if (completedAtMilliseconds !== undefined) {
+      previousCompletedAtMilliseconds = completedAtMilliseconds;
+    }
+
     return {
       comparisonElapsedMilliseconds,
       completedAtMilliseconds,
@@ -125,30 +145,7 @@ export function createDungeonRunMilestoneRows({
       milestone,
       milestoneIndex,
       requirementRows,
-      segmentElapsedMilliseconds: undefined,
-      segmentStartedAtMilliseconds: undefined,
-    } satisfies DungeonRunMilestoneRow;
-  });
-
-  const sortedMilestones = A.sort(milestoneRows, MilestoneCompletionOrder);
-
-  return A.map(sortedMilestones, (milestone, milestoneIndex) => {
-    if (
-      Predicate.isUndefined(milestone.completedAtMilliseconds) ||
-      isNil(startedAtMilliseconds)
-    ) {
-      return milestone;
-    }
-
-    const previousMilestone = sortedMilestones[milestoneIndex - 1];
-
-    const segmentStartedAtMilliseconds =
-      previousMilestone?.completedAtMilliseconds ?? startedAtMilliseconds;
-
-    return {
-      ...milestone,
-      segmentElapsedMilliseconds:
-        milestone.completedAtMilliseconds - segmentStartedAtMilliseconds,
+      segmentElapsedMilliseconds,
       segmentStartedAtMilliseconds,
     };
   });
