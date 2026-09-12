@@ -13,19 +13,19 @@ import {
 
 const TIME_COLUMN_OPTIONS = [
   {
-    label: "Best delta",
+    label: "Best",
     value: DUNGEON_RUN_TIME_COLUMN.BEST_DELTA,
   },
   {
-    label: "Average delta",
+    label: "Average",
     value: DUNGEON_RUN_TIME_COLUMN.AVERAGE_DELTA,
   },
   {
-    label: "Median delta",
+    label: "Median",
     value: DUNGEON_RUN_TIME_COLUMN.MEDIAN_DELTA,
   },
   {
-    label: "Goal delta",
+    label: "Goal",
     value: DUNGEON_RUN_TIME_COLUMN.GOAL_DELTA,
   },
   {

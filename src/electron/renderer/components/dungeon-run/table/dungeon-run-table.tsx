@@ -289,6 +289,16 @@ export function DungeonRunTableTimeCells({
     median: getDeltaMilliseconds(comparisonElapsedMilliseconds.median),
   };
 
+  const firstActiveTimeColumn = A.findFirst(
+    visibleTimeColumns,
+    (timeColumn) => {
+      return (
+        timeColumn.value === DUNGEON_RUN_TIME_COLUMN.SEGMENT ||
+        timeColumn.value === DUNGEON_RUN_TIME_COLUMN.TOTAL
+      );
+    },
+  ).pipe(Option.getOrUndefined);
+
   const renderDeltaCell = (
     timeColumn: DungeonRunTimeColumnDefinition,
     delta: number | undefined,
@@ -314,6 +324,9 @@ export function DungeonRunTableTimeCells({
   return (
     <>
       {A.map(visibleTimeColumns, (timeColumn) => {
+        const isFirstActiveTimeColumn =
+          timeColumn.value === firstActiveTimeColumn?.value;
+
         return Match.value(timeColumn.value).pipe(
           Match.when(DUNGEON_RUN_TIME_COLUMN.BEST_DELTA, () => {
             return renderDeltaCell(timeColumn, deltaMilliseconds.best);
@@ -329,14 +342,24 @@ export function DungeonRunTableTimeCells({
           }),
           Match.when(DUNGEON_RUN_TIME_COLUMN.SEGMENT, () => {
             return (
-              <DungeonRunTableTimeCell key={timeColumn.value}>
+              <DungeonRunTableTimeCell
+                className={cn(
+                  isFirstActiveTimeColumn && "border-l-2! border-l-border!",
+                )}
+                key={timeColumn.value}
+              >
                 {formatDuration(segmentMilliseconds)}
               </DungeonRunTableTimeCell>
             );
           }),
           Match.when(DUNGEON_RUN_TIME_COLUMN.TOTAL, () => {
             return (
-              <DungeonRunTableTimeCell key={timeColumn.value}>
+              <DungeonRunTableTimeCell
+                className={cn(
+                  isFirstActiveTimeColumn && "border-l-2! border-l-border!",
+                )}
+                key={timeColumn.value}
+              >
                 {formatDuration(totalMilliseconds)}
               </DungeonRunTableTimeCell>
             );

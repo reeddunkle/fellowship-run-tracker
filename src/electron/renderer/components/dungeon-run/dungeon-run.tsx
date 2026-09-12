@@ -53,7 +53,7 @@ export function DungeonRun() {
   const { trackingStatus } = useTrackingServerState();
   const { start, stop } = useTrackingActions();
   const { isPending } = useTrackingActionState();
-  const { dungeonRun, history } = useDungeonRunServerState();
+  const { dungeonRun } = useDungeonRunServerState();
   const { latestObservation, observations } =
     useDungeonRunInterpretationState();
 
@@ -99,8 +99,6 @@ export function DungeonRun() {
   const isTracking = trackingStatus?.status === "Tracking";
   const isWaitingForFile = trackingStatus?.status === "WaitingForLogFile";
 
-  const hasMatchingHistory = history?.configurationId === configuration.id;
-
   const isTimerRunning = dungeonRun?.status === "ACTIVE";
 
   const timerStartTimeMilliseconds = isNil(dungeonRun?.startedAtMilliseconds)
@@ -111,10 +109,6 @@ export function DungeonRun() {
         : undefined
       : latestObservation.observation.timestampMilliseconds -
         dungeonRun.startedAtMilliseconds;
-
-  const historyStatus = hasMatchingHistory
-    ? "Historical data loaded"
-    : "No historical data loaded";
 
   return (
     <section className="grid min-w-105 w-fit gap-3">
@@ -157,9 +151,6 @@ export function DungeonRun() {
         <h2 className="truncate text-sm font-semibold">
           {configuration.label}
         </h2>
-        <p className="text-xs text-muted-foreground">
-          {isTracking ? "Live run" : historyStatus}
-        </p>
       </header>
       <DungeonRunTable rows={tableRows}>
         <thead>
