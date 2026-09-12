@@ -27,7 +27,6 @@ import {
 } from "@/electron/renderer/components/ui/dropdown-menu.tsx";
 import { Separator } from "@/electron/renderer/components/ui/separator";
 import { Spinner } from "@/electron/renderer/components/ui/spinner.tsx";
-import { comparisonByValue } from "@/electron/renderer/constants/comparison-options.ts";
 import {
   useConfigurationById,
   useSelectedConfigurationId,
@@ -47,12 +46,9 @@ import { isNil } from "@/util/is-nil.ts";
 export function DungeonRun() {
   const { resizeToContent } = useDetachedWindow();
   const selectedConfigurationId = useSelectedConfigurationId();
-  const {
-    collapseAllMilestones,
-    comparison,
-    expandAllMilestones,
-    isMilestoneExpanded,
-  } = useDungeonRunDisplayState();
+
+  const { collapseAllMilestones, expandAllMilestones, isMilestoneExpanded } =
+    useDungeonRunDisplayState();
 
   const { trackingStatus } = useTrackingServerState();
   const { start, stop } = useTrackingActions();
@@ -77,17 +73,11 @@ export function DungeonRun() {
     }
 
     return createDungeonRunMilestoneRows({
-      comparison,
       milestones: configuration.milestones,
       observations,
       startedAtMilliseconds: dungeonRun?.startedAtMilliseconds,
     });
-  }, [
-    comparison,
-    configuration,
-    dungeonRun?.startedAtMilliseconds,
-    observations,
-  ]);
+  }, [configuration, dungeonRun?.startedAtMilliseconds, observations]);
 
   const areAllMilestonesExpanded =
     milestoneRows.length > 0 &&
@@ -119,10 +109,9 @@ export function DungeonRun() {
       : latestObservation.observation.timestampMilliseconds -
         dungeonRun.startedAtMilliseconds;
 
-  const comparisonStatus =
-    hasMatchingHistory || comparison === "CUSTOM"
-      ? `Comparing against "${comparisonByValue[comparison].label}"`
-      : "No historical data loaded";
+  const historyStatus = hasMatchingHistory
+    ? "Historical data loaded"
+    : "No historical data loaded";
 
   return (
     <section className="grid min-w-105 w-fit gap-3">
@@ -147,9 +136,11 @@ export function DungeonRun() {
             <ChevronsUpDownIcon />
           )}
         </Button>
+
         <Button onClick={resizeToContent} size="icon" variant="outline">
           <SquareDashedBottomIcon />
         </Button>
+
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger
             render={
@@ -158,27 +149,31 @@ export function DungeonRun() {
               </Button>
             }
           />
+
           <DungeonRunDropdownMenu />
         </DropdownMenu>
       </div>
+
       <header className="grid w-full gap-1">
         <h2 className="truncate text-sm font-semibold">
           {configuration.label}
         </h2>
+
         <p className="text-xs text-muted-foreground">
-          {isTracking ? "Live run" : comparisonStatus}
+          {isTracking ? "Live run" : historyStatus}
         </p>
       </header>
+
       <DungeonRunTable>
         <DungeonRunTableRow className="px-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
           <DungeonRunTableLabelCell>Milestone</DungeonRunTableLabelCell>
           <DungeonRunTableTimeHeaders />
         </DungeonRunTableRow>
+
         <div className="grid gap-1">
           {A.map(milestoneRows, (milestone) => {
             return (
               <DungeonRunMilestone
-                comparison={comparison}
                 key={`${configuration.id}:${milestone.milestoneIndex}`}
                 milestone={milestone}
               />
@@ -186,12 +181,15 @@ export function DungeonRun() {
           })}
         </div>
       </DungeonRunTable>
+
       <Separator />
+
       <DungeonRunTimer
         className="justify-self-end text-end"
         initialElapsedMilliseconds={timerStartTimeMilliseconds}
         isRunning={isTimerRunning}
       />
+
       <Button
         className="min-w-32 bg-green-600 text-white hover:bg-green-700"
         disabled={
@@ -222,6 +220,7 @@ export function DungeonRun() {
           </>
         )}
       </Button>
+
       <Button
         className="min-w-32"
         disabled={!isTracking || isPending}

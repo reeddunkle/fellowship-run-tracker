@@ -154,7 +154,7 @@ function DetachedWindow({ children, onClose }: DetachedWindowProps) {
       const childWindow = window.open(
         "",
         "tracking-window",
-        "width=460,detachedWindow=true",
+        "width=650,detachedWindow=true",
       );
 
       if (childWindow === null) {

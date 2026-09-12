@@ -5,7 +5,6 @@ import * as Predicate from "effect/Predicate";
 
 import { type DungeonRunMilestoneRow } from "@/electron/renderer/components/dungeon-run/dungeon-run-milestone.tsx";
 import { getComparisonElapsedMilliseconds } from "@/electron/renderer/components/dungeon-run/helpers/dungeon-run-time.ts";
-import { type DungeonRunComparison } from "@/electron/renderer/constants/comparison-options.ts";
 import { type DungeonRunObservationInterpretation } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-provider.tsx";
 import { isNil } from "@/util/is-nil.ts";
 
@@ -35,14 +34,12 @@ const MilestoneCompletionOrder = Order.mapInput(
 );
 
 type CreateDungeonRunMilestoneRowsOptions = {
-  readonly comparison: DungeonRunComparison;
   readonly milestones: ReadonlyArray<DungeonRunMilestoneRow["milestone"]>;
   readonly observations: ReadonlyArray<DungeonRunObservationInterpretation>;
   readonly startedAtMilliseconds: number | null | undefined;
 };
 
 export function createDungeonRunMilestoneRows({
-  comparison,
   milestones,
   observations,
   startedAtMilliseconds,
@@ -76,8 +73,8 @@ export function createDungeonRunMilestoneRows({
 
     const completedRequirementObservations = pipe(
       requirementRows,
-      A.map((row) => {
-        return row.completedObservation;
+      A.map((requirementRow) => {
+        return requirementRow.completedObservation;
       }),
       A.filter(
         (observation): observation is DungeonRunObservationInterpretation => {
@@ -104,13 +101,21 @@ export function createDungeonRunMilestoneRows({
         ? undefined
         : completedAtMilliseconds - startedAtMilliseconds;
 
-    const comparisonElapsedMilliseconds =
-      comparison === "CUSTOM"
-        ? (milestone.comparisonTime ?? undefined)
-        : getComparisonElapsedMilliseconds({
-            comparison,
-            requirements: requirementRows,
-          });
+    const comparisonElapsedMilliseconds = {
+      average: getComparisonElapsedMilliseconds({
+        comparison: "AVERAGE",
+        requirements: requirementRows,
+      }),
+      best: getComparisonElapsedMilliseconds({
+        comparison: "BEST",
+        requirements: requirementRows,
+      }),
+      goal: milestone.comparisonTime ?? undefined,
+      median: getComparisonElapsedMilliseconds({
+        comparison: "MEDIAN",
+        requirements: requirementRows,
+      }),
+    };
 
     return {
       comparisonElapsedMilliseconds,
@@ -127,7 +132,7 @@ export function createDungeonRunMilestoneRows({
 
   const sortedMilestones = A.sort(milestoneRows, MilestoneCompletionOrder);
 
-  return A.map(sortedMilestones, (milestone, index) => {
+  return A.map(sortedMilestones, (milestone, milestoneIndex) => {
     if (
       Predicate.isUndefined(milestone.completedAtMilliseconds) ||
       isNil(startedAtMilliseconds)
@@ -135,7 +140,7 @@ export function createDungeonRunMilestoneRows({
       return milestone;
     }
 
-    const previousMilestone = sortedMilestones[index - 1];
+    const previousMilestone = sortedMilestones[milestoneIndex - 1];
 
     const segmentStartedAtMilliseconds =
       previousMilestone?.completedAtMilliseconds ?? startedAtMilliseconds;

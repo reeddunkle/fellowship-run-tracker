@@ -3,21 +3,36 @@ import * as Schema from "effect/Schema";
 import { ConfigurationIdSchema } from "@/validation/configuration/configuration-id-schema.ts";
 
 export const DUNGEON_RUN_TIME_COLUMN = {
-  DELTA: "DELTA",
+  AVERAGE_DELTA: "AVERAGE_DELTA",
+  BEST_DELTA: "BEST_DELTA",
+  GOAL_DELTA: "GOAL_DELTA",
+  MEDIAN_DELTA: "MEDIAN_DELTA",
   SEGMENT: "SEGMENT",
   TOTAL: "TOTAL",
 } as const;
 
 export const DungeonRunTimeColumnSchema = Schema.Union([
-  Schema.Literal(DUNGEON_RUN_TIME_COLUMN.DELTA),
+  Schema.Literal(DUNGEON_RUN_TIME_COLUMN.BEST_DELTA),
+  Schema.Literal(DUNGEON_RUN_TIME_COLUMN.AVERAGE_DELTA),
+  Schema.Literal(DUNGEON_RUN_TIME_COLUMN.MEDIAN_DELTA),
+  Schema.Literal(DUNGEON_RUN_TIME_COLUMN.GOAL_DELTA),
   Schema.Literal(DUNGEON_RUN_TIME_COLUMN.SEGMENT),
   Schema.Literal(DUNGEON_RUN_TIME_COLUMN.TOTAL),
 ]);
 
 export type DungeonRunTimeColumn = typeof DungeonRunTimeColumnSchema.Type;
 
+export const DungeonRunTimeColumnStateSchema = Schema.Struct({
+  column: DungeonRunTimeColumnSchema,
+  displayOrder: Schema.Number,
+  isVisible: Schema.Boolean,
+});
+
+export type DungeonRunTimeColumnState =
+  typeof DungeonRunTimeColumnStateSchema.Type;
+
 export const DungeonRunStateSchema = Schema.Struct({
-  visibleTimeColumns: Schema.Array(DungeonRunTimeColumnSchema),
+  timeColumns: Schema.Array(DungeonRunTimeColumnStateSchema),
 });
 
 export type DungeonRunState = typeof DungeonRunStateSchema.Type;
@@ -41,10 +56,37 @@ export type AppState = typeof AppStateSchema.Type;
 
 export const DEFAULT_APP_STATE: AppState = {
   dungeonRun: {
-    visibleTimeColumns: [
-      DUNGEON_RUN_TIME_COLUMN.DELTA,
-      DUNGEON_RUN_TIME_COLUMN.SEGMENT,
-      DUNGEON_RUN_TIME_COLUMN.TOTAL,
+    timeColumns: [
+      {
+        column: DUNGEON_RUN_TIME_COLUMN.BEST_DELTA,
+        displayOrder: 0,
+        isVisible: true,
+      },
+      {
+        column: DUNGEON_RUN_TIME_COLUMN.AVERAGE_DELTA,
+        displayOrder: 1,
+        isVisible: true,
+      },
+      {
+        column: DUNGEON_RUN_TIME_COLUMN.MEDIAN_DELTA,
+        displayOrder: 2,
+        isVisible: true,
+      },
+      {
+        column: DUNGEON_RUN_TIME_COLUMN.GOAL_DELTA,
+        displayOrder: 3,
+        isVisible: true,
+      },
+      {
+        column: DUNGEON_RUN_TIME_COLUMN.SEGMENT,
+        displayOrder: 4,
+        isVisible: true,
+      },
+      {
+        column: DUNGEON_RUN_TIME_COLUMN.TOTAL,
+        displayOrder: 5,
+        isVisible: true,
+      },
     ],
   },
   selectedConfigurationId: null,

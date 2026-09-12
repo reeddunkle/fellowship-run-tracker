@@ -16,18 +16,11 @@ import {
   type DungeonRunStateApi,
 } from "@/api/websocket/dungeon-run/dungeon-run-api-message-schema.ts";
 import { type ApiConnectionState } from "@/electron/renderer/api/common.ts";
-import { type DungeonRunComparison } from "@/electron/renderer/constants/comparison-options.ts";
-import {
-  type AppStore,
-  appStore,
-} from "@/electron/renderer/stores/app-state-store/app-state-store.ts";
-import { useAppStore } from "@/electron/renderer/stores/app-state-store/use-app-store.ts";
 import {
   type DungeonRunEventStore,
   type DungeonRunEventStoreSnapshot,
   dungeonRunEventStore,
 } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-event-store.ts";
-import { type DungeonRunTimeColumn } from "@/electron/storage/app-state/app-state-schema.ts";
 import { ReactContextError } from "@/errors/react-context-error.ts";
 import {
   type DungeonRunApiHistory,
@@ -47,47 +40,23 @@ type DungeonRunMilestoneExpansionState = {
 
 export type DungeonRunDisplayState = {
   readonly collapseAllMilestones: () => void;
-  readonly comparison: DungeonRunComparison;
   readonly expandAllMilestones: () => void;
   readonly isMilestoneExpanded: (
     milestoneKey: DungeonRunMilestoneKey,
   ) => boolean;
-  readonly setComparison: (comparison: DungeonRunComparison) => void;
   readonly setMilestoneExpanded: (
     milestoneKey: DungeonRunMilestoneKey,
     isExpanded: boolean,
   ) => void;
-  readonly setTimeColumnVisible: (
-    column: DungeonRunTimeColumn,
-    isVisible: boolean,
-  ) => void;
-  readonly visibleTimeColumns: ReadonlySet<DungeonRunTimeColumn>;
 };
 
-type DungeonRunContextValue = {
-  readonly collapseAllMilestones: () => void;
-  readonly comparison: DungeonRunComparison;
+type DungeonRunContextValue = DungeonRunDisplayState & {
   readonly connectionState: ApiConnectionState;
-  readonly expandAllMilestones: () => void;
   readonly history: DungeonRunApiHistory | null;
-  readonly isMilestoneExpanded: (
-    milestoneKey: DungeonRunMilestoneKey,
-  ) => boolean;
   readonly runState: DungeonRunEventStoreSnapshot["runState"];
-  readonly setComparison: (comparison: DungeonRunComparison) => void;
-  readonly setMilestoneExpanded: (
-    milestoneKey: DungeonRunMilestoneKey,
-    isExpanded: boolean,
-  ) => void;
-  readonly setTimeColumnVisible: (
-    column: DungeonRunTimeColumn,
-    isVisible: boolean,
-  ) => void;
-  readonly visibleTimeColumns: ReadonlySet<DungeonRunTimeColumn>;
 };
 
 type DungeonRunProviderProps = {
-  readonly appStateStore?: AppStore;
   readonly children: ReactNode;
   readonly eventStore?: DungeonRunEventStore;
   readonly history: DungeonRunApiHistory | null;
@@ -147,7 +116,6 @@ function createObservationAnalytics(
 }
 
 export function DungeonRunProvider({
-  appStateStore = appStore,
   children,
   eventStore = dungeonRunEventStore,
   history,
@@ -157,9 +125,6 @@ export function DungeonRunProvider({
     eventStore.getSnapshot,
     eventStore.getSnapshot,
   );
-
-  const { dungeonRun: dungeonRunAppState, setDungeonRunVisibleTimeColumns } =
-    useAppStore(appStateStore);
 
   const [milestoneExpansionState, setMilestoneExpansionState] =
     useState<DungeonRunMilestoneExpansionState>({
@@ -212,52 +177,24 @@ export function DungeonRunProvider({
     [],
   );
 
-  const [comparison, setComparison] = useState<DungeonRunComparison>("BEST");
-
-  const visibleTimeColumns = useMemo<ReadonlySet<DungeonRunTimeColumn>>(() => {
-    return new Set(dungeonRunAppState.visibleTimeColumns);
-  }, [dungeonRunAppState.visibleTimeColumns]);
-
-  const setTimeColumnVisible = useCallback(
-    (column: DungeonRunTimeColumn, isVisible: boolean) => {
-      const nextVisibleTimeColumns = new Set(visibleTimeColumns);
-
-      if (isVisible) {
-        nextVisibleTimeColumns.add(column);
-      } else {
-        nextVisibleTimeColumns.delete(column);
-      }
-
-      setDungeonRunVisibleTimeColumns(Array.from(nextVisibleTimeColumns));
-    },
-    [setDungeonRunVisibleTimeColumns, visibleTimeColumns],
-  );
-
   const contextValue = useMemo<DungeonRunContextValue>(() => {
     return {
       collapseAllMilestones,
-      comparison,
       connectionState: dungeonRunSnapshot.connectionState,
       expandAllMilestones,
       history,
       isMilestoneExpanded,
       runState: dungeonRunSnapshot.runState,
-      setComparison,
       setMilestoneExpanded,
-      setTimeColumnVisible,
-      visibleTimeColumns,
     };
   }, [
     collapseAllMilestones,
-    comparison,
     dungeonRunSnapshot.connectionState,
     dungeonRunSnapshot.runState,
     expandAllMilestones,
     history,
     isMilestoneExpanded,
     setMilestoneExpanded,
-    setTimeColumnVisible,
-    visibleTimeColumns,
   ]);
 
   return (
@@ -389,23 +326,15 @@ export function useDungeonRunInterpretationState(): DungeonRunInterpretationStat
 export function useDungeonRunDisplayState(): DungeonRunDisplayState {
   const {
     collapseAllMilestones,
-    comparison,
     expandAllMilestones,
     isMilestoneExpanded,
-    setComparison,
     setMilestoneExpanded,
-    setTimeColumnVisible,
-    visibleTimeColumns,
   } = useDungeonRunContext();
 
   return {
     collapseAllMilestones,
-    comparison,
     expandAllMilestones,
     isMilestoneExpanded,
-    setComparison,
     setMilestoneExpanded,
-    setTimeColumnVisible,
-    visibleTimeColumns,
   };
 }

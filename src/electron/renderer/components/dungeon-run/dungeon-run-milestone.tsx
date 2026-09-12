@@ -15,7 +15,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/electron/renderer/components/ui/collapsible.tsx";
-import { type DungeonRunComparison } from "@/electron/renderer/constants/comparison-options.ts";
 import {
   type DungeonRunObservationInterpretation,
   useDungeonRunDisplayState,
@@ -29,6 +28,13 @@ type Milestone = ConfigurationApiConfiguration["milestones"][number];
 
 type Requirement = Milestone["requirements"][number];
 
+export type DungeonRunComparisonElapsedMilliseconds = {
+  readonly average: number | undefined;
+  readonly best: number | undefined;
+  readonly goal: number | undefined;
+  readonly median: number | undefined;
+};
+
 export type DungeonRunRequirementRow = {
   readonly completedObservation:
     | DungeonRunObservationInterpretation
@@ -38,7 +44,7 @@ export type DungeonRunRequirementRow = {
 };
 
 export type DungeonRunMilestoneRow = {
-  readonly comparisonElapsedMilliseconds: number | undefined;
+  readonly comparisonElapsedMilliseconds: DungeonRunComparisonElapsedMilliseconds;
   readonly completedAtMilliseconds: number | undefined;
   readonly elapsedMilliseconds: number | undefined;
   readonly isCompleted: boolean;
@@ -50,7 +56,6 @@ export type DungeonRunMilestoneRow = {
 };
 
 type DungeonRunMilestoneProps = {
-  readonly comparison: DungeonRunComparison;
   readonly milestone: DungeonRunMilestoneRow;
 };
 
@@ -74,18 +79,17 @@ const UndefinedLastNumberOrder = Order.make<number | undefined>(
 
 const RequirementCompletionOrder = Order.mapInput(
   UndefinedLastNumberOrder,
-  (row: DungeonRunRequirementRow) => {
-    return row.completedObservation?.observation.timestampMilliseconds;
+  (requirementRow: DungeonRunRequirementRow) => {
+    return requirementRow.completedObservation?.observation
+      .timestampMilliseconds;
   },
 );
 
 function RequirementRow({
-  comparison,
-  row,
+  requirementRow,
   segmentElapsedMilliseconds,
 }: {
-  readonly comparison: DungeonRunComparison;
-  readonly row: DungeonRunRequirementRow;
+  readonly requirementRow: DungeonRunRequirementRow;
   readonly segmentElapsedMilliseconds: number | undefined;
 }) {
   const abilitiesById = useFellowshipDataStore((state) => state.abilitiesById);
@@ -95,22 +99,40 @@ function RequirementRow({
   );
   const unitsById = useFellowshipDataStore((state) => state.unitsById);
 
-  const observation = row.completedObservation;
+  const observation = requirementRow.completedObservation;
 
-  const comparisonElapsedMilliseconds =
-    comparison === "CUSTOM" || observation === undefined
-      ? undefined
-      : getObservationComparisonElapsedMilliseconds({
-          comparison,
-          observation,
-        });
+  const comparisonElapsedMilliseconds: DungeonRunComparisonElapsedMilliseconds =
+    {
+      average:
+        observation === undefined
+          ? undefined
+          : getObservationComparisonElapsedMilliseconds({
+              comparison: "AVERAGE",
+              observation,
+            }),
+      best:
+        observation === undefined
+          ? undefined
+          : getObservationComparisonElapsedMilliseconds({
+              comparison: "BEST",
+              observation,
+            }),
+      goal: undefined,
+      median:
+        observation === undefined
+          ? undefined
+          : getObservationComparisonElapsedMilliseconds({
+              comparison: "MEDIAN",
+              observation,
+            }),
+    };
 
   const targetLabel = getRequirementTargetLabel({
     abilitiesById,
     dungeonsById,
     encountersById,
-    eventType: row.requirement.type,
-    targetId: row.requirement.targetId,
+    eventType: requirementRow.requirement.type,
+    targetId: requirementRow.requirement.targetId,
     unitsById,
   });
 
@@ -120,20 +142,22 @@ function RequirementRow({
         <div className="truncate text-muted-foreground">
           {targetLabel}
           <span className="px-1">·</span>
-          {row.requirement.type}
+          {requirementRow.requirement.type}
         </div>
-        {row.requirement.type === "UNIT_DEATH" ? (
+
+        {requirementRow.requirement.type === "UNIT_DEATH" ? (
           <div className="truncate text-[10px] text-muted-foreground/70">
-            occurrence {row.requirement.startOccurrence}
-            {row.requirement.requiredCount > 1 &&
+            occurrence {requirementRow.requirement.startOccurrence}
+            {requirementRow.requirement.requiredCount > 1 &&
               `–${
-                row.requirement.startOccurrence +
-                row.requirement.requiredCount -
+                requirementRow.requirement.startOccurrence +
+                requirementRow.requirement.requiredCount -
                 1
               }`}
           </div>
         ) : null}
       </DungeonRunTableLabelCell>
+
       <DungeonRunTableTimeCells
         comparisonElapsedMilliseconds={comparisonElapsedMilliseconds}
         segmentMilliseconds={segmentElapsedMilliseconds}
@@ -143,10 +167,7 @@ function RequirementRow({
   );
 }
 
-export function DungeonRunMilestone({
-  comparison,
-  milestone,
-}: DungeonRunMilestoneProps) {
+export function DungeonRunMilestone({ milestone }: DungeonRunMilestoneProps) {
   const { isMilestoneExpanded, setMilestoneExpanded } =
     useDungeonRunDisplayState();
 
@@ -183,6 +204,7 @@ export function DungeonRunMilestone({
                       isOpen && "rotate-90",
                     )}
                   />
+
                   <span
                     className={cn(
                       "min-w-0 truncate font-medium",
@@ -193,6 +215,7 @@ export function DungeonRunMilestone({
                   </span>
                 </div>
               </DungeonRunTableLabelCell>
+
               <DungeonRunTableTimeCells
                 comparisonElapsedMilliseconds={
                   milestone.comparisonElapsedMilliseconds
@@ -203,12 +226,15 @@ export function DungeonRunMilestone({
             </DungeonRunTableTriggerRow>
           }
         />
-        <CollapsibleContent className="min-w-0 overflow-hidden">
-          {A.map(sortedRequirementRows, (row, index) => {
-            const observationTimestamp =
-              row.completedObservation?.observation.timestampMilliseconds;
 
-            const previousRequirement = sortedRequirementRows[index - 1];
+        <CollapsibleContent className="min-w-0 overflow-hidden">
+          {A.map(sortedRequirementRows, (requirementRow, requirementIndex) => {
+            const observationTimestamp =
+              requirementRow.completedObservation?.observation
+                .timestampMilliseconds;
+
+            const previousRequirement =
+              sortedRequirementRows[requirementIndex - 1];
 
             const previousTimestamp =
               previousRequirement?.completedObservation?.observation
@@ -223,9 +249,8 @@ export function DungeonRunMilestone({
 
             return (
               <RequirementRow
-                comparison={comparison}
-                key={`${row.requirement.type}:${row.requirement.targetId}:${index}`}
-                row={row}
+                key={`${requirementRow.requirement.type}:${requirementRow.requirement.targetId}:${requirementIndex}`}
+                requirementRow={requirementRow}
                 segmentElapsedMilliseconds={segmentElapsedMilliseconds}
               />
             );

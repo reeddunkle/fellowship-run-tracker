@@ -3,8 +3,9 @@ import { millisecondsToSeconds } from "date-fns/millisecondsToSeconds";
 import * as A from "effect/Array";
 import { pipe } from "effect/Function";
 
-import { type DungeonRunComparison } from "@/electron/renderer/constants/comparison-options.ts";
 import { type DungeonRunObservationInterpretation } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-provider.tsx";
+
+export type DungeonRunHistoricalComparison = "AVERAGE" | "BEST" | "MEDIAN";
 
 type RequirementRow = {
   readonly completedObservation:
@@ -16,18 +17,19 @@ export function getObservationComparisonElapsedMilliseconds({
   comparison,
   observation,
 }: {
-  readonly comparison: DungeonRunComparison;
+  readonly comparison: DungeonRunHistoricalComparison;
   readonly observation: DungeonRunObservationInterpretation;
 }): number | undefined {
-  if (comparison === "CUSTOM" || observation.analytics === undefined) {
+  if (observation.analytics === undefined) {
     return undefined;
   }
 
-  const comparisonToAnalytics: Partial<Record<DungeonRunComparison, number>> = {
-    AVERAGE: observation.analytics.meanElapsedMilliseconds,
-    BEST: observation.analytics.bestElapsedMilliseconds,
-    MEDIAN: observation.analytics.medianElapsedMilliseconds,
-  };
+  const comparisonToAnalytics: Record<DungeonRunHistoricalComparison, number> =
+    {
+      AVERAGE: observation.analytics.meanElapsedMilliseconds,
+      BEST: observation.analytics.bestElapsedMilliseconds,
+      MEDIAN: observation.analytics.medianElapsedMilliseconds,
+    };
 
   return comparisonToAnalytics[comparison];
 }
@@ -36,7 +38,7 @@ export function getComparisonElapsedMilliseconds({
   comparison,
   requirements,
 }: {
-  readonly comparison: DungeonRunComparison;
+  readonly comparison: DungeonRunHistoricalComparison;
   readonly requirements: ReadonlyArray<RequirementRow>;
 }): number | undefined {
   const comparisonTimes = pipe(

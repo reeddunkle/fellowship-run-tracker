@@ -41,10 +41,6 @@ describe("FellowshipTracker dungeon run WebSocket messages", () => {
 
         expect(firstMessage).toBeDefined();
 
-        if (firstMessage === undefined) {
-          return;
-        }
-
         const decodedFirstMessage = yield* Schema.decodeUnknownEffect(
           DungeonRunApiMessageSchema,
         )(firstMessage);

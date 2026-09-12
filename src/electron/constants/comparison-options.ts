@@ -14,10 +14,6 @@ export const COMPARISON_OPTIONS = [
     value: "MEDIAN",
   },
   {
-    label: "Last run",
-    value: "LAST_RUN",
-  },
-  {
     label: "Goal",
     value: "CUSTOM",
   },

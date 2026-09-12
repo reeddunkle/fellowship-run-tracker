@@ -5,7 +5,7 @@ import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts"
 import {
   type AppState,
   DEFAULT_APP_STATE,
-  type DungeonRunTimeColumn,
+  type DungeonRunTimeColumnState,
   type Theme,
 } from "@/electron/storage/app-state/app-state-schema.ts";
 import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";
@@ -13,8 +13,8 @@ import { type ConfigurationId } from "@/validation/configuration/configuration-i
 type Listener = () => void;
 
 export type AppStoreActions = {
-  readonly setDungeonRunVisibleTimeColumns: (
-    visibleTimeColumns: ReadonlyArray<DungeonRunTimeColumn>,
+  readonly setDungeonRunTimeColumns: (
+    timeColumns: ReadonlyArray<DungeonRunTimeColumnState>,
   ) => void;
 
   readonly setSelectedConfigurationId: (
@@ -74,15 +74,15 @@ export function makeAppStore(): AppStore {
     });
   });
 
-  function setDungeonRunVisibleTimeColumns(
-    visibleTimeColumns: ReadonlyArray<DungeonRunTimeColumn>,
+  function setDungeonRunTimeColumns(
+    timeColumns: ReadonlyArray<DungeonRunTimeColumnState>,
   ): void {
     updateSnapshot((state) => {
       return {
         ...state,
         dungeonRun: {
           ...state.dungeonRun,
-          visibleTimeColumns,
+          timeColumns,
         },
       };
     });
@@ -132,7 +132,7 @@ export function makeAppStore(): AppStore {
   return {
     getSnapshot,
     initialize,
-    setDungeonRunVisibleTimeColumns,
+    setDungeonRunTimeColumns,
     setSelectedConfigurationId,
     setSidebarOpen,
     setTheme,
