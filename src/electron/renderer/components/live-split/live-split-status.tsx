@@ -45,15 +45,12 @@ export function LiveSplitStatus() {
   return (
     <div className="flex items-center gap-2">
       <CircleIcon className={circleClassName} />
-
       <div className="flex flex-col">
-        <span className="text-sm font-medium">LiveSplit</span>
-
+        <span className="text-sm font-medium">LiveSplit (optional)</span>
         <span className="text-sm text-muted-foreground">
           {statusLabel}
           {connectionState !== "CONNECTED" && " · API disconnected"}
         </span>
-
         {hasConnectionError && (
           <span className="text-sm text-red-600">
             {getErrorMessage(connectError)}
