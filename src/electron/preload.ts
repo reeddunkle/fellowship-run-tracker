@@ -21,6 +21,18 @@ contextBridge.exposeInMainWorld("electronAPI", {
       });
     },
   },
+  resizeWindowToContent: ({
+    height,
+    width,
+  }: {
+    readonly height: number;
+    readonly width: number;
+  }) => {
+    return ipcRenderer.invoke(ELECTRON_IPC_CHANNEL.RESIZE_WINDOW_TO_CONTENT, {
+      height,
+      width,
+    });
+  },
   showWindow: () => {
     ipcRenderer.send(ELECTRON_IPC_CHANNEL.SHOW_WINDOW);
   },

@@ -10,6 +10,10 @@ declare global {
       readonly files: {
         readonly getDirectoryPath: (file: File) => Promise<string>;
       };
+      readonly resizeWindowToContent: (options: {
+        readonly height: number;
+        readonly width: number;
+      }) => Promise<void>;
       readonly showWindow: () => void;
     };
   }

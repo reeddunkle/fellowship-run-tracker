@@ -9,9 +9,7 @@ import {
 import { createPortal } from "react-dom";
 
 import { useDetachedWindow } from "@/electron/renderer/components/detached-window/detached-window-provider";
-
-const WINDOW_HORIZONTAL_MARGIN = 32;
-const WINDOW_VERTICAL_MARGIN = 32;
+import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
 
 function copyDocumentStyles({
   sourceDocument,
@@ -64,6 +62,8 @@ function createDetachedWindowContainer(document: Document) {
   return container;
 }
 
+const SCROLLBAR_GUTTER_WIDTH = 30;
+
 function resizeDetachedWindowToContent({
   childContainer,
   childWindow,
@@ -71,38 +71,26 @@ function resizeDetachedWindowToContent({
   readonly childContainer: HTMLElement;
   readonly childWindow: Window;
 }) {
-  const childDocument = childWindow.document;
+  return E.gen(function* () {
+    const childDocument = childWindow.document;
 
-  // Prevent a transient scrollbar while the native window catches up
-  // with the newly rendered content size.
-  childDocument.documentElement.style.overflowY = "hidden";
+    childDocument.documentElement.style.overflowY = "hidden";
 
-  const contentHeight = childContainer.scrollHeight;
-  const contentWidth = childContainer.scrollWidth;
+    yield* E.tryPromise(() => {
+      return childWindow.electronAPI.resizeWindowToContent({
+        height: childContainer.scrollHeight,
+        width: childContainer.scrollWidth + SCROLLBAR_GUTTER_WIDTH,
+      });
+    });
 
-  const windowChromeHeight = childWindow.outerHeight - childWindow.innerHeight;
-  const windowChromeWidth = childWindow.outerWidth - childWindow.innerWidth;
-
-  const scrollbarGutterWidth =
-    childWindow.innerWidth - childWindow.document.documentElement.clientWidth;
-
-  const maxHeight = childWindow.screen.availHeight - WINDOW_VERTICAL_MARGIN;
-  const maxWidth = childWindow.screen.availWidth - WINDOW_HORIZONTAL_MARGIN;
-
-  const desiredHeight = Math.ceil(contentHeight) + windowChromeHeight;
-
-  const height = Math.min(desiredHeight, maxHeight);
-
-  const width = Math.min(
-    Math.ceil(contentWidth) + windowChromeWidth + scrollbarGutterWidth,
-    maxWidth,
-  );
-
-  childWindow.resizeTo(width, height);
-
-  childWindow.requestAnimationFrame(() => {
-    childDocument.documentElement.style.overflowY =
-      desiredHeight > maxHeight ? "auto" : "hidden";
+    yield* E.promise(() => {
+      return new Promise<void>((resolve) => {
+        childWindow.requestAnimationFrame(() => {
+          childDocument.documentElement.style.overflowY = "auto";
+          resolve();
+        });
+      });
+    });
   });
 }
 
@@ -113,7 +101,7 @@ function observeDetachedWindowContent({
 }: {
   readonly childContainer: HTMLElement;
   readonly childWindow: Window;
-  readonly resizeToContent: () => void;
+  readonly resizeToContent: E.Effect<void, unknown>;
 }) {
   let animationFrameId: number | undefined;
 
@@ -124,7 +112,8 @@ function observeDetachedWindowContent({
 
     animationFrameId = childWindow.requestAnimationFrame(() => {
       animationFrameId = undefined;
-      resizeToContent();
+
+      browserRuntime.runFork(resizeToContent.pipe(E.catchCause(E.logError)));
     });
   });
 
@@ -145,7 +134,6 @@ type DetachedWindowProps = {
 };
 
 function DetachedWindow({ children, onClose }: DetachedWindowProps) {
-  const childWindowRef = useRef<Window | null>(null);
   const childContainerRef = useRef<HTMLElement | null>(null);
   const { setPortalContainer, setResizeToContent } = useDetachedWindow();
 
@@ -154,7 +142,7 @@ function DetachedWindow({ children, onClose }: DetachedWindowProps) {
       const childWindow = window.open(
         "",
         "tracking-window",
-        "width=650,detachedWindow=true",
+        "width=1650,detachedWindow=true",
       );
 
       if (childWindow === null) {
@@ -175,19 +163,18 @@ function DetachedWindow({ children, onClose }: DetachedWindowProps) {
 
       const childContainer = createDetachedWindowContainer(childDocument);
 
-      childWindowRef.current = childWindow;
       childContainerRef.current = childContainer;
 
       setPortalContainer(childDocument.body);
 
-      const resizeToContent = () => {
-        resizeDetachedWindowToContent({
-          childContainer,
-          childWindow,
-        });
-      };
+      const resizeToContent = resizeDetachedWindowToContent({
+        childContainer,
+        childWindow,
+      });
 
-      setResizeToContent(resizeToContent);
+      setResizeToContent(() => {
+        browserRuntime.runFork(resizeToContent.pipe(E.catchCause(E.logError)));
+      });
 
       let stopObservingContent: (() => void) | undefined;
       let initializationFrameId: number | undefined;
@@ -197,7 +184,6 @@ function DetachedWindow({ children, onClose }: DetachedWindowProps) {
         setPortalContainer(null);
         setResizeToContent(null);
 
-        childWindowRef.current = null;
         childContainerRef.current = null;
       };
 
@@ -211,7 +197,7 @@ function DetachedWindow({ children, onClose }: DetachedWindowProps) {
 
       childWindow.addEventListener("beforeunload", handleClose);
 
-      // Publish the container to `useSyncExternalStore`
+      // Publish the container to `useSyncExternalStore`.
       onStoreChange();
 
       const initializeWindow = E.gen(function* () {
@@ -223,31 +209,41 @@ function DetachedWindow({ children, onClose }: DetachedWindowProps) {
           return;
         }
 
-        yield* E.sync(() => {
-          initializationFrameId = childWindow.requestAnimationFrame(() => {
-            if (isCancelled) {
-              return;
-            }
-
-            resizeToContent();
-
-            stopObservingContent = observeDetachedWindowContent({
-              childContainer,
-              childWindow,
-              resizeToContent,
+        yield* E.promise(() => {
+          return new Promise<void>((resolve) => {
+            initializationFrameId = childWindow.requestAnimationFrame(() => {
+              resolve();
             });
-
-            childWindow.electronAPI.showWindow();
           });
         });
+
+        if (isCancelled) {
+          return;
+        }
+
+        yield* resizeToContent;
+
+        if (isCancelled) {
+          return;
+        }
+
+        stopObservingContent = observeDetachedWindowContent({
+          childContainer,
+          childWindow,
+          resizeToContent,
+        });
+
+        childWindow.electronAPI.showWindow();
       });
 
-      const initializationFiber = E.runFork(initializeWindow);
+      const initializationFiber = browserRuntime.runFork(
+        initializeWindow.pipe(E.catchCause(E.logError)),
+      );
 
       return () => {
         isCancelled = true;
 
-        initializationFiber.pipe(Fiber.interrupt, E.runFork);
+        browserRuntime.runFork(Fiber.interrupt(initializationFiber));
 
         if (initializationFrameId !== undefined) {
           childWindow.cancelAnimationFrame(initializationFrameId);
