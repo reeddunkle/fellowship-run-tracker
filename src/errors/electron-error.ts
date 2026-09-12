@@ -12,6 +12,11 @@ export class AppStateClientError extends Data.TaggedError(
   readonly operation: "Get" | "Set";
 }> {}
 
+export class WindowClientError extends Data.TaggedError("WindowClientError")<{
+  readonly cause: unknown;
+  readonly operation: "ResizeToContent";
+}> {}
+
 export class ElectronApplicationShutdownError extends Data.TaggedError(
   "ElectronApplicationShutdownError",
 )<{

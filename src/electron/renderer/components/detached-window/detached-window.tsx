@@ -8,6 +8,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
+import * as windowClient from "@/electron/renderer/api/electron-ipc/window/window-client.ts";
 import { useDetachedWindow } from "@/electron/renderer/components/detached-window/detached-window-provider";
 import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
 
@@ -76,11 +77,10 @@ function resizeDetachedWindowToContent({
 
     childDocument.documentElement.style.overflowY = "hidden";
 
-    yield* E.tryPromise(() => {
-      return childWindow.electronAPI.resizeWindowToContent({
-        height: childContainer.scrollHeight,
-        width: childContainer.scrollWidth + SCROLLBAR_GUTTER_WIDTH,
-      });
+    yield* windowClient.resizeWindowToContent({
+      height: childContainer.scrollHeight,
+      width: childContainer.scrollWidth + SCROLLBAR_GUTTER_WIDTH,
+      window: childWindow,
     });
 
     yield* E.promise(() => {
