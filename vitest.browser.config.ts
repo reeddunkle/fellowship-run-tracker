@@ -6,7 +6,7 @@ const projectRoot = path.resolve(import.meta.dirname);
 
 export default defineConfig({
   optimizeDeps: {
-    include: ["effect", "effect/DateTime"],
+    include: ["effect", "effect/DateTime", "effect/Context", "effect/Deferred"],
   },
   resolve: {
     alias: {

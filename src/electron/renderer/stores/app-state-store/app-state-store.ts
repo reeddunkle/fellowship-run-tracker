@@ -1,6 +1,6 @@
 import * as E from "effect/Effect";
 
-import * as appStateClient from "@/electron/renderer/api/electron-ipc/app-state/app-state-client";
+import * as appStateClient from "@/electron/renderer/api/electron-ipc/app-state/app-state-client.ts";
 import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
 import {
   type AppState,
@@ -8,6 +8,7 @@ import {
   type DungeonRunTimeColumnState,
   type Theme,
 } from "@/electron/storage/app-state/app-state-schema.ts";
+import { AppStateUpdateWorker } from "@/services/app-state-update-worker/app-state-update-worker-service.ts";
 import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";
 
 type Listener = () => void;
@@ -46,7 +47,11 @@ export function makeAppStore(): AppStore {
 
   function persist(state: AppState): void {
     browserRuntime.runFork(
-      appStateClient.setAppState(state).pipe(E.catchCause(E.logError)),
+      E.gen(function* () {
+        const appStateUpdateWorker = yield* AppStateUpdateWorker;
+
+        yield* appStateUpdateWorker.submit(state);
+      }).pipe(E.catchCause(E.logError)),
     );
   }
 
