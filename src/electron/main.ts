@@ -7,10 +7,10 @@ import { app, BrowserWindow } from "electron";
 
 import { appConfig } from "@/app-config.ts";
 import { configureWindowIpc } from "@/electron/application/configure-window-ipc.ts";
-import { type AppStateStorage } from "@/electron/storage/app-state/app-state-storage.ts";
 import { getAppStateStorageDirectory } from "@/electron/storage/app-state/get-app-state-storage-directory.ts";
 import { logCause } from "@/logging/log-cause.ts";
 import { makeElectronRuntime } from "@/runtimes/electron-runtime.ts";
+import { type AppStateService } from "@/services/app-state/app-state-service.ts";
 
 import { createWindow } from "./application/create-window.ts";
 import { runElectronApplication } from "./application/run-electron-application.ts";
@@ -44,7 +44,7 @@ function runElectronMain() {
     };
 
     const runProgram = <A, ProgramError>(
-      effect: E.Effect<A, ProgramError, Path.Path | AppStateStorage>,
+      effect: E.Effect<A, ProgramError, Path.Path | AppStateService>,
     ) => {
       electronRuntime.runFork(
         effect.pipe(

@@ -13,7 +13,7 @@ import {
   showWindow,
 } from "@/electron/ipc/handlers/window-handlers.ts";
 import { type AppStateStorage } from "@/electron/storage/app-state/app-state-storage.ts";
-import { type AppStateUpdateWorker } from "@/services/app-state/app-state-update-worker/app-state-update-worker-service.ts";
+import { type AppStateUpdateWorker } from "@/services/app-state/app-state-service.ts";
 
 export function configureWindowIpc(
   runtime: ManagedRuntime.ManagedRuntime<

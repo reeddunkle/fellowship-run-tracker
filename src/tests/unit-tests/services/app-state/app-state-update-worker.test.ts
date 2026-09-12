@@ -6,7 +6,7 @@ import { makeAppStateUpdateWorkerTestHarness } from "@/tests/common/harnesses/ap
 import { runTest } from "@/tests/common/run-test.ts";
 
 describe("AppStateUpdateWorker", () => {
-  test("processes a submitted app state", async () => {
+  test("processes an app state update", async () => {
     const program = E.scoped(
       E.gen(function* () {
         const harness = yield* makeAppStateUpdateWorkerTestHarness();
@@ -16,17 +16,15 @@ describe("AppStateUpdateWorker", () => {
           sidebarOpen: !DEFAULT_APP_STATE.sidebarOpen,
         };
 
-        const { process, submission } =
-          yield* harness.startAndTakeProcess(appState);
+        const submission = yield* harness.start(appState);
+        const update = yield* harness.takeUpdate();
 
-        expect(process.state).toEqual(appState);
+        expect(update.state).toEqual(appState);
 
-        yield* process.succeed;
+        yield* update.succeed;
         yield* submission.join;
 
-        const processedStates = yield* harness.getProcessedStates();
-
-        expect(processedStates).toEqual([appState]);
+        expect(yield* harness.getUpdatedStates()).toEqual([appState]);
       }),
     );
 
@@ -56,35 +54,36 @@ describe("AppStateUpdateWorker", () => {
         };
 
         const firstSubmission = yield* harness.start(firstState);
-        const firstProcess = yield* harness.takeProcess();
+        const firstUpdate = yield* harness.takeUpdate();
 
-        expect(firstProcess.state).toEqual(firstState);
+        expect(firstUpdate.state).toEqual(firstState);
 
         const secondSubmission = yield* harness.start(secondState);
         const latestSubmission = yield* harness.start(latestState);
 
-        yield* firstProcess.succeed;
+        yield* firstUpdate.succeed;
 
-        const latestProcess = yield* harness.takeProcess();
+        const latestUpdate = yield* harness.takeUpdate();
 
-        expect(latestProcess.state).toEqual(latestState);
+        expect(latestUpdate.state).toEqual(latestState);
 
-        yield* latestProcess.succeed;
+        yield* latestUpdate.succeed;
 
         yield* firstSubmission.join;
         yield* secondSubmission.join;
         yield* latestSubmission.join;
 
-        const processedStates = yield* harness.getProcessedStates();
-
-        expect(processedStates).toEqual([firstState, latestState]);
+        expect(yield* harness.getUpdatedStates()).toEqual([
+          firstState,
+          latestState,
+        ]);
       }),
     );
 
     await runTest(program);
   });
 
-  test("fails coalesced submissions when processing the latest state fails", async () => {
+  test("fails coalesced submissions when the latest update fails", async () => {
     const program = E.scoped(
       E.gen(function* () {
         const harness =
@@ -108,20 +107,21 @@ describe("AppStateUpdateWorker", () => {
         };
 
         const firstSubmission = yield* harness.start(firstState);
-        const firstProcess = yield* harness.takeProcess();
+        const firstUpdate = yield* harness.takeUpdate();
+
+        expect(firstUpdate.state).toEqual(firstState);
 
         const secondSubmission = yield* harness.start(secondState);
         const latestSubmission = yield* harness.start(latestState);
 
-        yield* firstProcess.succeed;
-
-        const latestProcess = yield* harness.takeProcess();
-
-        expect(latestProcess.state).toEqual(latestState);
-
-        yield* latestProcess.fail("latest update failed");
-
+        yield* firstUpdate.succeed;
         yield* firstSubmission.join;
+
+        const latestUpdate = yield* harness.takeUpdate();
+
+        expect(latestUpdate.state).toEqual(latestState);
+
+        yield* latestUpdate.fail("latest update failed");
 
         const secondResult = yield* secondSubmission.result;
         const latestResult = yield* latestSubmission.result;
@@ -129,47 +129,9 @@ describe("AppStateUpdateWorker", () => {
         expect(secondResult._tag).toBe("Failure");
         expect(latestResult._tag).toBe("Failure");
 
-        const processedStates = yield* harness.getProcessedStates();
-
-        expect(processedStates).toEqual([firstState, latestState]);
-      }),
-    );
-
-    await runTest(program);
-  });
-
-  test("processes subsequent app states after completing a batch", async () => {
-    const program = E.scoped(
-      E.gen(function* () {
-        const harness = yield* makeAppStateUpdateWorkerTestHarness();
-
-        const firstState = {
-          ...DEFAULT_APP_STATE,
-          sidebarOpen: false,
-        };
-
-        const secondState = {
-          ...DEFAULT_APP_STATE,
-          sidebarOpen: true,
-        };
-
-        const first = yield* harness.startAndTakeProcess(firstState);
-
-        expect(first.process.state).toEqual(firstState);
-
-        yield* first.process.succeed;
-        yield* first.submission.join;
-
-        const second = yield* harness.startAndTakeProcess(secondState);
-
-        expect(second.process.state).toEqual(secondState);
-
-        yield* second.process.succeed;
-        yield* second.submission.join;
-
-        expect(yield* harness.getProcessedStates()).toEqual([
+        expect(yield* harness.getUpdatedStates()).toEqual([
           firstState,
-          secondState,
+          latestState,
         ]);
       }),
     );
@@ -193,22 +155,24 @@ describe("AppStateUpdateWorker", () => {
           sidebarOpen: true,
         };
 
-        const failed = yield* harness.startAndTakeProcess(failedState);
+        const failedSubmission = yield* harness.start(failedState);
+        const failedUpdate = yield* harness.takeUpdate();
 
-        yield* failed.process.fail("update failed");
+        expect(failedUpdate.state).toEqual(failedState);
 
-        const failedResult = yield* failed.submission.result;
+        yield* failedUpdate.fail("update failed");
 
-        expect(failedResult._tag).toBe("Failure");
+        expect((yield* failedSubmission.result)._tag).toBe("Failure");
 
-        const next = yield* harness.startAndTakeProcess(nextState);
+        const nextSubmission = yield* harness.start(nextState);
+        const nextUpdate = yield* harness.takeUpdate();
 
-        expect(next.process.state).toEqual(nextState);
+        expect(nextUpdate.state).toEqual(nextState);
 
-        yield* next.process.succeed;
-        yield* next.submission.join;
+        yield* nextUpdate.succeed;
+        yield* nextSubmission.join;
 
-        expect(yield* harness.getProcessedStates()).toEqual([
+        expect(yield* harness.getUpdatedStates()).toEqual([
           failedState,
           nextState,
         ]);

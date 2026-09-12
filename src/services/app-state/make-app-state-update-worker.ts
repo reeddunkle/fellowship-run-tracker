@@ -6,18 +6,24 @@ import type * as Scope from "effect/Scope";
 
 import { type AppState } from "@/electron/storage/app-state/app-state-schema.ts";
 
-import { type AppStateUpdateWorkerService } from "./app-state-update-worker-service.ts";
-
-type AppStateUpdateRequest<E> = {
-  readonly deferred: Deferred.Deferred<void, E>;
+type AppStateUpdateRequest<ProcessError> = {
+  readonly deferred: Deferred.Deferred<void, ProcessError>;
   readonly state: AppState;
 };
 
-export function makeAppStateUpdateWorker<E, R>(
-  process: (state: AppState) => E.Effect<void, E, R>,
-): E.Effect<AppStateUpdateWorkerService, never, R | Scope.Scope> {
+export type AppStateUpdateWorker<ProcessError> = {
+  readonly set: (state: AppState) => E.Effect<void, ProcessError>;
+};
+
+export function makeAppStateUpdateWorker<ProcessError, Requirements>(
+  process: (state: AppState) => E.Effect<void, ProcessError, Requirements>,
+): E.Effect<
+  AppStateUpdateWorker<ProcessError>,
+  never,
+  Requirements | Scope.Scope
+> {
   return E.gen(function* () {
-    const queue = yield* Queue.unbounded<AppStateUpdateRequest<E>>();
+    const queue = yield* Queue.unbounded<AppStateUpdateRequest<ProcessError>>();
 
     const processBatch = E.gen(function* () {
       const requests = yield* Queue.takeAll(queue);
@@ -34,15 +40,15 @@ export function makeAppStateUpdateWorker<E, R>(
       });
     });
 
-    const processLoop: E.Effect<never, never, R> = E.suspend(() => {
+    const processLoop: E.Effect<never, never, Requirements> = E.suspend(() => {
       return processBatch.pipe(E.andThen(processLoop));
     });
 
     yield* processLoop.pipe(E.tapCause(E.logError), E.forkScoped);
 
-    const submit = (state: AppState) => {
+    const set = (state: AppState) => {
       return E.gen(function* () {
-        const deferred = yield* Deferred.make<void, E>();
+        const deferred = yield* Deferred.make<void, ProcessError>();
 
         yield* Queue.offer(queue, {
           deferred,
@@ -54,7 +60,7 @@ export function makeAppStateUpdateWorker<E, R>(
     };
 
     return {
-      submit,
+      set,
     };
   });
 }

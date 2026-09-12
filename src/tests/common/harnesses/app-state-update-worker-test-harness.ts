@@ -5,29 +5,28 @@ import * as Queue from "effect/Queue";
 import * as Ref from "effect/Ref";
 
 import { type AppState } from "@/electron/storage/app-state/app-state-schema.ts";
-import { makeAppStateUpdateWorker } from "@/services/app-state/app-state-update-worker/make-app-state-update-worker.ts";
+import { makeAppStateUpdateWorker } from "@/services/app-state/make-app-state-update-worker.ts";
 
-type ProcessRequest<ProcessError> = {
-  readonly deferred: Deferred.Deferred<void, ProcessError>;
+type UpdateRequest<UpdateError> = {
+  readonly deferred: Deferred.Deferred<void, UpdateError>;
   readonly state: AppState;
 };
 
-export function makeAppStateUpdateWorkerTestHarness<ProcessError = never>() {
+export function makeAppStateUpdateWorkerTestHarness<UpdateError = never>() {
   return E.gen(function* () {
-    const processingRequests =
-      yield* Queue.unbounded<ProcessRequest<ProcessError>>();
+    const updateRequests = yield* Queue.unbounded<UpdateRequest<UpdateError>>();
 
-    const processedStatesRef = yield* Ref.make<ReadonlyArray<AppState>>([]);
+    const updatedStatesRef = yield* Ref.make<ReadonlyArray<AppState>>([]);
 
     const worker = yield* makeAppStateUpdateWorker((state) => {
       return E.gen(function* () {
-        const deferred = yield* Deferred.make<void, ProcessError>();
+        const deferred = yield* Deferred.make<void, UpdateError>();
 
-        yield* Ref.update(processedStatesRef, (processedStates) => {
-          return [...processedStates, state];
+        yield* Ref.update(updatedStatesRef, (updatedStates) => {
+          return [...updatedStates, state];
         });
 
-        yield* Queue.offer(processingRequests, {
+        yield* Queue.offer(updateRequests, {
           deferred,
           state,
         });
@@ -38,7 +37,7 @@ export function makeAppStateUpdateWorkerTestHarness<ProcessError = never>() {
 
     const start = (state: AppState) => {
       return E.gen(function* () {
-        const fiber = yield* E.forkChild(worker.submit(state));
+        const fiber = yield* E.forkChild(worker.set(state));
         const join = Fiber.join(fiber);
 
         return {
@@ -48,11 +47,11 @@ export function makeAppStateUpdateWorkerTestHarness<ProcessError = never>() {
       });
     };
 
-    const takeProcess = () => {
+    const takeUpdate = () => {
       return E.gen(function* () {
-        const request = yield* Queue.take(processingRequests);
+        const request = yield* Queue.take(updateRequests);
 
-        const fail = (error: ProcessError) => {
+        const fail = (error: UpdateError) => {
           return Deferred.fail(request.deferred, error).pipe(E.asVoid);
         };
 
@@ -68,28 +67,14 @@ export function makeAppStateUpdateWorkerTestHarness<ProcessError = never>() {
       });
     };
 
-    const startAndTakeProcess = (state: AppState) => {
-      return E.gen(function* () {
-        const submission = yield* start(state);
-        const process = yield* takeProcess();
-
-        return {
-          process,
-          submission,
-        };
-      });
-    };
-
-    const getProcessedStates = () => {
-      return Ref.get(processedStatesRef);
+    const getUpdatedStates = () => {
+      return Ref.get(updatedStatesRef);
     };
 
     return {
-      getProcessedStates,
+      getUpdatedStates,
       start,
-      startAndTakeProcess,
-      takeProcess,
-      worker,
+      takeUpdate,
     };
   });
 }

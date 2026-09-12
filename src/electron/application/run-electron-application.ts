@@ -2,7 +2,7 @@ import * as E from "effect/Effect";
 import { nativeTheme } from "electron";
 
 import { type AppState } from "@/electron/storage/app-state/app-state-schema.ts";
-import { AppStateStorage } from "@/electron/storage/app-state/app-state-storage.ts";
+import { AppStateService } from "@/services/app-state/app-state-service.ts";
 
 import { type CreateWindowOptions, createWindow } from "./create-window.ts";
 
@@ -17,8 +17,8 @@ function applyNativeTheme(theme: AppState["theme"]) {
 export function runElectronApplication(options: RunElectronApplicationOptions) {
   return E.scoped(
     E.gen(function* () {
-      const appStateStorage = yield* AppStateStorage;
-      const appState = yield* appStateStorage.get;
+      const appStateService = yield* AppStateService;
+      const appState = yield* appStateService.get;
 
       yield* applyNativeTheme(appState.theme);
 

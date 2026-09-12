@@ -1,6 +1,5 @@
 import * as E from "effect/Effect";
 
-import * as appStateClient from "@/electron/renderer/api/electron-ipc/app-state/app-state-client.ts";
 import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
 import {
   type AppState,
@@ -8,7 +7,8 @@ import {
   type DungeonRunTimeColumnState,
   type Theme,
 } from "@/electron/storage/app-state/app-state-schema.ts";
-import { AppStateUpdateWorker } from "@/services/app-state-update-worker/app-state-update-worker-service.ts";
+import { AppStateInitializationError } from "@/errors/app-state-error.ts";
+import { AppStateService } from "@/services/app-state/app-state-service.ts";
 import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";
 
 type Listener = () => void;
@@ -29,7 +29,7 @@ export type AppStoreActions = {
 
 export type AppStore = {
   readonly getSnapshot: () => AppState;
-  readonly initialize: E.Effect<void, Error>;
+  readonly initialize: E.Effect<void, AppStateInitializationError>;
   readonly subscribe: (listener: Listener) => () => void;
 } & AppStoreActions;
 
@@ -48,9 +48,9 @@ export function makeAppStore(): AppStore {
   function persist(state: AppState): void {
     browserRuntime.runFork(
       E.gen(function* () {
-        const appStateUpdateWorker = yield* AppStateUpdateWorker;
+        const appStateService = yield* AppStateService;
 
-        yield* appStateUpdateWorker.submit(state);
+        yield* appStateService.set(state);
       }).pipe(E.catchCause(E.logError)),
     );
   }
@@ -69,14 +69,32 @@ export function makeAppStore(): AppStore {
       return E.void;
     }
 
-    return E.gen(function* () {
-      const state = yield* appStateClient.getAppState;
+    return E.tryPromise({
+      catch: (cause) => {
+        return new AppStateInitializationError({
+          cause,
+        });
+      },
+      try: () => {
+        return browserRuntime.runPromise(
+          E.gen(function* () {
+            const appStateService = yield* AppStateService;
 
-      snapshot = state;
-      isInitialized = true;
+            return yield* appStateService.get;
+          }),
+        );
+      },
+    }).pipe(
+      E.tap((state) => {
+        return E.sync(() => {
+          snapshot = state;
+          isInitialized = true;
 
-      emit();
-    });
+          emit();
+        });
+      }),
+      E.asVoid,
+    );
   });
 
   function setDungeonRunTimeColumns(
