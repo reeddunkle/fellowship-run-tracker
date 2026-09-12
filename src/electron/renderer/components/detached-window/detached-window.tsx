@@ -1,16 +1,14 @@
+import * as Deferred from "effect/Deferred";
 import * as E from "effect/Effect";
 import * as Fiber from "effect/Fiber";
-import {
-  type ReactNode,
-  useCallback,
-  useRef,
-  useSyncExternalStore,
-} from "react";
+import { type ReactNode, useCallback } from "react";
 import { createPortal } from "react-dom";
 
 import * as windowClient from "@/electron/renderer/api/electron-ipc/window/window-client.ts";
 import { useDetachedWindow } from "@/electron/renderer/components/detached-window/detached-window-provider";
 import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
+
+const SCROLLBAR_GUTTER_WIDTH = 30;
 
 function copyDocumentStyles({
   sourceDocument,
@@ -45,6 +43,20 @@ function configureDetachedDocument({
   targetDocument.body.className = sourceDocument.body.className;
 }
 
+function waitForAnimationFrame(window: Window) {
+  return E.gen(function* () {
+    const deferred = yield* Deferred.make<void>();
+
+    yield* E.sync(() => {
+      window.requestAnimationFrame(() => {
+        browserRuntime.runFork(Deferred.succeed(deferred, undefined));
+      });
+    });
+
+    return yield* Deferred.await(deferred);
+  });
+}
+
 function createDetachedWindowContainer(document: Document) {
   const container = document.createElement("div");
 
@@ -62,8 +74,6 @@ function createDetachedWindowContainer(document: Document) {
 
   return container;
 }
-
-const SCROLLBAR_GUTTER_WIDTH = 30;
 
 function resizeDetachedWindowToContent({
   childContainer,
@@ -83,16 +93,16 @@ function resizeDetachedWindowToContent({
       window: childWindow,
     });
 
-    yield* E.promise(() => {
-      return new Promise<void>((resolve) => {
-        childWindow.requestAnimationFrame(() => {
-          childDocument.documentElement.style.overflowY = "auto";
-          resolve();
-        });
-      });
-    });
+    yield* waitForAnimationFrame(childWindow);
+
+    childDocument.documentElement.style.overflowY = "auto";
   });
 }
+
+type DetachedWindowResizeState = {
+  animationFrameId: number | undefined;
+  isActive: boolean;
+};
 
 function observeDetachedWindowContent({
   childContainer,
@@ -103,29 +113,54 @@ function observeDetachedWindowContent({
   readonly childWindow: Window;
   readonly resizeToContent: E.Effect<void, unknown>;
 }) {
-  let animationFrameId: number | undefined;
+  return E.acquireRelease(
+    E.sync(() => {
+      const resizeState: DetachedWindowResizeState = {
+        animationFrameId: undefined,
+        isActive: true,
+      };
 
-  const resizeObserver = new ResizeObserver(() => {
-    if (animationFrameId !== undefined) {
-      childWindow.cancelAnimationFrame(animationFrameId);
-    }
+      const resizeObserver = new ResizeObserver(() => {
+        if (!resizeState.isActive) {
+          return;
+        }
 
-    animationFrameId = childWindow.requestAnimationFrame(() => {
-      animationFrameId = undefined;
+        if (resizeState.animationFrameId !== undefined) {
+          childWindow.cancelAnimationFrame(resizeState.animationFrameId);
+        }
 
-      browserRuntime.runFork(resizeToContent.pipe(E.catchCause(E.logError)));
-    });
-  });
+        resizeState.animationFrameId = childWindow.requestAnimationFrame(() => {
+          resizeState.animationFrameId = undefined;
 
-  resizeObserver.observe(childContainer);
+          if (!resizeState.isActive) {
+            return;
+          }
 
-  return () => {
-    if (animationFrameId !== undefined) {
-      childWindow.cancelAnimationFrame(animationFrameId);
-    }
+          browserRuntime.runFork(
+            resizeToContent.pipe(E.catchCause(E.logError)),
+          );
+        });
+      });
 
-    resizeObserver.unobserve(childContainer);
-  };
+      resizeObserver.observe(childContainer);
+
+      return {
+        resizeObserver,
+        resizeState,
+      };
+    }),
+    ({ resizeObserver, resizeState }) => {
+      return E.sync(() => {
+        resizeState.isActive = false;
+
+        if (resizeState.animationFrameId !== undefined) {
+          childWindow.cancelAnimationFrame(resizeState.animationFrameId);
+        }
+
+        resizeObserver.disconnect();
+      });
+    },
+  );
 }
 
 type DetachedWindowProps = {
@@ -134,11 +169,11 @@ type DetachedWindowProps = {
 };
 
 function DetachedWindow({ children, onClose }: DetachedWindowProps) {
-  const childContainerRef = useRef<HTMLElement | null>(null);
-  const { setPortalContainer, setResizeToContent } = useDetachedWindow();
+  const { portalContainer, setPortalContainer, setResizeToContent } =
+    useDetachedWindow();
 
-  const subscribe = useCallback(
-    (onStoreChange: () => void) => {
+  const detachedWindowRef = useCallback(
+    (_hostElement: HTMLDivElement) => {
       const childWindow = window.open(
         "",
         "tracking-window",
@@ -146,7 +181,7 @@ function DetachedWindow({ children, onClose }: DetachedWindowProps) {
       );
 
       if (childWindow === null) {
-        return () => {};
+        return;
       }
 
       const childDocument = childWindow.document;
@@ -163,9 +198,7 @@ function DetachedWindow({ children, onClose }: DetachedWindowProps) {
 
       const childContainer = createDetachedWindowContainer(childDocument);
 
-      childContainerRef.current = childContainer;
-
-      setPortalContainer(childDocument.body);
+      setPortalContainer(childContainer);
 
       const resizeToContent = resizeDetachedWindowToContent({
         childContainer,
@@ -176,84 +209,45 @@ function DetachedWindow({ children, onClose }: DetachedWindowProps) {
         browserRuntime.runFork(resizeToContent.pipe(E.catchCause(E.logError)));
       });
 
-      let stopObservingContent: (() => void) | undefined;
-      let initializationFrameId: number | undefined;
-      let isCancelled = false;
+      const runDetachedWindow = E.scoped(
+        E.gen(function* () {
+          yield* E.promise(() => {
+            return childDocument.fonts.ready;
+          });
 
-      const clearReferences = () => {
-        setPortalContainer(null);
-        setResizeToContent(null);
+          yield* waitForAnimationFrame(childWindow);
 
-        childContainerRef.current = null;
-      };
+          yield* resizeToContent;
+
+          yield* observeDetachedWindowContent({
+            childContainer,
+            childWindow,
+            resizeToContent,
+          });
+
+          childWindow.electronAPI.showWindow();
+
+          return yield* E.never;
+        }),
+      );
+
+      const lifecycleFiber = browserRuntime.runFork(
+        runDetachedWindow.pipe(E.catchCause(E.logError)),
+      );
 
       const handleClose = () => {
-        stopObservingContent?.();
-        clearReferences();
-
-        onStoreChange();
         onClose();
       };
 
       childWindow.addEventListener("beforeunload", handleClose);
 
-      // Publish the container to `useSyncExternalStore`.
-      onStoreChange();
-
-      const initializeWindow = E.gen(function* () {
-        yield* E.promise(() => {
-          return childDocument.fonts.ready;
-        });
-
-        if (isCancelled) {
-          return;
-        }
-
-        yield* E.promise(() => {
-          return new Promise<void>((resolve) => {
-            initializationFrameId = childWindow.requestAnimationFrame(() => {
-              resolve();
-            });
-          });
-        });
-
-        if (isCancelled) {
-          return;
-        }
-
-        yield* resizeToContent;
-
-        if (isCancelled) {
-          return;
-        }
-
-        stopObservingContent = observeDetachedWindowContent({
-          childContainer,
-          childWindow,
-          resizeToContent,
-        });
-
-        childWindow.electronAPI.showWindow();
-      });
-
-      const initializationFiber = browserRuntime.runFork(
-        initializeWindow.pipe(E.catchCause(E.logError)),
-      );
-
       return () => {
-        isCancelled = true;
-
-        browserRuntime.runFork(Fiber.interrupt(initializationFiber));
-
-        if (initializationFrameId !== undefined) {
-          childWindow.cancelAnimationFrame(initializationFrameId);
-        }
-
-        stopObservingContent?.();
-
         childWindow.removeEventListener("beforeunload", handleClose);
 
-        clearReferences();
+        browserRuntime.runFork(Fiber.interrupt(lifecycleFiber));
+
+        setPortalContainer(null);
+        setResizeToContent(null);
 
         if (!childWindow.closed) {
           childWindow.close();
@@ -263,25 +257,15 @@ function DetachedWindow({ children, onClose }: DetachedWindowProps) {
     [onClose, setPortalContainer, setResizeToContent],
   );
 
-  const getSnapshot = useCallback(() => {
-    return childContainerRef.current;
-  }, []);
+  return (
+    <>
+      <div hidden ref={detachedWindowRef} />
 
-  const getServerSnapshot = useCallback(() => {
-    return null;
-  }, []);
-
-  const childContainer = useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getServerSnapshot,
+      {portalContainer === null
+        ? null
+        : createPortal(children, portalContainer)}
+    </>
   );
-
-  if (childContainer === null) {
-    return null;
-  }
-
-  return createPortal(children, childContainer);
 }
 
 type ManagedDetachedWindowProps = {

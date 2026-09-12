@@ -8,7 +8,7 @@ import {
 
 const ETERNAL_DUNGEON_LEVEL_OFFSET = 20;
 
-export const AbsoluteDungeonLevelSchema = Schema.Number.check(
+export const AbsoluteDungeonLevelSchema = Schema.Finite.check(
   Schema.isInt(),
   Schema.isGreaterThanOrEqualTo(0),
 );

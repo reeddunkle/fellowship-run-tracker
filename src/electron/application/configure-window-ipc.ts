@@ -19,8 +19,8 @@ const GetDirectoryPathArgsSchema = Schema.Struct({
 });
 
 const ResizeWindowToContentArgsSchema = Schema.Struct({
-  height: Schema.Number,
-  width: Schema.Number,
+  height: Schema.Finite,
+  width: Schema.Finite,
 });
 
 export function configureWindowIpc(

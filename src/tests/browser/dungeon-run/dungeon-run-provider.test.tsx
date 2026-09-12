@@ -1,11 +1,9 @@
-import * as E from "effect/Effect";
 import * as Stream from "effect/Stream";
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 import { render } from "vitest-browser-react";
 
 import { API_CONNECTION_STATE } from "@/electron/renderer/api/common.ts";
 import { type DungeonRunEventStreamEvent } from "@/electron/renderer/api/dungeon-run/dungeon-run-event-stream.ts";
-import { type AppStore } from "@/electron/renderer/stores/app-state-store/app-state-store.ts";
 import { makeDungeonRunEventStore } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-event-store.ts";
 import {
   DungeonRunProvider,
@@ -13,32 +11,12 @@ import {
   useDungeonRunInterpretationState,
   useDungeonRunServerState,
 } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-provider.tsx";
-import {
-  DEFAULT_APP_STATE,
-  DUNGEON_RUN_TIME_COLUMN,
-} from "@/electron/storage/app-state/app-state-schema.ts";
 import { type DungeonRunApiHistory } from "@/services/api/dungeon-run/dungeon-run-api-schema.ts";
 import { MOCK_CONFIGURATION_ID } from "@/tests/common/fixtures/configuration-fixtures.ts";
 import {
   MOCK_DUNGEON_RUN_API_MESSAGE,
   MOCK_DUNGEON_RUN_STATE_API,
 } from "@/tests/common/fixtures/dungeon-run-api-fixtures.ts";
-
-function makeAppStoreTest(): AppStore {
-  return {
-    getSnapshot: () => {
-      return DEFAULT_APP_STATE;
-    },
-    initialize: E.void,
-    setDungeonRunVisibleTimeColumns: vi.fn(),
-    setSelectedConfigurationId: vi.fn(),
-    setSidebarOpen: vi.fn(),
-    setTheme: vi.fn(),
-    subscribe: () => {
-      return () => {};
-    },
-  };
-}
 
 function DungeonRunProviderConsumer() {
   const {
@@ -51,13 +29,9 @@ function DungeonRunProviderConsumer() {
 
   const {
     collapseAllMilestones,
-    comparison,
     expandAllMilestones,
     isMilestoneExpanded,
-    setComparison,
     setMilestoneExpanded,
-    setTimeColumnVisible,
-    visibleTimeColumns,
   } = useDungeonRunDisplayState();
 
   return (
@@ -78,26 +52,9 @@ function DungeonRunProviderConsumer() {
         {latestObservation?.targetId ?? "No observation"}
       </div>
 
-      <div data-testid="comparison">{comparison}</div>
-
       <div data-testid="milestone-1">
         {isMilestoneExpanded("1") ? "Expanded" : "Collapsed"}
       </div>
-
-      <div data-testid="delta-visible">
-        {visibleTimeColumns.has(DUNGEON_RUN_TIME_COLUMN.DELTA)
-          ? "Visible"
-          : "Hidden"}
-      </div>
-
-      <button
-        onClick={() => {
-          setComparison("MEDIAN");
-        }}
-        type="button"
-      >
-        Use median
-      </button>
 
       <button
         onClick={() => {
@@ -114,15 +71,6 @@ function DungeonRunProviderConsumer() {
 
       <button onClick={collapseAllMilestones} type="button">
         Collapse all
-      </button>
-
-      <button
-        onClick={() => {
-          setTimeColumnVisible(DUNGEON_RUN_TIME_COLUMN.DELTA, false);
-        }}
-        type="button"
-      >
-        Hide delta
       </button>
     </div>
   );
@@ -210,11 +158,7 @@ describe("DungeonRunProvider", () => {
     });
 
     const screen = await render(
-      <DungeonRunProvider
-        appStateStore={makeAppStoreTest()}
-        eventStore={eventStore}
-        history={null}
-      >
+      <DungeonRunProvider eventStore={eventStore} history={null}>
         <DungeonRunProviderConsumer />
       </DungeonRunProvider>,
     );
@@ -240,10 +184,6 @@ describe("DungeonRunProvider", () => {
       .toHaveTextContent("No observation");
 
     await expect
-      .element(screen.getByTestId("comparison"))
-      .toHaveTextContent("BEST");
-
-    await expect
       .element(screen.getByTestId("milestone-1"))
       .toHaveTextContent("Collapsed");
   });
@@ -267,11 +207,7 @@ describe("DungeonRunProvider", () => {
     });
 
     const screen = await render(
-      <DungeonRunProvider
-        appStateStore={makeAppStoreTest()}
-        eventStore={eventStore}
-        history={null}
-      >
+      <DungeonRunProvider eventStore={eventStore} history={null}>
         <DungeonRunProviderConsumer />
       </DungeonRunProvider>,
     );
@@ -366,11 +302,7 @@ describe("DungeonRunProvider", () => {
     });
 
     const screen = await render(
-      <DungeonRunProvider
-        appStateStore={makeAppStoreTest()}
-        eventStore={eventStore}
-        history={history}
-      >
+      <DungeonRunProvider eventStore={eventStore} history={history}>
         <DungeonRunInterpretationConsumer />
       </DungeonRunProvider>,
     );
@@ -464,11 +396,7 @@ describe("DungeonRunProvider", () => {
     });
 
     const screen = await render(
-      <DungeonRunProvider
-        appStateStore={makeAppStoreTest()}
-        eventStore={eventStore}
-        history={null}
-      >
+      <DungeonRunProvider eventStore={eventStore} history={null}>
         <DungeonRunInterpretationConsumer />
       </DungeonRunProvider>,
     );
@@ -536,11 +464,7 @@ describe("DungeonRunProvider", () => {
     });
 
     const screen = await render(
-      <DungeonRunProvider
-        appStateStore={makeAppStoreTest()}
-        eventStore={eventStore}
-        history={history}
-      >
+      <DungeonRunProvider eventStore={eventStore} history={history}>
         <DungeonRunInterpretationConsumer />
       </DungeonRunProvider>,
     );
@@ -564,30 +488,6 @@ describe("DungeonRunProvider", () => {
       .toHaveTextContent("None");
   });
 
-  test("updates comparison state", async () => {
-    const eventStore = makeDungeonRunEventStore({
-      makeEventStream: () => {
-        return Stream.never;
-      },
-    });
-
-    const screen = await render(
-      <DungeonRunProvider
-        appStateStore={makeAppStoreTest()}
-        eventStore={eventStore}
-        history={null}
-      >
-        <DungeonRunProviderConsumer />
-      </DungeonRunProvider>,
-    );
-
-    await screen.getByRole("button", { name: "Use median" }).click();
-
-    await expect
-      .element(screen.getByTestId("comparison"))
-      .toHaveTextContent("MEDIAN");
-  });
-
   test("updates milestone expansion state", async () => {
     const eventStore = makeDungeonRunEventStore({
       makeEventStream: () => {
@@ -596,11 +496,7 @@ describe("DungeonRunProvider", () => {
     });
 
     const screen = await render(
-      <DungeonRunProvider
-        appStateStore={makeAppStoreTest()}
-        eventStore={eventStore}
-        history={null}
-      >
+      <DungeonRunProvider eventStore={eventStore} history={null}>
         <DungeonRunProviderConsumer />
       </DungeonRunProvider>,
     );
@@ -622,38 +518,5 @@ describe("DungeonRunProvider", () => {
     await expect
       .element(screen.getByTestId("milestone-1"))
       .toHaveTextContent("Expanded");
-  });
-
-  test("persists visible time column changes through the app store", async () => {
-    const setDungeonRunVisibleTimeColumns = vi.fn();
-
-    const appStateStore = {
-      ...makeAppStoreTest(),
-      setDungeonRunVisibleTimeColumns,
-    } satisfies AppStore;
-
-    const eventStore = makeDungeonRunEventStore({
-      makeEventStream: () => {
-        return Stream.never;
-      },
-    });
-
-    const screen = await render(
-      <DungeonRunProvider
-        appStateStore={appStateStore}
-        eventStore={eventStore}
-        history={null}
-      >
-        <DungeonRunProviderConsumer />
-      </DungeonRunProvider>,
-    );
-
-    await screen.getByRole("button", { name: "Hide delta" }).click();
-
-    expect(setDungeonRunVisibleTimeColumns).toHaveBeenCalledOnce();
-
-    expect(setDungeonRunVisibleTimeColumns).toHaveBeenCalledWith(
-      expect.not.arrayContaining([DUNGEON_RUN_TIME_COLUMN.DELTA]),
-    );
   });
 });

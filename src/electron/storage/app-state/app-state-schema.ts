@@ -24,7 +24,7 @@ export type DungeonRunTimeColumn = typeof DungeonRunTimeColumnSchema.Type;
 
 export const DungeonRunTimeColumnStateSchema = Schema.Struct({
   column: DungeonRunTimeColumnSchema,
-  displayOrder: Schema.Number,
+  displayOrder: Schema.Finite,
   isVisible: Schema.Boolean,
 });
 

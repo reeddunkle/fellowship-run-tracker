@@ -54,15 +54,12 @@ export function DetachedWindowProvider({
     resizeToContentRef.current?.();
   }, []);
 
-  const setResizeToContent = useCallback(
-    (nextResizeToContent: ResizeToContent | null) => {
-      resizeToContentRef.current = nextResizeToContent;
-    },
-    [],
-  );
+  const setResizeToContent = useCallback((value: ResizeToContent | null) => {
+    resizeToContentRef.current = value;
+  }, []);
 
-  const value = useMemo(
-    () => ({
+  const contextValue = useMemo<DetachedWindowContextValue>(() => {
+    return {
       close,
       isOpen,
       open,
@@ -70,12 +67,20 @@ export function DetachedWindowProvider({
       resizeToContent,
       setPortalContainer,
       setResizeToContent,
-    }),
-    [close, isOpen, open, portalContainer, resizeToContent, setResizeToContent],
-  );
+    };
+  }, [
+    close,
+    isOpen,
+    open,
+    portalContainer,
+    resizeToContent,
+    setResizeToContent,
+  ]);
 
   return (
-    <DetachedWindowContext value={value}>{children}</DetachedWindowContext>
+    <DetachedWindowContext value={contextValue}>
+      {children}
+    </DetachedWindowContext>
   );
 }
 
