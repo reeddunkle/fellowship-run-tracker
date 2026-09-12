@@ -10,4 +10,6 @@ export type AppStateUpdateWorkerService = {
 export class AppStateUpdateWorker extends Context.Service<
   AppStateUpdateWorker,
   AppStateUpdateWorkerService
->()("app/AppStateUpdateWorker") {}
+>()(
+  "fellowship-run-tracker/services/app-state-update-worker/app-state-update-worker-service/AppStateUpdateWorker",
+) {}
