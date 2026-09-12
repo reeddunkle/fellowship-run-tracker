@@ -3,7 +3,7 @@ import * as Schema from "effect/Schema";
 
 import { AppStateSchema } from "@/electron/storage/app-state/app-state-schema.ts";
 import { AppStateStorage } from "@/electron/storage/app-state/app-state-storage.ts";
-import { AppStateUpdateWorker } from "@/services/app-state-update-worker/app-state-update-worker-service.ts";
+import { AppStateUpdateWorker } from "@/services/app-state/app-state-update-worker/app-state-update-worker-service.ts";
 
 export function getAppState() {
   return E.gen(function* () {

@@ -5,7 +5,7 @@ import * as Queue from "effect/Queue";
 import * as Ref from "effect/Ref";
 
 import { type AppState } from "@/electron/storage/app-state/app-state-schema.ts";
-import { makeAppStateUpdateWorker } from "@/services/app-state-update-worker/make-app-state-update-worker.ts";
+import { makeAppStateUpdateWorker } from "@/services/app-state/app-state-update-worker/make-app-state-update-worker.ts";
 
 type ProcessRequest<ProcessError> = {
   readonly deferred: Deferred.Deferred<void, ProcessError>;

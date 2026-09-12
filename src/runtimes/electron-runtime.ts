@@ -7,7 +7,7 @@ import {
   NodePathLive,
   NodePlatformLive,
 } from "@/layers/node-platform-layer.ts";
-import { ElectronAppStateUpdateWorkerLive } from "@/services/app-state-update-worker/electron-app-state-update-worker-live.ts";
+import { ElectronAppStateUpdateWorkerLive } from "@/services/app-state/app-state-update-worker/electron-app-state-update-worker-live.ts";
 
 export type MakeElectronRuntimeOptions = MakeApiLayerOptions & {
   readonly appStateStorageDirectory: string;
