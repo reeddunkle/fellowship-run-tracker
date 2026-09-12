@@ -1,19 +1,17 @@
 import * as Layer from "effect/Layer";
-import * as ManagedRuntime from "effect/ManagedRuntime";
 
 import { FellowshipTrackerLive } from "@/application/fellowship-tracker/fellowship-tracker-service.ts";
 import { FellowshipServicesLive } from "@/layers/fellowship-layer.ts";
 import { LiveSplitServicesLive } from "@/layers/live-split-layer.ts";
-import { NodePlatformLive } from "@/layers/node-platform-layer.ts";
 import { makePersistenceLayer } from "@/layers/persistence-layer.ts";
 import { DungeonRunWebSocketBroadcasterLive } from "@/services/api/websocket-broadcaster-service.ts";
 import { AppSettingsLive } from "@/services/app-settings/app-settings-service.ts";
 import { LiveSplitFileLive } from "@/services/live-split/files/live-split-file-service.ts";
 import { type DatabaseOptions } from "@/types/app-options.ts";
 
-export type MakeAutosplitRuntimeOptions = DatabaseOptions;
+export type MakeAutosplitLayerOptions = DatabaseOptions;
 
-export function makeAutosplitRuntime(options: MakeAutosplitRuntimeOptions) {
+export function makeAutosplitLayer(options: MakeAutosplitLayerOptions) {
   const PersistenceLive = makePersistenceLayer(options);
 
   const AppSettingsWithDependenciesLive = AppSettingsLive.pipe(
@@ -39,27 +37,10 @@ export function makeAutosplitRuntime(options: MakeAutosplitRuntimeOptions) {
     ),
   );
 
-  const AutosplitLive = Layer.mergeAll(
-    NodePlatformLive,
+  return Layer.mergeAll(
     PersistenceLive,
     FellowshipTrackerWithDependenciesLive,
     LiveSplitWithDependenciesLive,
     LiveSplitFileLive,
   );
-
-  return ManagedRuntime.make(AutosplitLive);
-}
-
-export type MakeGenerateLSSRuntimeOptions = DatabaseOptions;
-
-export function makeGenerateLSSRuntime(options: MakeGenerateLSSRuntimeOptions) {
-  const PersistenceLive = makePersistenceLayer(options);
-
-  const GenerateLSSLive = Layer.mergeAll(
-    NodePlatformLive,
-    PersistenceLive,
-    LiveSplitFileLive,
-  );
-
-  return ManagedRuntime.make(GenerateLSSLive);
 }

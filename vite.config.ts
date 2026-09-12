@@ -4,7 +4,7 @@ import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
 
-import { parseEnv } from "./src/env.ts";
+import { parseEnv } from "./src/parse-env.ts";
 
 const projectRoot = path.resolve(import.meta.dirname);
 

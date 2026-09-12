@@ -1,3 +1,4 @@
+import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
@@ -14,15 +15,22 @@ import { AppHttpApi } from "@/api/http/http-api.ts";
 import { DungeonRunEventsRoutes } from "@/api/websocket/dungeon-run/dungeon-run-events-route.ts";
 import { LiveSplitRoutes } from "@/api/websocket/live-split/live-split-route.ts";
 import { TrackingRoutes } from "@/api/websocket/tracking/tracking-route.ts";
-import { env } from "@/env.ts";
+import { appConfig } from "@/app-config.ts";
 
 import { DungeonRunsApiLive } from "./http/groups/dungeon-runs/dungeon-runs-api-live.ts";
 
-const CorsLive = HttpRouter.cors({
-  allowedOrigins: [
-    `http://${env.electronRenderer.host}:${env.electronRenderer.port}`,
-  ],
-});
+const CorsLive = Layer.unwrap(
+  E.all({
+    host: appConfig.electronRendererHost,
+    port: appConfig.electronRendererPort,
+  }).pipe(
+    E.map(({ host, port }) => {
+      return HttpRouter.cors({
+        allowedOrigins: [`http://${host}:${port}`],
+      });
+    }),
+  ),
+);
 
 const HttpApiRoutes = HttpApiBuilder.layer(AppHttpApi).pipe(
   Layer.provide(AbilitiesApiLive),
