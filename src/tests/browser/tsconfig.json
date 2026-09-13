@@ -4,8 +4,10 @@
     "types": ["vite/client", "vitest/browser"]
   },
   "include": [
-    "../../electron/renderer/electron-api.d.ts",
+    "../../electron/renderer/**/*.ts",
+    "../../electron/renderer/**/*.tsx",
     "./**/*.ts",
     "./**/*.tsx"
-  ]
+  ],
+  "exclude": []
 }

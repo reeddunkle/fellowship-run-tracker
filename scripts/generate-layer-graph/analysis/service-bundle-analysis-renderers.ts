@@ -1,12 +1,18 @@
 import * as A from "effect/Array";
 import { pipe } from "effect/Function";
+import * as Schema from "effect/Schema";
 
 import {
   type ServiceBundleAnalysis,
+  ServiceBundleAnalysisSchema,
   type ServiceBundleRelationship,
   type ServiceBundleRequirementReduction,
   type ServiceBundleServiceMembership,
 } from "./service-bundle-analysis.ts";
+
+const encodeBundleAnalysis = Schema.encodeSync(
+  Schema.fromJsonString(ServiceBundleAnalysisSchema),
+);
 
 function getMermaidNodeId(value: string): string {
   return value.replaceAll(/[^A-Za-z0-9_]/g, "_");
@@ -89,7 +95,7 @@ function renderRequirementReductionEdge(
 export function renderServiceBundleAnalysisJson(
   analysis: ServiceBundleAnalysis,
 ): string {
-  return `${JSON.stringify(analysis, null, 2)}\n`;
+  return `${encodeBundleAnalysis(analysis)}\n`;
 }
 
 export function renderServiceBundleMembershipsMermaid(

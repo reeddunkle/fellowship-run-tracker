@@ -86,8 +86,3 @@ export const FELLOWSHIP_DUNGEON = {
     name: "Xul, The Blood Monolith",
   },
 } as const satisfies Record<string, FellowshipDungeonDefinition>;
-
-// type FellowshipDungeonKey = keyof typeof FELLOWSHIP_DUNGEON;
-
-// type FellowshipDungeon =
-//   (typeof FELLOWSHIP_DUNGEON)[FellowshipDungeonKey];

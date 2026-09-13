@@ -48,6 +48,21 @@ import { MilestoneEditor } from "./milestone/milestone-editor.tsx";
 
 const CONFIGURATION_FORM_DOM_ID = "configuration-form";
 
+const pinnacleOptions = [
+  {
+    label: "Normal",
+    value: "11",
+  },
+  {
+    label: "Hard",
+    value: "23",
+  },
+  {
+    label: "Nightmare",
+    value: "40",
+  },
+] as const;
+
 type ConfigurationEditorProps = {
   readonly defaultValue: ConfigurationEditorValue;
   readonly dungeonOptions: ReadonlyArray<DungeonOption>;
@@ -410,7 +425,19 @@ export function ConfigurationEditor({
                                 name={field.name}
                                 onBlur={field.handleBlur}
                                 onChange={(event) => {
-                                  field.handleChange(event.target.value);
+                                  const dungeonId = event.target.value;
+
+                                  field.handleChange(dungeonId);
+
+                                  if (
+                                    dungeonId === "30" &&
+                                    state.values.dungeonLevel === ""
+                                  ) {
+                                    form.setFieldValue(
+                                      "dungeonLevel",
+                                      pinnacleOptions[0].value,
+                                    );
+                                  }
                                 }}
                                 value={field.state.value}
                               >
@@ -441,23 +468,50 @@ export function ConfigurationEditor({
                             field.state.meta.isBlurred &&
                             !field.state.meta.isValid;
 
+                          const isPinnacleDungeon =
+                            state.values.dungeonId === "30";
+
                           return (
                             <Field data-invalid={isInvalid}>
                               <FieldLabel htmlFor={field.name}>
                                 Eternal level
                               </FieldLabel>
-                              <Input
-                                aria-invalid={isInvalid}
-                                id={field.name}
-                                min={1}
-                                name={field.name}
-                                onBlur={field.handleBlur}
-                                onChange={(event) => {
-                                  field.handleChange(event.target.value);
-                                }}
-                                type="number"
-                                value={field.state.value}
-                              />
+                              {isPinnacleDungeon ? (
+                                <NativeSelect
+                                  aria-invalid={isInvalid}
+                                  id={field.name}
+                                  name={field.name}
+                                  onBlur={field.handleBlur}
+                                  onChange={(event) => {
+                                    field.handleChange(event.target.value);
+                                  }}
+                                  value={field.state.value}
+                                >
+                                  {pinnacleOptions.map((option) => {
+                                    return (
+                                      <NativeSelectOption
+                                        key={option.value}
+                                        value={option.value}
+                                      >
+                                        {option.label}
+                                      </NativeSelectOption>
+                                    );
+                                  })}
+                                </NativeSelect>
+                              ) : (
+                                <Input
+                                  aria-invalid={isInvalid}
+                                  id={field.name}
+                                  min={1}
+                                  name={field.name}
+                                  onBlur={field.handleBlur}
+                                  onChange={(event) => {
+                                    field.handleChange(event.target.value);
+                                  }}
+                                  type="number"
+                                  value={field.state.value}
+                                />
+                              )}
                               {isInvalid && (
                                 <FieldError errors={field.state.meta.errors} />
                               )}

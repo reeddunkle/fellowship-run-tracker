@@ -41,7 +41,7 @@ function makeObservation({
 }
 
 describe("createDungeonRunMilestoneRows", () => {
-  test("calculates current and best comparison elapsed time from the dungeon start", () => {
+  test("calculates elapsed and comparison times from the dungeon start", () => {
     const milestone = MOCK_CONFIGURATION_WITH_MULTIPLE_MILESTONES.milestones[0];
 
     if (milestone === undefined) {
@@ -69,7 +69,6 @@ describe("createDungeonRunMilestoneRows", () => {
     ];
 
     const rows = createDungeonRunMilestoneRows({
-      comparison: "BEST",
       milestones: [milestone],
       observations,
       startedAtMilliseconds,
@@ -84,17 +83,22 @@ describe("createDungeonRunMilestoneRows", () => {
     expect(row?.isCompleted).toBe(true);
     expect(row?.completedAtMilliseconds).toBe(66_000);
     expect(row?.elapsedMilliseconds).toBe(65_000);
-    expect(row?.comparisonElapsedMilliseconds).toBe(62_000);
+    expect(row?.comparisonElapsedMilliseconds).toEqual({
+      average: 64_000,
+      best: 62_000,
+      goal: milestone.comparisonTime ?? undefined,
+      median: 63_000,
+    });
 
     expect(
       row?.elapsedMilliseconds === undefined ||
-        row.comparisonElapsedMilliseconds === undefined
+        row.comparisonElapsedMilliseconds.best === undefined
         ? undefined
-        : row.elapsedMilliseconds - row.comparisonElapsedMilliseconds,
+        : row.elapsedMilliseconds - row.comparisonElapsedMilliseconds.best,
     ).toBe(3_000);
   });
 
-  test("selects the average comparison elapsed time", () => {
+  test("includes average, best, and median comparison elapsed times", () => {
     const milestone = MOCK_CONFIGURATION_WITH_MULTIPLE_MILESTONES.milestones[0];
 
     if (milestone === undefined) {
@@ -108,7 +112,6 @@ describe("createDungeonRunMilestoneRows", () => {
     }
 
     const rows = createDungeonRunMilestoneRows({
-      comparison: "AVERAGE",
       milestones: [milestone],
       observations: [
         makeObservation({
@@ -124,43 +127,33 @@ describe("createDungeonRunMilestoneRows", () => {
       startedAtMilliseconds: 1_000,
     });
 
-    expect(rows[0]?.comparisonElapsedMilliseconds).toBe(64_000);
+    expect(rows[0]?.comparisonElapsedMilliseconds).toEqual({
+      average: 64_000,
+      best: 62_000,
+      goal: milestone.comparisonTime ?? undefined,
+      median: 63_000,
+    });
   });
 
-  test("selects the median comparison elapsed time", () => {
+  test("uses the milestone comparison time as the goal", () => {
     const milestone = MOCK_CONFIGURATION_WITH_MULTIPLE_MILESTONES.milestones[0];
 
     if (milestone === undefined) {
       throw new Error("Expected a milestone fixture.");
     }
 
-    const requirement = milestone.requirements[0];
-
-    if (requirement === undefined) {
-      throw new Error("Expected a requirement fixture.");
-    }
-
     const rows = createDungeonRunMilestoneRows({
-      comparison: "MEDIAN",
       milestones: [milestone],
-      observations: [
-        makeObservation({
-          bestElapsedMilliseconds: 62_000,
-          meanElapsedMilliseconds: 64_000,
-          medianElapsedMilliseconds: 63_000,
-          occurrence: requirement.startOccurrence,
-          targetId: requirement.targetId,
-          timestampMilliseconds: 66_000,
-          type: requirement.type,
-        }),
-      ],
+      observations: [],
       startedAtMilliseconds: 1_000,
     });
 
-    expect(rows[0]?.comparisonElapsedMilliseconds).toBe(63_000);
+    expect(rows[0]?.comparisonElapsedMilliseconds.goal).toBe(
+      milestone.comparisonTime ?? undefined,
+    );
   });
 
-  test("uses the latest requirement completion as the milestone comparison time", () => {
+  test("uses the latest requirement completion for milestone comparison times", () => {
     const milestone = MOCK_CONFIGURATION_WITH_MULTIPLE_MILESTONES.milestones[3];
 
     if (milestone === undefined) {
@@ -175,7 +168,6 @@ describe("createDungeonRunMilestoneRows", () => {
     }
 
     const rows = createDungeonRunMilestoneRows({
-      comparison: "BEST",
       milestones: [milestone],
       observations: [
         makeObservation({
@@ -204,12 +196,16 @@ describe("createDungeonRunMilestoneRows", () => {
 
     expect(row?.isCompleted).toBe(true);
     expect(row?.completedAtMilliseconds).toBe(50_000);
-
     expect(row?.elapsedMilliseconds).toBe(49_000);
-    expect(row?.comparisonElapsedMilliseconds).toBe(45_000);
+    expect(row?.comparisonElapsedMilliseconds).toEqual({
+      average: 48_000,
+      best: 45_000,
+      goal: milestone.comparisonTime ?? undefined,
+      median: 47_000,
+    });
   });
 
-  test("does not produce a comparison time when a completed requirement has no matching history", () => {
+  test("does not produce history comparisons when a completed requirement has no matching history", () => {
     const milestone = MOCK_CONFIGURATION_WITH_MULTIPLE_MILESTONES.milestones[3];
 
     if (milestone === undefined) {
@@ -248,7 +244,6 @@ describe("createDungeonRunMilestoneRows", () => {
     ];
 
     const rows = createDungeonRunMilestoneRows({
-      comparison: "BEST",
       milestones: [milestone],
       observations,
       startedAtMilliseconds: 1_000,
@@ -258,7 +253,12 @@ describe("createDungeonRunMilestoneRows", () => {
 
     expect(row?.isCompleted).toBe(true);
     expect(row?.elapsedMilliseconds).toBe(49_000);
-    expect(row?.comparisonElapsedMilliseconds).toBeUndefined();
+    expect(row?.comparisonElapsedMilliseconds).toEqual({
+      average: undefined,
+      best: undefined,
+      goal: milestone.comparisonTime ?? undefined,
+      median: undefined,
+    });
   });
 
   test("calculates segment elapsed time from the previous completed milestone", () => {
@@ -279,7 +279,6 @@ describe("createDungeonRunMilestoneRows", () => {
     }
 
     const rows = createDungeonRunMilestoneRows({
-      comparison: "BEST",
       milestones: [firstMilestone, secondMilestone],
       observations: [
         makeObservation({

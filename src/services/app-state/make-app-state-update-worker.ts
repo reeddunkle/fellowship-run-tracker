@@ -2,6 +2,7 @@ import * as A from "effect/Array";
 import * as Deferred from "effect/Deferred";
 import * as E from "effect/Effect";
 import * as Queue from "effect/Queue";
+import * as Result from "effect/Result";
 import type * as Scope from "effect/Scope";
 
 import { type AppState } from "@/electron/storage/app-state/app-state-schema.ts";
@@ -32,11 +33,14 @@ export function makeAppStateUpdateWorker<ProcessError, Requirements>(
       const result = yield* E.result(process(latestRequest.state));
 
       yield* E.forEach(requests, (request) => {
-        if (result._tag === "Failure") {
-          return Deferred.fail(request.deferred, result.failure).pipe(E.asVoid);
-        }
-
-        return Deferred.succeed(request.deferred, undefined).pipe(E.asVoid);
+        return Result.match(result, {
+          onFailure: (failure) => {
+            return Deferred.fail(request.deferred, failure).pipe(E.asVoid);
+          },
+          onSuccess: () => {
+            return Deferred.succeed(request.deferred, undefined).pipe(E.asVoid);
+          },
+        });
       });
     });
 

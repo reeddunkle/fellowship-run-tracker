@@ -115,9 +115,19 @@ export const FELLOWSHIP_ENCOUNTER = {
     encounterId: "36",
     name: "Varux",
   },
+  "37": {
+    dungeonId: "30",
+    encounterId: "37",
+    name: "Xul'Vorith",
+  },
+  "38": {
+    dungeonId: "30",
+    encounterId: "38",
+    name: "Han-Eth, Sentry of Xul",
+  },
+  "39": {
+    dungeonId: "30",
+    encounterId: "39",
+    name: "Vel'korath",
+  },
 } as const satisfies Record<string, FellowshipEncounterDefinition>;
-
-// type FellowshipEncounterKey = keyof typeof FELLOWSHIP_ENCOUNTER;
-
-// type FellowshipEncounter =
-//   (typeof FELLOWSHIP_ENCOUNTER)[FellowshipEncounterKey];

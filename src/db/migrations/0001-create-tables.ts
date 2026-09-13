@@ -19,6 +19,15 @@ export const createTables = E.gen(function* () {
   `;
 
   yield* sql`
+    CREATE TABLE catalog_sync (
+      catalog TEXT PRIMARY KEY NOT NULL,
+      checksum TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    ) STRICT
+  `;
+
+  yield* sql`
     CREATE TABLE dungeon (
       id TEXT PRIMARY KEY NOT NULL,
       map_id TEXT NOT NULL,

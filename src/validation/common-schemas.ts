@@ -7,7 +7,9 @@ export const BooleanFlagSchema = Schema.Union([
 
 export const EmptyStringSchema = Schema.Literal("");
 
-export const NonEmptyStringSchema = Schema.String.check(Schema.isMinLength(1));
+export const NonEmptyStringSchema = Schema.NonEmptyString;
+
+export type NonEmptyString = typeof NonEmptyStringSchema.Type;
 
 export const NonNegativeNumberSchema = Schema.Finite.check(
   Schema.isGreaterThanOrEqualTo(0),
@@ -38,6 +40,8 @@ export const JsonStringSchema = Schema.fromJsonString(Schema.String);
 export const UnknownFromJsonStringSchema = Schema.fromJsonString(
   Schema.Unknown,
 );
+
+export const encodeJson = Schema.encodeSync(UnknownFromJsonStringSchema);
 
 export const JsonStringArraySchema = Schema.String.pipe(
   Schema.Array,

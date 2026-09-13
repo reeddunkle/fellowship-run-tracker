@@ -1,13 +1,21 @@
 import * as E from "effect/Effect";
+import * as Schema from "effect/Schema";
 import * as Stream from "effect/Stream";
 
-import { type LiveSplitApiMessage } from "@/api/websocket/live-split/live-split-api-message-schema.ts";
+import {
+  type LiveSplitApiMessage,
+  LiveSplitApiMessageSchema,
+} from "@/api/websocket/live-split/live-split-api-message-schema.ts";
 import { type LiveSplitApiStatus } from "@/services/api/live-split/live-split-api-schema.ts";
 import { LiveSplitApiService } from "@/services/api/live-split/live-split-api-service.ts";
 import {
   LiveSplitWebSocketBroadcaster,
   type WebSocketBroadcasterService,
 } from "@/services/api/websocket-broadcaster-service.ts";
+
+const encodeLiveSplitApiMessage = Schema.encodeSync(
+  Schema.fromJsonString(LiveSplitApiMessageSchema),
+);
 
 type PublishLiveSplitApiStatusOptions = {
   readonly status: LiveSplitApiStatus;
@@ -23,7 +31,7 @@ function publishLiveSplitApiStatus({
     version: 1,
   } satisfies LiveSplitApiMessage;
 
-  return webSocketBroadcaster.publish(JSON.stringify(message));
+  return webSocketBroadcaster.publish(encodeLiveSplitApiMessage(message));
 }
 
 export const publishLiveSplitStatusChanges = E.gen(function* () {

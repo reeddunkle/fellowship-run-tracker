@@ -1,9 +1,11 @@
+# Root generated only
+/generated/
+
 .env
 
 data/
 dist/
 external/
-generated/
 logs/
 node_modules/
 test-combat-logs/

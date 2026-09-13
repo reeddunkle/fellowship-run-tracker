@@ -24,7 +24,6 @@
             "sortOrder": "natural"
           }
         },
-        "useSortedInterfaceMembers": "on",
         "useSortedKeys": {
           "level": "on",
           "options": {
@@ -47,7 +46,8 @@
     "ignoreUnknown": false,
     "includes": [
       "**/*.{js,cjs,mjs,ts,tsx,json,jsonc,md,css}",
-      "!src/electron/renderer/router/routeTree.gen.ts"
+      "!src/electron/renderer/router/routeTree.gen.ts",
+      "!src/catalogs/generated/**/*.{ts}"
     ]
   },
   "formatter": {

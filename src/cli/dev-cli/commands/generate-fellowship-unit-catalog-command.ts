@@ -1,7 +1,7 @@
 import * as E from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-import { generateFellowshipUnitCatalog } from "@/catalogs/units/generate-fellowship-unit-catalog.ts";
+import { generateFellowshipUnitCatalog } from "@/catalogs/unit/generate-fellowship-unit-catalog.ts";
 import { NonEmptyStringSchema } from "@/validation/common-schemas.ts";
 
 export const GenerateFellowshipUnitCatalogCommandInputSchema = Schema.Struct({

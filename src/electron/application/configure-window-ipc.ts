@@ -12,13 +12,12 @@ import {
   resizeWindowToContent,
   showWindow,
 } from "@/electron/ipc/handlers/window-handlers.ts";
-import { type AppStateStorage } from "@/electron/storage/app-state/app-state-storage.ts";
-import { type AppStateUpdateWorker } from "@/services/app-state/app-state-service.ts";
+import { type AppStateService } from "@/services/app-state/app-state-service.ts";
 
-export function configureWindowIpc(
+export function configureWindowIpc<RuntimeError>(
   runtime: ManagedRuntime.ManagedRuntime<
-    AppStateStorage | AppStateUpdateWorker | Path.Path,
-    unknown
+    AppStateService | Path.Path,
+    RuntimeError
   >,
 ) {
   ipcMain.handle(

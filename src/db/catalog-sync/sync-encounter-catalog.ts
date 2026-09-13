@@ -1,0 +1,64 @@
+import * as DateTime from "effect/DateTime";
+import * as E from "effect/Effect";
+import * as Option from "effect/Option";
+import * as SqlClient from "effect/unstable/sql/SqlClient";
+
+import { FELLOWSHIP_ENCOUNTER } from "@/catalogs/encounter/fellowship-encounter-catalog.ts";
+import { CATALOG_CHECKSUMS } from "@/catalogs/generated/catalog-checksums.ts";
+import { CatalogSyncDAO } from "@/db/daos/catalog-sync/catalog-sync-dao.ts";
+
+const CATALOG = "ENCOUNTER" as const;
+
+export const syncEncounterCatalog = E.fn("sync-encounter-catalog")(
+  function* () {
+    const catalogSyncDAO = yield* CatalogSyncDAO;
+    const sql = yield* SqlClient.SqlClient;
+
+    const catalogSync = yield* catalogSyncDAO.getByCatalog({
+      catalog: CATALOG,
+    });
+
+    const checksum = CATALOG_CHECKSUMS.encounter;
+
+    if (Option.isSome(catalogSync) && catalogSync.value.checksum === checksum) {
+      return;
+    }
+
+    yield* sql.withTransaction(
+      E.gen(function* () {
+        const now = DateTime.toEpochMillis(yield* DateTime.now);
+
+        for (const encounter of Object.values(FELLOWSHIP_ENCOUNTER)) {
+          yield* sql`
+            INSERT INTO
+              encounter (
+                dungeon_id,
+                id,
+                name,
+                created_at,
+                updated_at
+              )
+            VALUES
+              (
+                ${encounter.dungeonId},
+                ${encounter.encounterId},
+                ${encounter.name},
+                ${now},
+                ${now}
+              )
+            ON CONFLICT (dungeon_id, id) DO UPDATE SET
+              name = excluded.name,
+              updated_at = excluded.updated_at
+            WHERE
+              encounter.name IS NOT excluded.name
+          `;
+        }
+
+        yield* catalogSyncDAO.setChecksum({
+          catalog: CATALOG,
+          checksum,
+        });
+      }),
+    );
+  },
+);

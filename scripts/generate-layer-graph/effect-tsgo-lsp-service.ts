@@ -13,6 +13,8 @@ import * as Stream from "effect/Stream";
 import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
 import { type ChildProcessHandle } from "effect/unstable/process/ChildProcessSpawner";
 
+import { encodeJson } from "@/validation/common-schemas.ts";
+
 import {
   type EffectTsGoLspError,
   EffectTsGoLspExecutableError,
@@ -28,6 +30,20 @@ import {
   type JsonRpcRequest,
   type JsonRpcResponse,
 } from "./validation/lsp-client-schema.ts";
+
+const WorkspaceTsConfigSchema = Schema.Struct({
+  compilerOptions: Schema.Struct({
+    paths: Schema.Struct({
+      "@/*": Schema.Array(Schema.String),
+    }),
+  }),
+  extends: Schema.String,
+  include: Schema.Array(Schema.String),
+});
+
+const encodeWorkspaceTsConfig = Schema.encodeSync(
+  Schema.fromJsonString(WorkspaceTsConfigSchema),
+);
 
 const JsonRpcMessageFromStringSchema =
   Schema.fromJsonString(JsonRpcMessageSchema);
@@ -86,7 +102,7 @@ type LspSetup = {
 };
 
 function encodeMessage(message: unknown): Uint8Array {
-  const body = JSON.stringify(message);
+  const body = encodeJson(message);
   const bodyBytes = Buffer.from(body, "utf8");
 
   const header = Buffer.from(
@@ -230,19 +246,15 @@ const make = E.gen(function* () {
         "tsconfig.json",
       );
 
-      const workspaceTsConfig = JSON.stringify(
-        {
-          compilerOptions: {
-            paths: {
-              "@/*": ["./src/*"],
-            },
+      const workspaceTsConfig = encodeWorkspaceTsConfig({
+        compilerOptions: {
+          paths: {
+            "@/*": ["./src/*"],
           },
-          extends: effectTsConfigPath,
-          include: ["src/**/*.ts", "src/**/*.tsx"],
         },
-        null,
-        2,
-      );
+        extends: effectTsConfigPath,
+        include: ["src/**/*.ts", "src/**/*.tsx"],
+      });
 
       yield* fileSystem
         .writeFileString(workspaceTsConfigPath, `${workspaceTsConfig}\n`)

@@ -1,53 +1,71 @@
 import * as A from "effect/Array";
 import { pipe } from "effect/Function";
 import * as Predicate from "effect/Predicate";
+import * as Schema from "effect/Schema";
 
 import {
   type LayerAnalysisModel,
   type LayerAnalysisNode,
 } from "./layer-analysis-model.ts";
 
-export type ServiceBundle = {
-  readonly name: string;
-  readonly requires: ReadonlyArray<string>;
-  readonly services: ReadonlyArray<string>;
-};
+export const ServiceBundleSchema = Schema.Struct({
+  name: Schema.String,
+  requires: Schema.Array(Schema.String),
+  services: Schema.Array(Schema.String),
+});
 
-export type ServiceBundleRelationship = {
-  readonly bundle: string;
-  readonly comparedBundle: string;
-  readonly sharedServices: ReadonlyArray<string>;
-  readonly onlyInBundle: ReadonlyArray<string>;
-  readonly onlyInComparedBundle: ReadonlyArray<string>;
-  readonly relationship:
-    | "closed-by"
-    | "closes"
-    | "equal"
-    | "strict-superset"
-    | "strict-subset"
-    | "overlap";
-};
+export type ServiceBundle = typeof ServiceBundleSchema.Type;
 
-export type ServiceBundleRequirementReduction = {
-  readonly bundle: string;
-  readonly reducedByBundle: string;
-  readonly removedRequirements: ReadonlyArray<string>;
-  readonly remainingRequirements: ReadonlyArray<string>;
-  readonly relationship: "closes" | "reduces";
-  readonly services: ReadonlyArray<string>;
-};
+export const ServiceBundleRelationshipSchema = Schema.Struct({
+  bundle: Schema.String,
+  comparedBundle: Schema.String,
+  onlyInBundle: Schema.Array(Schema.String),
+  onlyInComparedBundle: Schema.Array(Schema.String),
+  relationship: Schema.Union([
+    Schema.Literal("closed-by"),
+    Schema.Literal("closes"),
+    Schema.Literal("equal"),
+    Schema.Literal("strict-superset"),
+    Schema.Literal("strict-subset"),
+    Schema.Literal("overlap"),
+  ]),
+  sharedServices: Schema.Array(Schema.String),
+});
 
-export type ServiceBundleServiceMembership = {
-  readonly bundles: ReadonlyArray<string>;
-  readonly service: string;
-};
+export type ServiceBundleRelationship =
+  typeof ServiceBundleRelationshipSchema.Type;
 
-export type ServiceBundleAnalysis = {
-  readonly bundles: ReadonlyArray<ServiceBundle>;
-  readonly bundleRelationships: ReadonlyArray<ServiceBundleRelationship>;
-  readonly requirementReductions: ReadonlyArray<ServiceBundleRequirementReduction>;
-  readonly serviceMemberships: ReadonlyArray<ServiceBundleServiceMembership>;
-};
+export const ServiceBundleRequirementReductionSchema = Schema.Struct({
+  bundle: Schema.String,
+  reducedByBundle: Schema.String,
+  relationship: Schema.Union([
+    Schema.Literal("closes"),
+    Schema.Literal("reduces"),
+  ]),
+  remainingRequirements: Schema.Array(Schema.String),
+  removedRequirements: Schema.Array(Schema.String),
+  services: Schema.Array(Schema.String),
+});
+
+export type ServiceBundleRequirementReduction =
+  typeof ServiceBundleRequirementReductionSchema.Type;
+
+export const ServiceBundleServiceMembershipSchema = Schema.Struct({
+  bundles: Schema.Array(Schema.String),
+  service: Schema.String,
+});
+
+export type ServiceBundleServiceMembership =
+  typeof ServiceBundleServiceMembershipSchema.Type;
+
+export const ServiceBundleAnalysisSchema = Schema.Struct({
+  bundleRelationships: Schema.Array(ServiceBundleRelationshipSchema),
+  bundles: Schema.Array(ServiceBundleSchema),
+  requirementReductions: Schema.Array(ServiceBundleRequirementReductionSchema),
+  serviceMemberships: Schema.Array(ServiceBundleServiceMembershipSchema),
+});
+
+export type ServiceBundleAnalysis = typeof ServiceBundleAnalysisSchema.Type;
 
 function isServiceBundle(layer: LayerAnalysisNode): boolean {
   return layer.composedFrom.length > 0;

@@ -29,7 +29,7 @@ const make = E.gen(function* () {
         FROM
           encounter
         ORDER BY
-          name
+          id
       `;
 
       return yield* decodeEncounterRows(rows);

@@ -7,15 +7,15 @@ import * as Schema from "effect/Schema";
 import {
   type ExternalMobData,
   ExternalMobDataSchema,
-} from "@/catalogs/units/external-mob-data-schema.ts";
+} from "@/catalogs/unit/external-mob-data-schema.ts";
 import {
   type FellowshipUnitCatalog,
   FellowshipUnitCatalogSchema,
-} from "@/catalogs/units/fellowship-unit-catalog-schema.ts";
+} from "@/catalogs/unit/fellowship-unit-catalog-schema.ts";
 import { FellowshipUnitCatalogJsonParseError } from "@/errors/fellowship-unit-catalog-error.ts";
 import { parseJson } from "@/util/parse-json.ts";
 
-const OUTPUT_FILE_PATH = "./src/catalogs/units/fellowship-unit-catalog.json";
+const OUTPUT_FILE_PATH = "./src/catalogs/unit/fellowship-unit-catalog.json";
 
 type FellowshipUnitCatalogEntry = FellowshipUnitCatalog[number];
 

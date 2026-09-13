@@ -2,12 +2,12 @@ import * as E from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
 import * as Schema from "effect/Schema";
 
-import { FellowshipUnitCatalogSchema } from "@/catalogs/units/fellowship-unit-catalog-schema.ts";
+import { FellowshipUnitCatalogSchema } from "@/catalogs/unit/fellowship-unit-catalog-schema.ts";
 import { FellowshipUnitCatalogJsonParseError } from "@/errors/fellowship-unit-catalog-error.ts";
 import { parseJson } from "@/util/parse-json.ts";
 
 const FELLOWSHIP_UNIT_CATALOG_FILE_PATH =
-  "./src/catalogs/units/fellowship-unit-catalog.json";
+  "./src/catalogs/unit/fellowship-unit-catalog.json";
 
 export const loadFellowshipUnitCatalog = E.fn("load-fellowship-unit-catalog")(
   function* () {
