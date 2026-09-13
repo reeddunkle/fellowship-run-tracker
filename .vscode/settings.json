@@ -33,7 +33,7 @@
   "js/ts.preferences.importModuleSpecifier": "non-relative",
   "js/ts.preferences.importModuleSpecifierEnding": "js",
   "js/ts.experimental.useTsgo": false,
-  
+
   // "js/ts.tsdk.promptToUseWorkspaceVersion": true,
   // "js/ts.updateImportsOnPaste.enabled": false,
   // "js/ts.tsdk.additionalLocations": ["./node_modules/typescript/bin"],
