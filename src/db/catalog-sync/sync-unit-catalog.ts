@@ -51,7 +51,8 @@ export const syncUnitCatalog = E.fn("sync-unit-catalog")(function* () {
               ${now},
               ${now}
             )
-          ON CONFLICT (id) DO UPDATE SET
+          ON CONFLICT (id) DO UPDATE
+          SET
             group_key = excluded.group_key,
             name = excluded.name,
             status = excluded.status,
@@ -67,12 +68,7 @@ export const syncUnitCatalog = E.fn("sync-unit-catalog")(function* () {
         for (const dungeonId of unit.dungeonIds) {
           yield* sql`
             INSERT INTO
-              dungeon_unit (
-                dungeon_id,
-                unit_id,
-                created_at,
-                updated_at
-              )
+              dungeon_unit (dungeon_id, unit_id, created_at, updated_at)
             VALUES
               (
                 ${dungeonId},

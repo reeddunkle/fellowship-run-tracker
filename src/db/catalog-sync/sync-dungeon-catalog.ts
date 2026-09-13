@@ -30,13 +30,7 @@ export const syncDungeonCatalog = E.fn("sync-dungeon-catalog")(function* () {
       for (const dungeon of Object.values(FELLOWSHIP_DUNGEON)) {
         yield* sql`
           INSERT INTO
-            dungeon (
-              id,
-              map_id,
-              name,
-              created_at,
-              updated_at
-            )
+            dungeon (id, map_id, name, created_at, updated_at)
           VALUES
             (
               ${dungeon.dungeonId},
@@ -45,7 +39,8 @@ export const syncDungeonCatalog = E.fn("sync-dungeon-catalog")(function* () {
               ${now},
               ${now}
             )
-          ON CONFLICT (id) DO UPDATE SET
+          ON CONFLICT (id) DO UPDATE
+          SET
             map_id = excluded.map_id,
             name = excluded.name,
             updated_at = excluded.updated_at

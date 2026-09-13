@@ -28,21 +28,29 @@ const DungeonRunsApiHandlersInferred = HttpApiBuilder.group(
   E.fn(function* (handlers) {
     const dungeonRunApiService = yield* DungeonRunApiService;
 
-    return handlers.handle("getDungeonRunHistory", ({ params }) => {
-      return E.gen(function* () {
-        const history = yield* dungeonRunApiService
-          .getHistory({
+    return handlers
+      .handle("deleteDungeonRunHistory", ({ params }) => {
+        return dungeonRunApiService
+          .deleteHistory({
             configurationId: params.configurationId,
           })
           .pipe(E.catch(mapDungeonRunApiError));
+      })
+      .handle("getDungeonRunHistory", ({ params }) => {
+        return E.gen(function* () {
+          const history = yield* dungeonRunApiService
+            .getHistory({
+              configurationId: params.configurationId,
+            })
+            .pipe(E.catch(mapDungeonRunApiError));
 
-        if (Option.isNone(history)) {
-          return yield* new HttpApiError.NotFound();
-        }
+          if (Option.isNone(history)) {
+            return yield* new HttpApiError.NotFound();
+          }
 
-        return history.value;
+          return history.value;
+        });
       });
-    });
   }),
 );
 

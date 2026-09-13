@@ -212,7 +212,8 @@ export const createTables = E.gen(function* () {
         started_at IS NULL
         OR ended_at IS NULL
         OR ended_at >= started_at
-      ) FOREIGN KEY (configuration_definition_id) REFERENCES configuration_definition (id),
+      ),
+      FOREIGN KEY (configuration_definition_id) REFERENCES configuration_definition (id),
       FOREIGN KEY (dungeon_id) REFERENCES dungeon (id)
     ) STRICT
   `;

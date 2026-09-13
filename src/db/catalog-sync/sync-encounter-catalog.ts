@@ -31,13 +31,7 @@ export const syncEncounterCatalog = E.fn("sync-encounter-catalog")(
         for (const encounter of Object.values(FELLOWSHIP_ENCOUNTER)) {
           yield* sql`
             INSERT INTO
-              encounter (
-                dungeon_id,
-                id,
-                name,
-                created_at,
-                updated_at
-              )
+              encounter (dungeon_id, id, name, created_at, updated_at)
             VALUES
               (
                 ${encounter.dungeonId},
@@ -46,7 +40,8 @@ export const syncEncounterCatalog = E.fn("sync-encounter-catalog")(
                 ${now},
                 ${now}
               )
-            ON CONFLICT (dungeon_id, id) DO UPDATE SET
+            ON CONFLICT (dungeon_id, id) DO UPDATE
+            SET
               name = excluded.name,
               updated_at = excluded.updated_at
             WHERE

@@ -249,9 +249,22 @@ const make = E.gen(function* () {
     });
   };
 
+  const deleteHistoryByConfigurationDefinitionId: DungeonRunDAOShape["deleteHistoryByConfigurationDefinitionId"] =
+    ({ configurationDefinitionId }) => {
+      return E.gen(function* () {
+        yield* sql`
+          DELETE FROM dungeon_run
+          WHERE
+            configuration_definition_id = ${configurationDefinitionId}
+            AND status != 'ACTIVE'
+        `;
+      }).pipe(E.mapError(mapDungeonRunDAOError));
+    };
+
   return {
     complete,
     create,
+    deleteHistoryByConfigurationDefinitionId,
     exit,
     getById,
     interrupt,

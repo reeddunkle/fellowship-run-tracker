@@ -1,4 +1,6 @@
+import { useRouter } from "@tanstack/react-router";
 import * as A from "effect/Array";
+import * as E from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import {
@@ -16,6 +18,8 @@ import {
   type DungeonRunStateApi,
 } from "@/api/websocket/dungeon-run/dungeon-run-api-message-schema.ts";
 import { type ApiConnectionState } from "@/electron/renderer/api/common.ts";
+import { deleteDungeonRunHistory } from "@/electron/renderer/api/dungeon-run/dungeon-run-client.ts";
+import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
 import {
   type DungeonRunEventStore,
   type DungeonRunEventStoreSnapshot,
@@ -30,6 +34,7 @@ import {
   RequirementObservationIdentityFromStringSchema,
   RequirementObservationOccurrenceIdentityFromStringSchema,
 } from "@/validation/common/requirement-observation-identity-schema.ts";
+import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";
 
 export type DungeonRunMilestoneKey = string;
 
@@ -50,11 +55,21 @@ export type DungeonRunDisplayState = {
   ) => void;
 };
 
-type DungeonRunContextValue = DungeonRunDisplayState & {
+export type DungeonRunActions = {
+  readonly deleteHistoryForConfigurationId: (
+    configurationId: ConfigurationId,
+  ) => void;
+};
+
+export type DungeonRunState = {
   readonly connectionState: ApiConnectionState;
   readonly history: DungeonRunApiHistory | null;
   readonly runState: DungeonRunEventStoreSnapshot["runState"];
 };
+
+export type DungeonRunStore = DungeonRunActions & DungeonRunState;
+
+type DungeonRunContextValue = DungeonRunDisplayState & DungeonRunStore;
 
 type DungeonRunProviderProps = {
   readonly children: ReactNode;
@@ -120,17 +135,98 @@ export function DungeonRunProvider({
   eventStore = dungeonRunEventStore,
   history,
 }: DungeonRunProviderProps) {
+  const router = useRouter();
+
   const dungeonRunSnapshot = useSyncExternalStore(
     eventStore.subscribe,
     eventStore.getSnapshot,
     eventStore.getSnapshot,
   );
 
+  const [
+    optimisticallyDeletedConfigurationId,
+    setOptimisticallyDeletedConfigurationId,
+  ] = useState<ConfigurationId | null>(null);
+
   const [milestoneExpansionState, setMilestoneExpansionState] =
     useState<DungeonRunMilestoneExpansionState>({
       defaultIsExpanded: false,
       overrides: new Set(),
     });
+
+  const historyForApp =
+    history?.configurationId === optimisticallyDeletedConfigurationId
+      ? null
+      : history;
+
+  const deleteHistoryForConfigurationId = useCallback(
+    (configurationId: ConfigurationId) => {
+      setOptimisticallyDeletedConfigurationId(configurationId);
+
+      browserRuntime.runFork(
+        E.gen(function* () {
+          const wasDeleted = yield* deleteDungeonRunHistory({
+            configurationId,
+          }).pipe(
+            E.as(true),
+            E.catch((error) => {
+              return E.gen(function* () {
+                setOptimisticallyDeletedConfigurationId(
+                  (deletedConfigurationId) => {
+                    return deletedConfigurationId === configurationId
+                      ? null
+                      : deletedConfigurationId;
+                  },
+                );
+
+                yield* E.logError("Failed to delete dungeon run history.", {
+                  configurationId,
+                  error,
+                });
+
+                return false;
+              });
+            }),
+          );
+
+          if (!wasDeleted) {
+            return;
+          }
+
+          yield* E.tryPromise({
+            try: () => {
+              return router.invalidate({
+                sync: true,
+              });
+            },
+            catch: (cause) => cause,
+          }).pipe(
+            E.tap(() => {
+              return E.sync(() => {
+                setOptimisticallyDeletedConfigurationId(
+                  (deletedConfigurationId) => {
+                    return deletedConfigurationId === configurationId
+                      ? null
+                      : deletedConfigurationId;
+                  },
+                );
+              });
+            }),
+            E.catch((error) => {
+              return E.logError(
+                "Failed to refresh dungeon run history after deletion.",
+                {
+                  configurationId,
+                  error,
+                },
+              );
+            }),
+          );
+        }),
+      );
+    },
+    [router],
+  );
 
   const expandAllMilestones = useCallback(() => {
     setMilestoneExpansionState({
@@ -181,18 +277,20 @@ export function DungeonRunProvider({
     return {
       collapseAllMilestones,
       connectionState: dungeonRunSnapshot.connectionState,
+      deleteHistoryForConfigurationId,
       expandAllMilestones,
-      history,
+      history: historyForApp,
       isMilestoneExpanded,
       runState: dungeonRunSnapshot.runState,
       setMilestoneExpanded,
     };
   }, [
     collapseAllMilestones,
+    deleteHistoryForConfigurationId,
     dungeonRunSnapshot.connectionState,
     dungeonRunSnapshot.runState,
     expandAllMilestones,
-    history,
+    historyForApp,
     isMilestoneExpanded,
     setMilestoneExpanded,
   ]);
@@ -215,6 +313,14 @@ function useDungeonRunContext(): DungeonRunContextValue {
   }
 
   return context;
+}
+
+export function useDungeonRunActions(): DungeonRunActions {
+  const { deleteHistoryForConfigurationId } = useDungeonRunContext();
+
+  return {
+    deleteHistoryForConfigurationId,
+  };
 }
 
 export function useDungeonRunServerState(): DungeonRunServerState {

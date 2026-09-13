@@ -55,12 +55,7 @@ const make = E.gen(function* () {
 
       yield* sql`
         INSERT INTO
-          catalog_sync (
-            catalog,
-            checksum,
-            created_at,
-            updated_at
-          )
+          catalog_sync (catalog, checksum, created_at, updated_at)
         VALUES
           (
             ${catalog},
@@ -68,7 +63,8 @@ const make = E.gen(function* () {
             ${now},
             ${now}
           )
-        ON CONFLICT (catalog) DO UPDATE SET
+        ON CONFLICT (catalog) DO UPDATE
+        SET
           checksum = excluded.checksum,
           updated_at = excluded.updated_at
       `;

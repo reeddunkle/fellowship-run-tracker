@@ -30,12 +30,7 @@ export const syncAbilityCatalog = E.fn("sync-ability-catalog")(function* () {
       for (const ability of Object.values(FELLOWSHIP_ABILITY)) {
         yield* sql`
           INSERT INTO
-            ability (
-              id,
-              name,
-              created_at,
-              updated_at
-            )
+            ability (id, name, created_at, updated_at)
           VALUES
             (
               ${ability.id},
@@ -43,7 +38,8 @@ export const syncAbilityCatalog = E.fn("sync-ability-catalog")(function* () {
               ${now},
               ${now}
             )
-          ON CONFLICT (id) DO UPDATE SET
+          ON CONFLICT (id) DO UPDATE
+          SET
             name = excluded.name,
             updated_at = excluded.updated_at
           WHERE
@@ -52,12 +48,7 @@ export const syncAbilityCatalog = E.fn("sync-ability-catalog")(function* () {
 
         yield* sql`
           INSERT INTO
-            ability_unit (
-              ability_id,
-              unit_id,
-              created_at,
-              updated_at
-            )
+            ability_unit (ability_id, unit_id, created_at, updated_at)
           VALUES
             (
               ${ability.id},
@@ -65,7 +56,8 @@ export const syncAbilityCatalog = E.fn("sync-ability-catalog")(function* () {
               ${now},
               ${now}
             )
-          ON CONFLICT (ability_id) DO UPDATE SET
+          ON CONFLICT (ability_id) DO UPDATE
+          SET
             unit_id = excluded.unit_id,
             updated_at = excluded.updated_at
           WHERE

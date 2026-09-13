@@ -2,6 +2,7 @@ import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 import {
   CopyPlusIcon,
+  HistoryIcon,
   PlusIcon,
   RotateCcwIcon,
   SaveIcon,
@@ -25,6 +26,10 @@ import {
   useSelectedConfiguration,
   useSelectedConfigurationId,
 } from "@/electron/renderer/stores/configurations-store/configurations-store.tsx";
+import {
+  useDungeonRunActions,
+  useDungeonRunServerState,
+} from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-provider.tsx";
 import { type RequirementEventType } from "@/services/fellowship/validation/requirement-event-type-schema.ts";
 import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";
 
@@ -172,6 +177,9 @@ export function ConfigurationEditor({
   const { deleteConfiguration, isUpdating, newConfiguration, save, update } =
     useConfigurationActions();
 
+  const { deleteHistoryForConfigurationId } = useDungeonRunActions();
+  const { history } = useDungeonRunServerState();
+
   const form = useConfigurationForm({
     defaultValues: defaultValue,
     onSave: save,
@@ -191,6 +199,22 @@ export function ConfigurationEditor({
   };
 
   const hasSelectedConfiguration = selectedConfiguration !== undefined;
+
+  const selectedConfigurationHistory =
+    history?.configurationId === selectedConfigurationId ? history : null;
+
+  const historicalSampleCount =
+    selectedConfigurationHistory?.observations.reduce(
+      (sampleCount, observation) => {
+        return sampleCount + observation.sampleCount;
+      },
+      0,
+    ) ?? 0;
+
+  const historicalObservationCount =
+    selectedConfigurationHistory?.observations.length ?? 0;
+
+  const hasHistory = historicalSampleCount > 0;
 
   return (
     <ConfigurationEditorProvider form={form}>
@@ -309,30 +333,65 @@ export function ConfigurationEditor({
               Delete
             </Button>
           </div>
-          <div className="min-h-6">
-            <form.Subscribe selector={selectConfigurationEditorFormState}>
-              {(state) => {
-                if (!hasUnsavedChanges(state)) {
-                  return null;
-                }
+          <form.Subscribe selector={selectConfigurationEditorFormState}>
+            {(state) => {
+              if (!hasUnsavedChanges(state)) {
+                return null;
+              }
 
-                const persistenceState = getConfigurationPersistenceState({
-                  saveState: resolveSaveState(state.values),
-                  selectedConfigurationId,
-                });
+              const persistenceState = getConfigurationPersistenceState({
+                saveState: resolveSaveState(state.values),
+                selectedConfigurationId,
+              });
 
-                if (!persistenceState.shouldWarnAboutOverwrite) {
-                  return null;
-                }
+              if (!persistenceState.shouldWarnAboutOverwrite) {
+                return null;
+              }
 
-                return (
-                  <ConfigurationOverwriteWarning
-                    configurationLabel={persistenceState.saveState.label}
-                  />
-                );
-              }}
-            </form.Subscribe>
+              return (
+                <ConfigurationOverwriteWarning
+                  configurationLabel={persistenceState.saveState.label}
+                />
+              );
+            }}
+          </form.Subscribe>
+        </section>
+        <section className="grid max-w-xl gap-3 rounded-lg border p-4">
+          <div className="grid gap-1">
+            <h2 className="text-sm font-medium">Run history</h2>
+            <p className="text-sm text-muted-foreground">
+              {selectedConfigurationId === null
+                ? "Select a saved configuration to view its historical timing data."
+                : hasHistory
+                  ? `${historicalSampleCount} historical ${
+                      historicalSampleCount === 1 ? "sample" : "samples"
+                    } across ${historicalObservationCount} tracked ${
+                      historicalObservationCount === 1
+                        ? "observation"
+                        : "observations"
+                    }.`
+                  : "No historical timing data is available for this configuration."}
+            </p>
           </div>
+          {hasHistory ? (
+            <div>
+              <Button
+                disabled={selectedConfigurationId === null || !hasHistory}
+                onClick={() => {
+                  if (selectedConfigurationId === null) {
+                    return;
+                  }
+
+                  deleteHistoryForConfigurationId(selectedConfigurationId);
+                }}
+                type="button"
+                variant="outline"
+              >
+                <HistoryIcon />
+                Clear historical times
+              </Button>
+            </div>
+          ) : null}
         </section>
         <form
           className="grid gap-8"

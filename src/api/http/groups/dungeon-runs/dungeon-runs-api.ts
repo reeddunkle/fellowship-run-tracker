@@ -12,6 +12,16 @@ const DungeonRunHistoryParamsSchema = Schema.Struct({
   configurationId: ConfigurationIdSchema,
 });
 
+const DeleteDungeonRunHistoryEndpoint = HttpApiEndpoint.delete(
+  "deleteDungeonRunHistory",
+  `${DUNGEON_RUNS_ROUTE}/history/:configurationId`,
+  {
+    error: HttpApiError.InternalServerErrorNoContent,
+    params: DungeonRunHistoryParamsSchema,
+    success: Schema.Void,
+  },
+);
+
 const GetDungeonRunHistoryEndpoint = HttpApiEndpoint.get(
   "getDungeonRunHistory",
   `${DUNGEON_RUNS_ROUTE}/history/:configurationId`,
@@ -25,6 +35,6 @@ const GetDungeonRunHistoryEndpoint = HttpApiEndpoint.get(
   },
 );
 
-export const DungeonRunsApi = HttpApiGroup.make("dungeonRuns").add(
-  GetDungeonRunHistoryEndpoint,
-);
+export const DungeonRunsApi = HttpApiGroup.make("dungeonRuns")
+  .add(DeleteDungeonRunHistoryEndpoint)
+  .add(GetDungeonRunHistoryEndpoint);

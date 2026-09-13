@@ -37,6 +37,10 @@ type InterruptDungeonRunOptions = {
   readonly endedAt: NonNullable<DungeonRunModel["endedAt"]>;
 };
 
+type DeleteHistoryByConfigurationDefinitionIdOptions = {
+  readonly configurationDefinitionId: ConfigurationDefinitionId;
+};
+
 export type DungeonRunDAOShape = {
   readonly complete: (
     options: CompleteDungeonRunOptions,
@@ -60,6 +64,10 @@ export type DungeonRunDAOShape = {
 
   readonly start: (
     options: StartDungeonRunOptions,
+  ) => E.Effect<void, DungeonRunDAOError>;
+
+  readonly deleteHistoryByConfigurationDefinitionId: (
+    options: DeleteHistoryByConfigurationDefinitionIdOptions,
   ) => E.Effect<void, DungeonRunDAOError>;
 };
 
