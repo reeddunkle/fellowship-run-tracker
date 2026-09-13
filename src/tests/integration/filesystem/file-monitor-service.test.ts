@@ -185,6 +185,123 @@ describe("FileMonitor", () => {
       await runTest(program);
     });
 
+    test("reads every line across multiple batches of appended lines", async () => {
+      const program = E.scoped(
+        E.gen(function* () {
+          const harness = yield* makeFileMonitorTestHarness();
+
+          yield* harness.writeFile("fellowship.txt", "");
+
+          const lines = yield* makeStreamTestHarness(
+            harness.fileMonitor.streamLatestFileLines({
+              directoryPath: harness.directoryPath,
+              matches: matchesTextFile,
+              startFrom: "end",
+            }),
+          );
+
+          yield* harness.awaitSourceRequest;
+          yield* harness.emitFile("fellowship.txt");
+
+          yield* harness.awaitSourceRequest;
+
+          yield* harness.appendFile(
+            "fellowship.txt",
+            "batch 1 line 1\nbatch 1 line 2\nbatch 1 line 3\n",
+          );
+          yield* harness.emitFile("fellowship.txt");
+
+          expect(yield* lines.take).toBe("batch 1 line 1");
+          expect(yield* lines.take).toBe("batch 1 line 2");
+          expect(yield* lines.take).toBe("batch 1 line 3");
+
+          yield* harness.awaitSourceRequest;
+
+          yield* harness.appendFile(
+            "fellowship.txt",
+            "batch 2 line 1\nbatch 2 line 2\nbatch 2 line 3\nbatch 2 line 4\n",
+          );
+          yield* harness.emitFile("fellowship.txt");
+
+          expect(yield* lines.take).toBe("batch 2 line 1");
+          expect(yield* lines.take).toBe("batch 2 line 2");
+          expect(yield* lines.take).toBe("batch 2 line 3");
+          expect(yield* lines.take).toBe("batch 2 line 4");
+
+          yield* harness.awaitSourceRequest;
+
+          yield* harness.appendFile(
+            "fellowship.txt",
+            "batch 3 line 1\nbatch 3 line 2\n",
+          );
+          yield* harness.emitFile("fellowship.txt");
+
+          expect(yield* lines.take).toBe("batch 3 line 1");
+          expect(yield* lines.take).toBe("batch 3 line 2");
+        }),
+      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+
+      await runTest(program);
+    });
+
+    test("reads all appended lines when multiple source snapshots are queued", async () => {
+      const program = E.scoped(
+        E.gen(function* () {
+          const harness = yield* makeFileMonitorTestHarness();
+
+          yield* harness.writeFile("fellowship.txt", "");
+
+          const lines = yield* makeStreamTestHarness(
+            harness.fileMonitor.streamLatestFileLines({
+              directoryPath: harness.directoryPath,
+              matches: matchesTextFile,
+              startFrom: "end",
+            }),
+          );
+
+          yield* harness.awaitSourceRequest;
+          yield* harness.emitFile("fellowship.txt");
+
+          yield* harness.awaitSourceRequest;
+
+          yield* harness.appendFile(
+            "fellowship.txt",
+            "batch 1 line 1\nbatch 1 line 2\n",
+          );
+
+          const firstSnapshot = yield* harness.getFileData("fellowship.txt");
+
+          yield* harness.appendFile(
+            "fellowship.txt",
+            "batch 2 line 1\nbatch 2 line 2\n",
+          );
+
+          const secondSnapshot = yield* harness.getFileData("fellowship.txt");
+
+          /*
+           * Queue both filesystem snapshots before FileMonitor gets another
+           * opportunity to request one.
+           */
+          yield* harness.emitSourceValue(Option.some(firstSnapshot));
+          yield* harness.emitSourceValue(Option.some(secondSnapshot));
+
+          const firstLine = yield* lines.take;
+          const secondLine = yield* lines.take;
+          const thirdLine = yield* lines.take;
+          const fourthLine = yield* lines.take;
+
+          expect([firstLine, secondLine, thirdLine, fourthLine]).toEqual([
+            "batch 1 line 1",
+            "batch 1 line 2",
+            "batch 2 line 1",
+            "batch 2 line 2",
+          ]);
+        }),
+      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+
+      await runTest(program);
+    });
+
     test("waits when no matching file exists and starts monitoring when one appears", async () => {
       const program = E.scoped(
         E.gen(function* () {
@@ -267,6 +384,66 @@ describe("FileMonitor", () => {
           const line = yield* lines.take;
 
           expect(line).toBe("appended line");
+        }),
+      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+
+      await runTest(program);
+    });
+
+    test("handles repeated identical snapshots after multiple writes", async () => {
+      const program = E.scoped(
+        E.gen(function* () {
+          const harness = yield* makeFileMonitorTestHarness();
+
+          yield* harness.writeFile("fellowship.txt", "");
+
+          const lines = yield* makeStreamTestHarness(
+            harness.fileMonitor.streamLatestFileLines({
+              directoryPath: harness.directoryPath,
+              matches: matchesTextFile,
+              startFrom: "end",
+            }),
+          );
+
+          yield* harness.awaitSourceRequest;
+          yield* harness.emitFile("fellowship.txt");
+
+          yield* harness.awaitSourceRequest;
+
+          yield* harness.appendFile(
+            "fellowship.txt",
+            "batch 1 line 1\nbatch 1 line 2\n",
+          );
+
+          yield* harness.appendFile(
+            "fellowship.txt",
+            "batch 2 line 1\nbatch 2 line 2\n",
+          );
+
+          const finalSnapshot = yield* harness.getFileData("fellowship.txt");
+
+          /*
+           * Model multiple watch events that are both resolved after the writes
+           * have completed, so both observe the same final file metadata.
+           */
+          yield* harness.emitSourceValue(Option.some(finalSnapshot));
+          yield* harness.emitSourceValue(Option.some(finalSnapshot));
+
+          expect(yield* lines.take).toBe("batch 1 line 1");
+          expect(yield* lines.take).toBe("batch 1 line 2");
+          expect(yield* lines.take).toBe("batch 2 line 1");
+          expect(yield* lines.take).toBe("batch 2 line 2");
+
+          /*
+           * FileMonitor requests and processes the duplicate snapshot.
+           */
+          yield* harness.awaitSourceRequest;
+
+          /*
+           * Reaching the following request proves the duplicate snapshot completed
+           * without emitting additional lines.
+           */
+          yield* harness.awaitSourceRequest;
         }),
       ).pipe(E.provide(FileMonitorTestDependenciesLive));
 

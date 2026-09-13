@@ -102,6 +102,10 @@ export function getRequirementLookupForEvent(
       };
     }),
     Match.when({ type: FELLOWSHIP_EVENT.ENCOUNTER_END }, (matchedEvent) => {
+      if (!matchedEvent.succeeded) {
+        return undefined;
+      }
+
       return {
         targetId: matchedEvent.encounterId,
         type: matchedEvent.type,
@@ -110,7 +114,13 @@ export function getRequirementLookupForEvent(
     Match.when({ type: FELLOWSHIP_EVENT.UNIT_DEATH }, (matchedEvent) => {
       return {
         targetId: matchedEvent.unitTypeId,
-        type: matchedEvent.type,
+        type: FELLOWSHIP_EVENT.UNIT_DEATH,
+      };
+    }),
+    Match.when({ type: FELLOWSHIP_EVENT.UNIT_DESTROYED }, (matchedEvent) => {
+      return {
+        targetId: matchedEvent.unitTypeId,
+        type: FELLOWSHIP_EVENT.UNIT_DEATH,
       };
     }),
     Match.orElse(() => {

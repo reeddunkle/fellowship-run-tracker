@@ -2,6 +2,7 @@ import { SchemaGetter } from "effect";
 import * as Schema from "effect/Schema";
 
 import { FELLOWSHIP_EVENT } from "@/services/fellowship/constants/fellowship-event.ts";
+import { parseUnitId } from "@/services/fellowship/utilities/parse-unit-id.ts";
 import { TimestampSchema } from "@/services/fellowship/validation/fellowship-common.ts";
 import { JsonStringSchema } from "@/validation/common-schemas.ts";
 
@@ -32,27 +33,6 @@ const UnitDeathEventSchema = Schema.Struct({
   unitName: Schema.String,
   unitTypeId: Schema.String,
 });
-
-function parseUnitId(unitId: string): {
-  readonly unitInstanceId: string;
-  readonly unitTypeId: string;
-} {
-  const segments = unitId.split("-");
-  const unitTypeId = segments.at(-1);
-  const unitInstanceId = segments.at(-2);
-
-  if (unitInstanceId === undefined || unitTypeId === undefined) {
-    return {
-      unitInstanceId: unitId,
-      unitTypeId: "0",
-    };
-  }
-
-  return {
-    unitInstanceId,
-    unitTypeId,
-  };
-}
 
 export const UnitDeathEventFromLogSchema = UnitDeathLogLineSchema.pipe(
   Schema.decodeTo(UnitDeathEventSchema, {
