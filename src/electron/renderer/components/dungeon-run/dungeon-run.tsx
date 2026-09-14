@@ -147,10 +147,8 @@ export function DungeonRun() {
           <DungeonRunDropdownMenu />
         </DropdownMenu>
       </div>
-      <header className="grid w-full gap-1">
-        <h2 className="truncate text-sm font-semibold">
-          {configuration.label}
-        </h2>
+      <header className="grid text-2xl w-full gap-1">
+        <h2 className="truncate font-semibold">{configuration.label}</h2>
       </header>
       <DungeonRunTable rows={tableRows}>
         <thead>
