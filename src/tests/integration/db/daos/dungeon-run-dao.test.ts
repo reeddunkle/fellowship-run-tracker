@@ -222,6 +222,69 @@ describe("DungeonRunDAOLive", () => {
     await runTest(program);
   });
 
+  test("deletes all historical dungeon runs for a configuration definition", async () => {
+    const program = E.gen(function* () {
+      const { configurationDefinitionId, dungeonRunDAO } =
+        yield* makeDungeonRunTestContext;
+
+      const firstDungeonRun = yield* dungeonRunDAO.create({
+        configurationDefinitionId,
+        dungeonId: MOCK_DUNGEON_ID,
+        dungeonLevel: MOCK_DUNGEON_LEVEL,
+      });
+
+      const secondDungeonRun = yield* dungeonRunDAO.create({
+        configurationDefinitionId,
+        dungeonId: MOCK_DUNGEON_ID,
+        dungeonLevel: MOCK_DUNGEON_LEVEL,
+      });
+
+      yield* dungeonRunDAO.complete({
+        dungeonRunId: firstDungeonRun.id,
+        endedAt: MOCK_DUNGEON_RUN_ENDED_AT,
+      });
+
+      yield* dungeonRunDAO.exit({
+        dungeonRunId: secondDungeonRun.id,
+        endedAt: MOCK_DUNGEON_RUN_ENDED_AT,
+      });
+
+      yield* dungeonRunDAO.deleteHistoryByConfigurationDefinitionId({
+        configurationDefinitionId,
+      });
+
+      const firstResult = yield* dungeonRunDAO.getById({
+        id: firstDungeonRun.id,
+      });
+
+      const secondResult = yield* dungeonRunDAO.getById({
+        id: secondDungeonRun.id,
+      });
+
+      expect(Option.isNone(firstResult)).toBe(true);
+      expect(Option.isNone(secondResult)).toBe(true);
+    }).pipe(E.provide(makePersistenceTestLayer()));
+
+    await runTest(program);
+  });
+
+  test("deleting dungeon runs is idempotent when no runs exist", async () => {
+    const program = E.gen(function* () {
+      const { configurationDefinitionId, dungeonRunDAO } =
+        yield* makeDungeonRunTestContext;
+
+      yield* dungeonRunDAO.deleteHistoryByConfigurationDefinitionId({
+        configurationDefinitionId,
+      });
+
+      yield* dungeonRunDAO.deleteHistoryByConfigurationDefinitionId({
+        configurationDefinitionId,
+      });
+    }).pipe(E.provide(makePersistenceTestLayer()));
+
+    await runTest(program);
+  });
+
   test("does not finish an inactive dungeon run", async () => {
     const program = E.gen(function* () {
       const { configurationDefinitionId, dungeonRunDAO } =

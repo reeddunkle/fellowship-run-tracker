@@ -1,4 +1,3 @@
-import { useRouter } from "@tanstack/react-router";
 import * as A from "effect/Array";
 import * as E from "effect/Effect";
 import * as Option from "effect/Option";
@@ -26,6 +25,7 @@ import {
   dungeonRunEventStore,
 } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-event-store.ts";
 import { ReactContextError } from "@/errors/react-context-error.ts";
+import { type RouterInvalidationError } from "@/errors/router-invalidation-error.ts";
 import {
   type DungeonRunApiHistory,
   type DungeonRunApiObservationStatistics,
@@ -75,6 +75,7 @@ type DungeonRunProviderProps = {
   readonly children: ReactNode;
   readonly eventStore?: DungeonRunEventStore;
   readonly history: DungeonRunApiHistory | null;
+  readonly invalidate: () => E.Effect<void, RouterInvalidationError>;
 };
 
 export type DungeonRunServerState = {
@@ -134,9 +135,8 @@ export function DungeonRunProvider({
   children,
   eventStore = dungeonRunEventStore,
   history,
+  invalidate,
 }: DungeonRunProviderProps) {
-  const router = useRouter();
-
   const dungeonRunSnapshot = useSyncExternalStore(
     eventStore.subscribe,
     eventStore.getSnapshot,
@@ -193,14 +193,7 @@ export function DungeonRunProvider({
             return;
           }
 
-          yield* E.tryPromise({
-            try: () => {
-              return router.invalidate({
-                sync: true,
-              });
-            },
-            catch: (cause) => cause,
-          }).pipe(
+          yield* invalidate().pipe(
             E.tap(() => {
               return E.sync(() => {
                 setOptimisticallyDeletedConfigurationId(
@@ -225,7 +218,7 @@ export function DungeonRunProvider({
         }),
       );
     },
-    [router],
+    [invalidate],
   );
 
   const expandAllMilestones = useCallback(() => {

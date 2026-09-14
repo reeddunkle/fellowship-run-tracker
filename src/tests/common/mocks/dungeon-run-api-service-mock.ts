@@ -10,11 +10,15 @@ export type MakeDungeonRunApiServiceMockOptions =
   Partial<DungeonRunApiServiceShape>;
 
 function makeDungeonRunApiServiceMock({
+  deleteHistory = () => {
+    return E.void;
+  },
   getHistory = () => {
     return E.succeedNone;
   },
 }: MakeDungeonRunApiServiceMockOptions = {}) {
   return Layer.succeed(DungeonRunApiService, {
+    deleteHistory,
     getHistory,
   } satisfies DungeonRunApiServiceShape);
 }

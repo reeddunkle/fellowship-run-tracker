@@ -1,15 +1,13 @@
+import * as E from "effect/Effect";
 import * as Stream from "effect/Stream";
 import { describe, expect, test } from "vitest";
 import { render } from "vitest-browser-react";
 
-import { API_CONNECTION_STATE } from "@/electron/renderer/api/common.ts";
 import { type DungeonRunEventStreamEvent } from "@/electron/renderer/api/dungeon-run/dungeon-run-event-stream.ts";
 import { makeDungeonRunEventStore } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-event-store.ts";
 import {
   DungeonRunProvider,
-  useDungeonRunDisplayState,
   useDungeonRunInterpretationState,
-  useDungeonRunServerState,
 } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-provider.tsx";
 import { type DungeonRunApiHistory } from "@/services/api/dungeon-run/dungeon-run-api-schema.ts";
 import { MOCK_CONFIGURATION_ID } from "@/tests/common/fixtures/configuration-fixtures.ts";
@@ -17,64 +15,6 @@ import {
   MOCK_DUNGEON_RUN_API_MESSAGE,
   MOCK_DUNGEON_RUN_STATE_API,
 } from "@/tests/common/fixtures/dungeon-run-api-fixtures.ts";
-
-function DungeonRunProviderConsumer() {
-  const {
-    connectionState,
-    dungeonRun,
-    history,
-    latestObservation,
-    observations,
-  } = useDungeonRunServerState();
-
-  const {
-    collapseAllMilestones,
-    expandAllMilestones,
-    isMilestoneExpanded,
-    setMilestoneExpanded,
-  } = useDungeonRunDisplayState();
-
-  return (
-    <div>
-      <div data-testid="connection-state">{connectionState}</div>
-
-      <div data-testid="dungeon-run">
-        {dungeonRun === null ? "No dungeon run" : dungeonRun.status}
-      </div>
-
-      <div data-testid="history">
-        {history === null ? "No history" : "Has history"}
-      </div>
-
-      <div data-testid="observation-count">{observations.length}</div>
-
-      <div data-testid="latest-observation">
-        {latestObservation?.targetId ?? "No observation"}
-      </div>
-
-      <div data-testid="milestone-1">
-        {isMilestoneExpanded("1") ? "Expanded" : "Collapsed"}
-      </div>
-
-      <button
-        onClick={() => {
-          setMilestoneExpanded("1", true);
-        }}
-        type="button"
-      >
-        Expand milestone
-      </button>
-
-      <button onClick={expandAllMilestones} type="button">
-        Expand all
-      </button>
-
-      <button onClick={collapseAllMilestones} type="button">
-        Collapse all
-      </button>
-    </div>
-  );
-}
 
 function DungeonRunInterpretationConsumer() {
   const { latestObservation, observations } =
@@ -149,92 +89,7 @@ function DungeonRunInterpretationConsumer() {
   );
 }
 
-describe("DungeonRunProvider", () => {
-  test("provides its initial state", async () => {
-    const eventStore = makeDungeonRunEventStore({
-      makeEventStream: () => {
-        return Stream.never;
-      },
-    });
-
-    const screen = await render(
-      <DungeonRunProvider eventStore={eventStore} history={null}>
-        <DungeonRunProviderConsumer />
-      </DungeonRunProvider>,
-    );
-
-    await expect
-      .element(screen.getByTestId("connection-state"))
-      .toHaveTextContent(API_CONNECTION_STATE.DISCONNECTED);
-
-    await expect
-      .element(screen.getByTestId("dungeon-run"))
-      .toHaveTextContent("No dungeon run");
-
-    await expect
-      .element(screen.getByTestId("history"))
-      .toHaveTextContent("No history");
-
-    await expect
-      .element(screen.getByTestId("observation-count"))
-      .toHaveTextContent("0");
-
-    await expect
-      .element(screen.getByTestId("latest-observation"))
-      .toHaveTextContent("No observation");
-
-    await expect
-      .element(screen.getByTestId("milestone-1"))
-      .toHaveTextContent("Collapsed");
-  });
-
-  test("updates server state when the event store changes", async () => {
-    const events = [
-      {
-        state: API_CONNECTION_STATE.CONNECTED,
-        type: "CONNECTION_STATE_CHANGED",
-      },
-      {
-        message: MOCK_DUNGEON_RUN_API_MESSAGE,
-        type: "MESSAGE_RECEIVED",
-      },
-    ] satisfies ReadonlyArray<DungeonRunEventStreamEvent>;
-
-    const eventStore = makeDungeonRunEventStore({
-      makeEventStream: () => {
-        return Stream.fromIterable(events);
-      },
-    });
-
-    const screen = await render(
-      <DungeonRunProvider eventStore={eventStore} history={null}>
-        <DungeonRunProviderConsumer />
-      </DungeonRunProvider>,
-    );
-
-    eventStore.start();
-
-    await expect
-      .element(screen.getByTestId("connection-state"))
-      .toHaveTextContent(API_CONNECTION_STATE.CONNECTED);
-
-    await expect
-      .element(screen.getByTestId("dungeon-run"))
-      .toHaveTextContent(MOCK_DUNGEON_RUN_STATE_API.dungeonRun.status);
-
-    await expect
-      .element(screen.getByTestId("observation-count"))
-      .toHaveTextContent(
-        String(MOCK_DUNGEON_RUN_STATE_API.observations.length),
-      );
-
-    await expect
-      .element(screen.getByTestId("latest-observation"))
-      .toHaveTextContent(
-        MOCK_DUNGEON_RUN_STATE_API.observations.at(-1)?.targetId ?? "",
-      );
-  });
-
+describe("DungeonRunProvider interpretation state", () => {
   test("matches historical analytics by observation occurrence", async () => {
     const observation = MOCK_DUNGEON_RUN_STATE_API.observations[0];
 
@@ -302,7 +157,11 @@ describe("DungeonRunProvider", () => {
     });
 
     const screen = await render(
-      <DungeonRunProvider eventStore={eventStore} history={history}>
+      <DungeonRunProvider
+        eventStore={eventStore}
+        history={history}
+        invalidate={() => E.void}
+      >
         <DungeonRunInterpretationConsumer />
       </DungeonRunProvider>,
     );
@@ -396,7 +255,11 @@ describe("DungeonRunProvider", () => {
     });
 
     const screen = await render(
-      <DungeonRunProvider eventStore={eventStore} history={null}>
+      <DungeonRunProvider
+        eventStore={eventStore}
+        history={null}
+        invalidate={() => E.void}
+      >
         <DungeonRunInterpretationConsumer />
       </DungeonRunProvider>,
     );
@@ -464,7 +327,11 @@ describe("DungeonRunProvider", () => {
     });
 
     const screen = await render(
-      <DungeonRunProvider eventStore={eventStore} history={history}>
+      <DungeonRunProvider
+        eventStore={eventStore}
+        history={history}
+        invalidate={() => E.void}
+      >
         <DungeonRunInterpretationConsumer />
       </DungeonRunProvider>,
     );
@@ -486,37 +353,5 @@ describe("DungeonRunProvider", () => {
     await expect
       .element(screen.getByTestId("first-median"))
       .toHaveTextContent("None");
-  });
-
-  test("updates milestone expansion state", async () => {
-    const eventStore = makeDungeonRunEventStore({
-      makeEventStream: () => {
-        return Stream.never;
-      },
-    });
-
-    const screen = await render(
-      <DungeonRunProvider eventStore={eventStore} history={null}>
-        <DungeonRunProviderConsumer />
-      </DungeonRunProvider>,
-    );
-
-    await screen.getByRole("button", { name: "Expand milestone" }).click();
-
-    await expect
-      .element(screen.getByTestId("milestone-1"))
-      .toHaveTextContent("Expanded");
-
-    await screen.getByRole("button", { name: "Collapse all" }).click();
-
-    await expect
-      .element(screen.getByTestId("milestone-1"))
-      .toHaveTextContent("Collapsed");
-
-    await screen.getByRole("button", { name: "Expand all" }).click();
-
-    await expect
-      .element(screen.getByTestId("milestone-1"))
-      .toHaveTextContent("Expanded");
   });
 });

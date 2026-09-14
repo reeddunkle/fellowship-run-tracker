@@ -155,6 +155,9 @@ export function makeFellowshipTrackerTestHarness(
           updatedAt: MOCK_UPDATED_AT,
         } satisfies DungeonRunModel);
       },
+      deleteHistoryByConfigurationDefinitionId: () => {
+        return E.void;
+      },
       exit: () => {
         return E.void;
       },
