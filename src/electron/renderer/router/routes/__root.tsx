@@ -1,5 +1,6 @@
 import { createRootRouteWithContext } from "@tanstack/react-router";
 import * as E from "effect/Effect";
+import * as HttpClientError from "effect/unstable/http/HttpClientError";
 
 import { type DungeonRunStateApi } from "@/api/websocket/dungeon-run/dungeon-run-api-message-schema.ts";
 import { type TrackingApiStatus } from "@/application/fellowship-tracker/tracking-api-schema.ts";
@@ -50,7 +51,18 @@ export const Route = createRootRouteWithContext<RouterContext>()({
         ? E.succeed(null)
         : getDungeonRunHistory({
             configurationId: historyConfigurationId,
-          });
+          }).pipe(
+            E.catchIf(
+              (error) => {
+                return (
+                  HttpClientError.isHttpClientError(error) &&
+                  error.reason._tag === "StatusCodeError" &&
+                  error.reason.response.status === 404
+                );
+              },
+              () => E.succeed(null),
+            ),
+          );
 
     return context.browserRuntime.runPromise(
       E.all({
