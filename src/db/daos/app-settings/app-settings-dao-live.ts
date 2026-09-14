@@ -28,6 +28,7 @@ const make = E.gen(function* () {
           created_at AS createdAt,
           fellowship_log_directory AS fellowshipLogDirectory,
           id,
+          is_live_split_enabled AS isLiveSplitEnabled,
           live_splits_host AS liveSplitsHost,
           live_splits_port AS liveSplitsPort,
           updated_at AS updatedAt
@@ -50,6 +51,7 @@ const make = E.gen(function* () {
 
   const insert: AppSettingsDAOShape["insert"] = ({
     fellowshipLogDirectory,
+    isLiveSplitEnabled,
     liveSplitsHost,
     liveSplitsPort,
   }) => {
@@ -62,6 +64,7 @@ const make = E.gen(function* () {
             id,
             live_splits_host,
             live_splits_port,
+            is_live_split_enabled,
             fellowship_log_directory,
             created_at,
             updated_at
@@ -71,6 +74,7 @@ const make = E.gen(function* () {
             1,
             ${liveSplitsHost},
             ${liveSplitsPort},
+            ${isLiveSplitEnabled ? 1 : 0},
             ${fellowshipLogDirectory},
             ${timestamp},
             ${timestamp}
@@ -81,6 +85,7 @@ const make = E.gen(function* () {
 
   const update: AppSettingsDAOShape["update"] = ({
     fellowshipLogDirectory,
+    isLiveSplitEnabled,
     liveSplitsHost,
     liveSplitsPort,
   }) => {
@@ -91,6 +96,7 @@ const make = E.gen(function* () {
         UPDATE app_settings
         SET
           fellowship_log_directory = ${fellowshipLogDirectory},
+          is_live_split_enabled = ${isLiveSplitEnabled ? 1 : 0},
           live_splits_host = ${liveSplitsHost},
           live_splits_port = ${liveSplitsPort},
           updated_at = ${timestamp}

@@ -19,8 +19,3 @@ export class MermaidGraphDecodeError extends Data.TaggedError(
   readonly message: string;
   readonly url: string;
 }> {}
-
-export type MermaidLiveError =
-  | MermaidGraphDecodeError
-  | MermaidGraphUrlError
-  | MermaidHoverResponseError;

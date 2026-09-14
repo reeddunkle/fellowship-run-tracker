@@ -8,6 +8,7 @@ import {
 
 export const AppSettingsApiAppSettingsSchema = Schema.Struct({
   fellowshipLogDirectory: FellowshipLogDirectorySchema,
+  isLiveSplitEnabled: Schema.Boolean,
   liveSplitsHost: LiveSplitHostSchema,
   liveSplitsPort: LiveSplitPortSchema,
 });

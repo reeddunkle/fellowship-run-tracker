@@ -1,6 +1,7 @@
 import { getRouteApi, Outlet, useRouter } from "@tanstack/react-router";
 import * as E from "effect/Effect";
 
+import { SettingsProvider } from "@/electron/renderer/components/providers/settings-provider.tsx";
 import { ThemeProvider } from "@/electron/renderer/components/providers/theme-provider.tsx";
 import { TooltipProvider } from "@/electron/renderer/components/ui/tooltip.tsx";
 import { DungeonRunProvider } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-provider";
@@ -24,24 +25,26 @@ function invalidateRouter(router: ReturnType<typeof useRouter>) {
 }
 
 export function RootLayout() {
-  const { history } = rootRouteApi.useLoaderData();
+  const { history, settings } = rootRouteApi.useLoaderData();
   const router = useRouter();
 
   return (
     <ThemeProvider>
       <TooltipProvider>
-        <TrackingProvider>
-          <LiveSplitProvider>
-            <DungeonRunProvider
-              history={history}
-              invalidate={() => {
-                return invalidateRouter(router);
-              }}
-            >
-              <Outlet />
-            </DungeonRunProvider>
-          </LiveSplitProvider>
-        </TrackingProvider>
+        <SettingsProvider appSettings={settings}>
+          <TrackingProvider>
+            <LiveSplitProvider>
+              <DungeonRunProvider
+                history={history}
+                invalidate={() => {
+                  return invalidateRouter(router);
+                }}
+              >
+                <Outlet />
+              </DungeonRunProvider>
+            </LiveSplitProvider>
+          </TrackingProvider>
+        </SettingsProvider>
       </TooltipProvider>
     </ThemeProvider>
   );

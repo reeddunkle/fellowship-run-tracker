@@ -8,15 +8,15 @@ import {
   type LayerAnalysisNode,
 } from "./layer-analysis-model.ts";
 
-export const ServiceBundleSchema = Schema.Struct({
+const ServiceBundleSchema = Schema.Struct({
   name: Schema.String,
   requires: Schema.Array(Schema.String),
   services: Schema.Array(Schema.String),
 });
 
-export type ServiceBundle = typeof ServiceBundleSchema.Type;
+type ServiceBundle = typeof ServiceBundleSchema.Type;
 
-export const ServiceBundleRelationshipSchema = Schema.Struct({
+const ServiceBundleRelationshipSchema = Schema.Struct({
   bundle: Schema.String,
   comparedBundle: Schema.String,
   onlyInBundle: Schema.Array(Schema.String),
@@ -35,7 +35,7 @@ export const ServiceBundleRelationshipSchema = Schema.Struct({
 export type ServiceBundleRelationship =
   typeof ServiceBundleRelationshipSchema.Type;
 
-export const ServiceBundleRequirementReductionSchema = Schema.Struct({
+const ServiceBundleRequirementReductionSchema = Schema.Struct({
   bundle: Schema.String,
   reducedByBundle: Schema.String,
   relationship: Schema.Union([
@@ -50,7 +50,7 @@ export const ServiceBundleRequirementReductionSchema = Schema.Struct({
 export type ServiceBundleRequirementReduction =
   typeof ServiceBundleRequirementReductionSchema.Type;
 
-export const ServiceBundleServiceMembershipSchema = Schema.Struct({
+const ServiceBundleServiceMembershipSchema = Schema.Struct({
   bundles: Schema.Array(Schema.String),
   service: Schema.String,
 });

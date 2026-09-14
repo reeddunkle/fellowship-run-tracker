@@ -12,6 +12,7 @@ export const createTables = E.gen(function* () {
         live_splits_port >= 1
         AND live_splits_port <= 65535
       ),
+      is_live_split_enabled INTEGER NOT NULL DEFAULT 0 CHECK (is_live_split_enabled IN (0, 1)),
       fellowship_log_directory TEXT NOT NULL,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL

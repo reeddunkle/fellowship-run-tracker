@@ -19,7 +19,7 @@ const decodeSubgraphBlock = Schema.decodeUnknownSync(SubgraphBlockSchema);
 const isSubgraphStartLine = Schema.is(SubgraphStartLineSchema);
 const isSubgraphEndLine = Schema.is(SubgraphEndLineSchema);
 
-export type IndexedSubgraphBlock = {
+type IndexedSubgraphBlock = {
   readonly block: SubgraphBlock;
   readonly endIndex: number;
   readonly startIndex: number;
@@ -119,7 +119,7 @@ function parseSubgraphBlock({
   };
 }
 
-export function parseIndexedTopLevelSubgraphs(
+function parseIndexedTopLevelSubgraphs(
   source: string,
 ): ReadonlyArray<IndexedSubgraphBlock> {
   const lines = source.split("\n");

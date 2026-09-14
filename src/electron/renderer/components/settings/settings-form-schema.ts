@@ -14,6 +14,7 @@ const LiveSplitPortFromStringSchema = IntegerFromStringSchema.pipe(
 
 export const SettingsFormSchema = Schema.Struct({
   fellowshipLogDirectory: FellowshipLogDirectorySchema,
+  isLiveSplitEnabled: Schema.Boolean,
   liveSplitsHost: LiveSplitHostSchema,
   liveSplitsPort: LiveSplitPortFromStringSchema,
 });

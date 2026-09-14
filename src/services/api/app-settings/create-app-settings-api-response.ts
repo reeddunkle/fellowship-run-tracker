@@ -6,6 +6,7 @@ export function createAppSettingsApiResponse(
 ): AppSettingsApiAppSettings {
   return {
     fellowshipLogDirectory: appSettings.fellowshipLogDirectory,
+    isLiveSplitEnabled: appSettings.isLiveSplitEnabled,
     liveSplitsHost: appSettings.liveSplitsHost,
     liveSplitsPort: appSettings.liveSplitsPort,
   };

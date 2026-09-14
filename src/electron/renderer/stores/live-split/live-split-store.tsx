@@ -4,18 +4,26 @@ import {
   type ReactNode,
   startTransition,
   useActionState,
+  useCallback,
   useContext,
   useMemo,
   useSyncExternalStore,
 } from "react";
 
-import { type ApiConnectionState } from "@/electron/renderer/api/common.ts";
+import {
+  API_CONNECTION_STATE,
+  type ApiConnectionState,
+} from "@/electron/renderer/api/common.ts";
 import * as liveSplitClient from "@/electron/renderer/api/live-split/live-split-client.ts";
+import { useAppSettings } from "@/electron/renderer/components/providers/settings-provider.tsx";
 import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
 import { ReactContextError } from "@/errors/react-context-error.ts";
 import { type LiveSplitApiStatus } from "@/services/api/live-split/live-split-api-schema.ts";
 
-import { liveSplitEventStore } from "./live-split-event-store.ts";
+import {
+  type LiveSplitEventStoreSnapshot,
+  liveSplitEventStore,
+} from "./live-split-event-store.ts";
 
 type LiveSplitActionResult = {
   readonly error: unknown | undefined;
@@ -53,15 +61,38 @@ const INITIAL_LIVE_SPLIT_ACTION_RESULT: LiveSplitActionResult = {
   error: undefined,
 };
 
+const DISABLED_LIVE_SPLIT_SNAPSHOT: LiveSplitEventStoreSnapshot = {
+  connectionState: API_CONNECTION_STATE.DISCONNECTED,
+  liveSplitStatus: null,
+};
+
 const LiveSplitContext = createContext<LiveSplitContextValue | undefined>(
   undefined,
 );
 
 export function LiveSplitProvider({ children }: LiveSplitProviderProps) {
-  const liveSplitSnapshot = useSyncExternalStore(
-    liveSplitEventStore.subscribe,
-    liveSplitEventStore.getSnapshot,
+  const appSettings = useAppSettings();
+
+  const subscribe = useCallback(
+    (listener: () => void) => {
+      if (!appSettings.isLiveSplitEnabled) {
+        return () => {};
+      }
+
+      return liveSplitEventStore.subscribe(listener);
+    },
+    [appSettings.isLiveSplitEnabled],
   );
+
+  const getSnapshot = useCallback(() => {
+    if (!appSettings.isLiveSplitEnabled) {
+      return DISABLED_LIVE_SPLIT_SNAPSHOT;
+    }
+
+    return liveSplitEventStore.getSnapshot();
+  }, [appSettings.isLiveSplitEnabled]);
+
+  const liveSplitSnapshot = useSyncExternalStore(subscribe, getSnapshot);
 
   const [connectState, dispatchConnect, isConnecting] = useActionState(
     (): Promise<LiveSplitActionResult> => {

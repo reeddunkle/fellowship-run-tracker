@@ -15,6 +15,7 @@ export type AppSettingsDAOError = SqlError.SqlError | Schema.SchemaError;
 
 type AppSettingsDAOValue = {
   readonly fellowshipLogDirectory: FellowshipLogDirectory;
+  readonly isLiveSplitEnabled: boolean;
   readonly liveSplitsHost: LiveSplitHost;
   readonly liveSplitsPort: LiveSplitPort;
 };

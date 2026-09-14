@@ -20,6 +20,7 @@ import {
 
 export type AppSettingsValue = {
   readonly fellowshipLogDirectory: FellowshipLogDirectory;
+  readonly isLiveSplitEnabled: boolean;
   readonly liveSplitsHost: LiveSplitHost;
   readonly liveSplitsPort: LiveSplitPort;
 };
@@ -30,6 +31,7 @@ export type AppSettingsShape = {
   readonly set: (
     appSettings: AppSettingsValue,
   ) => E.Effect<void, AppSettingsDAOError>;
+
   readonly streamChanges: () => Stream.Stream<AppSettingsValue>;
 };
 
@@ -43,6 +45,7 @@ export class AppSettings extends Context.Service<
 function toAppSettingsValue(appSettings: AppSettingsModel): AppSettingsValue {
   return {
     fellowshipLogDirectory: appSettings.fellowshipLogDirectory,
+    isLiveSplitEnabled: appSettings.isLiveSplitEnabled,
     liveSplitsHost: appSettings.liveSplitsHost,
     liveSplitsPort: appSettings.liveSplitsPort,
   };
@@ -63,6 +66,7 @@ const makeAppSettings = E.gen(function* () {
     onNone: () => {
       const appSettings = {
         fellowshipLogDirectory,
+        isLiveSplitEnabled: false,
         liveSplitsHost,
         liveSplitsPort,
       } satisfies AppSettingsValue;

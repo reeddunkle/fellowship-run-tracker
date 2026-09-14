@@ -27,23 +27,12 @@ export const Route = createFileRoute("/")({
   component: HomeRoute,
   loader: ({ context }) => {
     return context.browserRuntime.runPromise(
-      E.gen(function* () {
-        const [abilities, configurations, dungeons, encounters, units] =
-          yield* E.all([
-            getAbilities(),
-            getConfigurations(),
-            getDungeons(),
-            getEncounters(),
-            getUnits(),
-          ]);
-
-        return {
-          abilities,
-          configurations,
-          dungeons,
-          encounters,
-          units,
-        };
+      E.all({
+        abilities: getAbilities(),
+        configurations: getConfigurations(),
+        dungeons: getDungeons(),
+        encounters: getEncounters(),
+        units: getUnits(),
       }),
     );
   },

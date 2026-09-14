@@ -24,7 +24,7 @@ export type LayerContract = {
   readonly requires: ReadonlyArray<string>;
 };
 
-export function getContractServices({
+function getContractServices({
   block,
   section,
 }: {

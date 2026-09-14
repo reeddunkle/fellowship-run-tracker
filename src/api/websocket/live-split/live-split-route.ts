@@ -2,6 +2,7 @@ import * as E from "effect/Effect";
 import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import * as HttpServerRequest from "effect/unstable/http/HttpServerRequest";
 import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
+import * as Socket from "effect/unstable/socket/Socket";
 
 import { ROUTES } from "@/api/constants/routes.ts";
 import { LiveSplitWebSocketBroadcaster } from "@/services/api/websocket-broadcaster-service.ts";
@@ -22,20 +23,29 @@ const handleLiveSplitRequest = E.gen(function* () {
 
       yield* liveSplitWebSocketBroadcaster.registerClient(writer);
 
-      yield* socket.runRaw(
-        () => {
-          return E.void;
-        },
-        {
-          onOpen: E.gen(function* () {
-            yield* E.logInfo("LiveSplit WebSocket client connected.", {
-              url: request.url,
-            });
+      yield* socket
+        .runRaw(
+          () => {
+            return E.void;
+          },
+          {
+            onOpen: E.gen(function* () {
+              yield* E.logInfo("LiveSplit WebSocket client connected.", {
+                url: request.url,
+              });
 
-            yield* liveSplitWebSocketBroadcaster.sendLatestToClient(writer);
-          }),
-        },
-      );
+              yield* liveSplitWebSocketBroadcaster.sendLatestToClient(writer);
+            }),
+          },
+        )
+        .pipe(
+          E.catchFilter(
+            Socket.SocketCloseError.filterClean((code) => {
+              return code === 1000;
+            }),
+            () => E.void,
+          ),
+        );
     }),
   ).pipe(
     E.ensuring(

@@ -1,6 +1,7 @@
 import * as Schema from "effect/Schema";
 
 import {
+  BooleanIntSchema,
   HostSchema,
   NonEmptyStringSchema,
   PortSchema,
@@ -19,6 +20,8 @@ export type LiveSplitHost = typeof LiveSplitHostSchema.Type;
 export const LiveSplitPortSchema = PortSchema.pipe(
   Schema.brand("LiveSplitPort"),
 );
+
+export const IsLiveSplitEnabledSchema = BooleanIntSchema;
 
 export type LiveSplitPort = typeof LiveSplitPortSchema.Type;
 

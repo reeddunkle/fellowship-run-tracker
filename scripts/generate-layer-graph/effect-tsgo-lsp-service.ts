@@ -54,12 +54,12 @@ const decodeJsonRpcMessage = Schema.decodeUnknownSync(
 
 type PendingRequest = Deferred.Deferred<JsonRpcResponse, EffectTsGoLspError>;
 
-export type LspRequest = {
+type LspRequest = {
   readonly method: string;
   readonly params?: unknown;
 };
 
-export type LspNotification = {
+type LspNotification = {
   readonly method: string;
   readonly params?: unknown;
 };

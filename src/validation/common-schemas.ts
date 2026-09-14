@@ -5,6 +5,11 @@ export const BooleanFlagSchema = Schema.Union([
   Schema.Literal("1").transform(true),
 ]);
 
+export const BooleanIntSchema = Schema.Union([
+  Schema.Literal(0).transform(false),
+  Schema.Literal(1).transform(true),
+]);
+
 export const EmptyStringSchema = Schema.Literal("");
 
 export const NonEmptyStringSchema = Schema.NonEmptyString;

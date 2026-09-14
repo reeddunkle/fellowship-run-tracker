@@ -6,16 +6,19 @@ import {
   useAppSettings,
   useSettingsActions,
   useSettingsSaveStatus,
-} from "@/electron/renderer/components/settings/settings-provider.tsx";
+} from "@/electron/renderer/components/providers/settings-provider.tsx";
 import { Button } from "@/electron/renderer/components/ui/button.tsx";
 import { Card, CardContent } from "@/electron/renderer/components/ui/card.tsx";
+import { Checkbox } from "@/electron/renderer/components/ui/checkbox.tsx";
 import {
   Field,
   FieldError,
+  FieldGroup,
   FieldLabel,
 } from "@/electron/renderer/components/ui/field.tsx";
 import { DirectoryInput } from "@/electron/renderer/components/ui/file-input.tsx";
 import { Input } from "@/electron/renderer/components/ui/input.tsx";
+import { Separator } from "@/electron/renderer/components/ui/separator.tsx";
 
 import { createSettingsFormValue, useSettingsForm } from "./settings-form.ts";
 import {
@@ -53,6 +56,10 @@ function selectSettingsEditorFormState(state: SettingsEditorFormState) {
   };
 }
 
+function selectIsLiveSplitEnabled(state: SettingsEditorFormState): boolean {
+  return state.values.isLiveSplitEnabled;
+}
+
 function hasUnsavedChanges({
   isDefaultValue,
   isDirty,
@@ -73,9 +80,9 @@ function hasUnsavedChanges({
 }
 
 export function SettingsEditor() {
-  const appSettings = useAppSettings();
   const { getDirectoryPath, save } = useSettingsActions();
   const { error, isSaving } = useSettingsSaveStatus();
+  const appSettings = useAppSettings();
 
   const defaultValues = createSettingsFormValue(appSettings);
 
@@ -120,58 +127,93 @@ export function SettingsEditor() {
                 );
               }}
             </form.Field>
-            <div className="grid grid-cols-[14rem_8rem] gap-4">
-              <form.Field name="liveSplitsHost">
+            <Separator />
+            <FieldGroup className="gap-4">
+              <form.Field name="isLiveSplitEnabled">
                 {(field) => {
                   return (
-                    <Field>
-                      <FieldLabel htmlFor={field.name}>
-                        LiveSplit host
-                      </FieldLabel>
-                      <Input
+                    <Field orientation="horizontal">
+                      <Checkbox
+                        checked={field.state.value}
                         id={field.name}
-                        name={field.name}
-                        onBlur={field.handleBlur}
-                        onChange={(event) => {
-                          field.handleChange(event.target.value);
+                        onCheckedChange={(checked) => {
+                          field.handleChange(checked === true);
                         }}
-                        placeholder="localhost"
-                        value={field.state.value}
                       />
-
-                      {field.state.meta.errors.length > 0 ? (
-                        <FieldError errors={field.state.meta.errors} />
-                      ) : null}
+                      <FieldLabel htmlFor={field.name}>
+                        Enable LiveSplit integration
+                      </FieldLabel>
                     </Field>
                   );
                 }}
               </form.Field>
-              <form.Field name="liveSplitsPort">
-                {(field) => {
+              <form.Subscribe selector={selectIsLiveSplitEnabled}>
+                {(isLiveSplitEnabled) => {
                   return (
-                    <Field>
-                      <FieldLabel htmlFor={field.name}>
-                        LiveSplit port
-                      </FieldLabel>
-                      <Input
-                        id={field.name}
-                        inputMode="numeric"
-                        name={field.name}
-                        onBlur={field.handleBlur}
-                        onChange={(event) => {
-                          field.handleChange(event.target.value);
+                    <div className="grid grid-cols-[14rem_8rem] gap-4">
+                      <form.Field name="liveSplitsHost">
+                        {(field) => {
+                          return (
+                            <Field>
+                              <FieldLabel
+                                className="text-xs font-normal text-muted-foreground"
+                                htmlFor={field.name}
+                              >
+                                LiveSplit host
+                              </FieldLabel>
+                              <Input
+                                disabled={!isLiveSplitEnabled}
+                                id={field.name}
+                                name={field.name}
+                                onBlur={field.handleBlur}
+                                onChange={(event) => {
+                                  field.handleChange(event.target.value);
+                                }}
+                                placeholder="localhost"
+                                value={field.state.value}
+                              />
+                              {field.state.meta.errors.length > 0 ? (
+                                <FieldError errors={field.state.meta.errors} />
+                              ) : null}
+                            </Field>
+                          );
                         }}
-                        placeholder="16834"
-                        value={field.state.value}
-                      />
-                      {field.state.meta.errors.length > 0 ? (
-                        <FieldError errors={field.state.meta.errors} />
-                      ) : null}
-                    </Field>
+                      </form.Field>
+                      <form.Field name="liveSplitsPort">
+                        {(field) => {
+                          return (
+                            <Field>
+                              <FieldLabel
+                                className="text-xs font-normal text-muted-foreground"
+                                htmlFor={field.name}
+                              >
+                                LiveSplit port
+                              </FieldLabel>
+                              <Input
+                                disabled={!isLiveSplitEnabled}
+                                id={field.name}
+                                inputMode="numeric"
+                                name={field.name}
+                                onBlur={field.handleBlur}
+                                onChange={(event) => {
+                                  field.handleChange(event.target.value);
+                                }}
+                                placeholder="16834"
+                                value={field.state.value}
+                              />
+                              {field.state.meta.errors.length > 0 ? (
+                                <FieldError errors={field.state.meta.errors} />
+                              ) : null}
+                            </Field>
+                          );
+                        }}
+                      </form.Field>
+                    </div>
                   );
                 }}
-              </form.Field>
-            </div>
+              </form.Subscribe>
+            </FieldGroup>
+            <Separator />
             <form.Subscribe selector={selectSettingsEditorFormState}>
               {({ isDefaultValue, isDirty, isSubmitted, values }) => {
                 const decodedValue = decodeSettingsFormValue(values);

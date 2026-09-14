@@ -3,6 +3,7 @@ import * as E from "effect/Effect";
 
 import { type DungeonRunStateApi } from "@/api/websocket/dungeon-run/dungeon-run-api-message-schema.ts";
 import { type TrackingApiStatus } from "@/application/fellowship-tracker/tracking-api-schema.ts";
+import { getAppSettings } from "@/electron/renderer/api/app-settings/app-settings-client.ts";
 import { getDungeonRunHistory } from "@/electron/renderer/api/dungeon-run/dungeon-run-client.ts";
 import { RootLayout } from "@/electron/renderer/components/core/root-layout";
 import { type RouterContext } from "@/electron/renderer/router/router-context";
@@ -52,13 +53,10 @@ export const Route = createRootRouteWithContext<RouterContext>()({
           });
 
     return context.browserRuntime.runPromise(
-      getHistory.pipe(
-        E.map((history) => {
-          return {
-            history,
-          };
-        }),
-      ),
+      E.all({
+        history: getHistory,
+        settings: getAppSettings(),
+      }),
     );
   },
 });

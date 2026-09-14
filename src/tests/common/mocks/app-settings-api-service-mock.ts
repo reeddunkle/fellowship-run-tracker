@@ -18,6 +18,7 @@ function makeAppSettingsApiServiceMock({
   get = () => {
     return E.succeed({
       fellowshipLogDirectory: MOCK_FELLOWSHIP_LOG_DIRECTORY,
+      isLiveSplitEnabled: true,
       liveSplitsHost: MOCK_LIVE_SPLIT_HOST,
       liveSplitsPort: MOCK_LIVE_SPLIT_PORT,
     });

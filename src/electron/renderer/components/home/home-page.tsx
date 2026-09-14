@@ -6,6 +6,7 @@ import { DetachedWindowProvider } from "@/electron/renderer/components/detached-
 import { DungeonRun } from "@/electron/renderer/components/dungeon-run/dungeon-run";
 import { HomeTrackingControls } from "@/electron/renderer/components/home/home-tracking-controls.tsx";
 import { LiveSplitPanel } from "@/electron/renderer/components/live-split/live-split-panel.tsx";
+import { useAppSettings } from "@/electron/renderer/components/providers/settings-provider.tsx";
 import { ConfigurationProvider } from "@/electron/renderer/stores/configurations-store/configurations-store.tsx";
 import { FellowshipDataProvider } from "@/electron/renderer/stores/fellowship-data/fellowship-data-store.tsx";
 import { type AbilityApiAbilityList } from "@/services/api/ability/ability-api-schema.ts";
@@ -29,6 +30,8 @@ export function HomePage({
   encounters,
   units,
 }: HomePageProps) {
+  const appSettings = useAppSettings();
+
   return (
     <FellowshipDataProvider
       abilities={abilities}
@@ -43,7 +46,7 @@ export function HomePage({
           </ManagedDetachedWindow>
           <AppLayout sidebar={<ConfigurationSidebar />}>
             <main className="mx-auto grid w-full gap-6 p-6">
-              <LiveSplitPanel />
+              {appSettings.isLiveSplitEnabled ? <LiveSplitPanel /> : null}
               <HomeTrackingControls />
               <ConfigurationEditorContainer />
             </main>

@@ -7,9 +7,11 @@
   ],
   "project": [
     "src/**/*.{ts,tsx,css}",
+    "scripts/**/*.ts",
     "!src/services/fellowship/constants/all-fellowship-events.ts"
   ],
   "ignoreDependencies": [
+    "@effect/language-service",
     "@effect/tsgo-win32-x64",
     "@fontsource-variable/geist",
     "@mermaid-js/mermaid-cli",

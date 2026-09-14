@@ -21,6 +21,7 @@ export function createSettingsFormValue(
 ): SettingsFormValue {
   return {
     fellowshipLogDirectory: appSettings.fellowshipLogDirectory,
+    isLiveSplitEnabled: appSettings.isLiveSplitEnabled,
     liveSplitsHost: appSettings.liveSplitsHost,
     liveSplitsPort: String(appSettings.liveSplitsPort),
   };

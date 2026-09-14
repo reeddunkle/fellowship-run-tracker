@@ -55,12 +55,12 @@ const makeSubgraphHeaderSchema = ({
   );
 };
 
-export const TsGoSubgraphHeaderSchema = makeSubgraphHeaderSchema({
+const TsGoSubgraphHeaderSchema = makeSubgraphHeaderSchema({
   errorMessage: "Expected an Effect TS-Go Mermaid subgraph header",
   pattern: TSGO_SUBGRAPH_HEADER_PATTERN,
 });
 
-export const MermaidSubgraphHeaderSchema = makeSubgraphHeaderSchema({
+const MermaidSubgraphHeaderSchema = makeSubgraphHeaderSchema({
   errorMessage: "Expected a normalized Mermaid subgraph header",
   pattern: MERMAID_SUBGRAPH_HEADER_PATTERN,
 });

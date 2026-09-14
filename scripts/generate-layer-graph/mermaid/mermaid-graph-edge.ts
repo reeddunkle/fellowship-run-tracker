@@ -41,7 +41,7 @@ export function hasNodeReference(
   );
 }
 
-export function parseGraphEdge(line: string): GraphEdge | undefined {
+function parseGraphEdge(line: string): GraphEdge | undefined {
   const match = EDGE_PATTERN.exec(line);
   const { indent, operator, source, target } = match?.groups ?? {};
 

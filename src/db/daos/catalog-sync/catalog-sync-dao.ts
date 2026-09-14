@@ -17,7 +17,7 @@ type SetCatalogChecksumOptions = {
   readonly checksum: NonEmptyString;
 };
 
-export type CatalogSyncDAOError = SqlError.SqlError | Schema.SchemaError;
+type CatalogSyncDAOError = SqlError.SqlError | Schema.SchemaError;
 
 export type CatalogSyncDAOShape = {
   readonly getByCatalog: (
