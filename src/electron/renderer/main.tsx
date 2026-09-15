@@ -3,6 +3,7 @@ import * as E from "effect/Effect";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
+import { startDungeonRunHistoryInvalidation } from "@/electron/renderer/application/dungeon-run-history-invalidation.ts";
 import { router } from "@/electron/renderer/router/router";
 import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
 import { appStore } from "@/electron/renderer/stores/app-state-store/app-state-store.ts";
@@ -20,20 +21,6 @@ if (rootElement === null) {
   });
 }
 
-function invalidateDungeonRunHistory(): void {
-  void router.invalidate({
-    filter: (match) => {
-      return match.routeId === "__root__";
-    },
-  });
-}
-
-function isDungeonRunActive(): boolean {
-  const { runState } = dungeonRunEventStore.getSnapshot();
-
-  return runState?.dungeonRun?.status === "ACTIVE";
-}
-
 browserRuntime.runPromise(
   E.gen(function* () {
     yield* appStore.initialize;
@@ -41,60 +28,7 @@ browserRuntime.runPromise(
     dungeonRunEventStore.start();
     trackingEventStore.start();
 
-    let selectedConfigurationId =
-      appStore.getSnapshot().selectedConfigurationId;
-
-    let runState = dungeonRunEventStore.getSnapshot().runState;
-    let trackingStatus = trackingEventStore.getSnapshot().trackingStatus;
-
-    appStore.subscribe(() => {
-      const nextSelectedConfigurationId =
-        appStore.getSnapshot().selectedConfigurationId;
-
-      if (nextSelectedConfigurationId === selectedConfigurationId) {
-        return;
-      }
-
-      selectedConfigurationId = nextSelectedConfigurationId;
-
-      if (isDungeonRunActive()) {
-        return;
-      }
-
-      invalidateDungeonRunHistory();
-    });
-
-    trackingEventStore.subscribe(() => {
-      const nextTrackingStatus =
-        trackingEventStore.getSnapshot().trackingStatus;
-
-      if (nextTrackingStatus === trackingStatus) {
-        return;
-      }
-
-      trackingStatus = nextTrackingStatus;
-
-      if (!isDungeonRunActive()) {
-        return;
-      }
-
-      invalidateDungeonRunHistory();
-    });
-
-    dungeonRunEventStore.subscribe(() => {
-      const nextRunState = dungeonRunEventStore.getSnapshot().runState;
-
-      const previousRunStatus = runState?.dungeonRun?.status;
-      const nextRunStatus = nextRunState?.dungeonRun?.status;
-
-      runState = nextRunState;
-
-      if (nextRunStatus === previousRunStatus) {
-        return;
-      }
-
-      invalidateDungeonRunHistory();
-    });
+    startDungeonRunHistoryInvalidation(router);
 
     createRoot(rootElement).render(
       <StrictMode>
