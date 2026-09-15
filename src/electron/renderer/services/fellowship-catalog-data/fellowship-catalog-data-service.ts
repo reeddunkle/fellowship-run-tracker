@@ -28,7 +28,7 @@ export class FellowshipCatalogDataService extends Context.Service<
   FellowshipCatalogDataService,
   FellowshipCatalogDataShape
 >()(
-  "fellowship-run-tracker/electron/renderer/services/fellowship-catalog-data/FellowshipCatalogDataService",
+  "fellowship-run-tracker/electron/renderer/services/fellowship-catalog-data/fellowship-catalog-data-service/FellowshipCatalogDataService",
 ) {}
 
 const makeFellowshipCatalogDataService = E.gen(function* () {
