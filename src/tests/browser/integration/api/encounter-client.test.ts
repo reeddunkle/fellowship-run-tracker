@@ -1,16 +1,15 @@
 import * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as FetchHttpClient from "effect/unstable/http/FetchHttpClient";
-import * as HttpServer from "effect/unstable/http/HttpServer";
 import { describe, expect, test } from "vitest";
 
 import {
-  getEncounterBase,
-  getEncountersBase,
-} from "@/electron/renderer/api/encounter-client.ts";
+  getEncounter,
+  getEncounters,
+} from "@/electron/renderer/api/encounter/encounter-client.ts";
 import { type EncounterApiEncounter } from "@/services/api/encounter/encounter-api-schema.ts";
 import { makeApiServerTestLayerWith } from "@/tests/common/layers/api-server-test-layer.ts";
+import { TestAppApiClientTestLive } from "@/tests/common/layers/app-api-client-test-layer.ts";
 import { makeEncounterApiServiceMock } from "@/tests/common/mocks/encounter-api-service-mock.ts";
 import { runTest } from "@/tests/common/run-test.ts";
 
@@ -29,17 +28,6 @@ const encounter = {
   updatedAt: MOCK_UPDATED_AT,
 } satisfies EncounterApiEncounter;
 
-function getHttpUrl(address: HttpServer.Address): string {
-  if (address._tag === "UnixAddress") {
-    throw new Error("HTTP test does not support Unix socket addresses.");
-  }
-
-  const hostname =
-    address.hostname === "0.0.0.0" ? "127.0.0.1" : address.hostname;
-
-  return `http://${hostname}:${address.port}`;
-}
-
 describe("encounter client", () => {
   test("gets all encounters", async () => {
     const encounterApiServiceMock = makeEncounterApiServiceMock({
@@ -48,18 +36,16 @@ describe("encounter client", () => {
       },
     });
 
-    const TestLive = Layer.mergeAll(
-      makeApiServerTestLayerWith(encounterApiServiceMock),
-      FetchHttpClient.layer,
+    const ApiServerTestLive = makeApiServerTestLayerWith(
+      encounterApiServiceMock,
+    );
+
+    const TestLive = TestAppApiClientTestLive.pipe(
+      Layer.provide(ApiServerTestLive),
     );
 
     const program = E.scoped(
       E.gen(function* () {
-        const httpServer = yield* HttpServer.HttpServer;
-        const baseUrl = getHttpUrl(httpServer.address);
-
-        const getEncounters = getEncountersBase(baseUrl);
-
         const encounters = yield* getEncounters();
 
         expect(encounters).toEqual([encounter]);
@@ -80,18 +66,16 @@ describe("encounter client", () => {
       },
     });
 
-    const TestLive = Layer.mergeAll(
-      makeApiServerTestLayerWith(encounterApiServiceMock),
-      FetchHttpClient.layer,
+    const ApiServerTestLive = makeApiServerTestLayerWith(
+      encounterApiServiceMock,
+    );
+
+    const TestLive = TestAppApiClientTestLive.pipe(
+      Layer.provide(ApiServerTestLive),
     );
 
     const program = E.scoped(
       E.gen(function* () {
-        const httpServer = yield* HttpServer.HttpServer;
-        const baseUrl = getHttpUrl(httpServer.address);
-
-        const getEncounter = getEncounterBase(baseUrl);
-
         const result = yield* getEncounter({
           dungeonId: DUNGEON_ID,
           id: ENCOUNTER_ID,
@@ -107,18 +91,16 @@ describe("encounter client", () => {
   test("returns NotFound when an encounter does not exist", async () => {
     const encounterApiServiceMock = makeEncounterApiServiceMock();
 
-    const TestLive = Layer.mergeAll(
-      makeApiServerTestLayerWith(encounterApiServiceMock),
-      FetchHttpClient.layer,
+    const ApiServerTestLive = makeApiServerTestLayerWith(
+      encounterApiServiceMock,
+    );
+
+    const TestLive = TestAppApiClientTestLive.pipe(
+      Layer.provide(ApiServerTestLive),
     );
 
     const program = E.scoped(
       E.gen(function* () {
-        const httpServer = yield* HttpServer.HttpServer;
-        const baseUrl = getHttpUrl(httpServer.address);
-
-        const getEncounter = getEncounterBase(baseUrl);
-
         const wasNotFound = yield* getEncounter({
           dungeonId: DUNGEON_ID,
           id: UNKNOWN_ENCOUNTER_ID,

@@ -11,7 +11,7 @@ import {
   useOptimistic,
 } from "react";
 
-import * as configurationClient from "@/electron/renderer/api/configuration-client.ts";
+import * as configurationClient from "@/electron/renderer/api/configuration/configuration-client.ts";
 import { type DecodedConfigurationEditorValue } from "@/electron/renderer/components/configuration/configuration-form-schema.ts";
 import { saveConfigurationApiRequest } from "@/electron/renderer/components/configuration/helpers/configuration-editor-adapter.ts";
 import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";

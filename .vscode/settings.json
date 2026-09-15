@@ -1,7 +1,9 @@
 {
+  // [TROUBLESHOOTING]
   "biome.lsp.trace.server": "verbose",
   // "biome.runFromTemporaryLocation": false,
 
+  // [STABLE]
   "biome.enabled": true,
   "biome.requireConfiguration": true,
   "biome.configurationPath": "./biome.vscode.jsonc",

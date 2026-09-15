@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import * as E from "effect/Effect";
 
-import { getAbilities } from "@/electron/renderer/api/ability-client.ts";
-import { getConfigurations } from "@/electron/renderer/api/configuration-client.ts";
-import { getDungeons } from "@/electron/renderer/api/dungeon-client.ts";
-import { getEncounters } from "@/electron/renderer/api/encounter-client.ts";
-import { getUnits } from "@/electron/renderer/api/unit-client.ts";
+import { getAbilities } from "@/electron/renderer/api/ability/ability-client";
+import { getConfigurations } from "@/electron/renderer/api/configuration/configuration-client";
+import { getDungeons } from "@/electron/renderer/api/dungeon/dungeon-client";
+import { getEncounters } from "@/electron/renderer/api/encounter/encounter-client";
+import { getUnits } from "@/electron/renderer/api/unit/unit-client";
 import { HomePage } from "@/electron/renderer/components/home/home-page";
 
 function HomeRoute() {

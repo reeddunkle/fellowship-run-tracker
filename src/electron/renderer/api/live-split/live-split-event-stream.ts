@@ -11,11 +11,11 @@ import {
   type LiveSplitApiMessage,
   LiveSplitApiMessageSchema,
 } from "@/api/websocket/live-split/live-split-api-message-schema.ts";
-import { getApiWebSocketUrl } from "@/electron/renderer/api/api-url.ts";
 import {
   API_CONNECTION_STATE,
   type ApiConnectionState,
 } from "@/electron/renderer/api/common.ts";
+import { getApiWebSocketUrl } from "@/electron/renderer/services/app-api-client/api-url";
 import { LiveSplitEventMessageDecodeError } from "@/errors/live-split-event-stream-error.ts";
 
 export type LiveSplitEventStreamEvent =

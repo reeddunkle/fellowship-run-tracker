@@ -1,17 +1,15 @@
 import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Result from "effect/Result";
-import * as FetchHttpClient from "effect/unstable/http/FetchHttpClient";
-import * as HttpServer from "effect/unstable/http/HttpServer";
 import { describe, expect, test } from "vitest";
 
 import {
-  deleteConfigurationBase,
-  getConfigurationBase,
-  getConfigurationsBase,
-  saveConfigurationBase,
-  updateConfigurationBase,
-} from "@/electron/renderer/api/configuration-client.ts";
+  deleteConfiguration,
+  getConfiguration,
+  getConfigurations,
+  saveConfiguration,
+  updateConfiguration,
+} from "@/electron/renderer/api/configuration/configuration-client.ts";
 import { type ConfigurationApiConfiguration } from "@/services/api/configuration/configuration-api-schema.ts";
 import {
   MOCK_CONFIGURATION,
@@ -23,19 +21,9 @@ import {
   MOCK_UPDATED_CONFIGURATION_LABEL,
 } from "@/tests/common/fixtures/configuration-fixtures.ts";
 import { makeApiServerTestLayerWith } from "@/tests/common/layers/api-server-test-layer.ts";
+import { TestAppApiClientTestLive } from "@/tests/common/layers/app-api-client-test-layer.ts";
 import { makeConfigurationApiServiceMock } from "@/tests/common/mocks/configuration-api-service-mock.ts";
 import { runTest } from "@/tests/common/run-test.ts";
-
-function getHttpUrl(address: HttpServer.Address): string {
-  if (address._tag === "UnixAddress") {
-    throw new Error("HTTP test does not support Unix socket addresses.");
-  }
-
-  const hostname =
-    address.hostname === "0.0.0.0" ? "127.0.0.1" : address.hostname;
-
-  return `http://${hostname}:${address.port}`;
-}
 
 describe("configuration client", () => {
   test("gets all configurations", async () => {
@@ -45,18 +33,16 @@ describe("configuration client", () => {
       },
     });
 
-    const TestLive = Layer.mergeAll(
-      makeApiServerTestLayerWith(configurationApiServiceTest),
-      FetchHttpClient.layer,
+    const ApiServerTestLive = makeApiServerTestLayerWith(
+      configurationApiServiceTest,
+    );
+
+    const TestLive = TestAppApiClientTestLive.pipe(
+      Layer.provide(ApiServerTestLive),
     );
 
     const program = E.scoped(
       E.gen(function* () {
-        const httpServer = yield* HttpServer.HttpServer;
-        const baseUrl = getHttpUrl(httpServer.address);
-
-        const getConfigurations = getConfigurationsBase(baseUrl);
-
         const configurations = yield* getConfigurations();
 
         expect(configurations).toEqual([MOCK_CONFIGURATION]);
@@ -77,18 +63,16 @@ describe("configuration client", () => {
       },
     });
 
-    const TestLive = Layer.mergeAll(
-      makeApiServerTestLayerWith(configurationApiServiceTest),
-      FetchHttpClient.layer,
+    const ApiServerTestLive = makeApiServerTestLayerWith(
+      configurationApiServiceTest,
+    );
+
+    const TestLive = TestAppApiClientTestLive.pipe(
+      Layer.provide(ApiServerTestLive),
     );
 
     const program = E.scoped(
       E.gen(function* () {
-        const httpServer = yield* HttpServer.HttpServer;
-        const baseUrl = getHttpUrl(httpServer.address);
-
-        const getConfiguration = getConfigurationBase(baseUrl);
-
         const result = yield* getConfiguration({
           id: MOCK_CONFIGURATION_ID,
         });
@@ -103,18 +87,16 @@ describe("configuration client", () => {
   test("returns NotFound when a configuration does not exist", async () => {
     const configurationApiServiceTest = makeConfigurationApiServiceMock();
 
-    const TestLive = Layer.mergeAll(
-      makeApiServerTestLayerWith(configurationApiServiceTest),
-      FetchHttpClient.layer,
+    const ApiServerTestLive = makeApiServerTestLayerWith(
+      configurationApiServiceTest,
+    );
+
+    const TestLive = TestAppApiClientTestLive.pipe(
+      Layer.provide(ApiServerTestLive),
     );
 
     const program = E.scoped(
       E.gen(function* () {
-        const httpServer = yield* HttpServer.HttpServer;
-        const baseUrl = getHttpUrl(httpServer.address);
-
-        const getConfiguration = getConfigurationBase(baseUrl);
-
         const result = yield* getConfiguration({
           id: MOCK_UNKNOWN_CONFIGURATION_ID,
         }).pipe(E.result);
@@ -146,18 +128,16 @@ describe("configuration client", () => {
       },
     });
 
-    const TestLive = Layer.mergeAll(
-      makeApiServerTestLayerWith(configurationApiServiceTest),
-      FetchHttpClient.layer,
+    const ApiServerTestLive = makeApiServerTestLayerWith(
+      configurationApiServiceTest,
+    );
+
+    const TestLive = TestAppApiClientTestLive.pipe(
+      Layer.provide(ApiServerTestLive),
     );
 
     const program = E.scoped(
       E.gen(function* () {
-        const httpServer = yield* HttpServer.HttpServer;
-        const baseUrl = getHttpUrl(httpServer.address);
-
-        const saveConfiguration = saveConfigurationBase(baseUrl);
-
         const result = yield* saveConfiguration({
           request: MOCK_SAVE_CONFIGURATION_REQUEST,
         });
@@ -190,18 +170,16 @@ describe("configuration client", () => {
       },
     });
 
-    const TestLive = Layer.mergeAll(
-      makeApiServerTestLayerWith(configurationApiServiceTest),
-      FetchHttpClient.layer,
+    const ApiServerTestLive = makeApiServerTestLayerWith(
+      configurationApiServiceTest,
+    );
+
+    const TestLive = TestAppApiClientTestLive.pipe(
+      Layer.provide(ApiServerTestLive),
     );
 
     const program = E.scoped(
       E.gen(function* () {
-        const httpServer = yield* HttpServer.HttpServer;
-        const baseUrl = getHttpUrl(httpServer.address);
-
-        const saveConfiguration = saveConfigurationBase(baseUrl);
-
         const result = yield* saveConfiguration({
           request: updatedRequest,
         });
@@ -236,18 +214,16 @@ describe("configuration client", () => {
       },
     });
 
-    const TestLive = Layer.mergeAll(
-      makeApiServerTestLayerWith(configurationApiServiceTest),
-      FetchHttpClient.layer,
+    const ApiServerTestLive = makeApiServerTestLayerWith(
+      configurationApiServiceTest,
+    );
+
+    const TestLive = TestAppApiClientTestLive.pipe(
+      Layer.provide(ApiServerTestLive),
     );
 
     const program = E.scoped(
       E.gen(function* () {
-        const httpServer = yield* HttpServer.HttpServer;
-        const baseUrl = getHttpUrl(httpServer.address);
-
-        const updateConfiguration = updateConfigurationBase(baseUrl);
-
         const result = yield* updateConfiguration({
           id: MOCK_CONFIGURATION_ID,
           request: updatedRequest,
@@ -273,18 +249,16 @@ describe("configuration client", () => {
       },
     });
 
-    const TestLive = Layer.mergeAll(
-      makeApiServerTestLayerWith(configurationApiServiceTest),
-      FetchHttpClient.layer,
+    const ApiServerTestLive = makeApiServerTestLayerWith(
+      configurationApiServiceTest,
+    );
+
+    const TestLive = TestAppApiClientTestLive.pipe(
+      Layer.provide(ApiServerTestLive),
     );
 
     const program = E.scoped(
       E.gen(function* () {
-        const httpServer = yield* HttpServer.HttpServer;
-        const baseUrl = getHttpUrl(httpServer.address);
-
-        const deleteConfiguration = deleteConfigurationBase(baseUrl);
-
         yield* deleteConfiguration({
           id: MOCK_CONFIGURATION_ID,
         });

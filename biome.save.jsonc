@@ -94,9 +94,30 @@
         "noAccumulatingSpread": "on",
         "noBarrelFile": "on"
       },
+      "preset": "recommended",
+      "nursery": {
+        "noIdenticalTestTitle": "on",
+        "useArraySome": "on",
+        "useConsistentTestIt": {
+          "level": "on",
+          "options": {
+            "function": "test",
+            "withinDescribe": "test"
+          }
+        },
+        "useImportsFirst": "on",
+        "useMathMinMax": "on",
+        "useNullishCoalescing": "on",
+        "useReactCompiler": "on",
+        "useReduceTypeParameter": "on"
+        // "useFlatMathMinMax": "on",
+        // "useModernMathApis": "on",
+      },
       "style": {
+        "noContinue": "on",
         "noEnum": "on",
         "noExportedImports": "on",
+        "noMultiAssign": "on",
         "noParameterAssign": "on",
         "noShoutyConstants": "on",
         "noSubstr": "on",
@@ -121,6 +142,9 @@
       },
       "suspicious": {
         "noDoubleEquals": "on",
+        "noReturnAssign": "on",
+        "noShadow": "on",
+        "useArraySortCompare": "on",
         "useIsArray": "on"
       }
     }

@@ -1,42 +1,22 @@
 import * as E from "effect/Effect";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
-import { AppHttpApi } from "@/api/http/http-api.ts";
-import { getApiBaseUrl } from "@/electron/renderer/api/api-url.ts";
+import { AppApiClient } from "@/electron/renderer/services/app-api-client/app-api-client";
 import { type AppSettingsApiAppSettings } from "@/services/api/app-settings/app-settings-api-schema.ts";
 
-function makeHttpApiClient(baseUrl: string) {
-  return HttpApiClient.make(AppHttpApi, {
-    baseUrl,
+export function getAppSettings() {
+  return E.gen(function* () {
+    const client = yield* AppApiClient;
+
+    return yield* client.appSettings.getAppSettings();
   });
 }
 
-export function getAppSettingsBase(baseUrl: string) {
-  return () => {
-    return E.gen(function* () {
-      const client = yield* makeHttpApiClient(baseUrl);
-
-      return yield* client.appSettings.getAppSettings();
-    });
-  };
-}
-
-export function putAppSettingsBase(baseUrl: string) {
-  return (appSettings: AppSettingsApiAppSettings) => {
-    return E.gen(function* () {
-      const client = yield* makeHttpApiClient(baseUrl);
-
-      return yield* client.appSettings.putAppSettings({
-        payload: appSettings,
-      });
-    });
-  };
-}
-
-export function getAppSettings() {
-  return getAppSettingsBase(getApiBaseUrl())();
-}
-
 export function putAppSettings(appSettings: AppSettingsApiAppSettings) {
-  return putAppSettingsBase(getApiBaseUrl())(appSettings);
+  return E.gen(function* () {
+    const client = yield* AppApiClient;
+
+    return yield* client.appSettings.putAppSettings({
+      payload: appSettings,
+    });
+  });
 }

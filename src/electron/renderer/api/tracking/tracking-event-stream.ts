@@ -11,11 +11,11 @@ import {
   type TrackingApiMessage,
   TrackingApiMessageSchema,
 } from "@/api/websocket/tracking/tracking-api-message-schema.ts";
-import { getApiWebSocketUrl } from "@/electron/renderer/api/api-url.ts";
 import {
   API_CONNECTION_STATE,
   type ApiConnectionState,
 } from "@/electron/renderer/api/common.ts";
+import { getApiWebSocketUrl } from "@/electron/renderer/services/app-api-client/api-url";
 import { TrackingEventMessageDecodeError } from "@/errors/tracking-event-stream-error.ts";
 
 export type TrackingEventStreamEvent =
