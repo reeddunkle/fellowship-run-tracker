@@ -1,18 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import * as E from "effect/Effect";
 
-import { getConfigurations } from "@/electron/renderer/api/configuration/configuration-client";
+import { getConfigurationsQueryOptions } from "@/electron/renderer/api/configuration/configuration-queries.ts";
 import { HomePage } from "@/electron/renderer/components/home/home-page";
 import { FellowshipCatalogDataService } from "@/electron/renderer/services/fellowship-catalog-data/fellowship-catalog-data-service";
+import { QueryClientOperationError } from "@/errors/query-client-operation-error.ts";
 
 function HomeRoute() {
-  const { abilities, configurations, dungeons, encounters, units } =
-    Route.useLoaderData();
+  const { abilities, dungeons, encounters, units } = Route.useLoaderData();
 
   return (
     <HomePage
       abilities={abilities}
-      configurations={configurations}
       dungeons={dungeons}
       encounters={encounters}
       units={units}
@@ -28,15 +27,25 @@ export const Route = createFileRoute("/")({
         const fellowshipCatalogDataService =
           yield* FellowshipCatalogDataService;
 
-        const [fellowshipCatalogData, configurations] = yield* E.all([
+        const [fellowshipCatalogData] = yield* E.all([
           fellowshipCatalogDataService.get,
-          getConfigurations(),
+          E.tryPromise({
+            catch: (cause) => {
+              return new QueryClientOperationError({
+                cause,
+                operation: "QUERY",
+              });
+            },
+            try: () => {
+              return context.queryClient.query({
+                ...getConfigurationsQueryOptions(),
+                staleTime: "static",
+              });
+            },
+          }),
         ]);
 
-        return {
-          ...fellowshipCatalogData,
-          configurations,
-        };
+        return fellowshipCatalogData;
       }),
     );
   },

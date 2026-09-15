@@ -7,7 +7,7 @@ import {
 } from "@/services/api/configuration/configuration-api-schema.ts";
 import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";
 
-type ConfigurationIdArgs = {
+export type ConfigurationIdArgs = {
   readonly id: ConfigurationId;
 };
 

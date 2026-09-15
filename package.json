@@ -55,6 +55,7 @@
     "@effect/sql-sqlite-node": "catalog:effect",
     "@fontsource-variable/geist": "catalog:ui",
     "@tanstack/react-form": "catalog:tanstack",
+    "@tanstack/react-query": "catalog:tanstack",
     "@tanstack/react-router": "catalog:tanstack",
     "@tanstack/react-table": "catalog:tanstack",
     "class-variance-authority": "catalog:tailwind",

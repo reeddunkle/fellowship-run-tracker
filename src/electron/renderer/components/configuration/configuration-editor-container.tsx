@@ -6,11 +6,8 @@ import { createConfigurationEditorValue } from "@/electron/renderer/components/c
 import { type DungeonOption } from "@/electron/renderer/components/configuration/helpers/configuration-editor-types.ts";
 import { makeConfigurationSaveStateLookup } from "@/electron/renderer/components/configuration/helpers/configuration-save-state.ts";
 import {
-  useConfigurationSaveStatus,
   useConfigurations,
-  useConfigurationUpdateStatus,
   useSelectedConfiguration,
-  useSelectedConfigurationId,
 } from "@/electron/renderer/stores/configurations-store/configurations-store.tsx";
 import { useFellowshipDataStore } from "@/electron/renderer/stores/fellowship-data/fellowship-data-store.tsx";
 import { FELLOWSHIP_EVENT } from "@/services/fellowship/constants/fellowship-event.ts";
@@ -28,10 +25,6 @@ const eventTypes = [
 export function ConfigurationEditorContainer() {
   const configurations = useConfigurations();
   const selectedConfiguration = useSelectedConfiguration();
-  const selectedConfigurationId = useSelectedConfigurationId();
-
-  const { revision: saveRevision } = useConfigurationSaveStatus();
-  const { revision: updateRevision } = useConfigurationUpdateStatus();
 
   const dungeons = useFellowshipDataStore((state) => state.dungeons);
 
@@ -53,13 +46,18 @@ export function ConfigurationEditorContainer() {
       ? EMPTY_CONFIGURATION_EDITOR_VALUE
       : createConfigurationEditorValue(selectedConfiguration);
 
+  const editorKey =
+    selectedConfiguration === undefined
+      ? "new"
+      : `${selectedConfiguration.id}:${selectedConfiguration.fingerprint}:${selectedConfiguration.label}`;
+
   return (
     <ConfigurationEditor
       defaultValue={defaultValue}
       dungeonOptions={dungeonOptions}
       eventTypes={eventTypes}
       getSaveState={configurationSaveState.get}
-      key={`${selectedConfigurationId ?? "new"}:${saveRevision}:${updateRevision}`}
+      key={editorKey}
     />
   );
 }
