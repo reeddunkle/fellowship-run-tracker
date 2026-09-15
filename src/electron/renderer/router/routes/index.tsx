@@ -27,9 +27,8 @@ export const Route = createFileRoute("/")({
         const fellowshipCatalogDataService =
           yield* FellowshipCatalogDataService;
 
-        const [fellowshipCatalogData] = yield* E.all([
-          fellowshipCatalogDataService.get,
-          E.tryPromise({
+        const result = yield* E.all({
+          configurations: E.tryPromise({
             catch: (cause) => {
               return new QueryClientOperationError({
                 cause,
@@ -43,9 +42,10 @@ export const Route = createFileRoute("/")({
               });
             },
           }),
-        ]);
+          fellowshipCatalogData: fellowshipCatalogDataService.get,
+        });
 
-        return fellowshipCatalogData;
+        return result.fellowshipCatalogData;
       }),
     );
   },
