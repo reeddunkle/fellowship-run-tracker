@@ -1,8 +1,9 @@
-export const API_CONNECTION_STATE = {
+export const API_EVENT_CONNECTION_STATE = {
   CONNECTED: "CONNECTED",
   CONNECTING: "CONNECTING",
   DISCONNECTED: "DISCONNECTED",
+  ERROR: "ERROR",
 } as const;
 
-export type ApiConnectionState =
-  (typeof API_CONNECTION_STATE)[keyof typeof API_CONNECTION_STATE];
+export type ApiEventConnectionState =
+  (typeof API_EVENT_CONNECTION_STATE)[keyof typeof API_EVENT_CONNECTION_STATE];

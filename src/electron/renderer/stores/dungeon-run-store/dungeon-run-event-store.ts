@@ -6,8 +6,8 @@ import type * as Socket from "effect/unstable/socket/Socket";
 
 import { type DungeonRunStateApi } from "@/api/websocket/dungeon-run/dungeon-run-api-message-schema.ts";
 import {
-  API_CONNECTION_STATE,
-  type ApiConnectionState,
+  API_EVENT_CONNECTION_STATE,
+  type ApiEventConnectionState,
 } from "@/electron/renderer/api/common.ts";
 import {
   type DungeonRunEventStreamError,
@@ -17,7 +17,7 @@ import {
 import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
 
 export type DungeonRunEventStoreSnapshot = {
-  readonly connectionState: ApiConnectionState;
+  readonly eventConnectionState: ApiEventConnectionState;
   readonly runState: DungeonRunStateApi | null;
 };
 
@@ -41,7 +41,7 @@ export type DungeonRunEventStore = {
 };
 
 const initialSnapshot: DungeonRunEventStoreSnapshot = {
-  connectionState: API_CONNECTION_STATE.DISCONNECTED,
+  eventConnectionState: API_EVENT_CONNECTION_STATE.DISCONNECTED,
   runState: null,
 };
 
@@ -61,7 +61,7 @@ export function makeDungeonRunEventStore({
 
   function updateSnapshot(
     update: (
-      snapshot: DungeonRunEventStoreSnapshot,
+      currentSnapshot: DungeonRunEventStoreSnapshot,
     ) => DungeonRunEventStoreSnapshot,
   ): E.Effect<void> {
     return E.sync(() => {
@@ -76,7 +76,7 @@ export function makeDungeonRunEventStore({
       return updateSnapshot((currentSnapshot) => {
         return {
           ...currentSnapshot,
-          connectionState: event.state,
+          eventConnectionState: event.state,
         };
       });
     }),
@@ -107,7 +107,7 @@ export function makeDungeonRunEventStore({
           yield* updateSnapshot((currentSnapshot) => {
             return {
               ...currentSnapshot,
-              connectionState: API_CONNECTION_STATE.DISCONNECTED,
+              eventConnectionState: API_EVENT_CONNECTION_STATE.ERROR,
             };
           });
         });

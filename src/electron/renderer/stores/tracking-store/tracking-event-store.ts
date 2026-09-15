@@ -5,8 +5,8 @@ import * as Stream from "effect/Stream";
 
 import { type TrackingApiStatus } from "@/application/fellowship-tracker/tracking-api-schema.ts";
 import {
-  API_CONNECTION_STATE,
-  type ApiConnectionState,
+  API_EVENT_CONNECTION_STATE,
+  type ApiEventConnectionState,
 } from "@/electron/renderer/api/common.ts";
 import {
   makeTrackingEventStream,
@@ -15,7 +15,7 @@ import {
 import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
 
 export type TrackingEventStoreSnapshot = {
-  readonly connectionState: ApiConnectionState;
+  readonly eventConnectionState: ApiEventConnectionState;
   readonly trackingStatus: TrackingApiStatus | null;
 };
 
@@ -29,7 +29,7 @@ export type TrackingEventStore = {
 type Listener = () => void;
 
 const initialSnapshot: TrackingEventStoreSnapshot = {
-  connectionState: API_CONNECTION_STATE.DISCONNECTED,
+  eventConnectionState: API_EVENT_CONNECTION_STATE.DISCONNECTED,
   trackingStatus: null,
 };
 
@@ -47,7 +47,7 @@ export function makeTrackingEventStore(): TrackingEventStore {
 
   function updateSnapshot(
     update: (
-      snapshot: TrackingEventStoreSnapshot,
+      currentSnapshot: TrackingEventStoreSnapshot,
     ) => TrackingEventStoreSnapshot,
   ): E.Effect<void> {
     return E.sync(() => {
@@ -62,7 +62,7 @@ export function makeTrackingEventStore(): TrackingEventStore {
       return updateSnapshot((currentSnapshot) => {
         return {
           ...currentSnapshot,
-          connectionState: event.state,
+          eventConnectionState: event.state,
         };
       });
     }),
@@ -93,7 +93,7 @@ export function makeTrackingEventStore(): TrackingEventStore {
           yield* updateSnapshot((currentSnapshot) => {
             return {
               ...currentSnapshot,
-              connectionState: API_CONNECTION_STATE.DISCONNECTED,
+              eventConnectionState: API_EVENT_CONNECTION_STATE.ERROR,
             };
           });
         });

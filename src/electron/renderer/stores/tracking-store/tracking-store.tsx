@@ -10,7 +10,7 @@ import {
 } from "react";
 
 import { type TrackingApiStatus } from "@/application/fellowship-tracker/tracking-api-schema.ts";
-import { type ApiConnectionState } from "@/electron/renderer/api/common.ts";
+import { type ApiEventConnectionState } from "@/electron/renderer/api/common.ts";
 import * as trackingClient from "@/electron/renderer/api/tracking/tracking-client.ts";
 import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
 import { trackingEventStore } from "@/electron/renderer/stores/tracking-store/tracking-event-store.ts";
@@ -26,7 +26,7 @@ type TrackingActionResult = {
 };
 
 type TrackingContextValue = {
-  readonly connectionState: ApiConnectionState;
+  readonly eventConnectionState: ApiEventConnectionState;
   readonly isStarting: boolean;
   readonly isStopping: boolean;
   readonly start: (configurationId: ConfigurationId) => void;
@@ -49,7 +49,7 @@ export type TrackingActionState = {
 };
 
 export type TrackingServerState = {
-  readonly connectionState: ApiConnectionState;
+  readonly eventConnectionState: ApiEventConnectionState;
   readonly trackingStatus: TrackingApiStatus | null;
 };
 
@@ -110,7 +110,7 @@ export function TrackingProvider({ children }: TrackingProviderProps) {
 
   const contextValue = useMemo<TrackingContextValue>(() => {
     return {
-      connectionState: trackingSnapshot.connectionState,
+      eventConnectionState: trackingSnapshot.eventConnectionState,
       isStarting,
       isStopping,
       start: (configurationId) => {
@@ -136,7 +136,7 @@ export function TrackingProvider({ children }: TrackingProviderProps) {
     isStopping,
     startState.error,
     stopState.error,
-    trackingSnapshot.connectionState,
+    trackingSnapshot.eventConnectionState,
     trackingSnapshot.trackingStatus,
   ]);
 
@@ -183,10 +183,10 @@ export function useTrackingActionState(): TrackingActionState {
 }
 
 export function useTrackingServerState(): TrackingServerState {
-  const { connectionState, trackingStatus } = useTrackingContext();
+  const { eventConnectionState, trackingStatus } = useTrackingContext();
 
   return {
-    connectionState,
+    eventConnectionState,
     trackingStatus,
   };
 }

@@ -16,7 +16,7 @@ import {
   type DungeonRunObservationApi,
   type DungeonRunStateApi,
 } from "@/api/websocket/dungeon-run/dungeon-run-api-message-schema.ts";
-import { type ApiConnectionState } from "@/electron/renderer/api/common.ts";
+import { type ApiEventConnectionState } from "@/electron/renderer/api/common.ts";
 import { deleteDungeonRunHistory } from "@/electron/renderer/api/dungeon-run/dungeon-run-client.ts";
 import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
 import {
@@ -62,7 +62,7 @@ export type DungeonRunActions = {
 };
 
 export type DungeonRunState = {
-  readonly connectionState: ApiConnectionState;
+  readonly eventConnectionState: ApiEventConnectionState;
   readonly history: DungeonRunApiHistory | null;
   readonly runState: DungeonRunEventStoreSnapshot["runState"];
 };
@@ -79,7 +79,7 @@ type DungeonRunProviderProps = {
 };
 
 export type DungeonRunServerState = {
-  readonly connectionState: ApiConnectionState;
+  readonly eventConnectionState: ApiEventConnectionState;
   readonly dungeonRun: DungeonRunStateApi["dungeonRun"];
   readonly history: DungeonRunApiHistory | null;
   readonly latestObservation: DungeonRunObservationApi | undefined;
@@ -269,8 +269,8 @@ export function DungeonRunProvider({
   const contextValue = useMemo<DungeonRunContextValue>(() => {
     return {
       collapseAllMilestones,
-      connectionState: dungeonRunSnapshot.connectionState,
       deleteHistoryForConfigurationId,
+      eventConnectionState: dungeonRunSnapshot.eventConnectionState,
       expandAllMilestones,
       history: historyForApp,
       isMilestoneExpanded,
@@ -280,7 +280,7 @@ export function DungeonRunProvider({
   }, [
     collapseAllMilestones,
     deleteHistoryForConfigurationId,
-    dungeonRunSnapshot.connectionState,
+    dungeonRunSnapshot.eventConnectionState,
     dungeonRunSnapshot.runState,
     expandAllMilestones,
     historyForApp,
@@ -317,13 +317,13 @@ export function useDungeonRunActions(): DungeonRunActions {
 }
 
 export function useDungeonRunServerState(): DungeonRunServerState {
-  const { connectionState, history, runState } = useDungeonRunContext();
+  const { eventConnectionState, history, runState } = useDungeonRunContext();
 
   const observations = runState?.observations ?? [];
 
   return {
-    connectionState,
     dungeonRun: runState?.dungeonRun ?? null,
+    eventConnectionState,
     history,
     latestObservation: A.last(observations).pipe(Option.getOrUndefined),
     observations,

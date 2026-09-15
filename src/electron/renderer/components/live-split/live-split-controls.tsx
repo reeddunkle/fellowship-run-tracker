@@ -1,5 +1,6 @@
 import { LinkIcon, UnlinkIcon } from "lucide-react";
 
+import { API_EVENT_CONNECTION_STATE } from "@/electron/renderer/api/common.ts";
 import { Button } from "@/electron/renderer/components/ui/button.tsx";
 import {
   useLiveSplitActionState,
@@ -9,17 +10,18 @@ import {
 
 export function LiveSplitControls() {
   const { connect, disconnect } = useLiveSplitActions();
-
   const { isPending } = useLiveSplitActionState();
+  const { eventConnectionState, serverStatus } = useLiveSplitServerState();
 
-  const { liveSplitStatus } = useLiveSplitServerState();
+  const isEventConnected =
+    eventConnectionState === API_EVENT_CONNECTION_STATE.CONNECTED;
 
-  const isConnected = liveSplitStatus?.status === "Connected";
+  const isConnected = serverStatus?.status === "Connected";
 
   return (
     <div className="flex gap-2">
       <Button
-        disabled={isConnected || isPending}
+        disabled={!isEventConnected || isConnected || isPending}
         onClick={connect}
         type="button"
         variant="outline"
@@ -27,9 +29,8 @@ export function LiveSplitControls() {
         <LinkIcon />
         Connect
       </Button>
-
       <Button
-        disabled={!isConnected || isPending}
+        disabled={!isEventConnected || !isConnected || isPending}
         onClick={disconnect}
         type="button"
         variant="outline"

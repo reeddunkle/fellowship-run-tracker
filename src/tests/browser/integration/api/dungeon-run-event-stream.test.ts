@@ -17,7 +17,7 @@ import {
   type DungeonRunApiMessage,
   DungeonRunApiMessageSchema,
 } from "@/api/websocket/dungeon-run/dungeon-run-api-message-schema.ts";
-import { API_CONNECTION_STATE } from "@/electron/renderer/api/common.ts";
+import { API_EVENT_CONNECTION_STATE } from "@/electron/renderer/api/common.ts";
 import {
   type DungeonRunEventStreamEvent,
   makeDungeonRunEventStreamForUrl,
@@ -159,11 +159,11 @@ describe("Dungeon Run event stream", () => {
 
         expect(clientEvents).toEqual([
           {
-            state: API_CONNECTION_STATE.CONNECTING,
+            state: API_EVENT_CONNECTION_STATE.CONNECTING,
             type: "CONNECTION_STATE_CHANGED",
           },
           {
-            state: API_CONNECTION_STATE.CONNECTED,
+            state: API_EVENT_CONNECTION_STATE.CONNECTED,
             type: "CONNECTION_STATE_CHANGED",
           },
           {
@@ -193,7 +193,7 @@ describe("Dungeon Run event stream", () => {
           Stream.tap((event) => {
             if (
               event.type === "CONNECTION_STATE_CHANGED" &&
-              event.state === API_CONNECTION_STATE.CONNECTED
+              event.state === API_EVENT_CONNECTION_STATE.CONNECTED
             ) {
               return Deferred.succeed(connected, undefined);
             }
@@ -221,11 +221,11 @@ describe("Dungeon Run event stream", () => {
 
         expect(clientEvents).toEqual([
           {
-            state: API_CONNECTION_STATE.CONNECTING,
+            state: API_EVENT_CONNECTION_STATE.CONNECTING,
             type: "CONNECTION_STATE_CHANGED",
           },
           {
-            state: API_CONNECTION_STATE.CONNECTED,
+            state: API_EVENT_CONNECTION_STATE.CONNECTED,
             type: "CONNECTION_STATE_CHANGED",
           },
           {
@@ -294,19 +294,19 @@ describe("Dungeon Run event stream", () => {
 
         expect(clientEvents).toEqual([
           {
-            state: API_CONNECTION_STATE.CONNECTING,
+            state: API_EVENT_CONNECTION_STATE.CONNECTING,
             type: "CONNECTION_STATE_CHANGED",
           },
           {
-            state: API_CONNECTION_STATE.DISCONNECTED,
+            state: API_EVENT_CONNECTION_STATE.DISCONNECTED,
             type: "CONNECTION_STATE_CHANGED",
           },
           {
-            state: API_CONNECTION_STATE.CONNECTING,
+            state: API_EVENT_CONNECTION_STATE.CONNECTING,
             type: "CONNECTION_STATE_CHANGED",
           },
           {
-            state: API_CONNECTION_STATE.DISCONNECTED,
+            state: API_EVENT_CONNECTION_STATE.DISCONNECTED,
             type: "CONNECTION_STATE_CHANGED",
           },
         ]);
@@ -335,27 +335,27 @@ describe("Dungeon Run event stream", () => {
 
         expect(clientEvents).toEqual([
           {
-            state: API_CONNECTION_STATE.CONNECTING,
+            state: API_EVENT_CONNECTION_STATE.CONNECTING,
             type: "CONNECTION_STATE_CHANGED",
           },
           {
-            state: API_CONNECTION_STATE.CONNECTED,
+            state: API_EVENT_CONNECTION_STATE.CONNECTED,
             type: "CONNECTION_STATE_CHANGED",
           },
           {
-            state: API_CONNECTION_STATE.DISCONNECTED,
+            state: API_EVENT_CONNECTION_STATE.DISCONNECTED,
             type: "CONNECTION_STATE_CHANGED",
           },
           {
-            state: API_CONNECTION_STATE.CONNECTING,
+            state: API_EVENT_CONNECTION_STATE.CONNECTING,
             type: "CONNECTION_STATE_CHANGED",
           },
           {
-            state: API_CONNECTION_STATE.CONNECTED,
+            state: API_EVENT_CONNECTION_STATE.CONNECTED,
             type: "CONNECTION_STATE_CHANGED",
           },
           {
-            state: API_CONNECTION_STATE.DISCONNECTED,
+            state: API_EVENT_CONNECTION_STATE.DISCONNECTED,
             type: "CONNECTION_STATE_CHANGED",
           },
         ]);

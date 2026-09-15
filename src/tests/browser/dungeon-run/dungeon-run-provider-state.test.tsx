@@ -3,7 +3,7 @@ import * as Stream from "effect/Stream";
 import { describe, expect, test } from "vitest";
 import { render } from "vitest-browser-react";
 
-import { API_CONNECTION_STATE } from "@/electron/renderer/api/common.ts";
+import { API_EVENT_CONNECTION_STATE } from "@/electron/renderer/api/common.ts";
 import { type DungeonRunEventStreamEvent } from "@/electron/renderer/api/dungeon-run/dungeon-run-event-stream.ts";
 import { makeDungeonRunEventStore } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-event-store.ts";
 import {
@@ -17,8 +17,8 @@ import {
 
 function DungeonRunServerStateConsumer() {
   const {
-    connectionState,
     dungeonRun,
+    eventConnectionState,
     history,
     latestObservation,
     observations,
@@ -26,7 +26,7 @@ function DungeonRunServerStateConsumer() {
 
   return (
     <div>
-      <div data-testid="connection-state">{connectionState}</div>
+      <div data-testid="event-connection-state">{eventConnectionState}</div>
 
       <div data-testid="dungeon-run">
         {dungeonRun === null ? "No dungeon run" : dungeonRun.status}
@@ -64,8 +64,8 @@ describe("DungeonRunProvider server state", () => {
     );
 
     await expect
-      .element(screen.getByTestId("connection-state"))
-      .toHaveTextContent(API_CONNECTION_STATE.DISCONNECTED);
+      .element(screen.getByTestId("event-connection-state"))
+      .toHaveTextContent(API_EVENT_CONNECTION_STATE.DISCONNECTED);
 
     await expect
       .element(screen.getByTestId("dungeon-run"))
@@ -87,7 +87,7 @@ describe("DungeonRunProvider server state", () => {
   test("updates server state when the event store changes", async () => {
     const events = [
       {
-        state: API_CONNECTION_STATE.CONNECTED,
+        state: API_EVENT_CONNECTION_STATE.CONNECTED,
         type: "CONNECTION_STATE_CHANGED",
       },
       {
@@ -115,8 +115,8 @@ describe("DungeonRunProvider server state", () => {
     eventStore.start();
 
     await expect
-      .element(screen.getByTestId("connection-state"))
-      .toHaveTextContent(API_CONNECTION_STATE.CONNECTED);
+      .element(screen.getByTestId("event-connection-state"))
+      .toHaveTextContent(API_EVENT_CONNECTION_STATE.CONNECTED);
 
     await expect
       .element(screen.getByTestId("dungeon-run"))

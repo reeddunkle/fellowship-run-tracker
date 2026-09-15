@@ -12,15 +12,15 @@ import {
   LiveSplitApiMessageSchema,
 } from "@/api/websocket/live-split/live-split-api-message-schema.ts";
 import {
-  API_CONNECTION_STATE,
-  type ApiConnectionState,
+  API_EVENT_CONNECTION_STATE,
+  type ApiEventConnectionState,
 } from "@/electron/renderer/api/common.ts";
 import { getApiWebSocketUrl } from "@/electron/renderer/services/app-api-client/api-url";
 import { LiveSplitEventMessageDecodeError } from "@/errors/live-split-event-stream-error.ts";
 
 export type LiveSplitEventStreamEvent =
   | {
-      readonly state: ApiConnectionState;
+      readonly state: ApiEventConnectionState;
       readonly type: "CONNECTION_STATE_CHANGED";
     }
   | {
@@ -40,7 +40,7 @@ const DEFAULT_RECONNECT_DELAY = "1 second";
 
 function offerConnectionState(
   queue: Queue.Enqueue<LiveSplitEventStreamEvent>,
-  state: ApiConnectionState,
+  state: ApiEventConnectionState,
 ) {
   return Queue.offer(queue, {
     state,
@@ -82,7 +82,7 @@ export function makeLiveSplitEventStreamForUrl(
     Socket.WebSocketConstructor
   >((queue) => {
     const connect = E.gen(function* () {
-      yield* offerConnectionState(queue, API_CONNECTION_STATE.CONNECTING);
+      yield* offerConnectionState(queue, API_EVENT_CONNECTION_STATE.CONNECTING);
 
       const socket = yield* Socket.makeWebSocket(url, {
         closeCodeIsError: (code) => {
@@ -103,12 +103,15 @@ export function makeLiveSplitEventStreamForUrl(
           });
         },
         {
-          onOpen: offerConnectionState(queue, API_CONNECTION_STATE.CONNECTED),
+          onOpen: offerConnectionState(
+            queue,
+            API_EVENT_CONNECTION_STATE.CONNECTED,
+          ),
         },
       );
     }).pipe(
       E.ensuring(
-        offerConnectionState(queue, API_CONNECTION_STATE.DISCONNECTED),
+        offerConnectionState(queue, API_EVENT_CONNECTION_STATE.DISCONNECTED),
       ),
     );
 

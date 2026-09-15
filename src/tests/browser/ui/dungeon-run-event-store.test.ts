@@ -1,9 +1,10 @@
 import * as Stream from "effect/Stream";
 import { describe, expect, test, vi } from "vitest";
 
-import { API_CONNECTION_STATE } from "@/electron/renderer/api/common.ts";
+import { API_EVENT_CONNECTION_STATE } from "@/electron/renderer/api/common.ts";
 import { type DungeonRunEventStreamEvent } from "@/electron/renderer/api/dungeon-run/dungeon-run-event-stream.ts";
 import { makeDungeonRunEventStore } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-event-store.ts";
+import { DungeonRunEventMessageDecodeError } from "@/errors/dungeon-run-event-stream-error.ts";
 import {
   MOCK_DUNGEON_RUN_API_MESSAGE,
   MOCK_DUNGEON_RUN_STATE_API,
@@ -14,14 +15,14 @@ describe("DungeonRunEventStore", () => {
     const store = makeDungeonRunEventStore();
 
     expect(store.getSnapshot()).toEqual({
-      connectionState: API_CONNECTION_STATE.DISCONNECTED,
+      eventConnectionState: API_EVENT_CONNECTION_STATE.DISCONNECTED,
       runState: null,
     });
   });
 
-  test("updates connection state from the event stream", async () => {
+  test("updates event connection state from the event stream", async () => {
     const event = {
-      state: API_CONNECTION_STATE.CONNECTED,
+      state: API_EVENT_CONNECTION_STATE.CONNECTED,
       type: "CONNECTION_STATE_CHANGED",
     } satisfies DungeonRunEventStreamEvent;
 
@@ -35,7 +36,7 @@ describe("DungeonRunEventStore", () => {
 
     await vi.waitFor(() => {
       expect(store.getSnapshot()).toEqual({
-        connectionState: API_CONNECTION_STATE.CONNECTED,
+        eventConnectionState: API_EVENT_CONNECTION_STATE.CONNECTED,
         runState: null,
       });
     });
@@ -57,15 +58,36 @@ describe("DungeonRunEventStore", () => {
 
     await vi.waitFor(() => {
       expect(store.getSnapshot()).toEqual({
-        connectionState: API_CONNECTION_STATE.DISCONNECTED,
+        eventConnectionState: API_EVENT_CONNECTION_STATE.DISCONNECTED,
         runState: MOCK_DUNGEON_RUN_STATE_API,
+      });
+    });
+  });
+
+  test("sets the event connection state to error when the event stream fails", async () => {
+    const error = new DungeonRunEventMessageDecodeError({
+      cause: new Error("Event stream failed."),
+    });
+
+    const store = makeDungeonRunEventStore({
+      makeEventStream: () => {
+        return Stream.fail(error);
+      },
+    });
+
+    store.start();
+
+    await vi.waitFor(() => {
+      expect(store.getSnapshot()).toEqual({
+        eventConnectionState: API_EVENT_CONNECTION_STATE.ERROR,
+        runState: null,
       });
     });
   });
 
   test("notifies subscribers when the snapshot changes", async () => {
     const event = {
-      state: API_CONNECTION_STATE.CONNECTING,
+      state: API_EVENT_CONNECTION_STATE.CONNECTING,
       type: "CONNECTION_STATE_CHANGED",
     } satisfies DungeonRunEventStreamEvent;
 
@@ -84,14 +106,14 @@ describe("DungeonRunEventStore", () => {
       expect(listener).toHaveBeenCalledOnce();
     });
 
-    expect(store.getSnapshot().connectionState).toBe(
-      API_CONNECTION_STATE.CONNECTING,
+    expect(store.getSnapshot().eventConnectionState).toBe(
+      API_EVENT_CONNECTION_STATE.CONNECTING,
     );
   });
 
   test("does not notify a subscriber after it unsubscribes", async () => {
     const event = {
-      state: API_CONNECTION_STATE.CONNECTED,
+      state: API_EVENT_CONNECTION_STATE.CONNECTED,
       type: "CONNECTION_STATE_CHANGED",
     } satisfies DungeonRunEventStreamEvent;
 
@@ -109,8 +131,8 @@ describe("DungeonRunEventStore", () => {
     store.start();
 
     await vi.waitFor(() => {
-      expect(store.getSnapshot().connectionState).toBe(
-        API_CONNECTION_STATE.CONNECTED,
+      expect(store.getSnapshot().eventConnectionState).toBe(
+        API_EVENT_CONNECTION_STATE.CONNECTED,
       );
     });
 

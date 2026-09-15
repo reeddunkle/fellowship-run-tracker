@@ -11,8 +11,8 @@ import {
 } from "react";
 
 import {
-  API_CONNECTION_STATE,
-  type ApiConnectionState,
+  API_EVENT_CONNECTION_STATE,
+  type ApiEventConnectionState,
 } from "@/electron/renderer/api/common.ts";
 import * as liveSplitClient from "@/electron/renderer/api/live-split/live-split-client.ts";
 import { useAppSettings } from "@/electron/renderer/components/providers/settings-provider.tsx";
@@ -30,14 +30,14 @@ type LiveSplitActionResult = {
 };
 
 type LiveSplitContextValue = {
-  readonly connectionState: ApiConnectionState;
+  readonly eventConnectionState: ApiEventConnectionState;
   readonly connect: () => void;
   readonly connectError: unknown | undefined;
   readonly disconnect: () => void;
   readonly disconnectError: unknown | undefined;
   readonly isConnecting: boolean;
   readonly isDisconnecting: boolean;
-  readonly liveSplitStatus: LiveSplitApiStatus | null;
+  readonly serverStatus: LiveSplitApiStatus | null;
 };
 
 type LiveSplitProviderProps = {
@@ -53,8 +53,8 @@ export type LiveSplitActionState = {
 };
 
 export type LiveSplitServerState = {
-  readonly connectionState: ApiConnectionState;
-  readonly liveSplitStatus: LiveSplitApiStatus | null;
+  readonly eventConnectionState: ApiEventConnectionState;
+  readonly serverStatus: LiveSplitApiStatus | null;
 };
 
 const INITIAL_LIVE_SPLIT_ACTION_RESULT: LiveSplitActionResult = {
@@ -62,8 +62,8 @@ const INITIAL_LIVE_SPLIT_ACTION_RESULT: LiveSplitActionResult = {
 };
 
 const DISABLED_LIVE_SPLIT_SNAPSHOT: LiveSplitEventStoreSnapshot = {
-  connectionState: API_CONNECTION_STATE.DISCONNECTED,
-  liveSplitStatus: null,
+  eventConnectionState: API_EVENT_CONNECTION_STATE.DISCONNECTED,
+  serverStatus: null,
 };
 
 const LiveSplitContext = createContext<LiveSplitContextValue | undefined>(
@@ -136,16 +136,16 @@ export function LiveSplitProvider({ children }: LiveSplitProviderProps) {
         });
       },
       connectError: connectState.error,
-      connectionState: liveSplitSnapshot.connectionState,
       disconnect: () => {
         startTransition(() => {
           dispatchDisconnect();
         });
       },
       disconnectError: disconnectState.error,
+      eventConnectionState: liveSplitSnapshot.eventConnectionState,
       isConnecting,
       isDisconnecting,
-      liveSplitStatus: liveSplitSnapshot.liveSplitStatus,
+      serverStatus: liveSplitSnapshot.serverStatus,
     };
   }, [
     connectState.error,
@@ -154,8 +154,8 @@ export function LiveSplitProvider({ children }: LiveSplitProviderProps) {
     dispatchDisconnect,
     isConnecting,
     isDisconnecting,
-    liveSplitSnapshot.connectionState,
-    liveSplitSnapshot.liveSplitStatus,
+    liveSplitSnapshot.eventConnectionState,
+    liveSplitSnapshot.serverStatus,
   ]);
 
   return (
@@ -201,10 +201,10 @@ export function useLiveSplitActionState(): LiveSplitActionState {
 }
 
 export function useLiveSplitServerState(): LiveSplitServerState {
-  const { connectionState, liveSplitStatus } = useLiveSplitContext();
+  const { eventConnectionState, serverStatus } = useLiveSplitContext();
 
   return {
-    connectionState,
-    liveSplitStatus,
+    eventConnectionState,
+    serverStatus,
   };
 }

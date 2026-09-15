@@ -4,8 +4,8 @@ import * as Match from "effect/Match";
 import * as Stream from "effect/Stream";
 
 import {
-  API_CONNECTION_STATE,
-  type ApiConnectionState,
+  API_EVENT_CONNECTION_STATE,
+  type ApiEventConnectionState,
 } from "@/electron/renderer/api/common.ts";
 import {
   type LiveSplitEventStreamEvent,
@@ -13,16 +13,17 @@ import {
 } from "@/electron/renderer/api/live-split/live-split-event-stream.ts";
 import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
 import { type LiveSplitApiStatus } from "@/services/api/live-split/live-split-api-schema.ts";
+
 export type LiveSplitEventStoreSnapshot = {
-  readonly connectionState: ApiConnectionState;
-  readonly liveSplitStatus: LiveSplitApiStatus | null;
+  readonly eventConnectionState: ApiEventConnectionState;
+  readonly serverStatus: LiveSplitApiStatus | null;
 };
 
 type Listener = () => void;
 
 const initialSnapshot: LiveSplitEventStoreSnapshot = {
-  connectionState: API_CONNECTION_STATE.DISCONNECTED,
-  liveSplitStatus: null,
+  eventConnectionState: API_EVENT_CONNECTION_STATE.DISCONNECTED,
+  serverStatus: null,
 };
 
 export function makeLiveSplitEventStore() {
@@ -39,7 +40,7 @@ export function makeLiveSplitEventStore() {
 
   function updateSnapshot(
     update: (
-      snapshot: LiveSplitEventStoreSnapshot,
+      currentSnapshot: LiveSplitEventStoreSnapshot,
     ) => LiveSplitEventStoreSnapshot,
   ): E.Effect<void> {
     return E.sync(() => {
@@ -54,7 +55,7 @@ export function makeLiveSplitEventStore() {
       return updateSnapshot((currentSnapshot) => {
         return {
           ...currentSnapshot,
-          connectionState: event.state,
+          eventConnectionState: event.state,
         };
       });
     }),
@@ -62,7 +63,7 @@ export function makeLiveSplitEventStore() {
       return updateSnapshot((currentSnapshot) => {
         return {
           ...currentSnapshot,
-          liveSplitStatus: event.message.status,
+          serverStatus: event.message.status,
         };
       });
     }),
@@ -85,7 +86,7 @@ export function makeLiveSplitEventStore() {
           yield* updateSnapshot((currentSnapshot) => {
             return {
               ...currentSnapshot,
-              connectionState: API_CONNECTION_STATE.DISCONNECTED,
+              eventConnectionState: API_EVENT_CONNECTION_STATE.ERROR,
             };
           });
         });
