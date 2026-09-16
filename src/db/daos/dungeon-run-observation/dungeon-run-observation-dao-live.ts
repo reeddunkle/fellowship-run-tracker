@@ -87,8 +87,8 @@ const make = E.gen(function* () {
       }).pipe(E.mapError(mapDungeonRunObservationDAOError));
     };
 
-  const getHistoryByConfigurationDefinitionId: DungeonRunObservationDAOShape["getHistoryByConfigurationDefinitionId"] =
-    ({ configurationDefinitionId }) => {
+  const getHistoryByDungeon: DungeonRunObservationDAOShape["getHistoryByDungeon"] =
+    ({ dungeonId, dungeonLevel }) => {
       return E.gen(function* () {
         const rows = yield* sql`
           WITH
@@ -113,7 +113,8 @@ const make = E.gen(function* () {
                 dungeon_run_observation
                 INNER JOIN dungeon_run ON dungeon_run.id = dungeon_run_observation.dungeon_run_id
               WHERE
-                dungeon_run.configuration_definition_id = ${configurationDefinitionId}
+                dungeon_run.dungeon_id = ${dungeonId}
+                AND dungeon_run.dungeon_level = ${dungeonLevel}
                 AND dungeon_run.started_at IS NOT NULL
             )
           SELECT
@@ -173,7 +174,6 @@ const make = E.gen(function* () {
           dungeon_run
         WHERE
           id = ${insert.dungeonRunId}
-          AND status = 'ACTIVE'
         RETURNING
           id
       `;
@@ -184,7 +184,7 @@ const make = E.gen(function* () {
 
       return yield* new DungeonRunObservationDAOError({
         details: {
-          _tag: "RunNotFoundOrInactive",
+          _tag: "RunNotFound",
           dungeonRunId,
         },
       });
@@ -193,7 +193,7 @@ const make = E.gen(function* () {
 
   return {
     getByDungeonRunId,
-    getHistoryByConfigurationDefinitionId,
+    getHistoryByDungeon,
     observe,
   } satisfies DungeonRunObservationDAOShape;
 });

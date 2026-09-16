@@ -1,45 +1,23 @@
 import type * as DateTime from "effect/DateTime";
 
 import {
+  type ConfiguredDungeonRunProcessingState,
+  createInitialConfiguredDungeonRunProcessingState,
+  interruptConfiguredDungeonRunProcessingState,
+} from "@/services/fellowship/dungeon-runs/configured-dungeon-run-processing-state.ts";
+import {
   type DungeonRunTrackerState,
   initialDungeonRunTrackerState,
 } from "@/services/fellowship/dungeon-runs/track-dungeon-run.ts";
-import {
-  initialRequirementProcessorState,
-  type RequirementProcessorState,
-} from "@/services/fellowship/requirements/requirement-processor-state.ts";
-
-export type DungeonRunProcessingRunState =
-  | {
-      readonly startedAt: DateTime.Utc;
-      readonly status: "ACTIVE";
-    }
-  | {
-      readonly endedAt: DateTime.Utc;
-      readonly startedAt: DateTime.Utc;
-      readonly status: "COMPLETED";
-    }
-  | {
-      readonly endedAt: DateTime.Utc;
-      readonly startedAt: DateTime.Utc;
-      readonly status: "EXITED";
-    }
-  | {
-      readonly endedAt: DateTime.Utc;
-      readonly startedAt: DateTime.Utc;
-      readonly status: "INTERRUPTED";
-    };
 
 export type DungeonRunProcessingState = {
-  readonly dungeonRun: DungeonRunProcessingRunState | undefined;
-  readonly requirementProcessor: RequirementProcessorState;
+  readonly configuredRun: ConfiguredDungeonRunProcessingState;
   readonly runTracker: DungeonRunTrackerState;
 };
 
-export function createInitialDungeonRunState(): DungeonRunProcessingState {
+export function createInitialDungeonRunProcessingState(): DungeonRunProcessingState {
   return {
-    dungeonRun: undefined,
-    requirementProcessor: initialRequirementProcessorState,
+    configuredRun: createInitialConfiguredDungeonRunProcessingState(),
     runTracker: initialDungeonRunTrackerState,
   };
 }
@@ -51,16 +29,11 @@ export function interruptDungeonRunProcessingState({
   readonly endedAt: DateTime.Utc;
   readonly state: DungeonRunProcessingState;
 }): DungeonRunProcessingState {
-  if (state.dungeonRun?.status !== "ACTIVE") {
-    return state;
-  }
-
   return {
     ...state,
-    dungeonRun: {
+    configuredRun: interruptConfiguredDungeonRunProcessingState({
       endedAt,
-      startedAt: state.dungeonRun.startedAt,
-      status: "INTERRUPTED",
-    },
+      state: state.configuredRun,
+    }),
   };
 }

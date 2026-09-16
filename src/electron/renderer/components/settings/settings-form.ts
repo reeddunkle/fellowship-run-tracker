@@ -21,9 +21,11 @@ export function createSettingsFormValue(
 ): SettingsFormValue {
   return {
     fellowshipLogDirectory: appSettings.fellowshipLogDirectory,
+    fellowshipLogsClientId: appSettings.fellowshipLogsClientId ?? "",
+    fellowshipLogsClientSecret: "",
     isLiveSplitEnabled: appSettings.isLiveSplitEnabled,
-    liveSplitsHost: appSettings.liveSplitsHost,
-    liveSplitsPort: String(appSettings.liveSplitsPort),
+    liveSplitHost: appSettings.liveSplitHost,
+    liveSplitPort: String(appSettings.liveSplitPort),
   };
 }
 

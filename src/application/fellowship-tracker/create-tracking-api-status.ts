@@ -10,7 +10,7 @@ import {
   type FellowshipTrackerConfigurationSource,
   type FellowshipTrackerFailure,
   type FellowshipTrackerStatus,
-} from "./fellowship-tracker-service-types.ts";
+} from "./fellowship-tracker-service.ts";
 
 function createTrackingApiSource(
   source: FellowshipTrackerConfigurationSource,

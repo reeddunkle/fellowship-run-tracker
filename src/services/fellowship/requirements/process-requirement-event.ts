@@ -1,5 +1,4 @@
 import * as A from "effect/Array";
-import type * as DateTime from "effect/DateTime";
 import * as HashMap from "effect/HashMap";
 import * as Option from "effect/Option";
 
@@ -12,25 +11,19 @@ import {
   type RequirementReference,
 } from "@/services/fellowship/configurations/configuration-types.ts";
 import {
-  getRequirementLookupForEvent,
-  type RequirementLookup,
-} from "@/services/fellowship/requirements/requirement-lookup.ts";
+  createDungeonRunObservation,
+  type DungeonRunObservation,
+} from "@/services/fellowship/requirements/create-dungeon-run-observation.ts";
+import { type RequirementLookup } from "@/services/fellowship/requirements/requirement-lookup.ts";
 import {
-  type RequirementObservationHistory,
-  type RequirementObservationsByTargetId,
+  addRequirementObservation,
+  getRequirementObservationHistory,
   type RequirementProcessorState,
 } from "@/services/fellowship/requirements/requirement-processor-state.ts";
 import { type FellowshipRunMilestone } from "@/services/fellowship/types.ts";
 import { type DungeonStartEvent } from "@/services/fellowship/validation/events/dungeon-start.ts";
 import { type FellowshipEvent } from "@/services/fellowship/validation/fellowship-event-schema.ts";
-import { type RequirementEventType } from "@/services/fellowship/validation/requirement-event-type-schema.ts";
 import { getElapsedMilliseconds } from "@/util/get-elapsed-milliseconds.ts";
-
-export type DungeonRunObservation = {
-  readonly targetId: RequirementLookup["targetId"];
-  readonly timestamp: DateTime.Utc;
-  readonly type: RequirementEventType;
-};
 
 export type SatisfiedRequirement = RequirementReference;
 
@@ -48,10 +41,6 @@ export type ProcessRequirementEventResult = {
   readonly state: RequirementProcessorState;
 };
 
-function getEventTimestamp(event: FellowshipEvent): DateTime.Utc {
-  return event.type === "DUNGEON_START" ? event.startedAt : event.timestamp;
-}
-
 function getRequirementReferences({
   configuration,
   lookup,
@@ -65,66 +54,6 @@ function getRequirementReferences({
       return HashMap.get(referencesByTargetId, lookup.targetId);
     },
   ).pipe(Option.getOrElse(() => []));
-}
-
-function getObservationHistory({
-  lookup,
-  state,
-}: {
-  readonly lookup: RequirementLookup;
-  readonly state: RequirementProcessorState;
-}): RequirementObservationHistory | undefined {
-  return Option.flatMap(
-    HashMap.get(state.requirementObservations, lookup.type),
-    (observationsByTargetId) => {
-      return HashMap.get(observationsByTargetId, lookup.targetId);
-    },
-  ).pipe(Option.getOrUndefined);
-}
-
-function addRequirementObservation({
-  lookup,
-  state,
-  timestamp,
-}: {
-  readonly lookup: RequirementLookup;
-  readonly state: RequirementProcessorState;
-  readonly timestamp: DateTime.Utc;
-}): RequirementProcessorState {
-  const observationsByTargetId: RequirementObservationsByTargetId =
-    Option.getOrElse(
-      HashMap.get(state.requirementObservations, lookup.type),
-      () => HashMap.empty(),
-    );
-
-  const observationHistory = Option.getOrElse(
-    HashMap.get(observationsByTargetId, lookup.targetId),
-    () => {
-      return {
-        observations: [],
-      } satisfies RequirementObservationHistory;
-    },
-  );
-
-  const nextObservationHistory = {
-    observations: A.append(observationHistory.observations, {
-      timestamp,
-    }),
-  } satisfies RequirementObservationHistory;
-
-  const nextObservationsByTargetId = HashMap.set(
-    observationsByTargetId,
-    lookup.targetId,
-    nextObservationHistory,
-  );
-
-  return {
-    requirementObservations: HashMap.set(
-      state.requirementObservations,
-      lookup.type,
-      nextObservationsByTargetId,
-    ),
-  };
 }
 
 function getSatisfiedRequirements({
@@ -209,18 +138,21 @@ export function processRequirementEvent({
   runStart,
   state,
 }: ProcessRequirementEventOptions): ProcessRequirementEventResult {
-  const emptyResult: ProcessRequirementEventResult = {
-    completedMilestones: [],
-    observation: undefined,
-    satisfiedRequirements: [],
-    state,
-  };
+  const observation = createDungeonRunObservation(event);
 
-  const lookup = getRequirementLookupForEvent(event);
-
-  if (lookup === undefined) {
-    return emptyResult;
+  if (observation === undefined) {
+    return {
+      completedMilestones: [],
+      observation: undefined,
+      satisfiedRequirements: [],
+      state,
+    };
   }
+
+  const lookup = {
+    targetId: observation.targetId,
+    type: observation.type,
+  } satisfies RequirementLookup;
 
   const references = getRequirementReferences({
     configuration,
@@ -228,23 +160,20 @@ export function processRequirementEvent({
   });
 
   if (references.length === 0) {
-    return emptyResult;
+    return {
+      completedMilestones: [],
+      observation,
+      satisfiedRequirements: [],
+      state,
+    };
   }
 
-  const observationHistory = getObservationHistory({
+  const observationHistory = getRequirementObservationHistory({
     lookup,
     state,
   });
 
-  const currentOccurrence = (observationHistory?.observations.length ?? 0) + 1;
-
-  const timestamp = getEventTimestamp(event);
-
-  const observation = {
-    targetId: lookup.targetId,
-    timestamp,
-    type: lookup.type,
-  } satisfies DungeonRunObservation;
+  const occurrence = (observationHistory?.observations.length ?? 0) + 1;
 
   const previousAnalysis = analyzeMilestoneProgress({
     configuration,
@@ -254,7 +183,7 @@ export function processRequirementEvent({
   const nextState = addRequirementObservation({
     lookup,
     state,
-    timestamp,
+    timestamp: observation.timestamp,
   });
 
   const nextAnalysis = analyzeMilestoneProgress({
@@ -262,21 +191,17 @@ export function processRequirementEvent({
     state: nextState,
   });
 
-  const satisfiedRequirements = getSatisfiedRequirements({
-    occurrence: currentOccurrence,
-    references,
-  });
-
-  const completedMilestones = getNewlyCompletedMilestones({
-    nextMilestones: nextAnalysis.milestones,
-    previousMilestones: previousAnalysis.milestones,
-    runStart,
-  });
-
   return {
-    completedMilestones,
+    completedMilestones: getNewlyCompletedMilestones({
+      nextMilestones: nextAnalysis.milestones,
+      previousMilestones: previousAnalysis.milestones,
+      runStart,
+    }),
     observation,
-    satisfiedRequirements,
+    satisfiedRequirements: getSatisfiedRequirements({
+      occurrence,
+      references,
+    }),
     state: nextState,
   };
 }

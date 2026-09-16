@@ -2,22 +2,37 @@ import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 
 import { makeAppStateStorageLive } from "@/electron/storage/app-state/app-state-storage-live.ts";
-import { type MakeApiLayerOptions, makeApiLayer } from "@/layers/api-layer.ts";
+import { makeApiLayer } from "@/layers/api-layer.ts";
+import { makeEncryptionLayer } from "@/layers/encryption-layer.ts";
 import {
   NodePathLive,
   NodePlatformLive,
 } from "@/layers/node-platform-layer.ts";
+import { makePersistenceLayer } from "@/layers/persistence-layer.ts";
 import { ElectronAppStateLive } from "@/services/app-state/electron-app-state-live.ts";
+import { type DatabaseOptions } from "@/types/app-options.ts";
 
-export type MakeElectronRuntimeOptions = MakeApiLayerOptions & {
+export type MakeElectronRuntimeOptions = DatabaseOptions & {
   readonly appStateStorageDirectory: string;
+  readonly encryptionKeyDirectory: string;
 };
 
 export function makeElectronRuntime({
   appStateStorageDirectory,
-  ...apiOptions
+  databaseFilename,
+  encryptionKeyDirectory,
 }: MakeElectronRuntimeOptions) {
-  const ApiLive = makeApiLayer(apiOptions);
+  const PersistenceLive = makePersistenceLayer({
+    databaseFilename,
+  });
+
+  const EncryptionLive = makeEncryptionLayer({
+    encryptionKeyDirectory,
+  });
+
+  const ApiLive = makeApiLayer().pipe(
+    Layer.provide(Layer.mergeAll(PersistenceLive, EncryptionLive)),
+  );
 
   const AppStateStorageLive = makeAppStateStorageLive(
     appStateStorageDirectory,
@@ -27,9 +42,7 @@ export function makeElectronRuntime({
     Layer.provide(AppStateStorageLive),
   );
 
-  const ElectronServicesLive = Layer.mergeAll(AppStateLive, NodePathLive);
-
-  const ElectronLive = Layer.mergeAll(ApiLive, ElectronServicesLive);
+  const ElectronLive = Layer.mergeAll(ApiLive, AppStateLive, NodePathLive);
 
   return ManagedRuntime.make(ElectronLive);
 }

@@ -27,10 +27,12 @@ const make = E.gen(function* () {
         SELECT
           created_at AS createdAt,
           fellowship_log_directory AS fellowshipLogDirectory,
+          fellowship_logs_client_id AS fellowshipLogsClientId,
+          fellowship_logs_client_secret AS fellowshipLogsClientSecret,
           id,
           is_live_split_enabled AS isLiveSplitEnabled,
-          live_splits_host AS liveSplitsHost,
-          live_splits_port AS liveSplitsPort,
+          live_split_host AS liveSplitHost,
+          live_split_port AS liveSplitPort,
           updated_at AS updatedAt
         FROM
           app_settings
@@ -51,9 +53,11 @@ const make = E.gen(function* () {
 
   const insert: AppSettingsDAOShape["insert"] = ({
     fellowshipLogDirectory,
+    fellowshipLogsClientId,
+    fellowshipLogsClientSecret,
     isLiveSplitEnabled,
-    liveSplitsHost,
-    liveSplitsPort,
+    liveSplitHost,
+    liveSplitPort,
   }) => {
     return E.gen(function* () {
       const timestamp = DateTime.toEpochMillis(yield* DateTime.now);
@@ -62,20 +66,24 @@ const make = E.gen(function* () {
         INSERT INTO
           app_settings (
             id,
-            live_splits_host,
-            live_splits_port,
+            live_split_host,
+            live_split_port,
             is_live_split_enabled,
             fellowship_log_directory,
+            fellowship_logs_client_id,
+            fellowship_logs_client_secret,
             created_at,
             updated_at
           )
         VALUES
           (
             1,
-            ${liveSplitsHost},
-            ${liveSplitsPort},
+            ${liveSplitHost},
+            ${liveSplitPort},
             ${isLiveSplitEnabled ? 1 : 0},
             ${fellowshipLogDirectory},
+            ${fellowshipLogsClientId},
+            ${fellowshipLogsClientSecret},
             ${timestamp},
             ${timestamp}
           )
@@ -85,9 +93,11 @@ const make = E.gen(function* () {
 
   const update: AppSettingsDAOShape["update"] = ({
     fellowshipLogDirectory,
+    fellowshipLogsClientId,
+    fellowshipLogsClientSecret,
     isLiveSplitEnabled,
-    liveSplitsHost,
-    liveSplitsPort,
+    liveSplitHost,
+    liveSplitPort,
   }) => {
     return E.gen(function* () {
       const timestamp = DateTime.toEpochMillis(yield* DateTime.now);
@@ -96,9 +106,11 @@ const make = E.gen(function* () {
         UPDATE app_settings
         SET
           fellowship_log_directory = ${fellowshipLogDirectory},
+          fellowship_logs_client_id = ${fellowshipLogsClientId},
+          fellowship_logs_client_secret = ${fellowshipLogsClientSecret},
           is_live_split_enabled = ${isLiveSplitEnabled ? 1 : 0},
-          live_splits_host = ${liveSplitsHost},
-          live_splits_port = ${liveSplitsPort},
+          live_split_host = ${liveSplitHost},
+          live_split_port = ${liveSplitPort},
           updated_at = ${timestamp}
         WHERE
           id = 1

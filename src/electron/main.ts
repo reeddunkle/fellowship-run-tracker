@@ -7,7 +7,10 @@ import { app, BrowserWindow } from "electron";
 
 import { appConfig } from "@/app-config.ts";
 import { configureWindowIpc } from "@/electron/application/configure-window-ipc.ts";
-import { getAppStateStorageDirectory } from "@/electron/storage/app-state/get-app-state-storage-directory.ts";
+import { getAppStateStorageDirectory } from "@/helpers/get-app-state-storage-directory.ts";
+import { getDatabaseFilename } from "@/helpers/get-database-filename.ts";
+import { getEncryptionKeyDirectory } from "@/helpers/get-encryption-key-directory.ts";
+import { NodePathLive } from "@/layers/node-platform-layer.ts";
 import { logCause } from "@/logging/log-cause.ts";
 import { makeElectronRuntime } from "@/runtimes/electron-runtime.ts";
 import { type AppStateService } from "@/services/app-state/app-state-service.ts";
@@ -20,15 +23,19 @@ const currentDirectoryPath = path.dirname(fileURLToPath(import.meta.url));
 
 function runElectronMain() {
   return E.gen(function* () {
-    const databaseFilename = yield* appConfig.databaseFilename;
     const electronRendererHost = yield* appConfig.electronRendererHost;
     const electronRendererPort = yield* appConfig.electronRendererPort;
 
     yield* E.promise(() => app.whenReady());
 
+    const databaseFilename = yield* getDatabaseFilename();
+    const appStateStorageDirectory = getAppStateStorageDirectory();
+    const encryptionKeyDirectory = getEncryptionKeyDirectory();
+
     const electronRuntime = makeElectronRuntime({
-      appStateStorageDirectory: getAppStateStorageDirectory(),
+      appStateStorageDirectory,
       databaseFilename,
+      encryptionKeyDirectory,
     });
 
     const useRendererDevServer =
@@ -43,17 +50,11 @@ function runElectronMain() {
       rendererDevServerUrl,
     };
 
-    const runProgram = <A, ProgramError>(
+    function runProgram<A, ProgramError>(
       effect: E.Effect<A, ProgramError, Path.Path | AppStateService>,
-    ) => {
-      electronRuntime.runFork(
-        effect.pipe(
-          E.catchCause((cause) => {
-            return logCause(cause);
-          }),
-        ),
-      );
-    };
+    ) {
+      void electronRuntime.runPromiseExit(effect.pipe(E.tapCause(logCause)));
+    }
 
     configureWindowIpc(electronRuntime);
 
@@ -89,10 +90,10 @@ function runElectronMain() {
   });
 }
 
-E.runFork(
+void E.runPromiseExit(
   runElectronMain().pipe(
-    E.catchCause((cause) => {
-      return logCause(cause);
-    }),
+    // @effect-diagnostics-next-line strictEffectProvide:off
+    E.provide(NodePathLive),
+    E.tapCause(logCause),
   ),
 );

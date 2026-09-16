@@ -2,15 +2,17 @@ import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Stream from "effect/Stream";
 
+import { FellowshipTrackerLive } from "@/application/fellowship-tracker/fellowship-tracker-service-live.ts";
 import { FellowshipServicesLive } from "@/layers/fellowship-layer.ts";
 import { DungeonRunWebSocketBroadcaster } from "@/services/api/websocket-broadcaster-service.ts";
 import { AppSettingsLive } from "@/services/app-settings/app-settings-service.ts";
+import { Encryption } from "@/services/encryption/encryption-service.ts";
 import {
   LiveSplitConnectionManager,
   type LiveSplitConnectionManagerService,
 } from "@/services/live-split/core/live-split-connection-manager-service.ts";
 import { LiveSplitLive } from "@/services/live-split/core/live-split-service.ts";
-import { makeFellowshipTrackerTestLayer } from "@/tests/common/layers/fellowship-tracker-test-layer.ts";
+import { makeEncryptionHarness } from "@/tests/common/harnesses/encryption-harness.ts";
 import { makePersistenceTestLayer } from "@/tests/common/layers/persistence-test-layer.ts";
 
 import { makeLiveSplitTestHarness } from "./live-split-test-harness.ts";
@@ -24,6 +26,8 @@ export function makeFellowshipTrackerIntegrationTestHarness({
   databaseFilename = ":memory:",
 }: MakeFellowshipTrackerIntegrationTestHarnessOptions = {}) {
   return E.gen(function* () {
+    const encryptionHarness = yield* makeEncryptionHarness();
+
     const liveSplitHarness = yield* makeLiveSplitTestHarness();
 
     const dungeonRunWebSocketBroadcasterHarness =
@@ -31,8 +35,13 @@ export function makeFellowshipTrackerIntegrationTestHarness({
 
     const PersistenceTestLive = makePersistenceTestLayer(databaseFilename);
 
+    const EncryptionTestLive = Layer.succeed(
+      Encryption,
+      encryptionHarness.encryption,
+    );
+
     const AppSettingsTestLive = AppSettingsLive.pipe(
-      Layer.provide(PersistenceTestLive),
+      Layer.provide(Layer.mergeAll(PersistenceTestLive, EncryptionTestLive)),
     );
 
     const FellowshipTestLive = FellowshipServicesLive.pipe(
@@ -74,12 +83,13 @@ export function makeFellowshipTrackerIntegrationTestHarness({
       DungeonRunWebSocketBroadcasterTestLive,
     );
 
-    const FellowshipTrackerTestLive = makeFellowshipTrackerTestLayer(
-      FellowshipTrackerDependenciesTestLive,
+    const FellowshipTrackerTestLive = FellowshipTrackerLive.pipe(
+      Layer.provide(FellowshipTrackerDependenciesTestLive),
     );
 
     const layer = Layer.mergeAll(
       PersistenceTestLive,
+      EncryptionTestLive,
       AppSettingsTestLive,
       FellowshipTestLive,
       LiveSplitConnectionManagerTestLive,
@@ -90,6 +100,7 @@ export function makeFellowshipTrackerIntegrationTestHarness({
 
     return {
       dungeonRunWebSocketBroadcasterHarness,
+      encryptionHarness,
       layer,
       liveSplitHarness,
     };

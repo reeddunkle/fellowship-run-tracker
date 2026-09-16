@@ -1,5 +1,6 @@
 # Root generated only
 /generated/
+/fixtures/
 
 .env
 

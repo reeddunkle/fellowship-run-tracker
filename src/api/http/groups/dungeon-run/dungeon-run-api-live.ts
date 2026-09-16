@@ -1,6 +1,5 @@
 import * as E from "effect/Effect";
 import type * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
 import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 import * as HttpApiError from "effect/unstable/httpapi/HttpApiError";
 
@@ -22,9 +21,9 @@ function mapDungeonRunApiError(
   });
 }
 
-const DungeonRunsApiHandlersInferred = HttpApiBuilder.group(
+const DungeonRunApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
-  "dungeonRuns",
+  "dungeonRun",
   E.fn(function* (handlers) {
     const dungeonRunApiService = yield* DungeonRunApiService;
 
@@ -32,30 +31,24 @@ const DungeonRunsApiHandlersInferred = HttpApiBuilder.group(
       .handle("deleteDungeonRunHistory", ({ params }) => {
         return dungeonRunApiService
           .deleteHistory({
-            configurationId: params.configurationId,
+            dungeonId: params.dungeonId,
+            dungeonLevel: params.dungeonLevel,
           })
           .pipe(E.catch(mapDungeonRunApiError));
       })
       .handle("getDungeonRunHistory", ({ params }) => {
-        return E.gen(function* () {
-          const history = yield* dungeonRunApiService
-            .getHistory({
-              configurationId: params.configurationId,
-            })
-            .pipe(E.catch(mapDungeonRunApiError));
-
-          if (Option.isNone(history)) {
-            return yield* new HttpApiError.NotFound();
-          }
-
-          return history.value;
-        });
+        return dungeonRunApiService
+          .getHistory({
+            dungeonId: params.dungeonId,
+            dungeonLevel: params.dungeonLevel,
+          })
+          .pipe(E.catch(mapDungeonRunApiError));
       });
   }),
 );
 
-export const DungeonRunsApiLive: Layer.Layer<
-  Layer.Success<typeof DungeonRunsApiHandlersInferred>,
-  Layer.Error<typeof DungeonRunsApiHandlersInferred>,
+export const DungeonRunApiLive: Layer.Layer<
+  Layer.Success<typeof DungeonRunApiHandlersInferred>,
+  Layer.Error<typeof DungeonRunApiHandlersInferred>,
   DungeonRunApiService
-> = DungeonRunsApiHandlersInferred;
+> = DungeonRunApiHandlersInferred;

@@ -55,6 +55,7 @@ describe("DungeonRunProvider display state", () => {
       <DungeonRunProvider
         eventStore={eventStore}
         history={null}
+        historyKey={null}
         invalidate={() => E.void}
       >
         <DungeonRunDisplayConsumer />
@@ -77,6 +78,7 @@ describe("DungeonRunProvider display state", () => {
       <DungeonRunProvider
         eventStore={eventStore}
         history={null}
+        historyKey={null}
         invalidate={() => E.void}
       >
         <DungeonRunDisplayConsumer />

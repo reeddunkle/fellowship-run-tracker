@@ -1,41 +1,36 @@
 import * as Context from "effect/Context";
 import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
 
-import { ConfigurationDAO } from "@/db/daos/configuration/configuration-dao.ts";
-import { DungeonRunDAO } from "@/db/daos/dungeon-run/dungeon-run-dao.ts";
 import { DungeonRunObservationDAO } from "@/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
-import { type ConfigurationDAOError } from "@/errors/configuration-dao-error.ts";
+import { type DungeonRunModel } from "@/db/models/dungeon-run-model.ts";
 import { DungeonRunApiResponseError } from "@/errors/dungeon-run-api-service-error.ts";
-import { type DungeonRunDAOError } from "@/errors/dungeon-run-dao-error.ts";
 import { type DungeonRunObservationDAOError } from "@/errors/dungeon-run-observation-dao-error.ts";
 import { createDungeonRunApiResponse } from "@/services/api/dungeon-run/create-dungeon-run-api-response.ts";
 import { type DungeonRunApiHistory } from "@/services/api/dungeon-run/dungeon-run-api-schema.ts";
-import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";
+import {
+  DungeonRunRepository,
+  type DungeonRunRepositoryError,
+} from "@/services/dungeon-run-repository/dungeon-run-repository-service.ts";
 
-type DeleteDungeonRunHistoryOptions = {
-  readonly configurationId: ConfigurationId;
-};
-
-type GetDungeonRunHistoryOptions = {
-  readonly configurationId: ConfigurationId;
+type DungeonRunHistoryOptions = {
+  readonly dungeonId: DungeonRunModel["dungeonId"];
+  readonly dungeonLevel: DungeonRunModel["dungeonLevel"];
 };
 
 export type DungeonRunApiServiceError =
-  | ConfigurationDAOError
   | DungeonRunApiResponseError
-  | DungeonRunDAOError
-  | DungeonRunObservationDAOError;
+  | DungeonRunObservationDAOError
+  | DungeonRunRepositoryError;
 
 export type DungeonRunApiServiceShape = {
   readonly deleteHistory: (
-    options: DeleteDungeonRunHistoryOptions,
+    options: DungeonRunHistoryOptions,
   ) => E.Effect<void, DungeonRunApiServiceError>;
 
   readonly getHistory: (
-    options: GetDungeonRunHistoryOptions,
-  ) => E.Effect<Option.Option<DungeonRunApiHistory>, DungeonRunApiServiceError>;
+    options: DungeonRunHistoryOptions,
+  ) => E.Effect<DungeonRunApiHistory, DungeonRunApiServiceError>;
 };
 
 export class DungeonRunApiService extends Context.Service<
@@ -46,49 +41,30 @@ export class DungeonRunApiService extends Context.Service<
 ) {}
 
 const make = E.gen(function* () {
-  const configurationDAO = yield* ConfigurationDAO;
-  const dungeonRunDAO = yield* DungeonRunDAO;
   const dungeonRunObservationDAO = yield* DungeonRunObservationDAO;
+  const dungeonRunRepository = yield* DungeonRunRepository;
 
   const deleteHistory: DungeonRunApiServiceShape["deleteHistory"] = ({
-    configurationId,
+    dungeonId,
+    dungeonLevel,
   }) => {
-    return E.gen(function* () {
-      const configuration = yield* configurationDAO.getById({
-        id: configurationId,
-      });
-
-      if (Option.isNone(configuration)) {
-        return;
-      }
-
-      yield* dungeonRunDAO.deleteHistoryByConfigurationDefinitionId({
-        configurationDefinitionId:
-          configuration.value.configurationDefinitionId,
-      });
+    return dungeonRunRepository.deleteHistory({
+      dungeonId,
+      dungeonLevel,
     });
   };
 
   const getHistory: DungeonRunApiServiceShape["getHistory"] = ({
-    configurationId,
+    dungeonId,
+    dungeonLevel,
   }) => {
     return E.gen(function* () {
-      const configuration = yield* configurationDAO.getById({
-        id: configurationId,
+      const observations = yield* dungeonRunObservationDAO.getHistoryByDungeon({
+        dungeonId,
+        dungeonLevel,
       });
 
-      if (Option.isNone(configuration)) {
-        return Option.none<DungeonRunApiHistory>();
-      }
-
-      const observations =
-        yield* dungeonRunObservationDAO.getHistoryByConfigurationDefinitionId({
-          configurationDefinitionId:
-            configuration.value.configurationDefinitionId,
-        });
-
-      const history = yield* createDungeonRunApiResponse({
-        configurationId,
+      return yield* createDungeonRunApiResponse({
         observations,
       }).pipe(
         E.mapError((cause) => {
@@ -98,8 +74,6 @@ const make = E.gen(function* () {
           });
         }),
       );
-
-      return Option.some(history);
     });
   };
 

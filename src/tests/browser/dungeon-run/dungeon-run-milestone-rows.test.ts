@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 
 import { createDungeonRunMilestoneRows } from "@/electron/renderer/components/dungeon-run/helpers/dungeon-run-milestone-rows.ts";
-import { type DungeonRunObservationInterpretation } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-provider.tsx";
+import { type DungeonRunObservationInterpretation } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-interpretation.ts";
 import { MOCK_CONFIGURATION_WITH_MULTIPLE_MILESTONES } from "@/tests/common/fixtures/configuration-fixtures.ts";
 
 function makeObservation({

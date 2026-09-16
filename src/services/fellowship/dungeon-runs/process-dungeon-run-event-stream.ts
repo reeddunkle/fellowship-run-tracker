@@ -7,21 +7,55 @@ import {
   type CompiledConfiguration,
   type FellowshipMilestoneConfiguration,
 } from "@/services/fellowship/configurations/configuration-types.ts";
-import { createInitialDungeonRunState } from "@/services/fellowship/dungeon-runs/dungeon-run-processing-state.ts";
+import { createInitialDungeonRunProcessingState } from "@/services/fellowship/dungeon-runs/dungeon-run-processing-state.ts";
 import {
   type ProcessDungeonRunEventResult,
   processDungeonRunEvent,
 } from "@/services/fellowship/dungeon-runs/process-dungeon-run-event.ts";
 import { type FellowshipEvent } from "@/services/fellowship/validation/fellowship-event-schema.ts";
 
-type ProcessDungeonRunEventStreamResult = ProcessDungeonRunEventResult & {
+export type ProcessDungeonRunEventStreamResult =
+  ProcessDungeonRunEventResult & {
+    readonly configuration: CompiledConfiguration;
+  };
+
+type ProcessCompiledDungeonRunEventStreamOptions<Error> = {
   readonly configuration: CompiledConfiguration;
+  readonly events: Stream.Stream<FellowshipEvent, Error>;
 };
 
 export type ProcessDungeonRunEventStreamOptions<Error> = {
   readonly configuration: FellowshipMilestoneConfiguration;
   readonly events: Stream.Stream<FellowshipEvent, Error>;
 };
+
+function processCompiledDungeonRunEventStream<Error>({
+  configuration,
+  events,
+}: ProcessCompiledDungeonRunEventStreamOptions<Error>): Stream.Stream<
+  ProcessDungeonRunEventStreamResult,
+  Error
+> {
+  return events.pipe(
+    Stream.mapAccum(createInitialDungeonRunProcessingState, (state, event) => {
+      const result = processDungeonRunEvent({
+        configuration,
+        event,
+        state,
+      });
+
+      return [
+        result.state,
+        [
+          {
+            ...result,
+            configuration,
+          },
+        ],
+      ];
+    }),
+  );
+}
 
 export function processDungeonRunEventStream<Error>({
   configuration,
@@ -31,25 +65,13 @@ export function processDungeonRunEventStream<Error>({
   Error | DuplicateMilestoneRequirementsError
 > {
   return Stream.unwrap(
-    E.gen(function* () {
-      const compiledConfiguration = yield* compileConfiguration(configuration);
-
-      return events.pipe(
-        Stream.mapAccum(createInitialDungeonRunState, (state, event) => {
-          const result = processDungeonRunEvent({
-            configuration: compiledConfiguration,
-            event,
-            state,
-          });
-
-          const streamResult = {
-            ...result,
-            configuration: compiledConfiguration,
-          };
-
-          return [result.state, [streamResult]];
-        }),
-      );
-    }),
+    compileConfiguration(configuration).pipe(
+      E.map((compiledConfiguration) => {
+        return processCompiledDungeonRunEventStream({
+          configuration: compiledConfiguration,
+          events,
+        });
+      }),
+    ),
   );
 }

@@ -6,8 +6,11 @@ export function createAppSettingsApiResponse(
 ): AppSettingsApiAppSettings {
   return {
     fellowshipLogDirectory: appSettings.fellowshipLogDirectory,
+    fellowshipLogsClientId: appSettings.fellowshipLogsClientId,
+    hasFellowshipLogsClientSecret:
+      appSettings.fellowshipLogsClientSecret !== null,
     isLiveSplitEnabled: appSettings.isLiveSplitEnabled,
-    liveSplitsHost: appSettings.liveSplitsHost,
-    liveSplitsPort: appSettings.liveSplitsPort,
+    liveSplitHost: appSettings.liveSplitHost,
+    liveSplitPort: appSettings.liveSplitPort,
   };
 }

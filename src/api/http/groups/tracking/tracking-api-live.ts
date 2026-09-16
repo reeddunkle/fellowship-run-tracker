@@ -4,8 +4,10 @@ import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 
 import { AppHttpApi } from "@/api/http/http-api.ts";
 import { createTrackingApiStatus } from "@/application/fellowship-tracker/create-tracking-api-status.ts";
-import { FellowshipTracker } from "@/application/fellowship-tracker/fellowship-tracker-service.ts";
-import { type FellowshipTrackerStartError } from "@/application/fellowship-tracker/fellowship-tracker-service-types.ts";
+import {
+  FellowshipTracker,
+  type FellowshipTrackerStartError,
+} from "@/application/fellowship-tracker/fellowship-tracker-service.ts";
 import {
   FellowshipTrackerAlreadyRunningError,
   FellowshipTrackerConfigurationNotFoundError,

@@ -14,7 +14,9 @@ function makeDungeonRunApiServiceMock({
     return E.void;
   },
   getHistory = () => {
-    return E.succeedNone;
+    return E.succeed({
+      observations: [],
+    });
   },
 }: MakeDungeonRunApiServiceMockOptions = {}) {
   return Layer.succeed(DungeonRunApiService, {

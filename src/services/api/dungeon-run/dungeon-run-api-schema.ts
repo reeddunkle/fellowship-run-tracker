@@ -5,7 +5,6 @@ import {
   NonEmptyStringSchema,
   PositiveIntegerSchema,
 } from "@/validation/common-schemas.ts";
-import { ConfigurationIdSchema } from "@/validation/configuration/configuration-id-schema.ts";
 
 const DungeonRunApiObservationStatisticsSchema = Schema.Struct({
   bestElapsedMilliseconds: Schema.Finite,
@@ -21,7 +20,6 @@ export type DungeonRunApiObservationStatistics =
   typeof DungeonRunApiObservationStatisticsSchema.Type;
 
 export const DungeonRunApiHistorySchema = Schema.Struct({
-  configurationId: ConfigurationIdSchema,
   observations: Schema.Array(DungeonRunApiObservationStatisticsSchema),
 });
 

@@ -2,7 +2,10 @@ import * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
 import * as HttpApiError from "effect/unstable/httpapi/HttpApiError";
 import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
 
-import { AppSettingsApiAppSettingsSchema } from "@/services/api/app-settings/app-settings-api-schema.ts";
+import {
+  AppSettingsApiAppSettingsSchema,
+  AppSettingsApiUpdateSchema,
+} from "@/services/api/app-settings/app-settings-api-schema.ts";
 
 const APP_SETTINGS_ROUTE = "/app-settings" as const;
 
@@ -20,7 +23,7 @@ const PutAppSettingsEndpoint = HttpApiEndpoint.put(
   APP_SETTINGS_ROUTE,
   {
     error: HttpApiError.InternalServerErrorNoContent,
-    payload: AppSettingsApiAppSettingsSchema,
+    payload: AppSettingsApiUpdateSchema,
     success: AppSettingsApiAppSettingsSchema,
   },
 );

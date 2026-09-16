@@ -1,37 +1,42 @@
 import * as Layer from "effect/Layer";
 
 import { ApiServer } from "@/api/api-server.ts";
-import { FellowshipTrackerLive } from "@/application/fellowship-tracker/fellowship-tracker-service.ts";
+import { FellowshipLogsDungeonRunImporterLive } from "@/application/fellowship-logs-dungeon-run-importer/fellowship-logs-dungeon-run-importer-service-live.ts";
+import { FellowshipTrackerLive } from "@/application/fellowship-tracker/fellowship-tracker-service-live.ts";
 import { ApiLifecycleLive } from "@/layers/api-lifecycle-layer.ts";
 import { ApiServicesLive } from "@/layers/api-services-layer.ts";
+import { AppSettingsWithDependenciesLive } from "@/layers/app-settings-layer.ts";
+import { DungeonRunRepositoryWithDependenciesLive } from "@/layers/dungeon-run-repository-layer.ts";
 import { FellowshipServicesLive } from "@/layers/fellowship-layer.ts";
+import { makeFellowshipLogsLayer } from "@/layers/fellowship-logs-layer.ts";
 import { LiveSplitServicesLive } from "@/layers/live-split-layer.ts";
 import { NodePlatformLive } from "@/layers/node-platform-layer.ts";
-import {
-  type MakePersistenceLayerOptions,
-  makePersistenceLayer,
-} from "@/layers/persistence-layer.ts";
 import { NodeApiHttpServerLive } from "@/services/api/node-api-http-server.ts";
 import {
   DungeonRunWebSocketBroadcasterLive,
   LiveSplitWebSocketBroadcasterLive,
   TrackingWebSocketBroadcasterLive,
 } from "@/services/api/websocket-broadcaster-service.ts";
-import { AppSettingsLive } from "@/services/app-settings/app-settings-service.ts";
 import { AppLoggerLive } from "@/services/logging/app-logger-service.ts";
 
-export type MakeApiLayerOptions = MakePersistenceLayerOptions;
-
-export function makeApiLayer(options: MakeApiLayerOptions) {
-  const PersistenceLive = makePersistenceLayer(options);
-
-  const AppSettingsWithDependenciesLive = AppSettingsLive.pipe(
-    Layer.provide(PersistenceLive),
-  );
-
+export function makeApiLayer() {
   const FellowshipWithDependenciesLive = FellowshipServicesLive.pipe(
     Layer.provide(AppSettingsWithDependenciesLive),
   );
+
+  const FellowshipLogsWithDependenciesLive = makeFellowshipLogsLayer(
+    AppSettingsWithDependenciesLive,
+  );
+
+  const FellowshipLogsDungeonRunImporterWithDependenciesLive =
+    FellowshipLogsDungeonRunImporterLive.pipe(
+      Layer.provide(
+        Layer.merge(
+          FellowshipLogsWithDependenciesLive,
+          DungeonRunRepositoryWithDependenciesLive,
+        ),
+      ),
+    );
 
   const LiveSplitWithDependenciesLive = LiveSplitServicesLive.pipe(
     Layer.provide(AppSettingsWithDependenciesLive),
@@ -40,7 +45,6 @@ export function makeApiLayer(options: MakeApiLayerOptions) {
   const FellowshipTrackerWithDependenciesLive = FellowshipTrackerLive.pipe(
     Layer.provide(
       Layer.mergeAll(
-        PersistenceLive,
         FellowshipWithDependenciesLive,
         LiveSplitWithDependenciesLive,
         DungeonRunWebSocketBroadcasterLive,
@@ -51,8 +55,9 @@ export function makeApiLayer(options: MakeApiLayerOptions) {
   const ApiServicesWithDependenciesLive = ApiServicesLive.pipe(
     Layer.provide(
       Layer.mergeAll(
-        PersistenceLive,
         AppSettingsWithDependenciesLive,
+        FellowshipLogsWithDependenciesLive,
+        FellowshipLogsDungeonRunImporterWithDependenciesLive,
         LiveSplitWithDependenciesLive,
       ),
     ),

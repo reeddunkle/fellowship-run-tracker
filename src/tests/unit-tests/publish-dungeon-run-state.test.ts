@@ -6,9 +6,10 @@ import { describe, expect, test } from "vitest";
 import { publishDungeonRunState } from "@/api/websocket/dungeon-run/publish-dungeon-run-state.ts";
 import { DungeonRunWebSocketBroadcaster } from "@/services/api/websocket-broadcaster-service.ts";
 import {
-  type DungeonRunProcessingRunState,
-  type DungeonRunProcessingState,
-} from "@/services/fellowship/dungeon-runs/dungeon-run-processing-state.ts";
+  type ConfiguredDungeonRunProcessingState,
+  type ConfiguredDungeonRunState,
+} from "@/services/fellowship/dungeon-runs/configured-dungeon-run-processing-state.ts";
+import { type DungeonRunProcessingState } from "@/services/fellowship/dungeon-runs/dungeon-run-processing-state.ts";
 import {
   type DungeonRunTrackerState,
   initialDungeonRunTrackerState,
@@ -22,18 +23,28 @@ import { type RequirementEventType } from "@/services/fellowship/validation/requ
 import { makeWebSocketBroadcasterTestHarness } from "@/tests/common/harnesses/websocket-broadcaster-test-harness.ts";
 import { runTest } from "@/tests/common/run-test.ts";
 
-function createRunProcessingState({
+function createConfiguredDungeonRunProcessingState({
   dungeonRun,
   requirementProcessor = initialRequirementProcessorState,
-  runTracker = initialDungeonRunTrackerState,
 }: {
-  readonly dungeonRun?: DungeonRunProcessingRunState;
+  readonly dungeonRun?: ConfiguredDungeonRunState;
   readonly requirementProcessor?: RequirementProcessorState;
-  readonly runTracker?: DungeonRunTrackerState;
-} = {}): DungeonRunProcessingState {
+} = {}): ConfiguredDungeonRunProcessingState {
   return {
     dungeonRun,
     requirementProcessor,
+  };
+}
+
+function createDungeonRunProcessingState({
+  configuredRun = createConfiguredDungeonRunProcessingState(),
+  runTracker = initialDungeonRunTrackerState,
+}: {
+  readonly configuredRun?: ConfiguredDungeonRunProcessingState;
+  readonly runTracker?: DungeonRunTrackerState;
+} = {}): DungeonRunProcessingState {
+  return {
+    configuredRun,
     runTracker,
   };
 }
@@ -44,11 +55,13 @@ describe("publishDungeonRunState", () => {
       const webSocketBroadcasterHarness =
         yield* makeWebSocketBroadcasterTestHarness();
 
-      const state = createRunProcessingState({
-        dungeonRun: {
-          startedAt: DateTime.makeUnsafe(1_000),
-          status: "ACTIVE",
-        },
+      const state = createDungeonRunProcessingState({
+        configuredRun: createConfiguredDungeonRunProcessingState({
+          dungeonRun: {
+            startedAt: DateTime.makeUnsafe(1_000),
+            status: "ACTIVE",
+          },
+        }),
       });
 
       yield* publishDungeonRunState({
@@ -108,14 +121,16 @@ describe("publishDungeonRunState", () => {
         observationsByTargetId,
       );
 
-      const state = createRunProcessingState({
-        dungeonRun: {
-          startedAt: DateTime.makeUnsafe(1_000),
-          status: "ACTIVE",
-        },
-        requirementProcessor: {
-          requirementObservations,
-        },
+      const state = createDungeonRunProcessingState({
+        configuredRun: createConfiguredDungeonRunProcessingState({
+          dungeonRun: {
+            startedAt: DateTime.makeUnsafe(1_000),
+            status: "ACTIVE",
+          },
+          requirementProcessor: {
+            requirementObservations,
+          },
+        }),
       });
 
       yield* publishDungeonRunState({
@@ -158,12 +173,14 @@ describe("publishDungeonRunState", () => {
       const webSocketBroadcasterHarness =
         yield* makeWebSocketBroadcasterTestHarness();
 
-      const state = createRunProcessingState({
-        dungeonRun: {
-          endedAt: DateTime.makeUnsafe(13_345),
-          startedAt: DateTime.makeUnsafe(1_000),
-          status: "COMPLETED",
-        },
+      const state = createDungeonRunProcessingState({
+        configuredRun: createConfiguredDungeonRunProcessingState({
+          dungeonRun: {
+            endedAt: DateTime.makeUnsafe(13_345),
+            startedAt: DateTime.makeUnsafe(1_000),
+            status: "COMPLETED",
+          },
+        }),
       });
 
       yield* publishDungeonRunState({
@@ -201,7 +218,7 @@ describe("publishDungeonRunState", () => {
         yield* makeWebSocketBroadcasterTestHarness();
 
       yield* publishDungeonRunState({
-        state: createRunProcessingState(),
+        state: createDungeonRunProcessingState(),
       }).pipe(
         E.provideService(
           DungeonRunWebSocketBroadcaster,

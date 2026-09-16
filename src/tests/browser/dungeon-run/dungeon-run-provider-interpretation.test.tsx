@@ -10,11 +10,16 @@ import {
   useDungeonRunInterpretationState,
 } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-provider.tsx";
 import { type DungeonRunApiHistory } from "@/services/api/dungeon-run/dungeon-run-api-schema.ts";
-import { MOCK_CONFIGURATION_ID } from "@/tests/common/fixtures/configuration-fixtures.ts";
+import { MOCK_CONFIGURATION_WITH_MULTIPLE_MILESTONES } from "@/tests/common/fixtures/configuration-fixtures.ts";
 import {
   MOCK_DUNGEON_RUN_API_MESSAGE,
   MOCK_DUNGEON_RUN_STATE_API,
 } from "@/tests/common/fixtures/dungeon-run-api-fixtures.ts";
+
+const HISTORY_KEY = {
+  dungeonId: MOCK_CONFIGURATION_WITH_MULTIPLE_MILESTONES.dungeonId,
+  dungeonLevel: MOCK_CONFIGURATION_WITH_MULTIPLE_MILESTONES.dungeonLevel,
+};
 
 function DungeonRunInterpretationConsumer() {
   const { latestObservation, observations } =
@@ -120,7 +125,6 @@ describe("DungeonRunProvider interpretation state", () => {
     };
 
     const history = {
-      configurationId: MOCK_CONFIGURATION_ID,
       observations: [
         {
           bestElapsedMilliseconds: 8_000,
@@ -160,6 +164,7 @@ describe("DungeonRunProvider interpretation state", () => {
       <DungeonRunProvider
         eventStore={eventStore}
         history={history}
+        historyKey={HISTORY_KEY}
         invalidate={() => E.void}
       >
         <DungeonRunInterpretationConsumer />
@@ -258,6 +263,7 @@ describe("DungeonRunProvider interpretation state", () => {
       <DungeonRunProvider
         eventStore={eventStore}
         history={null}
+        historyKey={null}
         invalidate={() => E.void}
       >
         <DungeonRunInterpretationConsumer />
@@ -299,7 +305,6 @@ describe("DungeonRunProvider interpretation state", () => {
     };
 
     const history = {
-      configurationId: MOCK_CONFIGURATION_ID,
       observations: [
         {
           bestElapsedMilliseconds: 8_000,
@@ -330,6 +335,7 @@ describe("DungeonRunProvider interpretation state", () => {
       <DungeonRunProvider
         eventStore={eventStore}
         history={history}
+        historyKey={HISTORY_KEY}
         invalidate={() => E.void}
       >
         <DungeonRunInterpretationConsumer />

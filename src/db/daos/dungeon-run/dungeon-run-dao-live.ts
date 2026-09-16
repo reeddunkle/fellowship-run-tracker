@@ -34,12 +34,10 @@ function decodeDungeonRunRows(
   );
 }
 
-function makeRunNotFoundOrInactiveError(
-  dungeonRunId: DungeonRunId,
-): DungeonRunDAOError {
+function makeRunNotFoundError(dungeonRunId: DungeonRunId): DungeonRunDAOError {
   return new DungeonRunDAOError({
     details: {
-      _tag: "RunNotFoundOrInactive",
+      _tag: "RunNotFound",
       dungeonRunId,
     },
   });
@@ -53,10 +51,9 @@ const make = E.gen(function* () {
       const rows = yield* sql`
         SELECT
           id,
-          configuration_definition_id,
           dungeon_id,
           dungeon_level,
-          status,
+          source,
           started_at,
           ended_at,
           created_at,
@@ -79,18 +76,19 @@ const make = E.gen(function* () {
   };
 
   const create: DungeonRunDAOShape["create"] = ({
-    configurationDefinitionId,
     dungeonId,
     dungeonLevel,
+    endedAt,
+    source,
+    startedAt,
   }) => {
     return E.gen(function* () {
       const dungeonRun = DungeonRunModel.insert.make({
-        configurationDefinitionId,
         dungeonId,
         dungeonLevel,
-        endedAt: null,
-        startedAt: null,
-        status: "ACTIVE",
+        endedAt,
+        source,
+        startedAt,
       });
 
       const insert = yield* Schema.encodeEffect(DungeonRunModel.insert)(
@@ -101,10 +99,9 @@ const make = E.gen(function* () {
         INSERT INTO
           dungeon_run (
             id,
-            configuration_definition_id,
             dungeon_id,
             dungeon_level,
-            status,
+            source,
             started_at,
             ended_at,
             created_at,
@@ -113,10 +110,9 @@ const make = E.gen(function* () {
         VALUES
           (
             ${insert.id},
-            ${insert.configurationDefinitionId},
             ${insert.dungeonId},
             ${insert.dungeonLevel},
-            ${insert.status},
+            ${insert.source},
             ${insert.startedAt},
             ${insert.endedAt},
             ${insert.createdAt},
@@ -124,10 +120,9 @@ const make = E.gen(function* () {
           )
         RETURNING
           id,
-          configuration_definition_id,
           dungeon_id,
           dungeon_level,
-          status,
+          source,
           started_at,
           ended_at,
           created_at,
@@ -150,6 +145,34 @@ const make = E.gen(function* () {
     }).pipe(E.mapError(mapDungeonRunDAOError));
   };
 
+  const delete_: DungeonRunDAOShape["delete"] = ({ dungeonRunId }) => {
+    return E.gen(function* () {
+      const rows = yield* sql`
+        DELETE FROM dungeon_run
+        WHERE
+          id = ${dungeonRunId}
+        RETURNING
+          id
+      `;
+
+      if (rows[0] === undefined) {
+        return yield* makeRunNotFoundError(dungeonRunId);
+      }
+    }).pipe(E.mapError(mapDungeonRunDAOError));
+  };
+
+  const deleteByDungeon: DungeonRunDAOShape["deleteByDungeon"] = ({
+    dungeonId,
+    dungeonLevel,
+  }) => {
+    return sql`
+      DELETE FROM dungeon_run
+      WHERE
+        dungeon_id = ${dungeonId}
+        AND dungeon_level = ${dungeonLevel}
+    `.pipe(E.asVoid, E.mapError(mapDungeonRunDAOError));
+  };
+
   const start: DungeonRunDAOShape["start"] = ({ dungeonRunId, startedAt }) => {
     return E.gen(function* () {
       const encodedStartedAt = yield* Schema.encodeEffect(
@@ -169,26 +192,17 @@ const make = E.gen(function* () {
           updated_at = ${encodedUpdatedAt}
         WHERE
           id = ${dungeonRunId}
-          AND status = 'ACTIVE'
         RETURNING
           id
       `;
 
       if (rows[0] === undefined) {
-        return yield* makeRunNotFoundOrInactiveError(dungeonRunId);
+        return yield* makeRunNotFoundError(dungeonRunId);
       }
     }).pipe(E.mapError(mapDungeonRunDAOError));
   };
 
-  const finishRun = ({
-    dungeonRunId,
-    endedAt,
-    status,
-  }: {
-    readonly dungeonRunId: DungeonRunId;
-    readonly endedAt: NonNullable<DungeonRunModel["endedAt"]>;
-    readonly status: "COMPLETED" | "EXITED" | "INTERRUPTED";
-  }): E.Effect<void, DungeonRunDAOError> => {
+  const end: DungeonRunDAOShape["end"] = ({ dungeonRunId, endedAt }) => {
     return E.gen(function* () {
       const encodedEndedAt = yield* Schema.encodeEffect(
         Schema.DateTimeUtcFromMillis,
@@ -203,69 +217,26 @@ const make = E.gen(function* () {
       const rows = yield* sql`
         UPDATE dungeon_run
         SET
-          status = ${status},
           ended_at = ${encodedEndedAt},
           updated_at = ${encodedUpdatedAt}
         WHERE
           id = ${dungeonRunId}
-          AND status = 'ACTIVE'
         RETURNING
           id
       `;
 
       if (rows[0] === undefined) {
-        return yield* makeRunNotFoundOrInactiveError(dungeonRunId);
+        return yield* makeRunNotFoundError(dungeonRunId);
       }
     }).pipe(E.mapError(mapDungeonRunDAOError));
   };
 
-  const complete: DungeonRunDAOShape["complete"] = ({
-    dungeonRunId,
-    endedAt,
-  }) => {
-    return finishRun({
-      dungeonRunId,
-      endedAt,
-      status: "COMPLETED",
-    });
-  };
-
-  const exit: DungeonRunDAOShape["exit"] = ({ dungeonRunId, endedAt }) => {
-    return finishRun({
-      dungeonRunId,
-      endedAt,
-      status: "EXITED",
-    });
-  };
-
-  const interrupt: DungeonRunDAOShape["interrupt"] = ({
-    dungeonRunId,
-    endedAt,
-  }) => {
-    return finishRun({
-      dungeonRunId,
-      endedAt,
-      status: "INTERRUPTED",
-    });
-  };
-
-  const deleteHistoryByConfigurationDefinitionId: DungeonRunDAOShape["deleteHistoryByConfigurationDefinitionId"] =
-    ({ configurationDefinitionId }) => {
-      return sql`
-        DELETE FROM dungeon_run
-        WHERE
-          configuration_definition_id = ${configurationDefinitionId}
-          AND status != 'ACTIVE'
-      `.pipe(E.asVoid, E.mapError(mapDungeonRunDAOError));
-    };
-
   return {
-    complete,
     create,
-    deleteHistoryByConfigurationDefinitionId,
-    exit,
+    delete: delete_,
+    deleteByDungeon,
+    end,
     getById,
-    interrupt,
     start,
   } satisfies DungeonRunDAOShape;
 });

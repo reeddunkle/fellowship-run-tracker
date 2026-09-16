@@ -23,8 +23,10 @@ describe("PersistenceLayer", () => {
           map_id,
           name,
           updated_at
-        FROM dungeon
-        WHERE id = '11'
+        FROM
+          dungeon
+        WHERE
+          id = '11'
       `;
 
       const abilities = yield* sql<{
@@ -38,8 +40,10 @@ describe("PersistenceLayer", () => {
           id,
           name,
           updated_at
-        FROM ability
-        WHERE id = '634'
+        FROM
+          ability
+        WHERE
+          id = '634'
       `;
 
       const abilityUnits = yield* sql<{
@@ -53,8 +57,10 @@ describe("PersistenceLayer", () => {
           created_at,
           unit_id,
           updated_at
-        FROM ability_unit
-        WHERE ability_id = '634'
+        FROM
+          ability_unit
+        WHERE
+          ability_id = '634'
       `;
 
       const encounters = yield* sql<{
@@ -70,8 +76,10 @@ describe("PersistenceLayer", () => {
           id,
           name,
           updated_at
-        FROM encounter
-        WHERE dungeon_id = '24'
+        FROM
+          encounter
+        WHERE
+          dungeon_id = '24'
           AND id = '33'
       `;
 
@@ -92,8 +100,10 @@ describe("PersistenceLayer", () => {
           status,
           updated_at,
           variant
-        FROM unit
-        WHERE id = '276'
+        FROM
+          unit
+        WHERE
+          id = '276'
       `;
 
       const inactiveUnit = yield* sql<{
@@ -103,28 +113,38 @@ describe("PersistenceLayer", () => {
         SELECT
           id,
           status
-        FROM unit
-        WHERE id = '282'
+        FROM
+          unit
+        WHERE
+          id = '282'
       `;
 
       const unitCount = yield* sql<{ readonly count: number }>`
-        SELECT COUNT(*) AS count
-        FROM unit
+        SELECT
+          COUNT(*) AS count
+        FROM
+          unit
       `;
 
       const dungeonUnitCount = yield* sql<{ readonly count: number }>`
-        SELECT COUNT(*) AS count
-        FROM dungeon_unit
+        SELECT
+          COUNT(*) AS count
+        FROM
+          dungeon_unit
       `;
 
       const abilityUnitCount = yield* sql<{ readonly count: number }>`
-        SELECT COUNT(*) AS count
-        FROM ability_unit
+        SELECT
+          COUNT(*) AS count
+        FROM
+          ability_unit
       `;
 
       const catalogSyncCount = yield* sql<{ readonly count: number }>`
-        SELECT COUNT(*) AS count
-        FROM catalog_sync
+        SELECT
+          COUNT(*) AS count
+        FROM
+          catalog_sync
       `;
 
       expect(dungeons).toEqual([

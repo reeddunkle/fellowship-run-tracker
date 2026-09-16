@@ -15,7 +15,10 @@ import * as filesClient from "@/electron/renderer/api/electron-ipc/files/files-c
 import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
 import { ReactContextError } from "@/errors/react-context-error.ts";
 import { RouterInvalidationError } from "@/errors/router-invalidation-error.ts";
-import { type AppSettingsApiAppSettings } from "@/services/api/app-settings/app-settings-api-schema.ts";
+import {
+  type AppSettingsApiAppSettings,
+  type AppSettingsApiUpdate,
+} from "@/services/api/app-settings/app-settings-api-schema.ts";
 
 type SettingsProviderProps = {
   readonly appSettings: AppSettingsApiAppSettings;
@@ -36,7 +39,7 @@ type SettingsActionContextValue = {
   readonly error: unknown | undefined;
   readonly getDirectoryPath: (file: File) => Promise<string>;
   readonly isSaving: boolean;
-  readonly save: (appSettings: AppSettingsApiAppSettings) => void;
+  readonly save: (appSettings: AppSettingsApiUpdate) => void;
   readonly savedAppSettings: AppSettingsApiAppSettings | undefined;
   readonly saveRevision: number;
 };
@@ -72,6 +75,25 @@ function invalidateRouterSafely(router: ReturnType<typeof useRouter>) {
   return invalidateRouter(router).pipe(E.ignore);
 }
 
+function applyAppSettingsUpdate(
+  currentAppSettings: AppSettingsApiAppSettings,
+  update: AppSettingsApiUpdate,
+): AppSettingsApiAppSettings {
+  const hasFellowshipLogsClientSecret =
+    update.fellowshipLogsClientSecret === undefined
+      ? currentAppSettings.hasFellowshipLogsClientSecret
+      : update.fellowshipLogsClientSecret !== null;
+
+  return {
+    fellowshipLogDirectory: update.fellowshipLogDirectory,
+    fellowshipLogsClientId: update.fellowshipLogsClientId,
+    hasFellowshipLogsClientSecret,
+    isLiveSplitEnabled: update.isLiveSplitEnabled,
+    liveSplitHost: update.liveSplitHost,
+    liveSplitPort: update.liveSplitPort,
+  };
+}
+
 export function SettingsProvider({
   appSettings,
   children,
@@ -84,14 +106,16 @@ export function SettingsProvider({
   const [saveState, dispatchSave, isSaving] = useActionState(
     (
       previousState: SaveSettingsActionState,
-      nextAppSettings: AppSettingsApiAppSettings,
+      appSettingsUpdate: AppSettingsApiUpdate,
     ): Promise<SaveSettingsActionState> => {
       const optimisticallyUpdateAppSettings = E.sync(() => {
-        updateOptimisticAppSettings(nextAppSettings);
+        updateOptimisticAppSettings(
+          applyAppSettingsUpdate(optimisticAppSettings, appSettingsUpdate),
+        );
       });
 
       return optimisticallyUpdateAppSettings.pipe(
-        E.andThen(appSettingsClient.putAppSettings(nextAppSettings)),
+        E.andThen(appSettingsClient.putAppSettings(appSettingsUpdate)),
         E.tap(() => invalidateRouter(router)),
         E.map((savedAppSettings) => {
           return {
@@ -122,9 +146,9 @@ export function SettingsProvider({
         return E.runPromise(filesClient.getDirectoryPath(file));
       },
       isSaving,
-      save: (nextAppSettings) => {
+      save: (appSettingsUpdate) => {
         startTransition(() => {
-          dispatchSave(nextAppSettings);
+          dispatchSave(appSettingsUpdate);
         });
       },
       savedAppSettings: saveState.appSettings,

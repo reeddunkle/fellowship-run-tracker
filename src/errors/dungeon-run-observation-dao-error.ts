@@ -4,7 +4,14 @@ import { type DungeonRunId } from "@/validation/dungeon-run/dungeon-run-id-schem
 
 export type DungeonRunObservationDAOErrorDetails =
   | {
-      readonly _tag: "RunNotFoundOrInactive";
+      readonly _tag: "DuplicateObservation";
+      readonly dungeonRunId: DungeonRunId;
+      readonly occurrence: number;
+      readonly targetId: string;
+      readonly type: string;
+    }
+  | {
+      readonly _tag: "RunNotFound";
       readonly dungeonRunId: DungeonRunId;
     }
   | {

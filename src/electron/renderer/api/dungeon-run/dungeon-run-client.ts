@@ -1,46 +1,41 @@
 import * as E from "effect/Effect";
 
 import { AppApiClient } from "@/electron/renderer/services/app-api-client/app-api-client";
-import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";
+import { type DungeonId } from "@/services/fellowship/validation/fellowship-common.ts";
 
-type DeleteDungeonRunHistoryArgs = {
-  readonly configurationId: ConfigurationId;
-};
-
-type GetDungeonRunHistoryArgs = {
-  readonly configurationId: ConfigurationId;
+type DungeonRunHistoryArgs = {
+  readonly dungeonId: DungeonId;
+  readonly dungeonLevel: number;
 };
 
 export function deleteDungeonRunHistory({
-  configurationId,
-}: DeleteDungeonRunHistoryArgs) {
+  dungeonId,
+  dungeonLevel,
+}: DungeonRunHistoryArgs) {
   return E.gen(function* () {
     const client = yield* AppApiClient;
 
-    yield* client.dungeonRuns.deleteDungeonRunHistory({
+    yield* client.dungeonRun.deleteDungeonRunHistory({
       params: {
-        configurationId,
+        dungeonId,
+        dungeonLevel,
       },
     });
   });
 }
 
 export function getDungeonRunHistory({
-  configurationId,
-}: GetDungeonRunHistoryArgs) {
+  dungeonId,
+  dungeonLevel,
+}: DungeonRunHistoryArgs) {
   return E.gen(function* () {
     const client = yield* AppApiClient;
 
-    return yield* client.dungeonRuns
-      .getDungeonRunHistory({
-        params: {
-          configurationId,
-        },
-      })
-      .pipe(
-        E.catchTag("NotFound", () => {
-          return E.succeed(null);
-        }),
-      );
+    return yield* client.dungeonRun.getDungeonRunHistory({
+      params: {
+        dungeonId,
+        dungeonLevel,
+      },
+    });
   });
 }

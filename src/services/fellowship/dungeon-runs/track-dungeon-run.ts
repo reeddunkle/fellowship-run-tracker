@@ -17,6 +17,8 @@ export const initialDungeonRunTrackerState = {
 
 export type DungeonRunTrackerResult = {
   readonly completedRun?: RawFellowshipDungeonRun;
+  readonly exitedRunStart?: DungeonStartEvent;
+  readonly startedRun?: DungeonStartEvent;
   readonly state: DungeonRunTrackerState;
 };
 
@@ -31,6 +33,7 @@ export function trackDungeonRunEvent({
 }: TrackDungeonRunEventOptions): DungeonRunTrackerResult {
   if (event.type === FELLOWSHIP_EVENT.DUNGEON_START) {
     return {
+      startedRun: event,
       state: {
         currentEvents: [event],
         currentStart: event,
@@ -49,6 +52,7 @@ export function trackDungeonRunEvent({
     })
   ) {
     return {
+      exitedRunStart: state.currentStart,
       state: {
         currentEvents: [],
         currentStart: undefined,

@@ -14,9 +14,12 @@ describe("DatabaseLayer", () => {
       const sql = yield* SqlClient.SqlClient;
 
       const tables = yield* sql<{ readonly name: string }>`
-        SELECT name
-        FROM sqlite_master
-        WHERE type = 'table'
+        SELECT
+          name
+        FROM
+          sqlite_master
+        WHERE
+          type = 'table'
           AND name IN (
             'ability',
             'ability_unit',
@@ -34,7 +37,8 @@ describe("DatabaseLayer", () => {
             'requirement',
             'unit'
           )
-        ORDER BY name
+        ORDER BY
+          name
       `;
 
       expect(tables).toEqual([
@@ -80,9 +84,12 @@ describe("DatabaseLayer", () => {
           const sql = yield* SqlClient.SqlClient;
 
           const result = yield* sql`
-            SELECT name
-            FROM sqlite_master
-            WHERE type = 'table'
+            SELECT
+              name
+            FROM
+              sqlite_master
+            WHERE
+              type = 'table'
           `;
 
           expect(result.length).toBeGreaterThan(0);

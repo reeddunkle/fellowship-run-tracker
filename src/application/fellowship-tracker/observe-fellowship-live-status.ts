@@ -5,7 +5,7 @@ import * as Stream from "effect/Stream";
 import { type FellowshipLiveStatus } from "@/services/fellowship/fellowship-service.ts";
 import { type DungeonId } from "@/services/fellowship/validation/fellowship-common.ts";
 
-import { type FellowshipTrackerConfigurationSource } from "./fellowship-tracker-service-types.ts";
+import { type FellowshipTrackerConfigurationSource } from "./fellowship-tracker-service.ts";
 
 type ObserveFellowshipLiveStatusOptions = {
   readonly dungeonId: DungeonId;

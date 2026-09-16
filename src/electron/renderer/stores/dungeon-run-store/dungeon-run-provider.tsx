@@ -25,39 +25,23 @@ import {
 } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-event-store.ts";
 import { ReactContextError } from "@/errors/react-context-error.ts";
 import { type RouterInvalidationError } from "@/errors/router-invalidation-error.ts";
+import { type DungeonRunApiHistory } from "@/services/api/dungeon-run/dungeon-run-api-schema.ts";
+
 import {
-  type DungeonRunApiHistory,
-  type DungeonRunApiObservationStatistics,
-} from "@/services/api/dungeon-run/dungeon-run-api-schema.ts";
+  type DungeonRunHistoryKey,
+  dungeonRunHistoryKeysEqual,
+} from "./dungeon-run-history-key.ts";
 import {
-  encodeRequirementObservationIdentity,
-  encodeRequirementObservationOccurrenceIdentity,
-} from "@/validation/common/requirement-observation-identity-schema.ts";
-import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";
-
-export type DungeonRunMilestoneKey = string;
-
-type DungeonRunMilestoneExpansionState = {
-  readonly defaultIsExpanded: boolean;
-  readonly overrides: ReadonlySet<DungeonRunMilestoneKey>;
-};
-
-export type DungeonRunDisplayState = {
-  readonly collapseAllMilestones: () => void;
-  readonly expandAllMilestones: () => void;
-  readonly isMilestoneExpanded: (
-    milestoneKey: DungeonRunMilestoneKey,
-  ) => boolean;
-  readonly setMilestoneExpanded: (
-    milestoneKey: DungeonRunMilestoneKey,
-    isExpanded: boolean,
-  ) => void;
-};
+  createDungeonRunInterpretationState,
+  type DungeonRunInterpretationState,
+} from "./dungeon-run-interpretation.ts";
+import {
+  type DungeonRunDisplayState,
+  useDungeonRunMilestoneExpansion,
+} from "./use-dungeon-run-milestone-expansion.ts";
 
 export type DungeonRunActions = {
-  readonly deleteHistoryForConfigurationId: (
-    configurationId: ConfigurationId,
-  ) => void;
+  readonly deleteHistory: () => void;
 };
 
 export type DungeonRunState = {
@@ -74,6 +58,7 @@ type DungeonRunProviderProps = {
   readonly children: ReactNode;
   readonly eventStore?: DungeonRunEventStore;
   readonly history: DungeonRunApiHistory | null;
+  readonly historyKey: DungeonRunHistoryKey | null;
   readonly invalidate: () => E.Effect<void, RouterInvalidationError>;
 };
 
@@ -87,46 +72,15 @@ export type DungeonRunServerState = {
   readonly runState: DungeonRunEventStoreSnapshot["runState"];
 };
 
-export type DungeonRunObservationAnalytics = {
-  readonly bestElapsedMilliseconds: number;
-  readonly meanElapsedMilliseconds: number;
-  readonly medianElapsedMilliseconds: number;
-  readonly sampleCount: number;
-};
-
-export type DungeonRunObservationInterpretation = {
-  readonly analytics: DungeonRunObservationAnalytics | undefined;
-  readonly elapsedFromPreviousObservationMilliseconds: number | undefined;
-  readonly elapsedFromStartMilliseconds: number | undefined;
-  readonly observation: DungeonRunObservationApi;
-  readonly occurrence: number;
-  readonly previousObservation: DungeonRunObservationApi | undefined;
-};
-
-export type DungeonRunInterpretationState = {
-  readonly latestObservation: DungeonRunObservationInterpretation | undefined;
-  readonly observations: ReadonlyArray<DungeonRunObservationInterpretation>;
-};
-
 const DungeonRunContext = createContext<DungeonRunContextValue | undefined>(
   undefined,
 );
-
-function createObservationAnalytics(
-  statistics: DungeonRunApiObservationStatistics,
-): DungeonRunObservationAnalytics {
-  return {
-    bestElapsedMilliseconds: statistics.bestElapsedMilliseconds,
-    meanElapsedMilliseconds: statistics.meanElapsedMilliseconds,
-    medianElapsedMilliseconds: statistics.medianElapsedMilliseconds,
-    sampleCount: statistics.sampleCount,
-  };
-}
 
 export function DungeonRunProvider({
   children,
   eventStore = dungeonRunEventStore,
   history,
+  historyKey,
   invalidate,
 }: DungeonRunProviderProps) {
   const dungeonRunSnapshot = useSyncExternalStore(
@@ -135,133 +89,97 @@ export function DungeonRunProvider({
     eventStore.getSnapshot,
   );
 
-  const [
-    optimisticallyDeletedConfigurationId,
-    setOptimisticallyDeletedConfigurationId,
-  ] = useState<ConfigurationId | null>(null);
+  const [optimisticallyDeletedHistoryKey, setOptimisticallyDeletedHistoryKey] =
+    useState<DungeonRunHistoryKey | null>(null);
 
-  const [milestoneExpansionState, setMilestoneExpansionState] =
-    useState<DungeonRunMilestoneExpansionState>({
-      defaultIsExpanded: false,
-      overrides: new Set(),
-    });
+  const {
+    collapseAllMilestones,
+    expandAllMilestones,
+    isMilestoneExpanded,
+    setMilestoneExpanded,
+  } = useDungeonRunMilestoneExpansion();
 
-  const historyForApp =
-    history?.configurationId === optimisticallyDeletedConfigurationId
-      ? null
-      : history;
+  const historyForApp = dungeonRunHistoryKeysEqual(
+    historyKey,
+    optimisticallyDeletedHistoryKey,
+  )
+    ? null
+    : history;
 
-  const deleteHistoryForConfigurationId = useCallback(
-    (configurationId: ConfigurationId) => {
-      setOptimisticallyDeletedConfigurationId(configurationId);
+  const deleteHistory = useCallback(() => {
+    if (historyKey === null) {
+      return;
+    }
 
-      browserRuntime.runFork(
-        E.gen(function* () {
-          const wasDeleted = yield* deleteDungeonRunHistory({
-            configurationId,
-          }).pipe(
-            E.as(true),
-            E.catch((error) => {
-              return E.gen(function* () {
-                setOptimisticallyDeletedConfigurationId(
-                  (deletedConfigurationId) => {
-                    return deletedConfigurationId === configurationId
-                      ? null
-                      : deletedConfigurationId;
-                  },
-                );
+    const deletedHistoryKey = historyKey;
 
-                yield* E.logError("Failed to delete dungeon run history.", {
-                  configurationId,
-                  error,
-                });
+    setOptimisticallyDeletedHistoryKey(deletedHistoryKey);
 
-                return false;
+    browserRuntime.runFork(
+      E.gen(function* () {
+        const wasDeleted = yield* deleteDungeonRunHistory({
+          dungeonId: deletedHistoryKey.dungeonId,
+          dungeonLevel: deletedHistoryKey.dungeonLevel,
+        }).pipe(
+          E.as(true),
+          E.catch((error) => {
+            return E.gen(function* () {
+              setOptimisticallyDeletedHistoryKey((currentHistoryKey) => {
+                return dungeonRunHistoryKeysEqual(
+                  currentHistoryKey,
+                  deletedHistoryKey,
+                )
+                  ? null
+                  : currentHistoryKey;
               });
-            }),
-          );
 
-          if (!wasDeleted) {
-            return;
-          }
-
-          yield* invalidate().pipe(
-            E.tap(() => {
-              return E.sync(() => {
-                setOptimisticallyDeletedConfigurationId(
-                  (deletedConfigurationId) => {
-                    return deletedConfigurationId === configurationId
-                      ? null
-                      : deletedConfigurationId;
-                  },
-                );
+              yield* E.logError("Failed to delete dungeon run history.", {
+                dungeonId: deletedHistoryKey.dungeonId,
+                dungeonLevel: deletedHistoryKey.dungeonLevel,
+                error,
               });
-            }),
-            E.catch((error) => {
-              return E.logError(
-                "Failed to refresh dungeon run history after deletion.",
-                {
-                  configurationId,
-                  error,
-                },
-              );
-            }),
-          );
-        }),
-      );
-    },
-    [invalidate],
-  );
 
-  const expandAllMilestones = useCallback(() => {
-    setMilestoneExpansionState({
-      defaultIsExpanded: true,
-      overrides: new Set(),
-    });
-  }, []);
+              return false;
+            });
+          }),
+        );
 
-  const collapseAllMilestones = useCallback(() => {
-    setMilestoneExpansionState({
-      defaultIsExpanded: false,
-      overrides: new Set(),
-    });
-  }, []);
-
-  const isMilestoneExpanded = useCallback(
-    (milestoneKey: DungeonRunMilestoneKey) => {
-      const isOverridden = milestoneExpansionState.overrides.has(milestoneKey);
-
-      return isOverridden
-        ? !milestoneExpansionState.defaultIsExpanded
-        : milestoneExpansionState.defaultIsExpanded;
-    },
-    [milestoneExpansionState],
-  );
-
-  const setMilestoneExpanded = useCallback(
-    (milestoneKey: DungeonRunMilestoneKey, isExpanded: boolean) => {
-      setMilestoneExpansionState((currentState) => {
-        const overrides = new Set(currentState.overrides);
-
-        if (isExpanded === currentState.defaultIsExpanded) {
-          overrides.delete(milestoneKey);
-        } else {
-          overrides.add(milestoneKey);
+        if (!wasDeleted) {
+          return;
         }
 
-        return {
-          ...currentState,
-          overrides,
-        };
-      });
-    },
-    [],
-  );
+        yield* invalidate().pipe(
+          E.tap(() => {
+            return E.sync(() => {
+              setOptimisticallyDeletedHistoryKey((currentHistoryKey) => {
+                return dungeonRunHistoryKeysEqual(
+                  currentHistoryKey,
+                  deletedHistoryKey,
+                )
+                  ? null
+                  : currentHistoryKey;
+              });
+            });
+          }),
+          E.catch((error) => {
+            return E.logError(
+              "Failed to refresh dungeon run history after deletion.",
+              {
+                dungeonId: deletedHistoryKey.dungeonId,
+                dungeonLevel: deletedHistoryKey.dungeonLevel,
+                error,
+              },
+            );
+          }),
+        );
+      }),
+    );
+  }, [historyKey, invalidate]);
 
   const contextValue = useMemo<DungeonRunContextValue>(() => {
     return {
       collapseAllMilestones,
-      deleteHistoryForConfigurationId,
+      deleteHistory,
       eventConnectionState: dungeonRunSnapshot.eventConnectionState,
       expandAllMilestones,
       history: historyForApp,
@@ -271,7 +189,7 @@ export function DungeonRunProvider({
     };
   }, [
     collapseAllMilestones,
-    deleteHistoryForConfigurationId,
+    deleteHistory,
     dungeonRunSnapshot.eventConnectionState,
     dungeonRunSnapshot.runState,
     expandAllMilestones,
@@ -301,10 +219,10 @@ function useDungeonRunContext(): DungeonRunContextValue {
 }
 
 export function useDungeonRunActions(): DungeonRunActions {
-  const { deleteHistoryForConfigurationId } = useDungeonRunContext();
+  const { deleteHistory } = useDungeonRunContext();
 
   return {
-    deleteHistoryForConfigurationId,
+    deleteHistory,
   };
 }
 
@@ -329,94 +247,12 @@ export function useDungeonRunInterpretationState(): DungeonRunInterpretationStat
   const { dungeonRun, history, observations } = useDungeonRunServerState();
 
   return useMemo(() => {
-    const historicalStatisticsByKey = A.reduce(
-      history?.observations ?? [],
-      new Map<string, DungeonRunApiObservationStatistics>(),
-      (accumulator, statistics) => {
-        const key = encodeRequirementObservationOccurrenceIdentity([
-          statistics.type,
-          statistics.targetId,
-          statistics.occurrence,
-        ]);
-
-        accumulator.set(key, statistics);
-
-        return accumulator;
-      },
-    );
-
-    const interpretationResult = A.reduce(
+    return createDungeonRunInterpretationState({
+      dungeonRun,
+      history,
       observations,
-      {
-        observations: [] as Array<DungeonRunObservationInterpretation>,
-        occurrencesByIdentity: new Map<string, number>(),
-      },
-      (accumulator, observation) => {
-        const observationIdentityKey = encodeRequirementObservationIdentity([
-          observation.type,
-          observation.targetId,
-        ]);
-
-        const occurrence =
-          (accumulator.occurrencesByIdentity.get(observationIdentityKey) ?? 0) +
-          1;
-
-        accumulator.occurrencesByIdentity.set(
-          observationIdentityKey,
-          occurrence,
-        );
-
-        const previousObservation = A.last(accumulator.observations).pipe(
-          Option.getOrUndefined,
-        )?.observation;
-
-        const elapsedFromStartMilliseconds =
-          dungeonRun?.startedAtMilliseconds === null ||
-          dungeonRun?.startedAtMilliseconds === undefined
-            ? undefined
-            : observation.timestampMilliseconds -
-              dungeonRun.startedAtMilliseconds;
-
-        const elapsedFromPreviousObservationMilliseconds =
-          previousObservation === undefined
-            ? undefined
-            : observation.timestampMilliseconds -
-              previousObservation.timestampMilliseconds;
-
-        const historicalStatisticsKey =
-          encodeRequirementObservationOccurrenceIdentity([
-            observation.type,
-            observation.targetId,
-            occurrence,
-          ]);
-
-        const historicalStatistics = historicalStatisticsByKey.get(
-          historicalStatisticsKey,
-        );
-
-        accumulator.observations.push({
-          analytics:
-            historicalStatistics === undefined
-              ? undefined
-              : createObservationAnalytics(historicalStatistics),
-          elapsedFromPreviousObservationMilliseconds,
-          elapsedFromStartMilliseconds,
-          observation,
-          occurrence,
-          previousObservation,
-        });
-
-        return accumulator;
-      },
-    );
-
-    return {
-      latestObservation: A.last(interpretationResult.observations).pipe(
-        Option.getOrUndefined,
-      ),
-      observations: interpretationResult.observations,
-    };
-  }, [dungeonRun?.startedAtMilliseconds, history, observations]);
+    });
+  }, [dungeonRun, history, observations]);
 }
 
 export function useDungeonRunDisplayState(): DungeonRunDisplayState {

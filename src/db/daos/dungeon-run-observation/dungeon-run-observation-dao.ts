@@ -1,9 +1,9 @@
 import * as Context from "effect/Context";
 import type * as E from "effect/Effect";
 
+import { type DungeonRunModel } from "@/db/models/dungeon-run-model.ts";
 import { type DungeonRunObservationModel } from "@/db/models/dungeon-run-observation-model.ts";
 import { type DungeonRunObservationDAOError } from "@/errors/dungeon-run-observation-dao-error.ts";
-import { type ConfigurationDefinitionId } from "@/validation/configuration/configuration-definition-id-schema.ts";
 import { type DungeonRunId } from "@/validation/dungeon-run/dungeon-run-id-schema.ts";
 
 type ObserveDungeonRunOptions = {
@@ -25,7 +25,8 @@ export type DungeonRunObservationHistory = {
 };
 
 type GetDungeonRunObservationHistoryOptions = {
-  readonly configurationDefinitionId: ConfigurationDefinitionId;
+  readonly dungeonId: DungeonRunModel["dungeonId"];
+  readonly dungeonLevel: DungeonRunModel["dungeonLevel"];
 };
 
 export type DungeonRunObservationDAOShape = {
@@ -36,7 +37,7 @@ export type DungeonRunObservationDAOShape = {
     DungeonRunObservationDAOError
   >;
 
-  readonly getHistoryByConfigurationDefinitionId: (
+  readonly getHistoryByDungeon: (
     options: GetDungeonRunObservationHistoryOptions,
   ) => E.Effect<
     ReadonlyArray<DungeonRunObservationHistory>,

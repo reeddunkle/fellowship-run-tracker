@@ -47,7 +47,8 @@
     "includes": [
       "**/*.{js,cjs,mjs,ts,tsx,json,jsonc,md,css}",
       "!src/electron/renderer/router/routeTree.gen.ts",
-      "!src/catalogs/generated/**/*.{ts}"
+      "!src/catalogs/generated/**/*.{ts}",
+      "!src/services/fellowship-logs/fixtures/**/*.{json}"
     ]
   },
   "formatter": {

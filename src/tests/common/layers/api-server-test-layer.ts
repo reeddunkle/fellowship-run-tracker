@@ -9,6 +9,7 @@ import { type ConfigurationApiService } from "@/services/api/configuration/confi
 import { type DungeonApiService } from "@/services/api/dungeon/dungeon-api-service.ts";
 import { type DungeonRunApiService } from "@/services/api/dungeon-run/dungeon-run-api-service.ts";
 import { type EncounterApiService } from "@/services/api/encounter/encounter-api-service.ts";
+import { type FellowshipLogsApiService } from "@/services/api/fellowship-logs/fellowship-logs-api-service.ts";
 import { type LiveSplitApiService } from "@/services/api/live-split/live-split-api-service.ts";
 import { type UnitApiService } from "@/services/api/unit/unit-api-service.ts";
 import {
@@ -22,6 +23,7 @@ import { ConfigurationApiServiceMock } from "@/tests/common/mocks/configuration-
 import { DungeonApiServiceMock } from "@/tests/common/mocks/dungeon-api-service-mock.ts";
 import { DungeonRunApiServiceMock } from "@/tests/common/mocks/dungeon-run-api-service-mock.ts";
 import { EncounterApiServiceMock } from "@/tests/common/mocks/encounter-api-service-mock.ts";
+import { FellowshipLogsApiServiceMock } from "@/tests/common/mocks/fellowship-logs-api-service-mock.ts";
 import { FellowshipTrackerMock } from "@/tests/common/mocks/fellowship-tracker-service-mock.ts";
 import { LiveSplitApiServiceMock } from "@/tests/common/mocks/live-split-api-service-mock.ts";
 import { UnitApiServiceMock } from "@/tests/common/mocks/unit-api-service-mock.ts";
@@ -33,6 +35,7 @@ export type ApiServices =
   | DungeonApiService
   | DungeonRunApiService
   | EncounterApiService
+  | FellowshipLogsApiService
   | FellowshipTracker
   | LiveSplitApiService
   | UnitApiService;
@@ -44,6 +47,7 @@ type ApiServiceTestLayer =
   | Layer.Layer<DungeonApiService>
   | Layer.Layer<DungeonRunApiService>
   | Layer.Layer<EncounterApiService>
+  | Layer.Layer<FellowshipLogsApiService>
   | Layer.Layer<FellowshipTracker>
   | Layer.Layer<LiveSplitApiService>
   | Layer.Layer<UnitApiService>;
@@ -55,6 +59,7 @@ export const ApiServicesTest: Layer.Layer<ApiServices> = Layer.mergeAll(
   DungeonApiServiceMock,
   DungeonRunApiServiceMock,
   EncounterApiServiceMock,
+  FellowshipLogsApiServiceMock,
   FellowshipTrackerMock,
   LiveSplitApiServiceMock,
   UnitApiServiceMock,

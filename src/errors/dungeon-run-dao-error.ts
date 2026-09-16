@@ -4,15 +4,8 @@ import { type DungeonRunId } from "@/validation/dungeon-run/dungeon-run-id-schem
 
 export type DungeonRunDAOErrorDetails =
   | {
-      readonly _tag: "RunNotFoundOrInactive";
+      readonly _tag: "RunNotFound";
       readonly dungeonRunId: DungeonRunId;
-    }
-  | {
-      readonly _tag: "DuplicateObservation";
-      readonly dungeonRunId: DungeonRunId;
-      readonly occurrence: number;
-      readonly targetId: string;
-      readonly type: string;
     }
   | {
       readonly _tag: "RunNotReturnedAfterInsert";

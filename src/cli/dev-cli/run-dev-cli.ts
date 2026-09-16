@@ -10,19 +10,63 @@ import {
 } from "@/errors/cli-error.ts";
 
 import { BuildMilestoneConfigurationJsonSchemaCommandInputSchema } from "./commands/build-milestone-configuration-json-schema-command.ts";
+import { CaptureFellowshipLogsReportCommandInputSchema } from "./commands/capture-fellowship-logs-report-command.ts";
 import { GenerateFellowshipUnitCatalogCommandInputSchema } from "./commands/generate-fellowship-unit-catalog-command.ts";
 import {
   ReplayLogFileArgumentsSchema,
   ReplayLogFileCommandInputSchema,
 } from "./commands/replay-log-file-command.ts";
 
-type ParsedArguments = ReturnType<typeof parseArgs>;
+const PARSE_ARGS_OPTIONS = {
+  "fight-id": {
+    type: "string",
+  },
+  "initial-delay": {
+    type: "string",
+  },
+  input: {
+    short: "i",
+    type: "string",
+  },
+  "max-delay": {
+    type: "string",
+  },
+  output: {
+    short: "o",
+    type: "string",
+  },
+  "report-code": {
+    type: "string",
+  },
+  speed: {
+    short: "s",
+    type: "string",
+  },
+} as const;
+
+function parseArgumentsUnsafe(args: ReadonlyArray<string>) {
+  return parseArgs({
+    allowPositionals: true,
+    args: [...args],
+    options: PARSE_ARGS_OPTIONS,
+    strict: true,
+  });
+}
+
+type ParsedArguments = ReturnType<typeof parseArgumentsUnsafe>;
 
 type BuildConfigurationSchemaCommand = {
   readonly input: Schema.Schema.Type<
     typeof BuildMilestoneConfigurationJsonSchemaCommandInputSchema
   >;
   readonly type: "BUILD_CONFIGURATION_SCHEMA";
+};
+
+type CaptureFellowshipLogsReportCommand = {
+  readonly input: Schema.Schema.Type<
+    typeof CaptureFellowshipLogsReportCommandInputSchema
+  >;
+  readonly type: "CAPTURE_FELLOWSHIP_LOGS_REPORT";
 };
 
 type GenerateUnitCatalogCommand = {
@@ -43,6 +87,7 @@ type SetupDatabaseCommand = {
 
 export type DevCLICommand =
   | BuildConfigurationSchemaCommand
+  | CaptureFellowshipLogsReportCommand
   | GenerateUnitCatalogCommand
   | ReplayLogCommand
   | SetupDatabaseCommand;
@@ -68,31 +113,7 @@ function parseArguments(
       });
     },
     try: () => {
-      return parseArgs({
-        allowPositionals: true,
-        args: [...args],
-        options: {
-          "initial-delay": {
-            type: "string",
-          },
-          input: {
-            short: "i",
-            type: "string",
-          },
-          "max-delay": {
-            type: "string",
-          },
-          output: {
-            short: "o",
-            type: "string",
-          },
-          speed: {
-            short: "s",
-            type: "string",
-          },
-        },
-        strict: true,
-      });
+      return parseArgumentsUnsafe(args);
     },
   });
 }
@@ -104,10 +125,30 @@ function parseBuildMilestoneConfigurationJsonSchemaInput({
   return E.gen(function* () {
     yield* validateNoExtraPositionals(positionals);
 
-    return yield* Schema.decodeUnknownEffect(
+    return yield* Schema.decodeEffect(
       BuildMilestoneConfigurationJsonSchemaCommandInputSchema,
     )({
       ...includeWhenDefined("outputFilePath", values.output),
+    });
+  });
+}
+
+function parseCaptureFellowshipLogsReportInput({
+  positionals,
+  values,
+}: ParsedArguments) {
+  return E.gen(function* () {
+    yield* validateNoExtraPositionals(positionals);
+
+    const fightId =
+      values["fight-id"] === undefined ? undefined : Number(values["fight-id"]);
+
+    return yield* Schema.decodeUnknownEffect(
+      CaptureFellowshipLogsReportCommandInputSchema,
+    )({
+      fightId,
+      ...includeWhenDefined("outputFilePath", values.output),
+      reportCode: values["report-code"],
     });
   });
 }
@@ -172,6 +213,17 @@ export function parseDevCLICommand(
           return {
             input,
             type: "BUILD_CONFIGURATION_SCHEMA",
+          } as const;
+        }),
+      ),
+      Match.when("capture-fellowship-logs-report", () =>
+        E.gen(function* () {
+          const input =
+            yield* parseCaptureFellowshipLogsReportInput(parsedArguments);
+
+          return {
+            input,
+            type: "CAPTURE_FELLOWSHIP_LOGS_REPORT",
           } as const;
         }),
       ),

@@ -7,13 +7,15 @@ export const createTables = E.gen(function* () {
   yield* sql`
     CREATE TABLE app_settings (
       id INTEGER PRIMARY KEY NOT NULL CHECK (id = 1),
-      live_splits_host TEXT NOT NULL,
-      live_splits_port INTEGER NOT NULL CHECK (
-        live_splits_port >= 1
-        AND live_splits_port <= 65535
+      live_split_host TEXT NOT NULL,
+      live_split_port INTEGER NOT NULL CHECK (
+        live_split_port >= 1
+        AND live_split_port <= 65535
       ),
       is_live_split_enabled INTEGER NOT NULL DEFAULT 0 CHECK (is_live_split_enabled IN (0, 1)),
       fellowship_log_directory TEXT NOT NULL,
+      fellowship_logs_client_id TEXT,
+      fellowship_logs_client_secret TEXT,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
     ) STRICT
@@ -199,12 +201,9 @@ export const createTables = E.gen(function* () {
   yield* sql`
     CREATE TABLE dungeon_run (
       id TEXT PRIMARY KEY NOT NULL,
-      configuration_definition_id TEXT NOT NULL,
       dungeon_id TEXT NOT NULL,
       dungeon_level INTEGER NOT NULL CHECK (dungeon_level >= 1),
-      status TEXT NOT NULL CHECK (
-        status IN ('ACTIVE', 'COMPLETED', 'INTERRUPTED', 'EXITED')
-      ),
+      source TEXT NOT NULL CHECK (source IN ('LOCAL_LOG', 'FELLOWSHIP_LOGS')),
       started_at INTEGER,
       ended_at INTEGER,
       created_at INTEGER NOT NULL,
@@ -214,17 +213,39 @@ export const createTables = E.gen(function* () {
         OR ended_at IS NULL
         OR ended_at >= started_at
       ),
-      FOREIGN KEY (configuration_definition_id) REFERENCES configuration_definition (id),
       FOREIGN KEY (dungeon_id) REFERENCES dungeon (id)
     ) STRICT
   `;
 
   yield* sql`
-    CREATE INDEX dungeon_run_configuration_definition_id_started_at_index ON dungeon_run (configuration_definition_id, started_at)
+    CREATE INDEX dungeon_run_dungeon_id_dungeon_level_started_at_index ON dungeon_run (dungeon_id, dungeon_level, started_at)
   `;
 
   yield* sql`
-    CREATE INDEX dungeon_run_dungeon_id_dungeon_level_started_at_index ON dungeon_run (dungeon_id, dungeon_level, started_at)
+    CREATE INDEX dungeon_run_source_dungeon_id_dungeon_level_started_at_index ON dungeon_run (source, dungeon_id, dungeon_level, started_at)
+  `;
+
+  yield* sql`
+    CREATE TABLE local_log_dungeon_run (
+      dungeon_run_id TEXT PRIMARY KEY NOT NULL,
+      status TEXT NOT NULL CHECK (
+        status IN ('ACTIVE', 'COMPLETED', 'INTERRUPTED', 'EXITED')
+      ),
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (dungeon_run_id) REFERENCES dungeon_run (id) ON DELETE CASCADE
+    ) STRICT
+  `;
+
+  yield* sql`
+    CREATE TABLE fellowship_logs_dungeon_run (
+      dungeon_run_id TEXT PRIMARY KEY NOT NULL,
+      report_code TEXT NOT NULL,
+      fight_id INTEGER NOT NULL CHECK (fight_id >= 1),
+      created_at INTEGER NOT NULL,
+      UNIQUE (report_code, fight_id),
+      FOREIGN KEY (dungeon_run_id) REFERENCES dungeon_run (id) ON DELETE CASCADE
+    ) STRICT
   `;
 
   yield* sql`

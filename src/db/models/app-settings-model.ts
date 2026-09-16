@@ -1,8 +1,11 @@
+import * as Schema from "effect/Schema";
 import * as Model from "effect/unstable/schema/Model";
 
+import { EncryptedValueEncodedSchema } from "@/services/encryption/validation/encrypted-value-schema.ts";
 import {
   AppSettingsIdSchema,
   FellowshipLogDirectorySchema,
+  FellowshipLogsClientIdSchema,
   IsLiveSplitEnabledSchema,
   LiveSplitHostSchema,
   LiveSplitPortSchema,
@@ -13,9 +16,11 @@ export class AppSettingsModel extends Model.Class<AppSettingsModel>(
 )({
   createdAt: Model.DateTimeInsertFromNumber,
   fellowshipLogDirectory: FellowshipLogDirectorySchema,
+  fellowshipLogsClientId: Schema.NullOr(FellowshipLogsClientIdSchema),
+  fellowshipLogsClientSecret: Schema.NullOr(EncryptedValueEncodedSchema),
   id: AppSettingsIdSchema,
   isLiveSplitEnabled: IsLiveSplitEnabledSchema,
-  liveSplitsHost: LiveSplitHostSchema,
-  liveSplitsPort: LiveSplitPortSchema,
+  liveSplitHost: LiveSplitHostSchema,
+  liveSplitPort: LiveSplitPortSchema,
   updatedAt: Model.DateTimeUpdateFromNumber,
 }) {}

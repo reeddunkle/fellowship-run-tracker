@@ -72,8 +72,8 @@ const make = E.gen(function* () {
     const acquireClient = E.gen(function* () {
       const settings = yield* appSettings.get();
 
-      const host = settings.liveSplitsHost;
-      const port = settings.liveSplitsPort;
+      const host = settings.liveSplitHost;
+      const port = settings.liveSplitPort;
 
       yield* E.logInfo("Connecting to LiveSplit.", {
         host,

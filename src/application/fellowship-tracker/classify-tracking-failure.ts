@@ -4,7 +4,7 @@ import * as Option from "effect/Option";
 
 import { getErrorTag } from "@/util/get-error-tag.ts";
 
-import { type FellowshipTrackerFailure } from "./fellowship-tracker-service-types.ts";
+import { type FellowshipTrackerFailure } from "./fellowship-tracker-service.ts";
 
 const classifyError = (error: unknown): FellowshipTrackerFailure => {
   const errorTag = getErrorTag(error);

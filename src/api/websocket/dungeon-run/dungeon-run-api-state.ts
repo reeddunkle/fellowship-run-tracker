@@ -14,7 +14,9 @@ function createDungeonRunApiObservations(
   state: DungeonRunProcessingState,
 ): ReadonlyArray<DungeonRunObservationApi> {
   return A.flatMap(
-    A.fromIterable(state.requirementProcessor.requirementObservations),
+    A.fromIterable(
+      state.configuredRun.requirementProcessor.requirementObservations,
+    ),
     ([type, observationsByTargetId]) => {
       return A.flatMap(
         A.fromIterable(observationsByTargetId),
@@ -35,16 +37,19 @@ function createDungeonRunApiObservations(
 export function createDungeonRunApiState({
   state,
 }: CreateDungeonRunApiStateOptions): DungeonRunStateApi {
+  const configuredDungeonRun = state.configuredRun.dungeonRun;
+
   const dungeonRun =
-    state.dungeonRun === undefined
+    configuredDungeonRun === undefined
       ? null
       : {
           endedAtMilliseconds:
-            "endedAt" in state.dungeonRun
-              ? state.dungeonRun.endedAt.epochMilliseconds
+            "endedAt" in configuredDungeonRun
+              ? configuredDungeonRun.endedAt.epochMilliseconds
               : null,
-          startedAtMilliseconds: state.dungeonRun.startedAt.epochMilliseconds,
-          status: state.dungeonRun.status,
+          startedAtMilliseconds:
+            configuredDungeonRun.startedAt.epochMilliseconds,
+          status: configuredDungeonRun.status,
         };
 
   return {

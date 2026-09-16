@@ -1,23 +1,13 @@
 import * as Layer from "effect/Layer";
 
-import { FellowshipTrackerLive } from "@/application/fellowship-tracker/fellowship-tracker-service.ts";
+import { FellowshipTrackerLive } from "@/application/fellowship-tracker/fellowship-tracker-service-live.ts";
+import { AppSettingsWithDependenciesLive } from "@/layers/app-settings-layer.ts";
 import { FellowshipServicesLive } from "@/layers/fellowship-layer.ts";
 import { LiveSplitServicesLive } from "@/layers/live-split-layer.ts";
-import { makePersistenceLayer } from "@/layers/persistence-layer.ts";
 import { DungeonRunWebSocketBroadcasterLive } from "@/services/api/websocket-broadcaster-service.ts";
-import { AppSettingsLive } from "@/services/app-settings/app-settings-service.ts";
 import { LiveSplitFileLive } from "@/services/live-split/files/live-split-file-service.ts";
-import { type DatabaseOptions } from "@/types/app-options.ts";
 
-export type MakeAutosplitLayerOptions = DatabaseOptions;
-
-export function makeAutosplitLayer(options: MakeAutosplitLayerOptions) {
-  const PersistenceLive = makePersistenceLayer(options);
-
-  const AppSettingsWithDependenciesLive = AppSettingsLive.pipe(
-    Layer.provide(PersistenceLive),
-  );
-
+export function makeAutosplitLayer() {
   const FellowshipWithDependenciesLive = FellowshipServicesLive.pipe(
     Layer.provide(AppSettingsWithDependenciesLive),
   );
@@ -29,7 +19,7 @@ export function makeAutosplitLayer(options: MakeAutosplitLayerOptions) {
   const FellowshipTrackerWithDependenciesLive = FellowshipTrackerLive.pipe(
     Layer.provide(
       Layer.mergeAll(
-        PersistenceLive,
+        AppSettingsWithDependenciesLive,
         FellowshipWithDependenciesLive,
         LiveSplitWithDependenciesLive,
         DungeonRunWebSocketBroadcasterLive,
@@ -38,7 +28,7 @@ export function makeAutosplitLayer(options: MakeAutosplitLayerOptions) {
   );
 
   return Layer.mergeAll(
-    PersistenceLive,
+    AppSettingsWithDependenciesLive,
     FellowshipTrackerWithDependenciesLive,
     LiveSplitWithDependenciesLive,
     LiveSplitFileLive,

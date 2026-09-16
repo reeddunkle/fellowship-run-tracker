@@ -1,20 +1,18 @@
 import * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
+import * as Schema from "effect/Schema";
 import { describe, expect, test } from "vitest";
 
-import { ConfigurationDAO } from "@/db/daos/configuration/configuration-dao.ts";
 import { DungeonRunDAO } from "@/db/daos/dungeon-run/dungeon-run-dao.ts";
 import { DungeonRunObservationDAO } from "@/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
 import { DungeonRunObservationDAOError } from "@/errors/dungeon-run-observation-dao-error.ts";
 import {
-  MOCK_CONFIGURATION_LABEL,
   MOCK_DUNGEON_ID,
   MOCK_DUNGEON_LEVEL,
-  MOCK_FELLOWSHIP_CONFIGURATION,
 } from "@/tests/common/fixtures/configuration-fixtures.ts";
 import { makePersistenceTestLayer } from "@/tests/common/layers/persistence-test-layer.ts";
 import { runTest } from "@/tests/common/run-test.ts";
-import { type ConfigurationDefinitionId } from "@/validation/configuration/configuration-definition-id-schema.ts";
+import { DungeonRunIdSchema } from "@/validation/dungeon-run/dungeon-run-id-schema.ts";
 
 const RUN_STARTED_AT = DateTime.makeUnsafe("2026-09-05T16:00:00.000Z");
 
@@ -28,39 +26,24 @@ const SECOND_RUN_STARTED_AT = DateTime.makeUnsafe("2026-09-05T17:00:00.000Z");
 
 const SECOND_RUN_OBSERVED_AT = DateTime.makeUnsafe("2026-09-05T17:00:15.000Z");
 
-const createConfigurationDefinition = E.gen(function* () {
-  const configurationDAO = yield* ConfigurationDAO;
+const createDungeonRun = E.fn("test.create-dungeon-run")(function* () {
+  const dungeonRunDAO = yield* DungeonRunDAO;
 
-  const configuration = yield* configurationDAO.save({
-    configuration: MOCK_FELLOWSHIP_CONFIGURATION,
-    label: MOCK_CONFIGURATION_LABEL,
+  return yield* dungeonRunDAO.create({
+    dungeonId: MOCK_DUNGEON_ID,
+    dungeonLevel: MOCK_DUNGEON_LEVEL,
+    endedAt: null,
+    source: "LOCAL_LOG",
+    startedAt: null,
   });
-
-  return configuration.configurationDefinitionId;
 });
 
-function createDungeonRun(
-  configurationDefinitionId: ConfigurationDefinitionId,
-) {
-  return E.gen(function* () {
-    const dungeonRunDAO = yield* DungeonRunDAO;
-
-    return yield* dungeonRunDAO.create({
-      configurationDefinitionId,
-      dungeonId: MOCK_DUNGEON_ID,
-      dungeonLevel: MOCK_DUNGEON_LEVEL,
-    });
-  });
-}
-
 const makeDungeonRunObservationTestContext = E.gen(function* () {
-  const configurationDefinitionId = yield* createConfigurationDefinition;
-  const dungeonRun = yield* createDungeonRun(configurationDefinitionId);
+  const dungeonRun = yield* createDungeonRun();
   const dungeonRunDAO = yield* DungeonRunDAO;
   const dungeonRunObservationDAO = yield* DungeonRunObservationDAO;
 
   return {
-    configurationDefinitionId,
     dungeonRun,
     dungeonRunDAO,
     dungeonRunObservationDAO,
@@ -131,19 +114,17 @@ describe("DungeonRunObservationDAOLive", () => {
     await runTest(program);
   });
 
-  test("does not observe an inactive dungeon run", async () => {
-    const program = E.gen(function* () {
-      const { dungeonRun, dungeonRunDAO, dungeonRunObservationDAO } =
-        yield* makeDungeonRunObservationTestContext;
+  test("does not observe a dungeon run that does not exist", async () => {
+    const dungeonRunId = Schema.decodeSync(DungeonRunIdSchema)(
+      "00000000-0000-7000-8000-000000000000",
+    );
 
-      yield* dungeonRunDAO.complete({
-        dungeonRunId: dungeonRun.id,
-        endedAt: THIRD_OBSERVED_AT,
-      });
+    const program = E.gen(function* () {
+      const dungeonRunObservationDAO = yield* DungeonRunObservationDAO;
 
       const error = yield* dungeonRunObservationDAO
         .observe({
-          dungeonRunId: dungeonRun.id,
+          dungeonRunId,
           observedAt: FIRST_OBSERVED_AT,
           targetId: "42",
           type: "UNIT_DEATH",
@@ -152,15 +133,42 @@ describe("DungeonRunObservationDAOLive", () => {
 
       expect(error).toBeInstanceOf(DungeonRunObservationDAOError);
       expect(error.details).toEqual({
-        _tag: "RunNotFoundOrInactive",
+        _tag: "RunNotFound",
+        dungeonRunId,
+      });
+    }).pipe(E.provide(makePersistenceTestLayer()));
+
+    await runTest(program);
+  });
+
+  test("observes a dungeon run after it has ended", async () => {
+    const program = E.gen(function* () {
+      const { dungeonRun, dungeonRunDAO, dungeonRunObservationDAO } =
+        yield* makeDungeonRunObservationTestContext;
+
+      yield* dungeonRunDAO.end({
         dungeonRunId: dungeonRun.id,
+        endedAt: THIRD_OBSERVED_AT,
+      });
+
+      yield* dungeonRunObservationDAO.observe({
+        dungeonRunId: dungeonRun.id,
+        observedAt: FIRST_OBSERVED_AT,
+        targetId: "42",
+        type: "UNIT_DEATH",
       });
 
       const observations = yield* dungeonRunObservationDAO.getByDungeonRunId({
         dungeonRunId: dungeonRun.id,
       });
 
-      expect(observations).toEqual([]);
+      expect(observations).toHaveLength(1);
+      expect(observations[0]).toMatchObject({
+        dungeonRunId: dungeonRun.id,
+        observedAt: FIRST_OBSERVED_AT,
+        targetId: "42",
+        type: "UNIT_DEATH",
+      });
     }).pipe(E.provide(makePersistenceTestLayer()));
 
     await runTest(program);
@@ -168,12 +176,8 @@ describe("DungeonRunObservationDAOLive", () => {
 
   test("returns observation history with elapsed time and occurrences", async () => {
     const program = E.gen(function* () {
-      const {
-        configurationDefinitionId,
-        dungeonRun,
-        dungeonRunDAO,
-        dungeonRunObservationDAO,
-      } = yield* makeDungeonRunObservationTestContext;
+      const { dungeonRun, dungeonRunDAO, dungeonRunObservationDAO } =
+        yield* makeDungeonRunObservationTestContext;
 
       yield* dungeonRunDAO.start({
         dungeonRunId: dungeonRun.id,
@@ -201,10 +205,10 @@ describe("DungeonRunObservationDAOLive", () => {
         type: "ABILITY_ACTIVATED",
       });
 
-      const history =
-        yield* dungeonRunObservationDAO.getHistoryByConfigurationDefinitionId({
-          configurationDefinitionId,
-        });
+      const history = yield* dungeonRunObservationDAO.getHistoryByDungeon({
+        dungeonId: MOCK_DUNGEON_ID,
+        dungeonLevel: MOCK_DUNGEON_LEVEL,
+      });
 
       expect(history).toEqual([
         {
@@ -234,15 +238,12 @@ describe("DungeonRunObservationDAOLive", () => {
   test("calculates occurrences independently for each dungeon run", async () => {
     const program = E.gen(function* () {
       const {
-        configurationDefinitionId,
         dungeonRun: firstDungeonRun,
         dungeonRunDAO,
         dungeonRunObservationDAO,
       } = yield* makeDungeonRunObservationTestContext;
 
-      const secondDungeonRun = yield* createDungeonRun(
-        configurationDefinitionId,
-      );
+      const secondDungeonRun = yield* createDungeonRun();
 
       yield* dungeonRunDAO.start({
         dungeonRunId: firstDungeonRun.id,
@@ -275,10 +276,10 @@ describe("DungeonRunObservationDAOLive", () => {
         type: "UNIT_DEATH",
       });
 
-      const history =
-        yield* dungeonRunObservationDAO.getHistoryByConfigurationDefinitionId({
-          configurationDefinitionId,
-        });
+      const history = yield* dungeonRunObservationDAO.getHistoryByDungeon({
+        dungeonId: MOCK_DUNGEON_ID,
+        dungeonLevel: MOCK_DUNGEON_LEVEL,
+      });
 
       expect(history).toEqual([
         {
@@ -307,11 +308,8 @@ describe("DungeonRunObservationDAOLive", () => {
 
   test("excludes observations from dungeon runs that have not started", async () => {
     const program = E.gen(function* () {
-      const {
-        configurationDefinitionId,
-        dungeonRun,
-        dungeonRunObservationDAO,
-      } = yield* makeDungeonRunObservationTestContext;
+      const { dungeonRun, dungeonRunObservationDAO } =
+        yield* makeDungeonRunObservationTestContext;
 
       yield* dungeonRunObservationDAO.observe({
         dungeonRunId: dungeonRun.id,
@@ -320,10 +318,10 @@ describe("DungeonRunObservationDAOLive", () => {
         type: "UNIT_DEATH",
       });
 
-      const history =
-        yield* dungeonRunObservationDAO.getHistoryByConfigurationDefinitionId({
-          configurationDefinitionId,
-        });
+      const history = yield* dungeonRunObservationDAO.getHistoryByDungeon({
+        dungeonId: MOCK_DUNGEON_ID,
+        dungeonLevel: MOCK_DUNGEON_LEVEL,
+      });
 
       expect(history).toEqual([]);
     }).pipe(E.provide(makePersistenceTestLayer()));

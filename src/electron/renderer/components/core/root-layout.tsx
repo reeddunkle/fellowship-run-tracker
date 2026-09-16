@@ -25,7 +25,7 @@ function invalidateRouter(router: ReturnType<typeof useRouter>) {
 }
 
 export function RootLayout() {
-  const { history, settings } = rootRouteApi.useLoaderData();
+  const { history, historyKey, settings } = rootRouteApi.useLoaderData();
   const router = useRouter();
 
   return (
@@ -36,6 +36,7 @@ export function RootLayout() {
             <LiveSplitProvider>
               <DungeonRunProvider
                 history={history}
+                historyKey={historyKey}
                 invalidate={() => {
                   return invalidateRouter(router);
                 }}

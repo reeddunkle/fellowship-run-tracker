@@ -6,8 +6,10 @@ import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 import { AbilitiesApiLive } from "@/api/http/groups/abilities/abilities-api-live.ts";
 import { AppSettingsApiLive } from "@/api/http/groups/app-settings/app-settings-live.ts";
 import { ConfigurationsApiLive } from "@/api/http/groups/configurations/configurations-api-live.ts";
+import { DungeonRunApiLive } from "@/api/http/groups/dungeon-run/dungeon-run-api-live.ts";
 import { DungeonsApiLive } from "@/api/http/groups/dungeons/dungeons-api-live.ts";
 import { EncountersApiLive } from "@/api/http/groups/encounters/encounters-api-live.ts";
+import { FellowshipLogsApiLive } from "@/api/http/groups/fellowship-logs/fellowship-logs-api-live.ts";
 import { LiveSplitApiLive } from "@/api/http/groups/live-split/live-split-api-live.ts";
 import { TrackingApiLive } from "@/api/http/groups/tracking/tracking-api-live.ts";
 import { UnitsApiLive } from "@/api/http/groups/units/units-api-live.ts";
@@ -16,8 +18,6 @@ import { DungeonRunEventsRoutes } from "@/api/websocket/dungeon-run/dungeon-run-
 import { LiveSplitRoutes } from "@/api/websocket/live-split/live-split-route.ts";
 import { TrackingRoutes } from "@/api/websocket/tracking/tracking-route.ts";
 import { appConfig } from "@/app-config.ts";
-
-import { DungeonRunsApiLive } from "./http/groups/dungeon-runs/dungeon-runs-api-live.ts";
 
 const CorsLive = Layer.unwrap(
   E.all({
@@ -36,9 +36,10 @@ const HttpApiRoutes = HttpApiBuilder.layer(AppHttpApi).pipe(
   Layer.provide(AbilitiesApiLive),
   Layer.provide(AppSettingsApiLive),
   Layer.provide(ConfigurationsApiLive),
-  Layer.provide(DungeonRunsApiLive),
+  Layer.provide(DungeonRunApiLive),
   Layer.provide(DungeonsApiLive),
   Layer.provide(EncountersApiLive),
+  Layer.provide(FellowshipLogsApiLive),
   Layer.provide(LiveSplitApiLive),
   Layer.provide(TrackingApiLive),
   Layer.provide(UnitsApiLive),

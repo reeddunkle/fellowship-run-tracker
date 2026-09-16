@@ -4,17 +4,19 @@ import * as HttpApiError from "effect/unstable/httpapi/HttpApiError";
 import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
 
 import { DungeonRunApiHistorySchema } from "@/services/api/dungeon-run/dungeon-run-api-schema.ts";
-import { ConfigurationIdSchema } from "@/validation/configuration/configuration-id-schema.ts";
+import { DungeonIdSchema } from "@/services/fellowship/validation/fellowship-common.ts";
+import { PositiveIntegerFromStringSchema } from "@/validation/common-schemas.ts";
 
-const DUNGEON_RUNS_ROUTE = "/dungeon-runs" as const;
+const DUNGEON_RUNS_ROUTE = "/dungeon-run" as const;
 
 const DungeonRunHistoryParamsSchema = Schema.Struct({
-  configurationId: ConfigurationIdSchema,
+  dungeonId: DungeonIdSchema,
+  dungeonLevel: PositiveIntegerFromStringSchema,
 });
 
 const DeleteDungeonRunHistoryEndpoint = HttpApiEndpoint.delete(
   "deleteDungeonRunHistory",
-  `${DUNGEON_RUNS_ROUTE}/history/:configurationId`,
+  `${DUNGEON_RUNS_ROUTE}/history/:dungeonId/:dungeonLevel`,
   {
     error: HttpApiError.InternalServerErrorNoContent,
     params: DungeonRunHistoryParamsSchema,
@@ -24,17 +26,14 @@ const DeleteDungeonRunHistoryEndpoint = HttpApiEndpoint.delete(
 
 const GetDungeonRunHistoryEndpoint = HttpApiEndpoint.get(
   "getDungeonRunHistory",
-  `${DUNGEON_RUNS_ROUTE}/history/:configurationId`,
+  `${DUNGEON_RUNS_ROUTE}/history/:dungeonId/:dungeonLevel`,
   {
-    error: [
-      HttpApiError.NotFoundNoContent,
-      HttpApiError.InternalServerErrorNoContent,
-    ],
+    error: HttpApiError.InternalServerErrorNoContent,
     params: DungeonRunHistoryParamsSchema,
     success: DungeonRunApiHistorySchema,
   },
 );
 
-export const DungeonRunsApi = HttpApiGroup.make("dungeonRuns")
+export const DungeonRunApi = HttpApiGroup.make("dungeonRun")
   .add(DeleteDungeonRunHistoryEndpoint)
   .add(GetDungeonRunHistoryEndpoint);

@@ -5,21 +5,22 @@ import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 import * as Stream from "effect/Stream";
 
+import { FellowshipTrackerLive } from "@/application/fellowship-tracker/fellowship-tracker-service-live.ts";
 import {
   ConfigurationDAO,
   type ConfigurationDAOShape,
   type PersistedConfiguration,
 } from "@/db/daos/configuration/configuration-dao.ts";
 import {
-  DungeonRunDAO,
-  type DungeonRunDAOShape,
-} from "@/db/daos/dungeon-run/dungeon-run-dao.ts";
-import {
   DungeonRunObservationDAO,
   type DungeonRunObservationDAOShape,
 } from "@/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
 import { type DungeonRunModel } from "@/db/models/dungeon-run-model.ts";
 import { DungeonRunWebSocketBroadcaster } from "@/services/api/websocket-broadcaster-service.ts";
+import {
+  DungeonRunRepository,
+  type DungeonRunRepositoryShape,
+} from "@/services/dungeon-run-repository/dungeon-run-repository-service.ts";
 import { type FellowshipMilestoneConfiguration } from "@/services/fellowship/configurations/configuration-types.ts";
 import {
   Fellowship,
@@ -35,7 +36,6 @@ import {
   MOCK_CONFIGURATION_ID,
   MOCK_CONFIGURATION_LABEL,
 } from "@/tests/common/fixtures/configuration-fixtures.ts";
-import { makeFellowshipTrackerTestLayer } from "@/tests/common/layers/fellowship-tracker-test-layer.ts";
 import { type ConfigurationDefinitionId } from "@/validation/configuration/configuration-definition-id-schema.ts";
 import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";
 import { type ConfigurationLabel } from "@/validation/configuration/configuration-label-schema.ts";
@@ -138,45 +138,64 @@ export function makeFellowshipTrackerTestHarness(
       },
     } satisfies ConfigurationDAOShape;
 
-    const dungeonRunDAO = {
-      complete: () => {
+    const dungeonRunRepository = {
+      completeLocal: () => {
         return E.void;
       },
-      create: ({ dungeonId, dungeonLevel }) => {
+      createFellowshipLogsDungeonRun: ({
+        dungeonId,
+        dungeonLevel,
+        endedAt,
+        startedAt,
+      }) => {
         return E.succeed({
-          configurationDefinitionId,
+          createdAt: MOCK_CREATED_AT,
+          dungeonId,
+          dungeonLevel,
+          endedAt,
+          id: MOCK_DUNGEON_RUN_ID,
+          source: "FELLOWSHIP_LOGS",
+          startedAt,
+          updatedAt: MOCK_UPDATED_AT,
+        } satisfies DungeonRunModel);
+      },
+      createLocal: ({ dungeonId, dungeonLevel }) => {
+        return E.succeed({
           createdAt: MOCK_CREATED_AT,
           dungeonId,
           dungeonLevel,
           endedAt: null,
           id: MOCK_DUNGEON_RUN_ID,
+          source: "LOCAL_LOG",
           startedAt: null,
-          status: "ACTIVE",
           updatedAt: MOCK_UPDATED_AT,
         } satisfies DungeonRunModel);
       },
-      deleteHistoryByConfigurationDefinitionId: () => {
+      delete: () => {
         return E.void;
       },
-      exit: () => {
+      deleteHistory: () => {
         return E.void;
       },
-      getById: () => {
-        return E.succeedNone;
-      },
-      interrupt: () => {
+      exitLocal: () => {
         return E.void;
       },
-      start: () => {
+      interruptLocal: () => {
         return E.void;
       },
-    } satisfies DungeonRunDAOShape;
+      listFellowshipLogsDungeonRuns: () => {
+        return E.succeed([]);
+      },
+      startLocal: () => {
+        return E.void;
+      },
+    } satisfies DungeonRunRepositoryShape;
 
     const dungeonRunObservationDAO = {
       getByDungeonRunId: () => {
         return E.succeed([]);
       },
-      getHistoryByConfigurationDefinitionId: () => {
+      getHistoryByDungeon: () => {
         return E.succeed([]);
       },
       observe: () => {
@@ -206,8 +225,8 @@ export function makeFellowshipTrackerTestHarness(
 
     const FellowshipTrackerDependenciesTestLive = Layer.mergeAll(
       Layer.succeed(ConfigurationDAO, configurationDAO),
-      Layer.succeed(DungeonRunDAO, dungeonRunDAO),
       Layer.succeed(DungeonRunObservationDAO, dungeonRunObservationDAO),
+      Layer.succeed(DungeonRunRepository, dungeonRunRepository),
       Layer.succeed(Fellowship, fellowshipHarness.fellowship),
       Layer.succeed(LiveSplit, liveSplit),
       Layer.succeed(
@@ -216,8 +235,8 @@ export function makeFellowshipTrackerTestHarness(
       ),
     );
 
-    const FellowshipTrackerTestLive = makeFellowshipTrackerTestLayer(
-      FellowshipTrackerDependenciesTestLive,
+    const FellowshipTrackerTestLive = FellowshipTrackerLive.pipe(
+      Layer.provide(FellowshipTrackerDependenciesTestLive),
     );
 
     return {
@@ -225,6 +244,7 @@ export function makeFellowshipTrackerTestHarness(
       configurationDefinitionId,
       configurationId,
       configurationLabel,
+      dungeonRunRepository,
       dungeonRunWebSocketBroadcasterHarness,
       fellowshipHarness,
       layer: FellowshipTrackerTestLive,

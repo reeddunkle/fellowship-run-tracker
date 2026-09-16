@@ -21,12 +21,25 @@ export const LiveSplitPortSchema = PortSchema.pipe(
   Schema.brand("LiveSplitPort"),
 );
 
-export const IsLiveSplitEnabledSchema = BooleanIntSchema;
-
 export type LiveSplitPort = typeof LiveSplitPortSchema.Type;
+
+export const IsLiveSplitEnabledSchema = BooleanIntSchema;
 
 export const FellowshipLogDirectorySchema = NonEmptyStringSchema.pipe(
   Schema.brand("FellowshipLogDirectory"),
 );
 
 export type FellowshipLogDirectory = typeof FellowshipLogDirectorySchema.Type;
+
+export const FellowshipLogsClientIdSchema = NonEmptyStringSchema.pipe(
+  Schema.brand("FellowshipLogsClientId"),
+);
+
+export type FellowshipLogsClientId = typeof FellowshipLogsClientIdSchema.Type;
+
+export const FellowshipLogsClientSecretSchema = NonEmptyStringSchema.pipe(
+  Schema.brand("FellowshipLogsClientSecret"),
+);
+
+export type FellowshipLogsClientSecret =
+  typeof FellowshipLogsClientSecretSchema.Type;

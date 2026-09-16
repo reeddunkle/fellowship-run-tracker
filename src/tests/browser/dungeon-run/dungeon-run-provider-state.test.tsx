@@ -57,6 +57,7 @@ describe("DungeonRunProvider server state", () => {
       <DungeonRunProvider
         eventStore={eventStore}
         history={null}
+        historyKey={null}
         invalidate={() => E.void}
       >
         <DungeonRunServerStateConsumer />
@@ -106,6 +107,7 @@ describe("DungeonRunProvider server state", () => {
       <DungeonRunProvider
         eventStore={eventStore}
         history={null}
+        historyKey={null}
         invalidate={() => E.void}
       >
         <DungeonRunServerStateConsumer />

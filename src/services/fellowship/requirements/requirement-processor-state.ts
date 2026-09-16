@@ -1,7 +1,12 @@
+import * as A from "effect/Array";
 import type * as DateTime from "effect/DateTime";
 import * as HashMap from "effect/HashMap";
+import * as Option from "effect/Option";
 
-import { type RequirementTargetId } from "@/services/fellowship/requirements/requirement-lookup.ts";
+import {
+  type RequirementLookup,
+  type RequirementTargetId,
+} from "@/services/fellowship/requirements/requirement-lookup.ts";
 import { type RequirementEventType } from "@/services/fellowship/validation/requirement-event-type-schema.ts";
 
 export type RequirementObservation = {
@@ -29,3 +34,62 @@ export type RequirementProcessorState = {
 export const initialRequirementProcessorState: RequirementProcessorState = {
   requirementObservations: HashMap.empty(),
 };
+
+export function getRequirementObservationHistory({
+  lookup,
+  state,
+}: {
+  readonly lookup: RequirementLookup;
+  readonly state: RequirementProcessorState;
+}): RequirementObservationHistory | undefined {
+  return Option.flatMap(
+    HashMap.get(state.requirementObservations, lookup.type),
+    (observationsByTargetId) => {
+      return HashMap.get(observationsByTargetId, lookup.targetId);
+    },
+  ).pipe(Option.getOrUndefined);
+}
+
+export function addRequirementObservation({
+  lookup,
+  state,
+  timestamp,
+}: {
+  readonly lookup: RequirementLookup;
+  readonly state: RequirementProcessorState;
+  readonly timestamp: DateTime.Utc;
+}): RequirementProcessorState {
+  const observationsByTargetId = Option.getOrElse(
+    HashMap.get(state.requirementObservations, lookup.type),
+    () => HashMap.empty<RequirementTargetId, RequirementObservationHistory>(),
+  );
+
+  const observationHistory = Option.getOrElse(
+    HashMap.get(observationsByTargetId, lookup.targetId),
+    () => {
+      return {
+        observations: [],
+      } satisfies RequirementObservationHistory;
+    },
+  );
+
+  const nextObservationHistory = {
+    observations: A.append(observationHistory.observations, {
+      timestamp,
+    }),
+  } satisfies RequirementObservationHistory;
+
+  const nextObservationsByTargetId = HashMap.set(
+    observationsByTargetId,
+    lookup.targetId,
+    nextObservationHistory,
+  );
+
+  return {
+    requirementObservations: HashMap.set(
+      state.requirementObservations,
+      lookup.type,
+      nextObservationsByTargetId,
+    ),
+  };
+}

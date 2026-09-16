@@ -3,7 +3,7 @@ import { millisecondsToSeconds } from "date-fns/millisecondsToSeconds";
 import * as A from "effect/Array";
 import { pipe } from "effect/Function";
 
-import { type DungeonRunObservationInterpretation } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-provider.tsx";
+import { type DungeonRunObservationInterpretation } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-interpretation.ts";
 
 export type DungeonRunHistoricalComparison = "AVERAGE" | "BEST" | "MEDIAN";
 

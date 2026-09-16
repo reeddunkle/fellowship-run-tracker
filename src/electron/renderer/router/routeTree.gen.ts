@@ -10,11 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as FellowshipLogsRouteImport } from './routes/fellowship-logs'
 import { Route as SettingsRouteImport } from './routes/settings'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FellowshipLogsRoute = FellowshipLogsRouteImport.update({
+  id: '/fellowship-logs',
+  path: '/fellowship-logs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -25,27 +31,31 @@ const SettingsRoute = SettingsRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/fellowship-logs': typeof FellowshipLogsRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/fellowship-logs': typeof FellowshipLogsRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/fellowship-logs': typeof FellowshipLogsRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/settings'
+  fullPaths: '/' | '/fellowship-logs' | '/settings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/settings'
-  id: '__root__' | '/' | '/settings'
+  to: '/' | '/fellowship-logs' | '/settings'
+  id: '__root__' | '/' | '/fellowship-logs' | '/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  FellowshipLogsRoute: typeof FellowshipLogsRoute
   SettingsRoute: typeof SettingsRoute
 }
 
@@ -56,6 +66,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fellowship-logs': {
+      id: '/fellowship-logs'
+      path: '/fellowship-logs'
+      fullPath: '/fellowship-logs'
+      preLoaderRoute: typeof FellowshipLogsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -70,6 +87,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  FellowshipLogsRoute: FellowshipLogsRoute,
   SettingsRoute: SettingsRoute,
 }
 export const routeTree = rootRouteImport

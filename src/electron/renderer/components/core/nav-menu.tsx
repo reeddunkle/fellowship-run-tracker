@@ -22,6 +22,15 @@ export function NavMenu() {
           className: "bg-muted text-foreground shadow-sm",
         }}
         className={navigationMenuTriggerStyle()}
+        to="/fellowship-logs"
+      >
+        Fellowship Logs
+      </Link>
+      <Link
+        activeProps={{
+          className: "bg-muted text-foreground shadow-sm",
+        }}
+        className={navigationMenuTriggerStyle()}
         to="/settings"
       >
         Settings

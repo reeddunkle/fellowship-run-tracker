@@ -6,13 +6,13 @@ import {
   type DungeonRunProcessingEvent,
 } from "@/services/fellowship/dungeon-runs/process-dungeon-run-event.ts";
 
-type HandleLogDungeonRunEventOptions = {
+type LogDungeonRunProcessingEventOptions = {
   readonly processingEvent: DungeonRunProcessingEvent;
 };
 
-export const handleLogDungeonRunEvent = E.fn(
-  "fellowship.dungeon-run.handle-log-event",
-)(function* ({ processingEvent }: HandleLogDungeonRunEventOptions) {
+export const logDungeonRunProcessingEvent = E.fn(
+  "fellowship.dungeon-run.log-processing-event",
+)(function* ({ processingEvent }: LogDungeonRunProcessingEventOptions) {
   yield* Match.value(processingEvent).pipe(
     Match.when(
       {

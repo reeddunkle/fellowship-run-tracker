@@ -5,46 +5,56 @@ import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 import * as Semaphore from "effect/Semaphore";
 
-import { DungeonRunDAO } from "@/db/daos/dungeon-run/dungeon-run-dao.ts";
 import { DungeonRunObservationDAO } from "@/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
-import { type DungeonRunDAOError } from "@/errors/dungeon-run-dao-error.ts";
 import { type DungeonRunObservationDAOError } from "@/errors/dungeon-run-observation-dao-error.ts";
+import {
+  DungeonRunRepository,
+  type DungeonRunRepositoryError,
+} from "@/services/dungeon-run-repository/dungeon-run-repository-service.ts";
 import { type FellowshipMilestoneConfiguration } from "@/services/fellowship/configurations/configuration-types.ts";
 import {
   DUNGEON_RUN_PROCESSING_EVENT,
   type DungeonRunProcessingEvent,
 } from "@/services/fellowship/dungeon-runs/process-dungeon-run-event.ts";
-import { type DungeonRunObservation } from "@/services/fellowship/requirements/process-requirement-event.ts";
-import { type ConfigurationDefinitionId } from "@/validation/configuration/configuration-definition-id-schema.ts";
+import { type DungeonRunObservation } from "@/services/fellowship/requirements/create-dungeon-run-observation.ts";
 import { type DungeonRunId } from "@/validation/dungeon-run/dungeon-run-id-schema.ts";
 
-type DungeonRunPersistenceError =
-  | DungeonRunDAOError
-  | DungeonRunObservationDAOError;
+type LocalLogDungeonRunPersistenceError =
+  | DungeonRunObservationDAOError
+  | DungeonRunRepositoryError;
 
-type PersistDungeonRunEventResultOptions = {
+type PersistLocalLogDungeonRunEventResultOptions = {
   readonly observation: DungeonRunObservation | undefined;
   readonly processingEvents: ReadonlyArray<DungeonRunProcessingEvent>;
 };
 
-export type DungeonRunPersistence = {
+type LocalLogDungeonRunLifecycleEvent = Extract<
+  DungeonRunProcessingEvent,
+  {
+    readonly type:
+      | typeof DUNGEON_RUN_PROCESSING_EVENT.RUN_COMPLETED
+      | typeof DUNGEON_RUN_PROCESSING_EVENT.RUN_EXITED
+      | typeof DUNGEON_RUN_PROCESSING_EVENT.RUN_STARTED;
+  }
+>;
+
+export type LocalLogDungeonRunPersistence = {
   readonly interrupt: (
     endedAt: DateTime.Utc,
-  ) => E.Effect<void, DungeonRunDAOError>;
+  ) => E.Effect<void, LocalLogDungeonRunPersistenceError>;
 
   readonly persist: (
-    options: PersistDungeonRunEventResultOptions,
-  ) => E.Effect<void, DungeonRunPersistenceError>;
+    options: PersistLocalLogDungeonRunEventResultOptions,
+  ) => E.Effect<void, LocalLogDungeonRunPersistenceError>;
 };
 
-type MakeDungeonRunPersistenceOptions = {
+type MakeLocalLogDungeonRunPersistenceOptions = {
   readonly configuration: FellowshipMilestoneConfiguration;
-  readonly configurationDefinitionId: ConfigurationDefinitionId;
 };
 
-function isLifecycleProcessingEvent(
+function isLocalLogDungeonRunLifecycleEvent(
   processingEvent: DungeonRunProcessingEvent,
-): boolean {
+): processingEvent is LocalLogDungeonRunLifecycleEvent {
   return (
     processingEvent.type === DUNGEON_RUN_PROCESSING_EVENT.RUN_STARTED ||
     processingEvent.type === DUNGEON_RUN_PROCESSING_EVENT.RUN_COMPLETED ||
@@ -52,14 +62,11 @@ function isLifecycleProcessingEvent(
   );
 }
 
-export const makeDungeonRunPersistence = E.fn(
-  "fellowship.dungeon-run.make-persistence",
-)(function* ({
-  configuration,
-  configurationDefinitionId,
-}: MakeDungeonRunPersistenceOptions) {
-  const dungeonRunDAO = yield* DungeonRunDAO;
+export const makeLocalLogDungeonRunPersistence = E.fn(
+  "fellowship.local-log-dungeon-run.make-persistence",
+)(function* ({ configuration }: MakeLocalLogDungeonRunPersistenceOptions) {
   const dungeonRunObservationDAO = yield* DungeonRunObservationDAO;
+  const dungeonRunRepository = yield* DungeonRunRepository;
 
   const dungeonRunIdRef = yield* Ref.make<Option.Option<DungeonRunId>>(
     Option.none(),
@@ -68,7 +75,7 @@ export const makeDungeonRunPersistence = E.fn(
   const dungeonRunIdSemaphore = yield* Semaphore.make(1);
 
   const getOrCreateDungeonRunId = E.fn(
-    "fellowship.dungeon-run.get-or-create-id",
+    "fellowship.local-log-dungeon-run.get-or-create-id",
   )(function* () {
     return yield* dungeonRunIdSemaphore.withPermit(
       E.gen(function* () {
@@ -78,8 +85,7 @@ export const makeDungeonRunPersistence = E.fn(
           return dungeonRunId.value;
         }
 
-        const dungeonRun = yield* dungeonRunDAO.create({
-          configurationDefinitionId,
+        const dungeonRun = yield* dungeonRunRepository.createLocal({
           dungeonId: configuration.dungeonId,
           dungeonLevel: configuration.dungeonLevel,
         });
@@ -91,20 +97,22 @@ export const makeDungeonRunPersistence = E.fn(
     );
   });
 
-  const persistProcessingEvent = ({
+  const persistLifecycleEvent = E.fn(
+    "fellowship.local-log-dungeon-run.persist-lifecycle-event",
+  )(function* ({
     dungeonRunId,
     processingEvent,
   }: {
     readonly dungeonRunId: DungeonRunId;
-    readonly processingEvent: DungeonRunProcessingEvent;
-  }) => {
-    return Match.value(processingEvent).pipe(
+    readonly processingEvent: LocalLogDungeonRunLifecycleEvent;
+  }) {
+    yield* Match.value(processingEvent).pipe(
       Match.when(
         {
           type: DUNGEON_RUN_PROCESSING_EVENT.RUN_STARTED,
         },
         (runStartedEvent) => {
-          return dungeonRunDAO.start({
+          return dungeonRunRepository.startLocal({
             dungeonRunId,
             startedAt: runStartedEvent.timestamp,
           });
@@ -115,8 +123,8 @@ export const makeDungeonRunPersistence = E.fn(
           type: DUNGEON_RUN_PROCESSING_EVENT.RUN_COMPLETED,
         },
         (runCompletedEvent) => {
-          return dungeonRunDAO
-            .complete({
+          return dungeonRunRepository
+            .completeLocal({
               dungeonRunId,
               endedAt: runCompletedEvent.timestamp,
             })
@@ -130,8 +138,8 @@ export const makeDungeonRunPersistence = E.fn(
           type: DUNGEON_RUN_PROCESSING_EVENT.RUN_EXITED,
         },
         (runExitedEvent) => {
-          return dungeonRunDAO
-            .exit({
+          return dungeonRunRepository
+            .exitLocal({
               dungeonRunId,
               endedAt: runExitedEvent.timestamp,
             })
@@ -140,32 +148,18 @@ export const makeDungeonRunPersistence = E.fn(
             );
         },
       ),
-      Match.when(
-        {
-          type: DUNGEON_RUN_PROCESSING_EVENT.REQUIREMENT_SATISFIED,
-        },
-        () => {
-          return E.void;
-        },
-      ),
-      Match.when(
-        {
-          type: DUNGEON_RUN_PROCESSING_EVENT.MILESTONE_COMPLETED,
-        },
-        () => {
-          return E.void;
-        },
-      ),
       Match.exhaustive,
     );
-  };
+  });
 
-  const persist: DungeonRunPersistence["persist"] = E.fn(
-    "fellowship.dungeon-run.persist-event-result",
+  const persist: LocalLogDungeonRunPersistence["persist"] = E.fn(
+    "fellowship.local-log-dungeon-run.persist-event-result",
   )(function* ({ observation, processingEvents }) {
-    const hasLifecycleEvent = processingEvents.some(isLifecycleProcessingEvent);
+    const lifecycleEvents = processingEvents.filter(
+      isLocalLogDungeonRunLifecycleEvent,
+    );
 
-    if (observation === undefined && !hasLifecycleEvent) {
+    if (observation === undefined && lifecycleEvents.length === 0) {
       return;
     }
 
@@ -181,9 +175,9 @@ export const makeDungeonRunPersistence = E.fn(
     }
 
     yield* E.forEach(
-      processingEvents,
+      lifecycleEvents,
       (processingEvent) => {
-        return persistProcessingEvent({
+        return persistLifecycleEvent({
           dungeonRunId,
           processingEvent,
         });
@@ -194,8 +188,8 @@ export const makeDungeonRunPersistence = E.fn(
     );
   });
 
-  const interrupt: DungeonRunPersistence["interrupt"] = E.fn(
-    "fellowship.dungeon-run.interrupt-persistence",
+  const interrupt: LocalLogDungeonRunPersistence["interrupt"] = E.fn(
+    "fellowship.local-log-dungeon-run.interrupt-persistence",
   )(function* (endedAt) {
     const dungeonRunId = yield* Ref.get(dungeonRunIdRef);
 
@@ -203,7 +197,7 @@ export const makeDungeonRunPersistence = E.fn(
       return;
     }
 
-    yield* dungeonRunDAO.interrupt({
+    yield* dungeonRunRepository.interruptLocal({
       dungeonRunId: dungeonRunId.value,
       endedAt,
     });
@@ -214,5 +208,5 @@ export const makeDungeonRunPersistence = E.fn(
   return {
     interrupt,
     persist,
-  } satisfies DungeonRunPersistence;
+  } satisfies LocalLogDungeonRunPersistence;
 });

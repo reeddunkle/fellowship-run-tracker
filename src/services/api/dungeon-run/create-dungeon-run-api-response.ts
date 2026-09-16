@@ -13,7 +13,6 @@ import {
   type RequirementObservationOccurrenceIdentity,
   RequirementObservationOccurrenceIdentityFromStringSchema,
 } from "@/validation/common/requirement-observation-identity-schema.ts";
-import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";
 
 const DungeonRunApiObservationStatisticsOrder = Order.mapInput(
   Order.Tuple([Order.String, Order.String, Order.Number]),
@@ -25,11 +24,6 @@ const DungeonRunApiObservationStatisticsOrder = Order.mapInput(
     ] satisfies RequirementObservationOccurrenceIdentity;
   },
 );
-
-type CreateDungeonRunApiResponseOptions = {
-  readonly configurationId: ConfigurationId;
-  readonly observations: ReadonlyArray<DungeonRunObservationHistory>;
-};
 
 function getMedian(values: ReadonlyArray<number>): number {
   const sortedValues = A.sort(values, Order.Number);
@@ -50,8 +44,11 @@ const encodeRequirementObservationOccurrenceIdentity = Schema.encodeEffect(
   RequirementObservationOccurrenceIdentityFromStringSchema,
 );
 
+type CreateDungeonRunApiResponseOptions = {
+  readonly observations: ReadonlyArray<DungeonRunObservationHistory>;
+};
+
 export function createDungeonRunApiResponse({
-  configurationId,
   observations,
 }: CreateDungeonRunApiResponseOptions) {
   return E.gen(function* () {
@@ -124,7 +121,6 @@ export function createDungeonRunApiResponse({
     );
 
     return {
-      configurationId,
       observations: observationStatistics,
     } satisfies DungeonRunApiHistory;
   });

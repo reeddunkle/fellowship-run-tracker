@@ -8,17 +8,17 @@ import {
 } from "@/validation/app-config-schema.ts";
 import {
   FellowshipLogDirectorySchema,
+  FellowshipLogsClientIdSchema,
+  FellowshipLogsClientSecretSchema,
   LiveSplitHostSchema,
   LiveSplitPortSchema,
 } from "@/validation/app-settings/app-settings-schema.ts";
 import {
-  DatabaseFilenameSchema,
   ElectronRendererHostSchema,
   ElectronRendererPortSchema,
 } from "@/validation/env-schema.ts";
 
 export const appConfig = {
-  databaseFilename: Config.schema(DatabaseFilenameSchema, "DATABASE_FILENAME"),
   electronRendererHost: Config.schema(
     ElectronRendererHostSchema,
     "ELECTRON_RENDERER_HOST",
@@ -31,8 +31,16 @@ export const appConfig = {
     FellowshipLogDirectorySchema,
     "FELLOWSHIP_LOG_DIRECTORY",
   ),
-  liveSplitsHost: Config.schema(LiveSplitHostSchema, "LIVE_SPLITS_HOST"),
-  liveSplitsPort: Config.schema(LiveSplitPortSchema, "LIVE_SPLITS_PORT"),
+  fellowshipLogsClientId: Config.schema(
+    FellowshipLogsClientIdSchema,
+    "FELLOWSHIP_LOGS_CLIENT_ID",
+  ).pipe(Config.option),
+  fellowshipLogsClientSecret: Config.schema(
+    FellowshipLogsClientSecretSchema,
+    "FELLOWSHIP_LOGS_CLIENT_SECRET",
+  ).pipe(Config.option),
+  liveSplitHost: Config.schema(LiveSplitHostSchema, "LIVE_SPLIT_HOST"),
+  liveSplitPort: Config.schema(LiveSplitPortSchema, "LIVE_SPLIT_PORT"),
   publicApiHost: Config.schema(PublicApiHostSchema, "PUBLIC_API_HOST"),
   publicApiPort: Config.schema(PublicApiPortSchema, "PUBLIC_API_PORT"),
 } as const;

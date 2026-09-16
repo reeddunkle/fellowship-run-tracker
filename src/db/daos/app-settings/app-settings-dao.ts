@@ -5,8 +5,10 @@ import type * as Schema from "effect/Schema";
 import type * as SqlError from "effect/unstable/sql/SqlError";
 
 import { type AppSettingsModel } from "@/db/models/app-settings-model.ts";
+import { type EncryptedValue } from "@/services/encryption/validation/encrypted-value-schema.ts";
 import {
   type FellowshipLogDirectory,
+  type FellowshipLogsClientId,
   type LiveSplitHost,
   type LiveSplitPort,
 } from "@/validation/app-settings/app-settings-schema.ts";
@@ -15,9 +17,11 @@ export type AppSettingsDAOError = SqlError.SqlError | Schema.SchemaError;
 
 type AppSettingsDAOValue = {
   readonly fellowshipLogDirectory: FellowshipLogDirectory;
+  readonly fellowshipLogsClientId: FellowshipLogsClientId | null;
+  readonly fellowshipLogsClientSecret: EncryptedValue | null;
   readonly isLiveSplitEnabled: boolean;
-  readonly liveSplitsHost: LiveSplitHost;
-  readonly liveSplitsPort: LiveSplitPort;
+  readonly liveSplitHost: LiveSplitHost;
+  readonly liveSplitPort: LiveSplitPort;
 };
 
 export type AppSettingsDAOShape = {

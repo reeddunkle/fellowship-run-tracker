@@ -5,10 +5,11 @@ import * as HttpApiError from "effect/unstable/httpapi/HttpApiError";
 
 import { AppHttpApi } from "@/api/http/http-api.ts";
 import { type AppSettingsDAOError } from "@/db/daos/app-settings/app-settings-dao.ts";
+import { type EncryptionError } from "@/errors/encryption-error.ts";
 import { AppSettingsApiService } from "@/services/api/app-settings/app-settings-api-service.ts";
 
 function mapAppSettingsApiError(
-  error: AppSettingsDAOError,
+  error: AppSettingsDAOError | EncryptionError,
 ): E.Effect<never, HttpApiError.InternalServerError> {
   return E.gen(function* () {
     yield* E.logError("App settings API operation failed.", {
