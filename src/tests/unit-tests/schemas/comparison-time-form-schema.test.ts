@@ -101,10 +101,11 @@ describe("ComparisonTimeFormSchema", () => {
     ])("decodes %j to %j", (value, expected) => {
       const result = decodeComparisonTimeResult(value);
 
-      expect(result).toEqual({
-        _tag: "Success",
-        success: expected,
-      });
+      expect(result._tag).toBe("Success");
+
+      if (result._tag === "Success") {
+        expect(result.success).toBe(expected);
+      }
     });
 
     test.each([
