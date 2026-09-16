@@ -10,6 +10,18 @@ import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts"
 
 const SCROLLBAR_GUTTER_WIDTH = 30;
 
+/**
+ * `dungeon-run-table.tsx`'s label column is intentionally left unconstrained
+ * (`table-layout: fixed` with no explicit `<col>` width) so it can absorb
+ * extra width when the user manually widens the detached window. That makes
+ * it undefined what its "natural" content width should be while measuring -
+ * a fixed-layout table with an unconstrained column has no content-derived
+ * intrinsic size to shrink-wrap to. `measureNaturalWidth` briefly pins it to
+ * this default so the initial auto-size (and the "shrink to fit" button)
+ * measure a well-defined, tight width instead of the whole available window.
+ */
+const DEFAULT_LABEL_COLUMN_WIDTH = "12.5rem";
+
 function copyDocumentStyles({
   sourceDocument,
   targetDocument,
@@ -63,16 +75,62 @@ function createDetachedWindowContainer(document: Document) {
   container.id = "root";
 
   /*
-   * Keep the portal root sized to its contents rather than allowing the
-   * normal block layout to stretch it to the detached viewport width.
-   *
-   * This keeps content measurements independent of the current window size.
+   * Left at the default block width (fills the detached window's content
+   * area) so that a manual OS-level resize actually hands the layout extra
+   * horizontal space to use, instead of the layout permanently shrink-
+   * wrapping to its own content. `resizeDetachedWindowToContent` briefly
+   * overrides this to measure the content's natural/tight size.
    */
-  container.style.width = "fit-content";
 
   document.body.append(container);
 
   return container;
+}
+
+/**
+ * Measures the content's natural (shrink-to-fit) width by briefly forcing
+ * the container to `fit-content`, the dungeon-run table to `width: auto`
+ * (its normal `w-full` otherwise always stretches it to fill the container,
+ * regardless of how narrow its columns actually need to be), and the label
+ * column to its default width, then reading `scrollWidth` before restoring
+ * all three to their normal (window-filling / flexible) state. Reading a
+ * layout property like `scrollWidth` forces a synchronous layout, so this
+ * never paints the intermediate state.
+ */
+function measureNaturalWidth(childContainer: HTMLElement) {
+  const previousContainerWidth = childContainer.style.width;
+
+  const table = childContainer.querySelector("table");
+  const previousTableWidth = table?.style.width;
+
+  const labelColumn = childContainer.querySelector<HTMLTableColElement>(
+    "col[data-dungeon-run-label-col]",
+  );
+  const previousLabelColumnWidth = labelColumn?.style.width;
+
+  childContainer.style.width = "fit-content";
+
+  if (table !== null) {
+    table.style.width = "auto";
+  }
+
+  if (labelColumn !== null) {
+    labelColumn.style.width = DEFAULT_LABEL_COLUMN_WIDTH;
+  }
+
+  const width = childContainer.scrollWidth;
+
+  childContainer.style.width = previousContainerWidth;
+
+  if (table !== null) {
+    table.style.width = previousTableWidth ?? "";
+  }
+
+  if (labelColumn !== null) {
+    labelColumn.style.width = previousLabelColumnWidth ?? "";
+  }
+
+  return width;
 }
 
 function resizeDetachedWindowToContent({
@@ -91,7 +149,45 @@ function resizeDetachedWindowToContent({
 
     yield* windowClient.resizeWindowToContent({
       height: childContainer.scrollHeight,
-      width: childContainer.scrollWidth + SCROLLBAR_GUTTER_WIDTH,
+      width: measureNaturalWidth(childContainer) + SCROLLBAR_GUTTER_WIDTH,
+      window: childWindow,
+    });
+
+    yield* waitForAnimationFrame(childWindow);
+
+    childDocument.documentElement.style.overflowY = "auto";
+  });
+}
+
+/**
+ * Re-measures height only (e.g. after a milestone expands/collapses),
+ * resending the window's current width untouched so it never grows or
+ * shrinks in response to content changes alone. Reads `innerWidth` (the
+ * layout viewport, unaffected by the scrollbar-gutter reservation) rather
+ * than `childContainer.clientWidth`, which excludes that reserved gutter and
+ * so under-reports by a few pixels relative to what `resizeWindowToContent`
+ * was actually set to - re-sending that smaller value would ratchet the
+ * window narrower on every expand/collapse. `innerWidth` also naturally
+ * reflects a manual OS-level resize, since it always matches the window's
+ * actual current content width regardless of who last set it.
+ */
+function resizeDetachedWindowToContentHeight({
+  childContainer,
+  childWindow,
+}: {
+  readonly childContainer: HTMLElement;
+  readonly childWindow: Window;
+}) {
+  return E.gen(function* () {
+    yield* waitForAnimationFrame(childWindow);
+
+    const childDocument = childWindow.document;
+
+    childDocument.documentElement.style.overflowY = "hidden";
+
+    yield* windowClient.resizeWindowToContent({
+      height: childContainer.scrollHeight,
+      width: childWindow.innerWidth,
       window: childWindow,
     });
 
@@ -218,6 +314,11 @@ function DetachedWindow({ children, onClose }: DetachedWindowProps) {
         childWindow,
       });
 
+      const resizeToContentHeight = resizeDetachedWindowToContentHeight({
+        childContainer,
+        childWindow,
+      });
+
       setResizeToContent(() => {
         browserRuntime.runFork(resizeToContent.pipe(E.catchCause(E.logError)));
       });
@@ -233,7 +334,7 @@ function DetachedWindow({ children, onClose }: DetachedWindowProps) {
           yield* observeDetachedWindowContent({
             childContainer,
             childWindow,
-            resizeToContent,
+            resizeToContent: resizeToContentHeight,
           });
 
           childWindow.electronAPI.showWindow();
@@ -294,7 +395,7 @@ export function ManagedDetachedWindow({
 
   return (
     <DetachedWindow onClose={close}>
-      <main className="mx-auto w-fit p-2 sidebar-gutter-auto">{children}</main>
+      <main className="w-full p-2 sidebar-gutter-auto">{children}</main>
     </DetachedWindow>
   );
 }

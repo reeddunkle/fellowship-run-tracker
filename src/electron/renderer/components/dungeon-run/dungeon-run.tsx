@@ -113,7 +113,7 @@ export function DungeonRun() {
         dungeonRun.startedAtMilliseconds;
 
   return (
-    <section className="grid min-w-105 w-fit gap-3">
+    <section className="grid min-w-105 w-full gap-3">
       <div className="flex items-center justify-end gap-2">
         <Button
           onClick={

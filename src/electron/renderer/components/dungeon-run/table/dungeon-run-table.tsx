@@ -175,7 +175,13 @@ export function DungeonRunTable({ children, rows }: DungeonRunTableProps) {
 
   return (
     <DungeonRunTableContext value={contextValue}>
-      <table className="w-full table-auto border-separate border-spacing-0">
+      <table className="w-full table-fixed border-separate border-spacing-0">
+        <colgroup>
+          <col data-dungeon-run-label-col="" />
+          {A.map(contextValue.visibleTimeColumns, (timeColumn) => {
+            return <col key={timeColumn.value} style={{ width: "10ch" }} />;
+          })}
+        </colgroup>
         {children}
       </table>
     </DungeonRunTableContext>
@@ -206,10 +212,7 @@ export function DungeonRunTableLabelCell({
   return (
     <td
       {...props}
-      className={cn(
-        "w-50 min-w-50 max-w-50 overflow-hidden align-middle",
-        className,
-      )}
+      className={cn("min-w-[10ch] overflow-hidden align-middle", className)}
     >
       <div className="min-w-0 overflow-hidden">{children}</div>
     </td>
