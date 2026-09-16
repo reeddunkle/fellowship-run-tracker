@@ -1,4 +1,3 @@
-import * as Match from "effect/Match";
 import {
   Minimize2Icon,
   PlayIcon,
@@ -6,8 +5,11 @@ import {
   SquareIcon,
 } from "lucide-react";
 
-import { type TrackingApiStatus } from "@/application/fellowship-tracker/tracking-api-schema.ts";
-import { useDetachedWindow } from "@/electron/renderer/components/detached-window/detached-window-provider";
+import {
+  type TrackingApiFailure,
+  type TrackingApiStatus,
+} from "@/application/fellowship-tracker/tracking-api-schema.ts";
+import { useDetachedWindow } from "@/electron/renderer/components/detached-window/detached-window-provider.tsx";
 import { Button } from "@/electron/renderer/components/ui/button.tsx";
 import { Spinner } from "@/electron/renderer/components/ui/spinner.tsx";
 import {
@@ -15,115 +17,70 @@ import {
   useSelectedConfiguration,
   useSelectedConfigurationId,
 } from "@/electron/renderer/stores/configurations-store/configurations-store.tsx";
+import { useDungeonRunServerState } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-provider.tsx";
 import {
   useTrackingActionState,
   useTrackingActions,
   useTrackingServerState,
 } from "@/electron/renderer/stores/tracking-store/tracking-store.tsx";
+import { cn } from "@/util/class-names.ts";
 
 type TrackingMessageProps = {
   readonly configurationLabel: string;
   readonly trackingStatus: TrackingApiStatus | undefined;
 };
 
+const FAILURE_MESSAGE_BY_TYPE: Record<TrackingApiFailure["type"], string> = {
+  Configuration:
+    "Tracking stopped because the configuration could not be processed.",
+  FileSystem:
+    "Tracking stopped because the Fellowship log file could not be monitored.",
+  Unexpected: "Tracking stopped because of an unexpected error.",
+};
+
+function getTrackingMessage({
+  configurationLabel,
+  trackingStatus,
+}: TrackingMessageProps): string {
+  if (trackingStatus === undefined || trackingStatus.status === "Idle") {
+    return `Start tracking a dungeon run using "${configurationLabel}"`;
+  }
+
+  if (trackingStatus.status === "WaitingForLogFile") {
+    return "Waiting for a Fellowship log file…";
+  }
+
+  if (trackingStatus.status === "Tracking") {
+    return `Tracking "${configurationLabel}"`;
+  }
+
+  return FAILURE_MESSAGE_BY_TYPE[trackingStatus.failure.type];
+}
+
 function TrackingMessage({
   configurationLabel,
   trackingStatus,
 }: TrackingMessageProps) {
-  if (trackingStatus === undefined) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        Start tracking a dungeon run using "{configurationLabel}"
-      </p>
-    );
-  }
+  const isFailed = trackingStatus?.status === "Failed";
 
-  return Match.value(trackingStatus).pipe(
-    Match.when(
-      {
-        status: "Idle",
-      },
-      () => {
-        return (
-          <p className="text-sm text-muted-foreground">
-            Start tracking a dungeon run using "{configurationLabel}"
-          </p>
-        );
-      },
-    ),
-    Match.when(
-      {
-        status: "WaitingForLogFile",
-      },
-      () => {
-        return (
-          <p className="flex items-center gap-2 text-sm text-muted-foreground/60">
-            Waiting for a Fellowship log file…
-          </p>
-        );
-      },
-    ),
-    Match.when(
-      {
-        status: "Tracking",
-      },
-      () => {
-        return (
-          <p className="flex items-center gap-2 text-sm text-muted-foreground/60">
-            Tracking "{configurationLabel}"
-          </p>
-        );
-      },
-    ),
-    Match.when(
-      {
-        status: "Failed",
-      },
-      ({ failure }) => {
-        return Match.value(failure).pipe(
-          Match.when(
-            {
-              type: "Configuration",
-            },
-            () => {
-              return (
-                <p className="flex items-center gap-2 text-sm text-destructive">
-                  Tracking stopped because the configuration could not be
-                  processed.
-                </p>
-              );
-            },
-          ),
-          Match.when(
-            {
-              type: "FileSystem",
-            },
-            () => {
-              return (
-                <p className="flex items-center gap-2 text-sm text-destructive">
-                  Tracking stopped because the Fellowship log file could not be
-                  monitored.
-                </p>
-              );
-            },
-          ),
-          Match.when(
-            {
-              type: "Unexpected",
-            },
-            () => {
-              return (
-                <p className="flex items-center gap-2 text-sm text-destructive">
-                  Tracking stopped because of an unexpected error.
-                </p>
-              );
-            },
-          ),
-          Match.exhaustive,
-        );
-      },
-    ),
-    Match.exhaustive,
+  const message = getTrackingMessage({
+    configurationLabel,
+    trackingStatus,
+  });
+
+  return (
+    <p
+      className={cn("text-sm", {
+        "text-destructive": isFailed,
+        "text-muted-foreground":
+          trackingStatus === undefined || trackingStatus.status === "Idle",
+        "text-muted-foreground/60":
+          trackingStatus?.status === "WaitingForLogFile" ||
+          trackingStatus?.status === "Tracking",
+      })}
+    >
+      {message}
+    </p>
   );
 }
 
@@ -134,6 +91,7 @@ export function HomeTrackingControls() {
   const { start, stop } = useTrackingActions();
   const { isPending } = useTrackingActionState();
   const { trackingStatus } = useTrackingServerState();
+  const { isActiveRun } = useDungeonRunServerState();
 
   const detachedWindow = useDetachedWindow();
 
@@ -154,7 +112,7 @@ export function HomeTrackingControls() {
 
   return (
     <section className="flex flex-col items-end gap-3">
-      <div className="flex gap-3 items-center">
+      <div className="flex items-center gap-3">
         <Button
           className="min-w-32 bg-green-600 text-white hover:bg-green-700"
           disabled={
@@ -177,7 +135,7 @@ export function HomeTrackingControls() {
           {isTracking ? (
             <>
               <Spinner className="size-6" />
-              Tracking
+              {isActiveRun ? "Active run" : "Waiting for run"}
             </>
           ) : (
             <>
@@ -213,14 +171,12 @@ export function HomeTrackingControls() {
           </Button>
         )}
       </div>
-
       {configurationLabel !== undefined && trackingStatus !== null && (
         <TrackingMessage
           configurationLabel={configurationLabel}
           trackingStatus={trackingStatus}
         />
       )}
-
       {selectedConfigurationId === null && !isTracking && (
         <p className="text-sm text-muted-foreground">
           Save the configuration before starting a run.

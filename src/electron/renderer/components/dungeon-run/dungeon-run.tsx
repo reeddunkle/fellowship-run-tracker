@@ -78,6 +78,7 @@ export function DungeonRun() {
       startedAtMilliseconds: dungeonRun?.startedAtMilliseconds ?? undefined,
     });
   }, [configuration, dungeonRun?.startedAtMilliseconds, observations]);
+
   const tableRows = useMemo(() => {
     return createDungeonRunTableRows(milestoneRows);
   }, [milestoneRows]);
@@ -98,8 +99,9 @@ export function DungeonRun() {
 
   const isTracking = trackingStatus?.status === "Tracking";
   const isWaitingForFile = trackingStatus?.status === "WaitingForLogFile";
+  const isActiveRun = dungeonRun?.status === "ACTIVE";
 
-  const isTimerRunning = dungeonRun?.status === "ACTIVE";
+  const isTimerRunning = isActiveRun;
 
   const timerStartTimeMilliseconds = isNil(dungeonRun?.startedAtMilliseconds)
     ? undefined
@@ -195,7 +197,7 @@ export function DungeonRun() {
         {isTracking ? (
           <>
             <Spinner className="size-6" />
-            Tracking
+            {isActiveRun ? "Active run" : "Waiting for run"}
           </>
         ) : (
           <>

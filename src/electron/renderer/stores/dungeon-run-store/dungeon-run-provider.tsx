@@ -79,9 +79,10 @@ type DungeonRunProviderProps = {
 };
 
 export type DungeonRunServerState = {
-  readonly eventConnectionState: ApiEventConnectionState;
   readonly dungeonRun: DungeonRunStateApi["dungeonRun"];
+  readonly eventConnectionState: ApiEventConnectionState;
   readonly history: DungeonRunApiHistory | null;
+  readonly isActiveRun: boolean;
   readonly latestObservation: DungeonRunObservationApi | undefined;
   readonly observations: ReadonlyArray<DungeonRunObservationApi>;
   readonly runState: DungeonRunEventStoreSnapshot["runState"];
@@ -319,12 +320,14 @@ export function useDungeonRunActions(): DungeonRunActions {
 export function useDungeonRunServerState(): DungeonRunServerState {
   const { eventConnectionState, history, runState } = useDungeonRunContext();
 
+  const dungeonRun = runState?.dungeonRun ?? null;
   const observations = runState?.observations ?? [];
 
   return {
-    dungeonRun: runState?.dungeonRun ?? null,
+    dungeonRun,
     eventConnectionState,
     history,
+    isActiveRun: dungeonRun?.status === "ACTIVE",
     latestObservation: A.last(observations).pipe(Option.getOrUndefined),
     observations,
     runState,
