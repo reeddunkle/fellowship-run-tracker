@@ -176,17 +176,24 @@ function getTsGoExecutableCommand({
   projectRoot,
 }: {
   readonly projectRoot: string;
-}): TsGoExecutableCommand {
-  const platform = `${process.platform}/${process.arch}`;
-  const platformDependency = getTsGoPlatformDependency();
+}): E.Effect<TsGoExecutableCommand> {
+  return E.gen(function* () {
+    const platform = `${process.platform}/${process.arch}`;
+    const platformDependency = getTsGoPlatformDependency();
 
-  return {
-    command: makePnpmCommand(["exec", "effect-tsgo", "get-exe-path"], {
-      cwd: projectRoot,
-    }),
-    platform,
-    platformDependency,
-  };
+    const command = yield* makePnpmCommand(
+      ["exec", "effect-tsgo", "get-exe-path"],
+      {
+        cwd: projectRoot,
+      },
+    );
+
+    return {
+      command,
+      platform,
+      platformDependency,
+    };
+  });
 }
 
 function getTsGoDependencyMessage({
@@ -275,7 +282,7 @@ const make = E.gen(function* () {
         workspaceDirectory,
       });
 
-      const executableCommand = getTsGoExecutableCommand({
+      const executableCommand = yield* getTsGoExecutableCommand({
         projectRoot,
       });
 

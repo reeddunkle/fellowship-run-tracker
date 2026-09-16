@@ -15,7 +15,7 @@ export function fixWithBiome(
   return E.gen(function* () {
     const childProcessSpawner = yield* ChildProcessSpawner.ChildProcessSpawner;
 
-    const command = makePnpmCommand([
+    const command = yield* makePnpmCommand([
       "exec",
       "biome",
       "check",
