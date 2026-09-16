@@ -2,8 +2,8 @@ import { NodeRuntime, NodeServices } from "@effect/platform-node";
 import * as E from "effect/Effect";
 import { ChildProcessSpawner } from "effect/unstable/process";
 
+import { makePnpmCommand } from "../../src/helpers/make-pnpm-command.ts";
 import { LayerGraphRenderError } from "./errors/render-layer-graph-error.ts";
-import { makePnpmCommand } from "./helpers/make-pnpm-command.ts";
 import { LAYER_GRAPH_OUTPUTS } from "./layer-graph-config.ts";
 
 const renderTargets = [

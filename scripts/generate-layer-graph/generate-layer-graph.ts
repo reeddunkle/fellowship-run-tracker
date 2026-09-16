@@ -4,6 +4,8 @@ import * as FileSystem from "effect/FileSystem";
 import { pipe } from "effect/Function";
 import * as Layer from "effect/Layer";
 
+import { fixWithBiome } from "@/helpers/fix-with-biome.ts";
+
 import { createLayerAnalysisModel } from "./analysis/layer-analysis-model.ts";
 import { analyzeServiceBundles } from "./analysis/service-bundle-analysis.ts";
 import {
@@ -68,10 +70,16 @@ const program = E.gen(function* () {
 
   yield* E.all([
     fileSystem.writeFileString(LAYER_GRAPH_OUTPUTS.appGraph, appGraph),
-    fileSystem.writeFileString(
-      LAYER_GRAPH_OUTPUTS.analysis.serviceBundleJson,
-      serviceBundleJson,
-    ),
+    fileSystem
+      .writeFileString(
+        LAYER_GRAPH_OUTPUTS.analysis.serviceBundleJson,
+        serviceBundleJson,
+      )
+      .pipe(
+        E.andThen(
+          fixWithBiome([LAYER_GRAPH_OUTPUTS.analysis.serviceBundleJson]),
+        ),
+      ),
     fileSystem.writeFileString(
       LAYER_GRAPH_OUTPUTS.analysis.serviceBundleMemberships.mermaid,
       serviceBundleMembershipsMermaid,

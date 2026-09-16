@@ -211,7 +211,8 @@ flowchart TB
     subgraph 42_wrap[" "]
       subgraph 42_requires [Requires]
         42_requires_0["ConfigurationDAO"]
-        42_requires_1["DungeonRunObservationDAO"]
+        42_requires_1["DungeonRunDAO"]
+        42_requires_2["DungeonRunObservationDAO"]
       end
       style 42_requires stroke:none
       subgraph 42_provides [Provides]
@@ -290,10 +291,11 @@ flowchart TB
         47_requires_1["AppSettings"]
         47_requires_2["ConfigurationDAO"]
         47_requires_3["DungeonDAO"]
-        47_requires_4["DungeonRunObservationDAO"]
-        47_requires_5["EncounterDAO"]
-        47_requires_6["LiveSplit"]
-        47_requires_7["UnitDAO"]
+        47_requires_4["DungeonRunDAO"]
+        47_requires_5["DungeonRunObservationDAO"]
+        47_requires_6["EncounterDAO"]
+        47_requires_7["LiveSplit"]
+        47_requires_8["UnitDAO"]
       end
       style 47_requires stroke:none
       subgraph 47_provides [Provides]
@@ -584,12 +586,13 @@ flowchart TB
   47_provides_3 -.-> 43_provides_0
   47_requires_2 -.-> 42_requires_0
   47_requires_4 -.-> 42_requires_1
+  47_requires_5 -.-> 42_requires_2
   47_provides_4 -.-> 42_provides_0
-  47_requires_5 -.-> 41_requires_0
+  47_requires_6 -.-> 41_requires_0
   47_provides_5 -.-> 41_provides_0
-  47_requires_6 -.-> 40_requires_0
+  47_requires_7 -.-> 40_requires_0
   47_provides_6 -.-> 40_provides_0
-  47_requires_7 -.-> 39_requires_0
+  47_requires_8 -.-> 39_requires_0
   47_provides_7 -.-> 39_provides_0
   51_provides_0 -.-> 49_provides_0
   51_provides_1 -.-> 49_provides_1

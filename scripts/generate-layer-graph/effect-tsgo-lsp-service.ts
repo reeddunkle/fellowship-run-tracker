@@ -15,6 +15,7 @@ import { type ChildProcessHandle } from "effect/unstable/process/ChildProcessSpa
 
 import { encodeJson } from "@/validation/common-schemas.ts";
 
+import { makePnpmCommand } from "../../src/helpers/make-pnpm-command.ts";
 import {
   type EffectTsGoLspError,
   EffectTsGoLspExecutableError,
@@ -23,7 +24,6 @@ import {
   EffectTsGoLspSourceFileError,
   EffectTsGoLspWorkspaceError,
 } from "./errors/effect-tsgo-lsp-error.ts";
-import { makePnpmCommand } from "./helpers/make-pnpm-command.ts";
 import {
   type JsonRpcMessage,
   JsonRpcMessageSchema,

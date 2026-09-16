@@ -1,5 +1,5 @@
 import * as NodeCrypto from "@effect/platform-node/NodeCrypto";
-import * as NodeFileSystem from "@effect/platform-node/NodeFileSystem";
+import * as NodeServices from "@effect/platform-node/NodeServices";
 import * as A from "effect/Array";
 import * as Crypto from "effect/Crypto";
 import * as E from "effect/Effect";
@@ -14,6 +14,7 @@ import { FELLOWSHIP_ABILITY } from "@/catalogs/ability/fellowship-ability-catalo
 import { FELLOWSHIP_DUNGEON } from "@/catalogs/dungeon/fellowship-dungeon-catalog.ts";
 import { FELLOWSHIP_ENCOUNTER } from "@/catalogs/encounter/fellowship-encounter-catalog.ts";
 import { loadFellowshipUnitCatalog } from "@/catalogs/unit/load-fellowship-unit-catalog.ts";
+import { fixWithBiome } from "@/helpers/fix-with-biome.ts";
 import { encodeJson } from "@/validation/common-schemas.ts";
 
 const OUTPUT_FILE_PATH = "./src/catalogs/generated/catalog-checksums.ts";
@@ -96,11 +97,15 @@ export const CATALOG_CHECKSUMS = ${encodedChecksums} as const;
   });
 
   yield* fileSystem.writeFileString(OUTPUT_FILE_PATH, contents);
+  yield* fixWithBiome([OUTPUT_FILE_PATH]);
 });
 
-const RuntimeLive = Layer.mergeAll(NodeCrypto.layer, NodeFileSystem.layer);
+const RuntimeLive = Layer.mergeAll(NodeCrypto.layer, NodeServices.layer);
 
 const runtime = ManagedRuntime.make(RuntimeLive);
 
-await runtime.runPromise(generateCatalogChecksums);
-await runtime.dispose();
+try {
+  await runtime.runPromise(generateCatalogChecksums);
+} finally {
+  await runtime.dispose();
+}

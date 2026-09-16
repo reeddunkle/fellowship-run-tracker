@@ -13,6 +13,7 @@ import {
   FellowshipUnitCatalogSchema,
 } from "@/catalogs/unit/fellowship-unit-catalog-schema.ts";
 import { FellowshipUnitCatalogJsonParseError } from "@/errors/fellowship-unit-catalog-error.ts";
+import { fixWithBiome } from "@/helpers/fix-with-biome.ts";
 import { parseJson } from "@/util/parse-json.ts";
 
 const OUTPUT_FILE_PATH = "./src/catalogs/unit/fellowship-unit-catalog.json";
@@ -141,6 +142,7 @@ export const generateFellowshipUnitCatalog = E.fn(
   const outputContents = `${JSON.stringify(validatedCatalog, null, 2)}\n`;
 
   yield* fileSystem.writeFileString(OUTPUT_FILE_PATH, outputContents);
+  yield* fixWithBiome([OUTPUT_FILE_PATH]);
 
   yield* E.logInfo("Generated Fellowship unit catalog.", {
     inputFilePath,
