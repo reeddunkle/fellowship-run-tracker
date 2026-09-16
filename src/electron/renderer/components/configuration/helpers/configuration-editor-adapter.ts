@@ -11,7 +11,7 @@ import {
 } from "@/services/api/configuration/configuration-api-schema.ts";
 import { FELLOWSHIP_EVENT } from "@/services/fellowship/constants/fellowship-event.ts";
 import { type FellowshipRequirement } from "@/services/fellowship/validation/fellowship-configuration-file-schema.ts";
-import { encodeComparisonTime } from "@/validation/milestone/comparison-time-form-schema.ts";
+import { formatComparisonTime } from "@/validation/milestone/comparison-time-form-schema.ts";
 
 function createEditorRequirement(
   requirement: ConfigurationApiConfiguration["milestones"][number]["requirements"][number],
@@ -35,7 +35,7 @@ export function createConfigurationEditorValue(
     label: configuration.label,
     milestones: configuration.milestones.map((milestone) => {
       return {
-        comparisonTime: encodeComparisonTime(milestone.comparisonTime),
+        comparisonTime: formatComparisonTime(milestone.comparisonTime),
         // @effect-diagnostics-next-line cryptoRandomUUID:off
         id: crypto.randomUUID(),
         label: milestone.label,

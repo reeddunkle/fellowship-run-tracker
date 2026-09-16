@@ -1,3 +1,4 @@
+import * as E from "effect/Effect";
 import * as Schema from "effect/Schema";
 import { BrowserWindow, screen } from "electron";
 
@@ -15,27 +16,31 @@ const ResizeWindowToContentArgsSchema = Schema.Struct({
   width: Schema.Finite,
 });
 
+const decodeResizeWindowToContentArgs = Schema.decodeUnknownEffect(
+  ResizeWindowToContentArgsSchema,
+);
+
 export function resizeWindowToContent(
   sender: Electron.WebContents,
   input: unknown,
-): void {
-  const window = BrowserWindow.fromWebContents(sender);
+) {
+  return E.gen(function* () {
+    const window = BrowserWindow.fromWebContents(sender);
 
-  if (window === null) {
-    return;
-  }
+    if (window === null) {
+      return;
+    }
 
-  const { height, width } = Schema.decodeUnknownSync(
-    ResizeWindowToContentArgsSchema,
-  )(input);
+    const { height, width } = yield* decodeResizeWindowToContentArgs(input);
 
-  const display = screen.getDisplayMatching(window.getBounds());
+    const display = screen.getDisplayMatching(window.getBounds());
 
-  const maxHeight = display.workAreaSize.height - WINDOW_VERTICAL_MARGIN;
-  const maxWidth = display.workAreaSize.width - WINDOW_HORIZONTAL_MARGIN;
+    const maxHeight = display.workAreaSize.height - WINDOW_VERTICAL_MARGIN;
+    const maxWidth = display.workAreaSize.width - WINDOW_HORIZONTAL_MARGIN;
 
-  window.setContentSize(
-    Math.min(Math.ceil(width), maxWidth),
-    Math.min(Math.ceil(height), maxHeight),
-  );
+    window.setContentSize(
+      Math.min(Math.ceil(width), maxWidth),
+      Math.min(Math.ceil(height), maxHeight),
+    );
+  });
 }

@@ -1,4 +1,5 @@
 import * as A from "effect/Array";
+import * as E from "effect/Effect";
 import { pipe } from "effect/Function";
 import * as Order from "effect/Order";
 import * as Schema from "effect/Schema";
@@ -30,10 +31,6 @@ type CreateDungeonRunApiResponseOptions = {
   readonly observations: ReadonlyArray<DungeonRunObservationHistory>;
 };
 
-const encodeRequirementObservationOccurrenceIdentity = Schema.encodeSync(
-  RequirementObservationOccurrenceIdentityFromStringSchema,
-);
-
 function getMedian(values: ReadonlyArray<number>): number {
   const sortedValues = A.sort(values, Order.Number);
 
@@ -49,74 +46,86 @@ function getMedian(values: ReadonlyArray<number>): number {
   return (lowerValue + upperValue) / 2;
 }
 
+const encodeRequirementObservationOccurrenceIdentity = Schema.encodeEffect(
+  RequirementObservationOccurrenceIdentityFromStringSchema,
+);
+
 export function createDungeonRunApiResponse({
   configurationId,
   observations,
-}: CreateDungeonRunApiResponseOptions): DungeonRunApiHistory {
-  const observationsByIdentity = A.reduce(
-    observations,
-    new Map<string, Array<DungeonRunObservationHistory>>(),
-    (accumulator, observation) => {
-      const key = encodeRequirementObservationOccurrenceIdentity([
-        observation.type,
-        observation.targetId,
-        observation.occurrence,
-      ]);
+}: CreateDungeonRunApiResponseOptions) {
+  return E.gen(function* () {
+    const observationsByIdentity = new Map<
+      string,
+      Array<DungeonRunObservationHistory>
+    >();
 
-      const existingObservations = accumulator.get(key);
+    yield* E.forEach(observations, (observation) => {
+      return E.gen(function* () {
+        const key = yield* encodeRequirementObservationOccurrenceIdentity([
+          observation.type,
+          observation.targetId,
+          observation.occurrence,
+        ]);
 
-      if (existingObservations === undefined) {
-        accumulator.set(key, [observation]);
+        const existingObservations = observationsByIdentity.get(key);
 
-        return accumulator;
-      }
+        if (existingObservations === undefined) {
+          observationsByIdentity.set(key, [observation]);
 
-      existingObservations.push(observation);
+          return;
+        }
 
-      return accumulator;
-    },
-  );
-
-  const observationStatistics = pipe(
-    A.fromIterable(observationsByIdentity.values()),
-    A.map((groupedObservations) => {
-      const firstObservation = groupedObservations[0];
-
-      if (firstObservation === undefined) {
-        return undefined;
-      }
-
-      const elapsedMilliseconds = A.map(groupedObservations, (observation) => {
-        return observation.elapsedMilliseconds;
+        existingObservations.push(observation);
       });
+    });
 
-      const totalElapsedMilliseconds = A.reduce(
-        elapsedMilliseconds,
-        0,
-        (total, elapsed) => {
-          return total + elapsed;
+    const observationStatistics = pipe(
+      A.fromIterable(observationsByIdentity.values()),
+      A.map((groupedObservations) => {
+        const firstObservation = groupedObservations[0];
+
+        if (firstObservation === undefined) {
+          return undefined;
+        }
+
+        const elapsedMilliseconds = A.map(
+          groupedObservations,
+          (observation) => {
+            return observation.elapsedMilliseconds;
+          },
+        );
+
+        const totalElapsedMilliseconds = A.reduce(
+          elapsedMilliseconds,
+          0,
+          (total, elapsed) => {
+            return total + elapsed;
+          },
+        );
+
+        return {
+          bestElapsedMilliseconds: Math.min(...elapsedMilliseconds),
+          meanElapsedMilliseconds:
+            totalElapsedMilliseconds / elapsedMilliseconds.length,
+          medianElapsedMilliseconds: getMedian(elapsedMilliseconds),
+          occurrence: firstObservation.occurrence,
+          sampleCount: elapsedMilliseconds.length,
+          targetId: firstObservation.targetId,
+          type: firstObservation.type,
+        } satisfies DungeonRunApiObservationStatistics;
+      }),
+      A.filter(
+        (statistics): statistics is DungeonRunApiObservationStatistics => {
+          return statistics !== undefined;
         },
-      );
+      ),
+      A.sort(DungeonRunApiObservationStatisticsOrder),
+    );
 
-      return {
-        bestElapsedMilliseconds: Math.min(...elapsedMilliseconds),
-        meanElapsedMilliseconds:
-          totalElapsedMilliseconds / elapsedMilliseconds.length,
-        medianElapsedMilliseconds: getMedian(elapsedMilliseconds),
-        occurrence: firstObservation.occurrence,
-        sampleCount: elapsedMilliseconds.length,
-        targetId: firstObservation.targetId,
-        type: firstObservation.type,
-      } satisfies DungeonRunApiObservationStatistics;
-    }),
-    A.filter((statistics): statistics is DungeonRunApiObservationStatistics => {
-      return statistics !== undefined;
-    }),
-    A.sort(DungeonRunApiObservationStatisticsOrder),
-  );
-
-  return {
-    configurationId,
-    observations: observationStatistics,
-  };
+    return {
+      configurationId,
+      observations: observationStatistics,
+    } satisfies DungeonRunApiHistory;
+  });
 }

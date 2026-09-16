@@ -44,6 +44,27 @@ export function parseDecimalMinutes(value: string): number | undefined {
   return Math.round(minutes * 60_000);
 }
 
+export function formatComparisonTime(value: number | null): string {
+  if (value === null) {
+    return "";
+  }
+
+  const minutes = Math.floor(value / 60_000);
+  const remainingMilliseconds = value % 60_000;
+  const seconds = Math.floor(remainingMilliseconds / 1_000);
+  const milliseconds = remainingMilliseconds % 1_000;
+
+  const secondsValue = seconds.toString().padStart(2, "0");
+
+  if (milliseconds === 0) {
+    return `${minutes}:${secondsValue}`;
+  }
+
+  return `${minutes}:${secondsValue}.${milliseconds
+    .toString()
+    .padStart(3, "0")}`;
+}
+
 export const ComparisonTimeFormSchema = Schema.String.pipe(
   Schema.decodeTo(Schema.NullOr(NonNegativeIntegerSchema), {
     decode: SchemaGetter.transformOrFail((value) => {
@@ -63,28 +84,10 @@ export const ComparisonTimeFormSchema = Schema.String.pipe(
 
       return E.succeed(milliseconds);
     }),
-    encode: SchemaGetter.transform((value) => {
-      if (value === null) {
-        return "";
-      }
-
-      const minutes = Math.floor(value / 60_000);
-      const remainingMilliseconds = value % 60_000;
-      const seconds = Math.floor(remainingMilliseconds / 1_000);
-      const milliseconds = remainingMilliseconds % 1_000;
-
-      const secondsValue = seconds.toString().padStart(2, "0");
-
-      if (milliseconds === 0) {
-        return `${minutes}:${secondsValue}`;
-      }
-
-      return `${minutes}:${secondsValue}.${milliseconds
-        .toString()
-        .padStart(3, "0")}`;
-    }),
+    encode: SchemaGetter.transform(formatComparisonTime),
   }),
 );
 
-export const encodeComparisonTime = Schema.encodeSync(ComparisonTimeFormSchema);
-export const decodeComparisonTime = Schema.decodeSync(ComparisonTimeFormSchema);
+export const decodeComparisonTime = Schema.decodeEffect(
+  ComparisonTimeFormSchema,
+);

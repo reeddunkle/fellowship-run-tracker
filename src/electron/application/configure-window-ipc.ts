@@ -23,7 +23,7 @@ export function configureWindowIpc<RuntimeError>(
   ipcMain.handle(
     ELECTRON_IPC_CHANNEL.RESIZE_WINDOW_TO_CONTENT,
     (event, input: unknown) => {
-      resizeWindowToContent(event.sender, input);
+      return runtime.runPromise(resizeWindowToContent(event.sender, input));
     },
   );
 

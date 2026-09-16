@@ -23,6 +23,18 @@ const RequirementObservationOccurrenceIdentitySchema = Schema.Tuple([
 export type RequirementObservationOccurrenceIdentity =
   typeof RequirementObservationOccurrenceIdentitySchema.Type;
 
+export function encodeRequirementObservationIdentity(
+  identity: RequirementObservationIdentity,
+): string {
+  return JSON.stringify(identity);
+}
+
+export function encodeRequirementObservationOccurrenceIdentity(
+  identity: RequirementObservationOccurrenceIdentity,
+): string {
+  return JSON.stringify(identity);
+}
+
 export const RequirementObservationIdentityFromStringSchema =
   Schema.fromJsonString(RequirementObservationIdentitySchema);
 

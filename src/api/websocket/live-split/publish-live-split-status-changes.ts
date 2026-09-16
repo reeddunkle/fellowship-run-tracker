@@ -13,7 +13,7 @@ import {
   type WebSocketBroadcasterService,
 } from "@/services/api/websocket-broadcaster-service.ts";
 
-const encodeLiveSplitApiMessage = Schema.encodeSync(
+const encodeLiveSplitApiMessage = Schema.encodeEffect(
   Schema.fromJsonString(LiveSplitApiMessageSchema),
 );
 
@@ -31,7 +31,11 @@ function publishLiveSplitApiStatus({
     version: 1,
   } satisfies LiveSplitApiMessage;
 
-  return webSocketBroadcaster.publish(encodeLiveSplitApiMessage(message));
+  return encodeLiveSplitApiMessage(message).pipe(
+    E.flatMap((encodedMessage) => {
+      return webSocketBroadcaster.publish(encodedMessage);
+    }),
+  );
 }
 
 export const publishLiveSplitStatusChanges = E.gen(function* () {

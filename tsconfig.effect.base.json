@@ -53,6 +53,7 @@
             "options": {
               "diagnosticSeverity": {
                 "asyncFunction": "off",
+                "schemaSync": "off",
                 "strictEffectProvide": "off"
               }
             }

@@ -1,7 +1,6 @@
 import * as A from "effect/Array";
 import * as E from "effect/Effect";
 import * as Option from "effect/Option";
-import * as Schema from "effect/Schema";
 import {
   createContext,
   type ReactNode,
@@ -31,8 +30,8 @@ import {
   type DungeonRunApiObservationStatistics,
 } from "@/services/api/dungeon-run/dungeon-run-api-schema.ts";
 import {
-  RequirementObservationIdentityFromStringSchema,
-  RequirementObservationOccurrenceIdentityFromStringSchema,
+  encodeRequirementObservationIdentity,
+  encodeRequirementObservationOccurrenceIdentity,
 } from "@/validation/common/requirement-observation-identity-schema.ts";
 import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";
 
@@ -111,14 +110,6 @@ export type DungeonRunInterpretationState = {
 
 const DungeonRunContext = createContext<DungeonRunContextValue | undefined>(
   undefined,
-);
-
-const encodeRequirementObservationIdentity = Schema.encodeSync(
-  RequirementObservationIdentityFromStringSchema,
-);
-
-const encodeRequirementObservationOccurrenceIdentity = Schema.encodeSync(
-  RequirementObservationOccurrenceIdentityFromStringSchema,
 );
 
 function createObservationAnalytics(
@@ -392,12 +383,15 @@ export function useDungeonRunInterpretationState(): DungeonRunInterpretationStat
             : observation.timestampMilliseconds -
               previousObservation.timestampMilliseconds;
 
-        const historicalStatistics = historicalStatisticsByKey.get(
+        const historicalStatisticsKey =
           encodeRequirementObservationOccurrenceIdentity([
             observation.type,
             observation.targetId,
             occurrence,
-          ]),
+          ]);
+
+        const historicalStatistics = historicalStatisticsByKey.get(
+          historicalStatisticsKey,
         );
 
         accumulator.observations.push({

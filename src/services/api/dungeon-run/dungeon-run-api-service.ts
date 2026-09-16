@@ -7,6 +7,7 @@ import { ConfigurationDAO } from "@/db/daos/configuration/configuration-dao.ts";
 import { DungeonRunDAO } from "@/db/daos/dungeon-run/dungeon-run-dao.ts";
 import { DungeonRunObservationDAO } from "@/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
 import { type ConfigurationDAOError } from "@/errors/configuration-dao-error.ts";
+import { DungeonRunApiResponseError } from "@/errors/dungeon-run-api-service-error.ts";
 import { type DungeonRunDAOError } from "@/errors/dungeon-run-dao-error.ts";
 import { type DungeonRunObservationDAOError } from "@/errors/dungeon-run-observation-dao-error.ts";
 import { createDungeonRunApiResponse } from "@/services/api/dungeon-run/create-dungeon-run-api-response.ts";
@@ -23,6 +24,7 @@ type GetDungeonRunHistoryOptions = {
 
 export type DungeonRunApiServiceError =
   | ConfigurationDAOError
+  | DungeonRunApiResponseError
   | DungeonRunDAOError
   | DungeonRunObservationDAOError;
 
@@ -85,12 +87,19 @@ const make = E.gen(function* () {
             configuration.value.configurationDefinitionId,
         });
 
-      return Option.some(
-        createDungeonRunApiResponse({
-          configurationId,
-          observations,
+      const history = yield* createDungeonRunApiResponse({
+        configurationId,
+        observations,
+      }).pipe(
+        E.mapError((cause) => {
+          return new DungeonRunApiResponseError({
+            cause,
+            message: "Failed to create dungeon run history response.",
+          });
         }),
       );
+
+      return Option.some(history);
     });
   };
 

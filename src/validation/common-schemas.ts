@@ -46,7 +46,7 @@ export const UnknownFromJsonStringSchema = Schema.fromJsonString(
   Schema.Unknown,
 );
 
-export const encodeJson = Schema.encodeSync(UnknownFromJsonStringSchema);
+export const encodeJson = Schema.encodeEffect(UnknownFromJsonStringSchema);
 
 export const JsonStringArraySchema = Schema.String.pipe(
   Schema.Array,

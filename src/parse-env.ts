@@ -14,6 +14,7 @@ export type Env = {
 };
 
 export function parseEnv(source: unknown): Env {
+  // @effect-diagnostics-next-line schemaSync:off
   const rawEnv = Schema.decodeUnknownSync(RawEnvSchema)(source);
 
   return {

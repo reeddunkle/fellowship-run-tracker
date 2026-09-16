@@ -101,16 +101,19 @@ type LspSetup = {
   readonly workspaceDirectory: string;
 };
 
-function encodeMessage(message: unknown): Uint8Array {
-  const body = encodeJson(message);
-  const bodyBytes = Buffer.from(body, "utf8");
+function encodeMessage(message: unknown) {
+  return encodeJson(message).pipe(
+    E.map((body) => {
+      const bodyBytes = Buffer.from(body, "utf8");
 
-  const header = Buffer.from(
-    `Content-Length: ${bodyBytes.byteLength}\r\n\r\n`,
-    "utf8",
+      const header = Buffer.from(
+        `Content-Length: ${bodyBytes.byteLength}\r\n\r\n`,
+        "utf8",
+      );
+
+      return Buffer.concat([header, bodyBytes]);
+    }),
   );
-
-  return Buffer.concat([header, bodyBytes]);
 }
 
 function parseNextMessage(
@@ -325,7 +328,10 @@ const make = E.gen(function* () {
       let responseBuffer: Buffer<ArrayBufferLike> = Buffer.alloc(0);
 
       const sendMessage = (message: unknown) => {
-        return Queue.offer(stdinQueue, encodeMessage(message)).pipe(
+        return encodeMessage(message).pipe(
+          E.flatMap((encodedMessage) => {
+            return Queue.offer(stdinQueue, encodedMessage);
+          }),
           E.asVoid,
           E.mapError((cause) => {
             return new EffectTsGoLspProtocolError({

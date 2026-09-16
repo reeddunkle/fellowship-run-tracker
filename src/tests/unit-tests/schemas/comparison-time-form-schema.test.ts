@@ -3,8 +3,7 @@ import { describe, expect, test } from "vitest";
 
 import {
   ComparisonTimeFormSchema,
-  decodeComparisonTime,
-  encodeComparisonTime,
+  formatComparisonTime,
   parseColonTime,
   parseDecimalMinutes,
 } from "@/validation/milestone/comparison-time-form-schema.ts";
@@ -100,7 +99,12 @@ describe("ComparisonTimeFormSchema", () => {
       ["10:59.999", 659_999],
       ["123:45.678", 7_425_678],
     ])("decodes %j to %j", (value, expected) => {
-      expect(decodeComparisonTime(value)).toBe(expected);
+      const result = decodeComparisonTimeResult(value);
+
+      expect(result).toEqual({
+        _tag: "Success",
+        success: expected,
+      });
     });
 
     test.each([
@@ -128,24 +132,24 @@ describe("ComparisonTimeFormSchema", () => {
       expect(result._tag).toBe("Failure");
     });
   });
+});
 
-  describe("encode", () => {
-    test.each([
-      [null, ""],
-      [0, "0:00"],
-      [1_000, "0:01"],
-      [30_000, "0:30"],
-      [60_000, "1:00"],
-      [75_000, "1:15"],
-      [83_000, "1:23"],
-      [83_100, "1:23.100"],
-      [83_120, "1:23.120"],
-      [83_123, "1:23.123"],
-      [127_500, "2:07.500"],
-      [659_999, "10:59.999"],
-      [7_425_678, "123:45.678"],
-    ])("encodes %j to %j", (value, expected) => {
-      expect(encodeComparisonTime(value)).toBe(expected);
-    });
+describe("formatComparisonTime", () => {
+  test.each([
+    [null, ""],
+    [0, "0:00"],
+    [1_000, "0:01"],
+    [30_000, "0:30"],
+    [60_000, "1:00"],
+    [75_000, "1:15"],
+    [83_000, "1:23"],
+    [83_100, "1:23.100"],
+    [83_120, "1:23.120"],
+    [83_123, "1:23.123"],
+    [127_500, "2:07.500"],
+    [659_999, "10:59.999"],
+    [7_425_678, "123:45.678"],
+  ])("formats %j to %j", (value, expected) => {
+    expect(formatComparisonTime(value)).toBe(expected);
   });
 });
