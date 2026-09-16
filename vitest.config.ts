@@ -11,6 +11,7 @@ export default defineConfig({
   },
   test: {
     exclude: [...configDefaults.exclude, "src/tests/browser/**"],
+    fsModuleCache: true,
     root: projectRoot,
     setupFiles: ["./src/tests/setup.ts"],
   },
