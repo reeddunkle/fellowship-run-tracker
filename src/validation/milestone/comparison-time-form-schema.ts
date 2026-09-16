@@ -87,7 +87,3 @@ export const ComparisonTimeFormSchema = Schema.String.pipe(
     encode: SchemaGetter.transform(formatComparisonTime),
   }),
 );
-
-export const decodeComparisonTime = Schema.decodeEffect(
-  ComparisonTimeFormSchema,
-);

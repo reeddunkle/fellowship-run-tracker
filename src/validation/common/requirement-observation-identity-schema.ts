@@ -35,8 +35,5 @@ export function encodeRequirementObservationOccurrenceIdentity(
   return JSON.stringify(identity);
 }
 
-export const RequirementObservationIdentityFromStringSchema =
-  Schema.fromJsonString(RequirementObservationIdentitySchema);
-
 export const RequirementObservationOccurrenceIdentityFromStringSchema =
   Schema.fromJsonString(RequirementObservationOccurrenceIdentitySchema);
