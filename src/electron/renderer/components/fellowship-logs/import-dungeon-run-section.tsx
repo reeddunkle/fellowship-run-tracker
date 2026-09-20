@@ -1,33 +1,27 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import {
-  getDungeonRunMetadataMutationOptions,
-  importDungeonRunMutationOptions,
+  useDungeonRunMetadata,
+  useImportDungeonRun,
 } from "@/electron/renderer/api/fellowship-logs/fellowship-logs-mutations.ts";
 import { type FellowshipLogsApiDungeonRunReference } from "@/services/api/fellowship-logs/fellowship-logs-api-schema.ts";
 
 import { ImportConfirmationCard } from "./import-confirmation/import-confirmation-card.tsx";
 import { type DecodedImportConfirmationFormValue } from "./import-confirmation/import-confirmation-form-schema.ts";
-import { ImportUrlForm } from "./import-url-form.tsx";
+import { ImportUrlForm } from "./import-url-form/import-url-form.tsx";
 
 export function ImportDungeonRunSection() {
-  const queryClient = useQueryClient();
   const [formKey, setFormKey] = useState(0);
 
-  const metadataMutation = useMutation(
-    getDungeonRunMetadataMutationOptions(queryClient),
-  );
-  const importMutation = useMutation(
-    importDungeonRunMutationOptions(queryClient),
-  );
+  const metadataMutation = useDungeonRunMetadata();
+  const importMutation = useImportDungeonRun();
 
   const reference: FellowshipLogsApiDungeonRunReference | undefined =
     metadataMutation.variables;
 
   function handleLookup(nextReference: FellowshipLogsApiDungeonRunReference) {
     importMutation.reset();
-    metadataMutation.mutate(nextReference);
+    metadataMutation.lookup(nextReference);
   }
 
   function handleCancel() {
@@ -40,7 +34,7 @@ export function ImportDungeonRunSection() {
       return;
     }
 
-    importMutation.mutate(
+    importMutation.importRun(
       {
         ...reference,
         isOwnRun,

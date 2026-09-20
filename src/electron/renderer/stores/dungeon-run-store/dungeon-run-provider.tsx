@@ -1,4 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
 import * as A from "effect/Array";
 import * as Option from "effect/Option";
 import {
@@ -16,9 +15,9 @@ import {
 } from "@/api/websocket/dungeon-run/dungeon-run-api-message-schema.ts";
 import { type TrackingApiStatus } from "@/application/fellowship-tracker/tracking-api-schema.ts";
 import { type ApiEventConnectionState } from "@/electron/renderer/api/common.ts";
-import { getConfigurationsQueryOptions } from "@/electron/renderer/api/configuration/configuration-queries.ts";
+import { useConfigurationsQuery } from "@/electron/renderer/api/configuration/configuration-queries.ts";
 import {
-  getDungeonRunHistoryQueryOptions,
+  useDungeonRunHistoryQuery,
   useInvalidateDungeonRunHistory,
 } from "@/electron/renderer/api/dungeon-run/dungeon-run-queries.ts";
 import {
@@ -148,7 +147,7 @@ export function DungeonRunProvider({
     setMilestoneExpanded,
   } = useDungeonRunMilestoneExpansion();
 
-  const { data: configurations } = useQuery(getConfigurationsQueryOptions());
+  const { data: configurations } = useConfigurationsQuery();
 
   const historyConfigurationId = getHistoryConfigurationId({
     runState: dungeonRunSnapshot.runState,
@@ -168,13 +167,7 @@ export function DungeonRunProvider({
           dungeonLevel: historyConfiguration.dungeonLevel,
         };
 
-  const historyQuery = useQuery({
-    ...getDungeonRunHistoryQueryOptions({
-      dungeonId: historyKey?.dungeonId ?? "0",
-      dungeonLevel: historyKey?.dungeonLevel ?? 1,
-    }),
-    enabled: historyKey !== null,
-  });
+  const historyQuery = useDungeonRunHistoryQuery(historyKey);
 
   const history = historyQuery.data ?? null;
 

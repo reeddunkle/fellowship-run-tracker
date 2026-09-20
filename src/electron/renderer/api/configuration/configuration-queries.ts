@@ -1,4 +1,8 @@
-import { queryOptions } from "@tanstack/react-query";
+import {
+  queryOptions,
+  useQuery,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 
 import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
 
@@ -12,4 +16,13 @@ export function getConfigurationsQueryOptions() {
     queryKey: ["configurations"],
     staleTime: Infinity,
   });
+}
+
+export function useConfigurationsQuery() {
+  return useQuery(getConfigurationsQueryOptions());
+}
+
+export function useConfigurationsSuspense() {
+  const { data } = useSuspenseQuery(getConfigurationsQueryOptions());
+  return data;
 }

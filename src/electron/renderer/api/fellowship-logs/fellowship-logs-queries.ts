@@ -1,4 +1,4 @@
-import { queryOptions } from "@tanstack/react-query";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 
 import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
 
@@ -25,4 +25,16 @@ export function getFellowshipLogsLastKnownRateLimitDataQueryOptions() {
     queryKey: ["fellowship-logs", "rate-limit-data", "last-known"],
     staleTime: Infinity,
   });
+}
+
+export function useImportedDungeonRunsSuspense() {
+  const { data } = useSuspenseQuery(getFellowshipLogsDungeonRunsQueryOptions());
+  return data;
+}
+
+export function useFellowshipLogsRateLimitDataSuspense() {
+  const { data } = useSuspenseQuery(
+    getFellowshipLogsLastKnownRateLimitDataQueryOptions(),
+  );
+  return data;
 }

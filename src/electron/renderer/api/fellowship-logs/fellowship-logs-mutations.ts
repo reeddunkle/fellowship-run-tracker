@@ -1,4 +1,9 @@
-import { mutationOptions, type QueryClient } from "@tanstack/react-query";
+import {
+  mutationOptions,
+  type QueryClient,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import * as E from "effect/Effect";
 
 import { DUNGEON_RUN_HISTORY_QUERY_KEY_PREFIX } from "@/electron/renderer/api/dungeon-run/dungeon-run-queries.ts";
@@ -210,4 +215,36 @@ export function deleteImportedDungeonRunMutationOptions(
       );
     },
   });
+}
+
+export function useRefreshFellowshipLogsRateLimitData() {
+  const queryClient = useQueryClient();
+  const { mutate, data, error, isError, isPending } = useMutation(
+    refreshFellowshipLogsRateLimitDataMutationOptions(queryClient),
+  );
+  return { data, error, isError, isPending, refresh: mutate };
+}
+
+export function useDungeonRunMetadata() {
+  const queryClient = useQueryClient();
+  const { mutate, data, error, isPending, reset, variables } = useMutation(
+    getDungeonRunMetadataMutationOptions(queryClient),
+  );
+  return { data, error, isPending, lookup: mutate, reset, variables };
+}
+
+export function useImportDungeonRun() {
+  const queryClient = useQueryClient();
+  const { mutate, error, isPending, reset } = useMutation(
+    importDungeonRunMutationOptions(queryClient),
+  );
+  return { error, importRun: mutate, isPending, reset };
+}
+
+export function useDeleteImportedDungeonRun() {
+  const queryClient = useQueryClient();
+  const { mutate, error, isPending, variables } = useMutation(
+    deleteImportedDungeonRunMutationOptions(queryClient),
+  );
+  return { delete: mutate, error, isPending, variables };
 }

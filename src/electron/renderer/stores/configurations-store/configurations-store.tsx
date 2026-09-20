@@ -1,17 +1,12 @@
-import {
-  useMutation,
-  useQueryClient,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
 import * as R from "effect/Record";
 import { createContext, type ReactNode, useContext, useMemo } from "react";
 
 import {
-  deleteConfigurationMutationOptions,
-  saveConfigurationMutationOptions,
-  updateConfigurationMutationOptions,
+  useDeleteConfiguration,
+  useSaveConfiguration,
+  useUpdateConfiguration,
 } from "@/electron/renderer/api/configuration/configuration-mutations.ts";
-import { getConfigurationsQueryOptions } from "@/electron/renderer/api/configuration/configuration-queries.ts";
+import { useConfigurationsSuspense } from "@/electron/renderer/api/configuration/configuration-queries.ts";
 import { saveConfigurationApiRequest } from "@/electron/renderer/components/configuration/form/configuration-editor-adapter.ts";
 import { type DecodedConfigurationEditorValue } from "@/electron/renderer/components/configuration/form/configuration-form-schema.ts";
 import { useAppStore } from "@/electron/renderer/stores/app-state-store/use-app-store.ts";
@@ -83,25 +78,15 @@ const ConfigurationActionContext = createContext<
 export function ConfigurationProvider({
   children,
 }: ConfigurationProviderProps) {
-  const queryClient = useQueryClient();
-
-  const { data: configurations } = useSuspenseQuery(
-    getConfigurationsQueryOptions(),
-  );
+  const configurations = useConfigurationsSuspense();
 
   const { selectedConfigurationId, setSelectedConfigurationId } = useAppStore();
 
-  const saveMutation = useMutation(
-    saveConfigurationMutationOptions(queryClient),
-  );
+  const saveMutation = useSaveConfiguration();
 
-  const updateMutation = useMutation(
-    updateConfigurationMutationOptions(queryClient),
-  );
+  const updateMutation = useUpdateConfiguration();
 
-  const deleteMutation = useMutation(
-    deleteConfigurationMutationOptions(queryClient),
-  );
+  const deleteMutation = useDeleteConfiguration();
 
   const configurationsById = useMemo(() => {
     return createConfigurationsById(configurations);
@@ -128,7 +113,7 @@ export function ConfigurationProvider({
           setSelectedConfigurationId(null);
         }
 
-        deleteMutation.mutate(
+        deleteMutation.delete(
           {
             id,
           },
@@ -150,7 +135,7 @@ export function ConfigurationProvider({
       save: (value) => {
         const request = saveConfigurationApiRequest(value);
 
-        saveMutation.mutate(
+        saveMutation.save(
           {
             request,
           },
@@ -167,7 +152,7 @@ export function ConfigurationProvider({
       update: (id, value) => {
         const request = saveConfigurationApiRequest(value);
 
-        updateMutation.mutate(
+        updateMutation.update(
           {
             id,
             request,
@@ -185,15 +170,15 @@ export function ConfigurationProvider({
     configurationsById,
     deleteMutation.error,
     deleteMutation.isPending,
-    deleteMutation.mutate,
+    deleteMutation.delete,
     saveMutation.error,
     saveMutation.isPending,
-    saveMutation.mutate,
+    saveMutation.save,
     selectedConfigurationId,
     setSelectedConfigurationId,
     updateMutation.error,
     updateMutation.isPending,
-    updateMutation.mutate,
+    updateMutation.update,
   ]);
 
   const stateContextValue = useMemo<ConfigurationStateContextValue>(() => {

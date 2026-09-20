@@ -1,9 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { CatchBoundary } from "@tanstack/react-router";
 import * as DateTime from "effect/DateTime";
 import { Trash2Icon } from "lucide-react";
+import { Suspense } from "react";
 
-import { deleteImportedDungeonRunMutationOptions } from "@/electron/renderer/api/fellowship-logs/fellowship-logs-mutations.ts";
-import { getFellowshipLogsDungeonRunsQueryOptions } from "@/electron/renderer/api/fellowship-logs/fellowship-logs-queries.ts";
+import { useDeleteImportedDungeonRun } from "@/electron/renderer/api/fellowship-logs/fellowship-logs-mutations.ts";
+import { useImportedDungeonRunsSuspense } from "@/electron/renderer/api/fellowship-logs/fellowship-logs-queries.ts";
 import { Button } from "@/electron/renderer/components/ui/button.tsx";
 import {
   Item,
@@ -13,7 +14,7 @@ import {
   ItemGroup,
   ItemTitle,
 } from "@/electron/renderer/components/ui/item.tsx";
-import { Spinner } from "@/electron/renderer/components/ui/spinner.tsx";
+import { Skeleton } from "@/electron/renderer/components/ui/skeleton.tsx";
 
 function formatImportedAt(importedAtMilliseconds: number): string {
   return DateTime.formatLocal(DateTime.makeUnsafe(importedAtMilliseconds), {
@@ -22,29 +23,49 @@ function formatImportedAt(importedAtMilliseconds: number): string {
   });
 }
 
-export function ImportedDungeonRunsList() {
-  const queryClient = useQueryClient();
-  const query = useQuery(getFellowshipLogsDungeonRunsQueryOptions());
-  const deleteMutation = useMutation(
-    deleteImportedDungeonRunMutationOptions(queryClient),
+function ImportedDungeonRunsLoadError() {
+  return (
+    <p className="text-sm text-destructive">Failed to load imported runs.</p>
   );
+}
 
-  if (query.isPending) {
-    return (
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Spinner />
-        Loading imported runs...
-      </div>
-    );
-  }
+function ImportedDungeonRunsListSkeleton({
+  numRows = 1,
+}: {
+  numRows?: number;
+}) {
+  const rowIndexes = Array.from({ length: numRows }, (_, index) => {
+    return index;
+  });
 
-  if (query.isError) {
-    return (
-      <p className="text-sm text-destructive">Failed to load imported runs.</p>
-    );
-  }
+  return (
+    <section
+      aria-busy="true"
+      aria-label="Loading imported runs"
+      aria-live="polite"
+    >
+      <ItemGroup aria-hidden="true">
+        {rowIndexes.map((rowIndex) => (
+          <Item key={rowIndex} variant="outline">
+            <ItemContent>
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-4 w-64 max-w-full" />
+            </ItemContent>
+            <ItemActions>
+              <Skeleton className="size-8 rounded-md" />
+            </ItemActions>
+          </Item>
+        ))}
+      </ItemGroup>
+    </section>
+  );
+}
 
-  if (query.data.length === 0) {
+function ImportedDungeonRunsListContent() {
+  const importedDungeonRuns = useImportedDungeonRunsSuspense();
+  const deleteMutation = useDeleteImportedDungeonRun();
+
+  if (importedDungeonRuns.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
         No Fellowship Logs runs imported yet.
@@ -54,7 +75,7 @@ export function ImportedDungeonRunsList() {
 
   return (
     <ItemGroup>
-      {query.data.map((importedDungeonRun) => {
+      {importedDungeonRuns.map((importedDungeonRun) => {
         return (
           <Item key={importedDungeonRun.dungeonRunId} variant="outline">
             <ItemContent>
@@ -77,7 +98,7 @@ export function ImportedDungeonRunsList() {
                     importedDungeonRun.dungeonRunId
                 }
                 onClick={() => {
-                  deleteMutation.mutate({
+                  deleteMutation.delete({
                     dungeonRunId: importedDungeonRun.dungeonRunId,
                   });
                 }}
@@ -93,5 +114,18 @@ export function ImportedDungeonRunsList() {
         );
       })}
     </ItemGroup>
+  );
+}
+
+export function ImportedDungeonRunsList() {
+  return (
+    <CatchBoundary
+      errorComponent={ImportedDungeonRunsLoadError}
+      getResetKey={() => "imported-dungeon-runs"}
+    >
+      <Suspense fallback={<ImportedDungeonRunsListSkeleton />}>
+        <ImportedDungeonRunsListContent />
+      </Suspense>
+    </CatchBoundary>
   );
 }

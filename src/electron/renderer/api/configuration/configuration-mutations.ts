@@ -1,4 +1,9 @@
-import { mutationOptions, type QueryClient } from "@tanstack/react-query";
+import {
+  mutationOptions,
+  type QueryClient,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import * as A from "effect/Array";
 import * as E from "effect/Effect";
 
@@ -385,4 +390,28 @@ export function deleteConfigurationsByDungeonAndLevelMutationOptions(
       return browserRuntime.runPromise(invalidateConfigurations(queryClient));
     },
   });
+}
+
+export function useSaveConfiguration() {
+  const queryClient = useQueryClient();
+  const { mutate, error, isPending } = useMutation(
+    saveConfigurationMutationOptions(queryClient),
+  );
+  return { error, isPending, save: mutate };
+}
+
+export function useUpdateConfiguration() {
+  const queryClient = useQueryClient();
+  const { mutate, error, isPending } = useMutation(
+    updateConfigurationMutationOptions(queryClient),
+  );
+  return { error, isPending, update: mutate };
+}
+
+export function useDeleteConfiguration() {
+  const queryClient = useQueryClient();
+  const { mutate, error, isPending } = useMutation(
+    deleteConfigurationMutationOptions(queryClient),
+  );
+  return { delete: mutate, error, isPending };
 }

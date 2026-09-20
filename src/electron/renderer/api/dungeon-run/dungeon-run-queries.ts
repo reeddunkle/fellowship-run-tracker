@@ -1,5 +1,7 @@
 import {
   queryOptions,
+  skipToken,
+  useQuery,
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
@@ -75,4 +77,17 @@ export function useInvalidateDungeonRunHistory(): () => void {
       queryKey: DUNGEON_RUN_HISTORY_QUERY_KEY_PREFIX,
     });
   }, [queryClient]);
+}
+
+export function useDungeonRunHistoryQuery(
+  args: DungeonRunHistoryQueryOptionsArgs | null,
+) {
+  return useQuery(
+    args === null
+      ? {
+          queryFn: skipToken,
+          queryKey: [...DUNGEON_RUN_HISTORY_QUERY_KEY_PREFIX, "disabled"],
+        }
+      : getDungeonRunHistoryQueryOptions(args),
+  );
 }

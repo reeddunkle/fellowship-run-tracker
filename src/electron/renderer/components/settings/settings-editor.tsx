@@ -1,4 +1,3 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 import {
@@ -9,7 +8,7 @@ import {
   XCircleIcon,
 } from "lucide-react";
 
-import { refreshFellowshipLogsRateLimitDataMutationOptions } from "@/electron/renderer/api/fellowship-logs/fellowship-logs-mutations.ts";
+import { useRefreshFellowshipLogsRateLimitData } from "@/electron/renderer/api/fellowship-logs/fellowship-logs-mutations.ts";
 import { FellowshipLogsRateLimitData } from "@/electron/renderer/components/fellowship-logs/fellowship-logs-rate-limit-data.tsx";
 import {
   useAppSettings,
@@ -111,11 +110,7 @@ export function SettingsEditor() {
   const { error, isSaving } = useSettingsSaveStatus();
   const appSettings = useAppSettings();
 
-  const queryClient = useQueryClient();
-
-  const refreshRateLimitDataMutation = useMutation(
-    refreshFellowshipLogsRateLimitDataMutationOptions(queryClient),
-  );
+  const refreshRateLimitDataMutation = useRefreshFellowshipLogsRateLimitData();
 
   const isRefreshingRateLimitData = refreshRateLimitDataMutation.isPending;
   const rateLimitData = refreshRateLimitDataMutation.data ?? null;
@@ -383,7 +378,7 @@ export function SettingsEditor() {
                 <Button
                   disabled={isRefreshingRateLimitData}
                   onClick={() => {
-                    refreshRateLimitDataMutation.mutate();
+                    refreshRateLimitDataMutation.refresh();
                   }}
                   type="button"
                   variant="outline"
