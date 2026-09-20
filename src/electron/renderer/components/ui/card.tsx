@@ -1,5 +1,9 @@
 import type * as React from "react";
 
+import {
+  descriptionStyles,
+  titleStyles,
+} from "@/electron/renderer/components/ui/primitive-styles";
 import { cn } from "@/util/class-names";
 
 export function Card({
@@ -43,7 +47,8 @@ export function CardTitle({
   return (
     <div
       className={cn(
-        "font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm",
+        titleStyles,
+        "group-data-[size=sm]/card:text-sm",
         className,
       )}
       data-slot="card-title"
@@ -58,7 +63,7 @@ export function CardDescription({
 }: React.ComponentProps<"div">) {
   return (
     <div
-      className={cn("text-sm text-muted-foreground", className)}
+      className={cn(descriptionStyles, className)}
       data-slot="card-description"
       {...props}
     />

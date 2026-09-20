@@ -3,6 +3,11 @@ import type * as React from "react";
 import { useRef } from "react";
 
 import { Input } from "@/electron/renderer/components/ui/input.tsx";
+import {
+  controlFrameStyles,
+  controlSizeStyles,
+  textControlStyles,
+} from "@/electron/renderer/components/ui/primitive-styles";
 import { cn } from "@/util/class-names.ts";
 
 type DirectoryInputProps = Omit<
@@ -55,11 +60,16 @@ export function DirectoryInput({
   return (
     <div className={cn("w-full min-w-0", className)}>
       <button
-        className="group grid h-10 w-full min-w-0 cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-stretch overflow-hidden rounded-lg border border-input bg-transparent text-left text-base outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
+        className={cn(
+          controlFrameStyles,
+          controlSizeStyles.default,
+          textControlStyles,
+          "group grid w-full cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-stretch overflow-hidden text-left",
+        )}
         onClick={chooseDirectory}
         type="button"
       >
-        <span className="min-w-0 truncate px-2.5 py-1.5">
+        <span className="min-w-0 self-center truncate px-2.5">
           {String(value ?? "")}
         </span>
         <span className="flex shrink-0 items-center border-l border-input px-3 font-medium transition-colors group-hover:bg-accent group-hover:text-accent-foreground">

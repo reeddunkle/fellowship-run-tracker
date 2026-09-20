@@ -3,6 +3,11 @@ import { useRender } from "@base-ui/react/use-render";
 import { cva, type VariantProps } from "class-variance-authority";
 import type * as React from "react";
 
+import {
+  descriptionStyles,
+  focusRingStyles,
+  labelVariants,
+} from "@/electron/renderer/components/ui/primitive-styles";
 import { Separator } from "@/electron/renderer/components/ui/separator";
 import { cn } from "@/util/class-names";
 
@@ -34,7 +39,10 @@ function ItemSeparator({
 }
 
 const itemVariants = cva(
-  "group/item flex w-full flex-wrap items-center rounded-lg border text-sm transition-colors duration-100 outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 [a]:transition-colors [a]:hover:bg-muted",
+  [
+    focusRingStyles,
+    "group/item flex w-full flex-wrap items-center rounded-lg border text-sm transition-colors duration-100 [a]:transition-colors [a]:hover:bg-muted",
+  ],
   {
     defaultVariants: {
       size: "default",
@@ -128,7 +136,8 @@ function ItemTitle({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       className={cn(
-        "line-clamp-1 flex w-fit items-center gap-2 text-sm leading-snug font-medium underline-offset-4",
+        labelVariants(),
+        "line-clamp-1 flex w-fit items-center gap-2 underline-offset-4",
         className,
       )}
       data-slot="item-title"
@@ -141,7 +150,8 @@ function ItemDescription({ className, ...props }: React.ComponentProps<"p">) {
   return (
     <p
       className={cn(
-        "line-clamp-2 text-left text-sm leading-normal font-normal text-muted-foreground group-data-[size=xs]/item:text-xs [&>a]:underline [&>a]:underline-offset-4 [&>a:hover]:text-primary",
+        descriptionStyles,
+        "line-clamp-2 text-left group-data-[size=xs]/item:text-xs",
         className,
       )}
       data-slot="item-description"

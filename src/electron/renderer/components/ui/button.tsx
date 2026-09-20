@@ -1,10 +1,19 @@
 import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cva, type VariantProps } from "class-variance-authority";
 
+import {
+  controlSizeStyles,
+  focusRingStyles,
+  invalidControlStyles,
+} from "@/electron/renderer/components/ui/primitive-styles";
 import { cn } from "@/util/class-names";
 
 const buttonStyles = cva(
-  "group/button inline-flex shrink-0 cursor-pointer items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  [
+    focusRingStyles,
+    invalidControlStyles,
+    "group/button inline-flex shrink-0 cursor-pointer items-center justify-center border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all select-none active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  ],
   {
     defaultVariants: {
       size: "default",
@@ -12,19 +21,43 @@ const buttonStyles = cva(
     },
     variants: {
       size: {
-        default:
-          "h-10 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
-        icon: "size-10 [&_svg:not([class*='size-'])]:size-4",
-        "icon-lg": "size-11 [&_svg:not([class*='size-'])]:size-4.5",
-        "icon-sm":
-          "size-9 rounded-[min(var(--radius-md),12px)] [&_svg:not([class*='size-'])]:size-3.5",
-        "icon-xl": "size-12 [&_svg:not([class*='size-'])]:size-5",
-        "icon-xs":
-          "size-8 rounded-[min(var(--radius-md),10px)] [&_svg:not([class*='size-'])]:size-3",
-        lg: "h-11 gap-1.5 px-3 has-data-[icon=inline-end]:pr-2.5 has-data-[icon=inline-start]:pl-2.5 [&_svg:not([class*='size-'])]:size-4.5",
-        sm: "h-9 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
-        xl: "h-12 gap-2 px-4 text-base has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3 [&_svg:not([class*='size-'])]:size-5",
-        xs: "h-8 gap-1 rounded-[min(var(--radius-md),10px)] px-2 text-xs in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
+        default: [
+          controlSizeStyles.default,
+          "gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
+        ],
+        icon: controlSizeStyles.icon,
+        "icon-lg": [
+          controlSizeStyles["icon-lg"],
+          "[&_svg:not([class*='size-'])]:size-4.5",
+        ],
+        "icon-sm": [
+          controlSizeStyles["icon-sm"],
+          "[&_svg:not([class*='size-'])]:size-3.5",
+        ],
+        "icon-xl": [
+          controlSizeStyles["icon-xl"],
+          "[&_svg:not([class*='size-'])]:size-5",
+        ],
+        "icon-xs": [
+          controlSizeStyles["icon-xs"],
+          "[&_svg:not([class*='size-'])]:size-3",
+        ],
+        lg: [
+          controlSizeStyles.lg,
+          "gap-1.5 px-3 has-data-[icon=inline-end]:pr-2.5 has-data-[icon=inline-start]:pl-2.5 [&_svg:not([class*='size-'])]:size-4.5",
+        ],
+        sm: [
+          controlSizeStyles.sm,
+          "gap-1 px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
+        ],
+        xl: [
+          controlSizeStyles.xl,
+          "gap-2 px-4 text-base has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3 [&_svg:not([class*='size-'])]:size-5",
+        ],
+        xs: [
+          controlSizeStyles.xs,
+          "gap-1 px-2 text-xs in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
+        ],
       },
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/80",

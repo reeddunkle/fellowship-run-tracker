@@ -116,8 +116,8 @@ export function DungeonRun() {
             aria-label="Resize window to its contents"
             onClick={resizeToContent}
             size="icon"
-            variant="outline"
             title="Resize window to its contents"
+            variant="outline"
           >
             <SquareDashedBottomIcon />
           </Button>
