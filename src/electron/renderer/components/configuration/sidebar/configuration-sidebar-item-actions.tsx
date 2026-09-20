@@ -11,6 +11,7 @@ import {
 } from "@/electron/renderer/components/ui/popover.tsx";
 import { Separator } from "@/electron/renderer/components/ui/separator";
 import { type ConfigurationApiConfiguration } from "@/services/api/configuration/configuration-api-schema.ts";
+import { cn } from "@/util/class-names";
 import { formatLocalDateTime } from "@/util/format-date-time.ts";
 import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";
 
@@ -31,10 +32,14 @@ export function ConfigurationSidebarItemActions({
         render={
           <Button
             aria-label={`Actions for ${configuration.label}`}
-            className="rounded-full"
+            className={cn(
+              "rounded-full",
+              isActive &&
+                "hover:bg-sidebar-accent-foreground/10 aria-expanded:bg-sidebar-accent-foreground/10 dark:hover:bg-sidebar-accent-foreground/10",
+            )}
             size="icon-xs"
             type="button"
-            variant={isActive ? "secondary" : "ghost"}
+            variant="ghost"
           />
         }
       >

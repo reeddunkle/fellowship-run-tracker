@@ -15,3 +15,5 @@ test-logs/
 .tanstack/
 
 .effect-tsgo-lsp-*/
+
+.pnpm-store/

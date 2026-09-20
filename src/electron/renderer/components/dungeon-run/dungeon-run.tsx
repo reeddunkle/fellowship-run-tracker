@@ -110,31 +110,41 @@ export function DungeonRun() {
 
   return (
     <section className="grid min-w-105 w-full gap-3">
-      <div className="flex items-center justify-end gap-2">
-        <Button
-          onClick={
-            areAllMilestonesExpanded
-              ? collapseAllMilestones
-              : expandAllMilestones
-          }
-          size="icon"
-          title={
-            areAllMilestonesExpanded
-              ? "Collapse all milestones"
-              : "Expand all milestones"
-          }
-          variant="outline"
-        >
-          {areAllMilestonesExpanded ? (
-            <ChevronsDownUpIcon />
-          ) : (
-            <ChevronsUpDownIcon />
-          )}
-        </Button>
-        <Button onClick={resizeToContent} size="icon" variant="outline">
-          <SquareDashedBottomIcon />
-        </Button>
-        <DungeonRunDropdownMenu />
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Button
+            aria-label="Resize window to its contents"
+            onClick={resizeToContent}
+            size="icon"
+            variant="outline"
+            title="Resize window to its contents"
+          >
+            <SquareDashedBottomIcon />
+          </Button>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={
+              areAllMilestonesExpanded
+                ? collapseAllMilestones
+                : expandAllMilestones
+            }
+            size="icon"
+            title={
+              areAllMilestonesExpanded
+                ? "Collapse all milestones"
+                : "Expand all milestones"
+            }
+            variant="outline"
+          >
+            {areAllMilestonesExpanded ? (
+              <ChevronsDownUpIcon />
+            ) : (
+              <ChevronsUpDownIcon />
+            )}
+          </Button>
+          <DungeonRunDropdownMenu />
+        </div>
       </div>
       <header className="grid text-2xl w-full gap-1">
         <h2 className="truncate font-semibold">{configuration.label}</h2>
