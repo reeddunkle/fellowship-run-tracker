@@ -10,6 +10,7 @@ import {
 import {
   FellowshipLogsApiDungeonRunMetadataSchema,
   FellowshipLogsApiDungeonRunReferenceSchema,
+  FellowshipLogsApiImportDungeonRunOptionsSchema,
   FellowshipLogsApiImportDungeonRunResultSchema,
   FellowshipLogsApiImportedDungeonRunListSchema,
   FellowshipLogsApiLastKnownRateLimitDataSchema,
@@ -63,7 +64,7 @@ const ImportFellowshipLogsDungeonRunEndpoint = HttpApiEndpoint.post(
       FellowshipLogsApiRunNotFinishedErrorSchema,
       HttpApiError.InternalServerErrorNoContent,
     ],
-    payload: FellowshipLogsApiDungeonRunReferenceSchema,
+    payload: FellowshipLogsApiImportDungeonRunOptionsSchema,
     success: FellowshipLogsApiImportDungeonRunResultSchema,
   },
 );

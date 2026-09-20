@@ -1,7 +1,7 @@
 import { XIcon } from "lucide-react";
 
 import { useConfigurationEditor } from "@/electron/renderer/components/configuration/configuration-editor-provider.tsx";
-import { type ConfigurationFormApi } from "@/electron/renderer/components/configuration/configuration-form.ts";
+import { type ConfigurationFormApi } from "@/electron/renderer/components/configuration/form/configuration-form.ts";
 import { type RequirementLocation } from "@/electron/renderer/components/configuration/helpers/configuration-editor-metadata.ts";
 import { Button } from "@/electron/renderer/components/ui/button.tsx";
 import {

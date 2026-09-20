@@ -89,13 +89,23 @@ function createDetachedWindowContainer(document: Document) {
 
 /**
  * Measures the content's natural (shrink-to-fit) width by briefly forcing
- * the container to `fit-content`, the dungeon-run table to `width: auto`
+ * the container to `max-content`, the dungeon-run table to `width: auto`
  * (its normal `w-full` otherwise always stretches it to fill the container,
  * regardless of how narrow its columns actually need to be), and the label
  * column to its default width, then reading `scrollWidth` before restoring
  * all three to their normal (window-filling / flexible) state. Reading a
  * layout property like `scrollWidth` forces a synchronous layout, so this
  * never paints the intermediate state.
+ *
+ * `max-content` (not `fit-content`) is deliberate: `fit-content` resolves to
+ * `min(max-content, available-space)`, where "available space" is the
+ * *current* (pre-resize) window width. When the content needs to grow wider
+ * than the window currently is, `fit-content` clamps the measurement back
+ * down to that current width, silently undermeasuring by however much the
+ * content actually needs to grow. `max-content` ignores available space
+ * entirely and always reports the content's true intrinsic width, which is
+ * exactly what this measurement needs regardless of whether the window is
+ * about to grow or shrink.
  */
 function measureNaturalWidth(childContainer: HTMLElement) {
   const previousContainerWidth = childContainer.style.width;
@@ -108,7 +118,7 @@ function measureNaturalWidth(childContainer: HTMLElement) {
   );
   const previousLabelColumnWidth = labelColumn?.style.width;
 
-  childContainer.style.width = "fit-content";
+  childContainer.style.width = "max-content";
 
   if (table !== null) {
     table.style.width = "auto";

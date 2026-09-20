@@ -6,7 +6,7 @@ import * as Schema from "effect/Schema";
 import { FELLOWSHIP_EVENT } from "@/services/fellowship/constants/fellowship-event.ts";
 import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";
 
-import { type RequirementValuesForEventType } from "./configuration-editor-provider.tsx";
+import { type RequirementValuesForEventType } from "../configuration-editor-provider.tsx";
 import {
   ConfigurationEditorSchema,
   ConfigurationEditorStandardSchema,

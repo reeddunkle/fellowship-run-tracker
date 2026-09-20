@@ -1,6 +1,7 @@
 import * as Schema from "effect/Schema";
 
 import { ConfigurationIdSchema } from "@/validation/configuration/configuration-id-schema.ts";
+import { DungeonRunComparisonGroupSchema } from "@/validation/dungeon-run/dungeon-run-comparison-group-schema.ts";
 
 export const DUNGEON_RUN_TIME_COLUMN = {
   AVERAGE_DELTA: "AVERAGE_DELTA",
@@ -32,6 +33,7 @@ export type DungeonRunTimeColumnState =
   typeof DungeonRunTimeColumnStateSchema.Type;
 
 export const DungeonRunStateSchema = Schema.Struct({
+  comparisonGroup: DungeonRunComparisonGroupSchema,
   timeColumns: Schema.Array(DungeonRunTimeColumnStateSchema),
 });
 
@@ -56,6 +58,7 @@ export type AppState = typeof AppStateSchema.Type;
 
 export const DEFAULT_APP_STATE: AppState = {
   dungeonRun: {
+    comparisonGroup: "OWN",
     timeColumns: [
       {
         column: DUNGEON_RUN_TIME_COLUMN.BEST_DELTA,

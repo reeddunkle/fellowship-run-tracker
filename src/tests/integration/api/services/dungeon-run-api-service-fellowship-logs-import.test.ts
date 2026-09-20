@@ -41,6 +41,7 @@ describe("DungeonRunApiServiceLive with Fellowship Logs import", () => {
       const importResult = yield* fellowshipLogsDungeonRunImporter.importReport(
         {
           fightId: FIGHT_ID,
+          isOwnRun: true,
           reportCode: REPORT_CODE,
         },
       );

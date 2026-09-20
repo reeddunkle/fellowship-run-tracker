@@ -1,4 +1,3 @@
-import * as R from "effect/Record";
 import { CheckIcon, XIcon } from "lucide-react";
 
 import { Button } from "@/electron/renderer/components/ui/button.tsx";
@@ -8,12 +7,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@/electron/renderer/components/ui/card.tsx";
+import { Checkbox } from "@/electron/renderer/components/ui/checkbox.tsx";
+import { Field, FieldLabel } from "@/electron/renderer/components/ui/field.tsx";
 import { Spinner } from "@/electron/renderer/components/ui/spinner.tsx";
-import { type DungeonApiDungeonList } from "@/services/api/dungeon/dungeon-api-schema.ts";
+import { useFellowshipDataStore } from "@/electron/renderer/stores/fellowship-data/fellowship-data-store.tsx";
 import {
   type FellowshipLogsApiDungeonRunMetadata,
   type FellowshipLogsApiDungeonRunReference,
 } from "@/services/api/fellowship-logs/fellowship-logs-api-schema.ts";
+
+import { useImportConfirmationForm } from "./import-confirmation-form.ts";
+import { type DecodedImportConfirmationFormValue } from "./import-confirmation-form-schema.ts";
+
+const IMPORT_CONFIRMATION_FORM_DOM_ID = "import-dungeon-run-confirmation-form";
 
 function formatDuration(
   startedAtMilliseconds: number,
@@ -29,17 +35,15 @@ function formatDuration(
 }
 
 type ImportConfirmationCardProps = {
-  readonly dungeons: DungeonApiDungeonList;
   readonly error: unknown;
   readonly isImporting: boolean;
   readonly metadata: FellowshipLogsApiDungeonRunMetadata;
   readonly onCancel: () => void;
-  readonly onConfirm: () => void;
+  readonly onConfirm: (value: DecodedImportConfirmationFormValue) => void;
   readonly reference: FellowshipLogsApiDungeonRunReference;
 };
 
 export function ImportConfirmationCard({
-  dungeons,
   error,
   isImporting,
   metadata,
@@ -47,12 +51,14 @@ export function ImportConfirmationCard({
   onConfirm,
   reference,
 }: ImportConfirmationCardProps) {
-  const dungeonsById = R.fromIterableBy(dungeons, (dungeon) => {
-    return dungeon.id;
-  });
+  const dungeonsById = useFellowshipDataStore((state) => state.dungeonsById);
 
   const dungeonName =
     dungeonsById[metadata.dungeonId]?.name ?? metadata.dungeonId;
+
+  const form = useImportConfirmationForm({
+    onConfirm,
+  });
 
   return (
     <Card>
@@ -85,8 +91,39 @@ export function ImportConfirmationCard({
             </dd>
           </div>
         </dl>
+        <form
+          id={IMPORT_CONFIRMATION_FORM_DOM_ID}
+          onSubmit={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            void form.handleSubmit();
+          }}
+        >
+          <form.Field name="isOwnRun">
+            {(field) => {
+              return (
+                <Field orientation="horizontal">
+                  <Checkbox
+                    checked={field.state.value}
+                    disabled={isImporting}
+                    id={field.name}
+                    onCheckedChange={(checked) => {
+                      field.handleChange(checked === true);
+                    }}
+                  />
+                  <FieldLabel htmlFor={field.name}>This run is mine</FieldLabel>
+                </Field>
+              );
+            }}
+          </form.Field>
+        </form>
         <div className="flex items-center gap-3">
-          <Button disabled={isImporting} onClick={onConfirm} type="button">
+          <Button
+            disabled={isImporting}
+            form={IMPORT_CONFIRMATION_FORM_DOM_ID}
+            type="submit"
+          >
             {isImporting ? <Spinner /> : <CheckIcon />}
             {isImporting ? "Importing..." : "Import"}
           </Button>

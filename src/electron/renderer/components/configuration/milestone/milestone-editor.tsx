@@ -5,7 +5,7 @@ import { useConfigurationEditor } from "@/electron/renderer/components/configura
 import {
   type ConfigurationFormApi,
   createRequirementEditorValue,
-} from "@/electron/renderer/components/configuration/configuration-form.ts";
+} from "@/electron/renderer/components/configuration/form/configuration-form.ts";
 import { RequirementEditor } from "@/electron/renderer/components/configuration/requirement/requirement-editor.tsx";
 import { Button } from "@/electron/renderer/components/ui/button.tsx";
 import {

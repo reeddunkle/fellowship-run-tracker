@@ -15,8 +15,8 @@ import { ReactContextError } from "@/errors/react-context-error.ts";
 import { FELLOWSHIP_EVENT } from "@/services/fellowship/constants/fellowship-event.ts";
 import { type RequirementEventType } from "@/services/fellowship/validation/requirement-event-type-schema.ts";
 
-import { type ConfigurationFormApi } from "./configuration-form.ts";
-import { type ConfigurationEditorValue } from "./configuration-form-schema.ts";
+import { type ConfigurationFormApi } from "./form/configuration-form.ts";
+import { type ConfigurationEditorValue } from "./form/configuration-form-schema.ts";
 import {
   type ConfigurationEditorRequirementMetadata,
   type CreateRequirementMetadataOptions,

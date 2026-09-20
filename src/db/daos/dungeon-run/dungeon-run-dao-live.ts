@@ -54,6 +54,7 @@ const make = E.gen(function* () {
           dungeon_id,
           dungeon_level,
           source,
+          is_own_run,
           started_at,
           ended_at,
           created_at,
@@ -79,6 +80,7 @@ const make = E.gen(function* () {
     dungeonId,
     dungeonLevel,
     endedAt,
+    isOwnRun,
     source,
     startedAt,
   }) => {
@@ -87,6 +89,7 @@ const make = E.gen(function* () {
         dungeonId,
         dungeonLevel,
         endedAt,
+        isOwnRun,
         source,
         startedAt,
       });
@@ -102,6 +105,7 @@ const make = E.gen(function* () {
             dungeon_id,
             dungeon_level,
             source,
+            is_own_run,
             started_at,
             ended_at,
             created_at,
@@ -113,6 +117,7 @@ const make = E.gen(function* () {
             ${insert.dungeonId},
             ${insert.dungeonLevel},
             ${insert.source},
+            ${insert.isOwnRun},
             ${insert.startedAt},
             ${insert.endedAt},
             ${insert.createdAt},
@@ -123,6 +128,7 @@ const make = E.gen(function* () {
           dungeon_id,
           dungeon_level,
           source,
+          is_own_run,
           started_at,
           ended_at,
           created_at,
@@ -164,12 +170,14 @@ const make = E.gen(function* () {
   const deleteByDungeon: DungeonRunDAOShape["deleteByDungeon"] = ({
     dungeonId,
     dungeonLevel,
+    isOwnRun,
   }) => {
     return sql`
       DELETE FROM dungeon_run
       WHERE
         dungeon_id = ${dungeonId}
         AND dungeon_level = ${dungeonLevel}
+        AND is_own_run = ${isOwnRun ? 1 : 0}
     `.pipe(E.asVoid, E.mapError(mapDungeonRunDAOError));
   };
 

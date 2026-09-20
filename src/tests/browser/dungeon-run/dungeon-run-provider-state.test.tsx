@@ -1,4 +1,3 @@
-import * as E from "effect/Effect";
 import * as Stream from "effect/Stream";
 import { describe, expect, test } from "vitest";
 import { render } from "vitest-browser-react";
@@ -6,14 +5,13 @@ import { render } from "vitest-browser-react";
 import { API_EVENT_CONNECTION_STATE } from "@/electron/renderer/api/common.ts";
 import { type DungeonRunEventStreamEvent } from "@/electron/renderer/api/dungeon-run/dungeon-run-event-stream.ts";
 import { makeDungeonRunEventStore } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-event-store.ts";
-import {
-  DungeonRunProvider,
-  useDungeonRunServerState,
-} from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-provider.tsx";
+import { useDungeonRunServerState } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-provider.tsx";
 import {
   MOCK_DUNGEON_RUN_API_MESSAGE,
   MOCK_DUNGEON_RUN_STATE_API,
 } from "@/tests/common/fixtures/dungeon-run-api-fixtures.ts";
+
+import { TestDungeonRunProvider } from "./test-dungeon-run-provider.tsx";
 
 function DungeonRunServerStateConsumer() {
   const {
@@ -27,17 +25,13 @@ function DungeonRunServerStateConsumer() {
   return (
     <div>
       <div data-testid="event-connection-state">{eventConnectionState}</div>
-
       <div data-testid="dungeon-run">
         {dungeonRun === null ? "No dungeon run" : dungeonRun.status}
       </div>
-
       <div data-testid="history">
         {history === null ? "No history" : "Has history"}
       </div>
-
       <div data-testid="observation-count">{observations.length}</div>
-
       <div data-testid="latest-observation">
         {latestObservation?.targetId ?? "No observation"}
       </div>
@@ -54,14 +48,9 @@ describe("DungeonRunProvider server state", () => {
     });
 
     const screen = await render(
-      <DungeonRunProvider
-        eventStore={eventStore}
-        history={null}
-        historyKey={null}
-        invalidate={() => E.void}
-      >
+      <TestDungeonRunProvider eventStore={eventStore}>
         <DungeonRunServerStateConsumer />
-      </DungeonRunProvider>,
+      </TestDungeonRunProvider>,
     );
 
     await expect
@@ -104,14 +93,9 @@ describe("DungeonRunProvider server state", () => {
     });
 
     const screen = await render(
-      <DungeonRunProvider
-        eventStore={eventStore}
-        history={null}
-        historyKey={null}
-        invalidate={() => E.void}
-      >
+      <TestDungeonRunProvider eventStore={eventStore}>
         <DungeonRunServerStateConsumer />
-      </DungeonRunProvider>,
+      </TestDungeonRunProvider>,
     );
 
     eventStore.start();

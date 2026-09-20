@@ -1,10 +1,10 @@
 import { useMemo } from "react";
 
 import { ConfigurationEditor } from "@/electron/renderer/components/configuration/configuration-editor.tsx";
-import { EMPTY_CONFIGURATION_EDITOR_VALUE } from "@/electron/renderer/components/configuration/configuration-form.ts";
-import { createConfigurationEditorValue } from "@/electron/renderer/components/configuration/helpers/configuration-editor-adapter.ts";
+import { createConfigurationEditorValue } from "@/electron/renderer/components/configuration/form/configuration-editor-adapter.ts";
+import { EMPTY_CONFIGURATION_EDITOR_VALUE } from "@/electron/renderer/components/configuration/form/configuration-form.ts";
+import { makeConfigurationSaveStateLookup } from "@/electron/renderer/components/configuration/form/configuration-save-state.ts";
 import { type DungeonOption } from "@/electron/renderer/components/configuration/helpers/configuration-editor-types.ts";
-import { makeConfigurationSaveStateLookup } from "@/electron/renderer/components/configuration/helpers/configuration-save-state.ts";
 import {
   useConfigurations,
   useSelectedConfiguration,

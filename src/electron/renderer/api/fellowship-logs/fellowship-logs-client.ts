@@ -1,7 +1,10 @@
 import * as E from "effect/Effect";
 
 import { AppApiClient } from "@/electron/renderer/services/app-api-client/app-api-client";
-import { type FellowshipLogsApiDungeonRunReference } from "@/services/api/fellowship-logs/fellowship-logs-api-schema.ts";
+import {
+  type FellowshipLogsApiDungeonRunReference,
+  type FellowshipLogsApiImportDungeonRunOptions,
+} from "@/services/api/fellowship-logs/fellowship-logs-api-schema.ts";
 import { type DungeonRunId } from "@/validation/dungeon-run/dungeon-run-id-schema.ts";
 
 export function getRateLimitData() {
@@ -33,7 +36,7 @@ export function getDungeonRunMetadata(
 }
 
 export function importDungeonRun(
-  options: FellowshipLogsApiDungeonRunReference,
+  options: FellowshipLogsApiImportDungeonRunOptions,
 ) {
   return E.gen(function* () {
     const client = yield* AppApiClient;

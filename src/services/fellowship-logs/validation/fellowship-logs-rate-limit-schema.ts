@@ -22,12 +22,6 @@ export const FellowshipLogsRateLimitResponseDataSchema = Schema.Struct({
   rateLimitData: FellowshipLogsRateLimitDataSchema,
 });
 
-/**
- * Fellowship Logs lets every query request `rateLimitData` as a sibling of
- * its "real" selection. This mixes that optional field into a response data
- * schema so a query's response can be decoded and, opportunistically, yield
- * the caller's latest rate limit standing alongside its actual data.
- */
 export function withRateLimitData<const Fields extends Schema.Struct.Fields>(
   fields: Fields,
 ) {

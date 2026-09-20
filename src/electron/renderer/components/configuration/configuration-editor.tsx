@@ -1,10 +1,10 @@
 import { ConfigurationEditorActions } from "@/electron/renderer/components/configuration/configuration-editor-actions.tsx";
 import { ConfigurationEditorFormFields } from "@/electron/renderer/components/configuration/configuration-editor-form-fields.tsx";
 import { ConfigurationEditorHistory } from "@/electron/renderer/components/configuration/configuration-editor-history.tsx";
-import { type ConfigurationSaveStateResolver } from "@/electron/renderer/components/configuration/configuration-editor-persistence.ts";
 import { ConfigurationEditorProvider } from "@/electron/renderer/components/configuration/configuration-editor-provider.tsx";
-import { useConfigurationForm } from "@/electron/renderer/components/configuration/configuration-form.ts";
-import { type ConfigurationEditorValue } from "@/electron/renderer/components/configuration/configuration-form-schema.ts";
+import { type ConfigurationSaveStateResolver } from "@/electron/renderer/components/configuration/form/configuration-editor-persistence.ts";
+import { useConfigurationForm } from "@/electron/renderer/components/configuration/form/configuration-form.ts";
+import { type ConfigurationEditorValue } from "@/electron/renderer/components/configuration/form/configuration-form-schema.ts";
 import { type DungeonOption } from "@/electron/renderer/components/configuration/helpers/configuration-editor-types.ts";
 import { useConfigurationActions } from "@/electron/renderer/stores/configurations-store/configurations-store.tsx";
 import { type RequirementEventType } from "@/services/fellowship/validation/requirement-event-type-schema.ts";

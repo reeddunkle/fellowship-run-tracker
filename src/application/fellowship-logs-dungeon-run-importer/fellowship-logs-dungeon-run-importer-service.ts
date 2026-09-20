@@ -22,7 +22,9 @@ export type FellowshipLogsDungeonRunReference = {
 };
 
 export type ImportFellowshipLogsDungeonRunOptions =
-  FellowshipLogsDungeonRunReference;
+  FellowshipLogsDungeonRunReference & {
+    readonly isOwnRun: boolean;
+  };
 
 export type ImportFellowshipLogsDungeonRunResult = {
   readonly dungeonRunId: DungeonRunId;

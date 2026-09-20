@@ -6,6 +6,7 @@ import {
   type DungeonRunStateApi,
 } from "@/api/websocket/dungeon-run/dungeon-run-api-message-schema.ts";
 import {
+  type DungeonRunApiComparisonGroup,
   type DungeonRunApiHistory,
   type DungeonRunApiObservationStatistics,
 } from "@/services/api/dungeon-run/dungeon-run-api-schema.ts";
@@ -36,6 +37,7 @@ export type DungeonRunInterpretationState = {
 };
 
 type CreateDungeonRunInterpretationStateOptions = {
+  readonly comparisonGroup: DungeonRunApiComparisonGroup;
   readonly dungeonRun: DungeonRunStateApi["dungeonRun"];
   readonly history: DungeonRunApiHistory | null;
   readonly observations: ReadonlyArray<DungeonRunObservationApi>;
@@ -53,12 +55,20 @@ function createObservationAnalytics(
 }
 
 export function createDungeonRunInterpretationState({
+  comparisonGroup,
   dungeonRun,
   history,
   observations,
 }: CreateDungeonRunInterpretationStateOptions): DungeonRunInterpretationState {
-  const historicalStatisticsByKey = A.reduce(
+  const relevantHistoricalStatistics = A.filter(
     history?.observations ?? [],
+    (statistics) => {
+      return statistics.comparisonGroup === comparisonGroup;
+    },
+  );
+
+  const historicalStatisticsByKey = A.reduce(
+    relevantHistoricalStatistics,
     new Map<string, DungeonRunApiObservationStatistics>(),
     (accumulator, statistics) => {
       const key = encodeRequirementObservationOccurrenceIdentity([

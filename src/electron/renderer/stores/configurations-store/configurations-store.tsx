@@ -12,8 +12,8 @@ import {
   updateConfigurationMutationOptions,
 } from "@/electron/renderer/api/configuration/configuration-mutations.ts";
 import { getConfigurationsQueryOptions } from "@/electron/renderer/api/configuration/configuration-queries.ts";
-import { type DecodedConfigurationEditorValue } from "@/electron/renderer/components/configuration/configuration-form-schema.ts";
-import { saveConfigurationApiRequest } from "@/electron/renderer/components/configuration/helpers/configuration-editor-adapter.ts";
+import { saveConfigurationApiRequest } from "@/electron/renderer/components/configuration/form/configuration-editor-adapter.ts";
+import { type DecodedConfigurationEditorValue } from "@/electron/renderer/components/configuration/form/configuration-form-schema.ts";
 import { useAppStore } from "@/electron/renderer/stores/app-state-store/use-app-store.ts";
 import { ReactContextError } from "@/errors/react-context-error.ts";
 import {

@@ -10,10 +10,17 @@ import {
 import { AppStateInitializationError } from "@/errors/app-state-error.ts";
 import { AppStateService } from "@/services/app-state/app-state-service.ts";
 import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";
+import { type DungeonRunComparisonGroupSchema } from "@/validation/dungeon-run/dungeon-run-comparison-group-schema.ts";
 
 type Listener = () => void;
 
+type DungeonRunComparisonGroup = typeof DungeonRunComparisonGroupSchema.Type;
+
 export type AppStoreActions = {
+  readonly setDungeonRunComparisonGroup: (
+    comparisonGroup: DungeonRunComparisonGroup,
+  ) => void;
+
   readonly setDungeonRunTimeColumns: (
     timeColumns: ReadonlyArray<DungeonRunTimeColumnState>,
   ) => void;
@@ -33,8 +40,10 @@ export type AppStore = {
   readonly subscribe: (listener: Listener) => () => void;
 } & AppStoreActions;
 
-export function makeAppStore(): AppStore {
-  let snapshot: AppState = DEFAULT_APP_STATE;
+export function makeAppStore(
+  initialState: AppState = DEFAULT_APP_STATE,
+): AppStore {
+  let snapshot: AppState = initialState;
   let isInitialized = false;
 
   const listeners = new Set<Listener>();
@@ -97,6 +106,20 @@ export function makeAppStore(): AppStore {
     );
   });
 
+  function setDungeonRunComparisonGroup(
+    comparisonGroup: DungeonRunComparisonGroup,
+  ): void {
+    updateSnapshot((state) => {
+      return {
+        ...state,
+        dungeonRun: {
+          ...state.dungeonRun,
+          comparisonGroup,
+        },
+      };
+    });
+  }
+
   function setDungeonRunTimeColumns(
     timeColumns: ReadonlyArray<DungeonRunTimeColumnState>,
   ): void {
@@ -155,6 +178,7 @@ export function makeAppStore(): AppStore {
   return {
     getSnapshot,
     initialize,
+    setDungeonRunComparisonGroup,
     setDungeonRunTimeColumns,
     setSelectedConfigurationId,
     setSidebarOpen,

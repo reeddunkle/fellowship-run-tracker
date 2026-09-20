@@ -1,5 +1,6 @@
 import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Schema from "effect/Schema";
 import { describe, expect, test } from "vitest";
 
 import {
@@ -20,22 +21,53 @@ import {
   MOCK_DUNGEON_LEVEL,
 } from "@/tests/common/fixtures/configuration-fixtures.ts";
 import { runTest } from "@/tests/common/run-test.ts";
+import { DungeonRunIdSchema } from "@/validation/dungeon-run/dungeon-run-id-schema.ts";
+
+const FIRST_OWN_DUNGEON_RUN_ID = Schema.decodeSync(DungeonRunIdSchema)(
+  "00000000-0000-7000-8000-000000000001",
+);
+
+const SECOND_OWN_DUNGEON_RUN_ID = Schema.decodeSync(DungeonRunIdSchema)(
+  "00000000-0000-7000-8000-000000000002",
+);
+
+const THIRD_OWN_DUNGEON_RUN_ID = Schema.decodeSync(DungeonRunIdSchema)(
+  "00000000-0000-7000-8000-000000000003",
+);
+
+const COMPARISON_DUNGEON_RUN_ID = Schema.decodeSync(DungeonRunIdSchema)(
+  "00000000-0000-7000-8000-000000000004",
+);
 
 const observations = [
   {
+    dungeonRunId: FIRST_OWN_DUNGEON_RUN_ID,
     elapsedMilliseconds: 10_000,
+    isOwnRun: true,
     occurrence: 1,
     targetId: "42",
     type: "UNIT_DEATH",
   },
   {
+    dungeonRunId: SECOND_OWN_DUNGEON_RUN_ID,
     elapsedMilliseconds: 20_000,
+    isOwnRun: true,
     occurrence: 1,
     targetId: "42",
     type: "UNIT_DEATH",
   },
   {
+    dungeonRunId: THIRD_OWN_DUNGEON_RUN_ID,
     elapsedMilliseconds: 30_000,
+    isOwnRun: true,
+    occurrence: 1,
+    targetId: "42",
+    type: "UNIT_DEATH",
+  },
+  {
+    dungeonRunId: COMPARISON_DUNGEON_RUN_ID,
+    elapsedMilliseconds: 15_000,
+    isOwnRun: false,
     occurrence: 1,
     targetId: "42",
     type: "UNIT_DEATH",
@@ -129,7 +161,7 @@ function makeTestLayer({
 }
 
 describe("DungeonRunApiServiceLive", () => {
-  test("returns dungeon run history for a dungeon and level", async () => {
+  test("returns dungeon run history grouped by ownership for a dungeon and level", async () => {
     const program = E.gen(function* () {
       const dungeonRunApiService = yield* DungeonRunApiService;
 
@@ -139,9 +171,32 @@ describe("DungeonRunApiServiceLive", () => {
       });
 
       expect(result).toEqual({
+        comparisonRunCount: 1,
+        comparisonSampleCount: 1,
         observations: [
           {
             bestElapsedMilliseconds: 10_000,
+            comparisonGroup: "ALL",
+            meanElapsedMilliseconds: 18_750,
+            medianElapsedMilliseconds: 17_500,
+            occurrence: 1,
+            sampleCount: 4,
+            targetId: "42",
+            type: "UNIT_DEATH",
+          },
+          {
+            bestElapsedMilliseconds: 15_000,
+            comparisonGroup: "COMPARISON",
+            meanElapsedMilliseconds: 15_000,
+            medianElapsedMilliseconds: 15_000,
+            occurrence: 1,
+            sampleCount: 1,
+            targetId: "42",
+            type: "UNIT_DEATH",
+          },
+          {
+            bestElapsedMilliseconds: 10_000,
+            comparisonGroup: "OWN",
             meanElapsedMilliseconds: 20_000,
             medianElapsedMilliseconds: 20_000,
             occurrence: 1,
@@ -150,6 +205,8 @@ describe("DungeonRunApiServiceLive", () => {
             type: "UNIT_DEATH",
           },
         ],
+        ownRunCount: 3,
+        ownSampleCount: 3,
       });
     }).pipe(E.provide(makeTestLayer()));
 
@@ -166,14 +223,18 @@ describe("DungeonRunApiServiceLive", () => {
       });
 
       expect(result).toEqual({
+        comparisonRunCount: 0,
+        comparisonSampleCount: 0,
         observations: [],
+        ownRunCount: 0,
+        ownSampleCount: 0,
       });
     }).pipe(E.provide(makeTestLayer({ history: [] })));
 
     await runTest(program);
   });
 
-  test("gets observation history for the requested dungeon and level", async () => {
+  test("gets observation history for the requested dungeon and level once", async () => {
     let getHistoryCallCount = 0;
 
     const program = E.gen(function* () {

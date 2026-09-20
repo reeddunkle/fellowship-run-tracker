@@ -7,12 +7,13 @@ const projectRoot = path.resolve(import.meta.dirname);
 export default defineConfig({
   optimizeDeps: {
     include: [
+      "@tanstack/react-query",
+      "@tanstack/react-router",
       "effect",
       "effect/Context",
       "effect/DateTime",
       "effect/Deferred",
       "effect/Result",
-      "@tanstack/react-router",
       "effect/unstable/httpapi/HttpApi",
       "effect/unstable/httpapi/HttpApiClient",
       "effect/unstable/httpapi/HttpApiEndpoint",

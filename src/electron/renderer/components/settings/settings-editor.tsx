@@ -1,3 +1,4 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 import {
@@ -8,6 +9,7 @@ import {
   XCircleIcon,
 } from "lucide-react";
 
+import { refreshFellowshipLogsRateLimitDataMutationOptions } from "@/electron/renderer/api/fellowship-logs/fellowship-logs-mutations.ts";
 import { FellowshipLogsRateLimitData } from "@/electron/renderer/components/fellowship-logs/fellowship-logs-rate-limit-data.tsx";
 import {
   useAppSettings,
@@ -26,7 +28,6 @@ import {
 import { DirectoryInput } from "@/electron/renderer/components/ui/file-input.tsx";
 import { Input } from "@/electron/renderer/components/ui/input.tsx";
 import { Separator } from "@/electron/renderer/components/ui/separator.tsx";
-import { useFellowshipLogsStore } from "@/electron/renderer/stores/fellowship-logs-store/use-fellowship-logs-store.ts";
 import { type AppSettingsApiUpdate } from "@/services/api/app-settings/app-settings-api-schema.ts";
 
 import { createSettingsFormValue, useSettingsForm } from "./settings-form.ts";
@@ -110,12 +111,14 @@ export function SettingsEditor() {
   const { error, isSaving } = useSettingsSaveStatus();
   const appSettings = useAppSettings();
 
-  const {
-    isRefreshingRateLimitData,
-    rateLimitData,
-    refreshRateLimitData,
-    refreshRateLimitDataError,
-  } = useFellowshipLogsStore();
+  const queryClient = useQueryClient();
+
+  const refreshRateLimitDataMutation = useMutation(
+    refreshFellowshipLogsRateLimitDataMutationOptions(queryClient),
+  );
+
+  const isRefreshingRateLimitData = refreshRateLimitDataMutation.isPending;
+  const rateLimitData = refreshRateLimitDataMutation.data ?? null;
 
   const defaultValues = createSettingsFormValue(appSettings);
 
@@ -379,7 +382,9 @@ export function SettingsEditor() {
               <div className="flex items-center gap-3">
                 <Button
                   disabled={isRefreshingRateLimitData}
-                  onClick={refreshRateLimitData}
+                  onClick={() => {
+                    refreshRateLimitDataMutation.mutate();
+                  }}
                   type="button"
                   variant="outline"
                 >
@@ -387,7 +392,7 @@ export function SettingsEditor() {
                   {isRefreshingRateLimitData ? "Testing..." : "Test connection"}
                 </Button>
               </div>
-              {refreshRateLimitDataError !== undefined ? (
+              {refreshRateLimitDataMutation.isError ? (
                 <div className="rounded-md border border-destructive p-3">
                   <div className="flex items-center gap-1.5 text-xs font-medium text-destructive">
                     <XCircleIcon className="size-3.5" />

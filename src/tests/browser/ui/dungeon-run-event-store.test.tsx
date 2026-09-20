@@ -139,6 +139,110 @@ describe("DungeonRunEventStore", () => {
     expect(listener).not.toHaveBeenCalled();
   });
 
+  test("notifies onRunFinished listeners when the run transitions away from ACTIVE", async () => {
+    const activeEvent = {
+      message: MOCK_DUNGEON_RUN_API_MESSAGE,
+      type: "MESSAGE_RECEIVED",
+    } satisfies DungeonRunEventStreamEvent;
+
+    const finishedEvent = {
+      message: {
+        ...MOCK_DUNGEON_RUN_API_MESSAGE,
+        state: {
+          ...MOCK_DUNGEON_RUN_STATE_API,
+          dungeonRun: {
+            ...MOCK_DUNGEON_RUN_STATE_API.dungeonRun,
+            status: "COMPLETED",
+          },
+        },
+      },
+      type: "MESSAGE_RECEIVED",
+    } satisfies DungeonRunEventStreamEvent;
+
+    const store = makeDungeonRunEventStore({
+      makeEventStream: () => {
+        return Stream.make(activeEvent, finishedEvent);
+      },
+    });
+
+    const listener = vi.fn();
+
+    store.onRunFinished(listener);
+    store.start();
+
+    await vi.waitFor(() => {
+      expect(store.getSnapshot().runState?.dungeonRun?.status).toBe(
+        "COMPLETED",
+      );
+    });
+
+    expect(listener).toHaveBeenCalledOnce();
+  });
+
+  test("does not notify onRunFinished when the run becomes active for the first time", async () => {
+    const activeEvent = {
+      message: MOCK_DUNGEON_RUN_API_MESSAGE,
+      type: "MESSAGE_RECEIVED",
+    } satisfies DungeonRunEventStreamEvent;
+
+    const store = makeDungeonRunEventStore({
+      makeEventStream: () => {
+        return Stream.make(activeEvent);
+      },
+    });
+
+    const listener = vi.fn();
+
+    store.onRunFinished(listener);
+    store.start();
+
+    await vi.waitFor(() => {
+      expect(store.getSnapshot().runState).toEqual(MOCK_DUNGEON_RUN_STATE_API);
+    });
+
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  test("does not notify an onRunFinished listener after it unsubscribes", async () => {
+    const activeEvent = {
+      message: MOCK_DUNGEON_RUN_API_MESSAGE,
+      type: "MESSAGE_RECEIVED",
+    } satisfies DungeonRunEventStreamEvent;
+
+    const finishedEvent = {
+      message: {
+        ...MOCK_DUNGEON_RUN_API_MESSAGE,
+        state: {
+          ...MOCK_DUNGEON_RUN_STATE_API,
+          dungeonRun: {
+            ...MOCK_DUNGEON_RUN_STATE_API.dungeonRun,
+            status: "EXITED",
+          },
+        },
+      },
+      type: "MESSAGE_RECEIVED",
+    } satisfies DungeonRunEventStreamEvent;
+
+    const store = makeDungeonRunEventStore({
+      makeEventStream: () => {
+        return Stream.make(activeEvent, finishedEvent);
+      },
+    });
+
+    const listener = vi.fn();
+
+    const unsubscribe = store.onRunFinished(listener);
+
+    unsubscribe();
+    store.start();
+
+    await vi.waitFor(() => {
+      expect(store.getSnapshot().runState?.dungeonRun?.status).toBe("EXITED");
+    });
+
+    expect(listener).not.toHaveBeenCalled();
+  });
+
   test("does not start another event stream while already running", () => {
     const makeEventStream = vi.fn(() => {
       return Stream.never;

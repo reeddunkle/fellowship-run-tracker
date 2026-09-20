@@ -26,13 +26,16 @@ const SECOND_RUN_STARTED_AT = DateTime.makeUnsafe("2026-09-05T17:00:00.000Z");
 
 const SECOND_RUN_OBSERVED_AT = DateTime.makeUnsafe("2026-09-05T17:00:15.000Z");
 
-const createDungeonRun = E.fn("test.create-dungeon-run")(function* () {
+const createDungeonRun = E.fn("test.create-dungeon-run")(function* (options?: {
+  readonly isOwnRun?: boolean;
+}) {
   const dungeonRunDAO = yield* DungeonRunDAO;
 
   return yield* dungeonRunDAO.create({
     dungeonId: MOCK_DUNGEON_ID,
     dungeonLevel: MOCK_DUNGEON_LEVEL,
     endedAt: null,
+    isOwnRun: options?.isOwnRun ?? true,
     source: "LOCAL_LOG",
     startedAt: null,
   });
@@ -212,19 +215,25 @@ describe("DungeonRunObservationDAOLive", () => {
 
       expect(history).toEqual([
         {
+          dungeonRunId: dungeonRun.id,
           elapsedMilliseconds: 30_000,
+          isOwnRun: true,
           occurrence: 1,
           targetId: "634",
           type: "ABILITY_ACTIVATED",
         },
         {
+          dungeonRunId: dungeonRun.id,
           elapsedMilliseconds: 10_000,
+          isOwnRun: true,
           occurrence: 1,
           targetId: "42",
           type: "UNIT_DEATH",
         },
         {
+          dungeonRunId: dungeonRun.id,
           elapsedMilliseconds: 20_000,
+          isOwnRun: true,
           occurrence: 2,
           targetId: "42",
           type: "UNIT_DEATH",
@@ -283,20 +292,88 @@ describe("DungeonRunObservationDAOLive", () => {
 
       expect(history).toEqual([
         {
+          dungeonRunId: firstDungeonRun.id,
           elapsedMilliseconds: 10_000,
+          isOwnRun: true,
           occurrence: 1,
           targetId: "42",
           type: "UNIT_DEATH",
         },
         {
+          dungeonRunId: secondDungeonRun.id,
           elapsedMilliseconds: 15_000,
+          isOwnRun: true,
           occurrence: 1,
           targetId: "42",
           type: "UNIT_DEATH",
         },
         {
+          dungeonRunId: firstDungeonRun.id,
           elapsedMilliseconds: 20_000,
+          isOwnRun: true,
           occurrence: 2,
+          targetId: "42",
+          type: "UNIT_DEATH",
+        },
+      ]);
+    }).pipe(E.provide(makePersistenceTestLayer()));
+
+    await runTest(program);
+  });
+
+  test("tags observations with the ownership of their dungeon run", async () => {
+    const program = E.gen(function* () {
+      const {
+        dungeonRun: ownRun,
+        dungeonRunDAO,
+        dungeonRunObservationDAO,
+      } = yield* makeDungeonRunObservationTestContext;
+
+      const notOwnRun = yield* createDungeonRun({ isOwnRun: false });
+
+      yield* dungeonRunDAO.start({
+        dungeonRunId: ownRun.id,
+        startedAt: RUN_STARTED_AT,
+      });
+
+      yield* dungeonRunDAO.start({
+        dungeonRunId: notOwnRun.id,
+        startedAt: SECOND_RUN_STARTED_AT,
+      });
+
+      yield* dungeonRunObservationDAO.observe({
+        dungeonRunId: ownRun.id,
+        observedAt: FIRST_OBSERVED_AT,
+        targetId: "42",
+        type: "UNIT_DEATH",
+      });
+
+      yield* dungeonRunObservationDAO.observe({
+        dungeonRunId: notOwnRun.id,
+        observedAt: SECOND_RUN_OBSERVED_AT,
+        targetId: "42",
+        type: "UNIT_DEATH",
+      });
+
+      const history = yield* dungeonRunObservationDAO.getHistoryByDungeon({
+        dungeonId: MOCK_DUNGEON_ID,
+        dungeonLevel: MOCK_DUNGEON_LEVEL,
+      });
+
+      expect(history).toEqual([
+        {
+          dungeonRunId: notOwnRun.id,
+          elapsedMilliseconds: 15_000,
+          isOwnRun: false,
+          occurrence: 1,
+          targetId: "42",
+          type: "UNIT_DEATH",
+        },
+        {
+          dungeonRunId: ownRun.id,
+          elapsedMilliseconds: 10_000,
+          isOwnRun: true,
+          occurrence: 1,
           targetId: "42",
           type: "UNIT_DEATH",
         },

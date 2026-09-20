@@ -37,6 +37,7 @@ describe("FellowshipLogsApiServiceLive imported dungeon runs", () => {
 
       const importResult = yield* fellowshipLogsApiService.importDungeonRun({
         fightId: FIGHT_ID,
+        isOwnRun: false,
         reportCode: REPORT_CODE,
       });
 
@@ -79,6 +80,7 @@ describe("FellowshipLogsApiServiceLive imported dungeon runs", () => {
 
       const importResult = yield* fellowshipLogsApiService.importDungeonRun({
         fightId: FIGHT_ID,
+        isOwnRun: false,
         reportCode: REPORT_CODE,
       });
 

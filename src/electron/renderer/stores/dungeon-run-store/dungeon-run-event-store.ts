@@ -35,6 +35,7 @@ export type MakeDungeonRunEventStoreOptions = {
 
 export type DungeonRunEventStore = {
   readonly getSnapshot: () => DungeonRunEventStoreSnapshot;
+  readonly onRunFinished: (listener: Listener) => () => void;
   readonly start: () => void;
   readonly stop: () => void;
   readonly subscribe: (listener: Listener) => () => void;
@@ -52,9 +53,16 @@ export function makeDungeonRunEventStore({
   let fiber: Fiber.Fiber<void, unknown> | undefined;
 
   const listeners = new Set<Listener>();
+  const runFinishedListeners = new Set<Listener>();
 
   function emit(): void {
     listeners.forEach((listener) => {
+      listener();
+    });
+  }
+
+  function emitRunFinished(): void {
+    runFinishedListeners.forEach((listener) => {
       listener();
     });
   }
@@ -81,12 +89,23 @@ export function makeDungeonRunEventStore({
       });
     }),
     Match.when({ type: "MESSAGE_RECEIVED" }, (event) => {
+      const previousStatus = snapshot.runState?.dungeonRun?.status;
+      const nextStatus = event.message.state.dungeonRun?.status;
+
       return updateSnapshot((currentSnapshot) => {
         return {
           ...currentSnapshot,
           runState: event.message.state,
         };
-      });
+      }).pipe(
+        E.tap(() => {
+          return E.sync(() => {
+            if (previousStatus === "ACTIVE" && nextStatus !== "ACTIVE") {
+              emitRunFinished();
+            }
+          });
+        }),
+      );
     }),
     Match.exhaustive,
   );
@@ -140,12 +159,21 @@ export function makeDungeonRunEventStore({
     };
   }
 
+  function onRunFinished(listener: Listener): () => void {
+    runFinishedListeners.add(listener);
+
+    return () => {
+      runFinishedListeners.delete(listener);
+    };
+  }
+
   function getSnapshot(): DungeonRunEventStoreSnapshot {
     return snapshot;
   }
 
   return {
     getSnapshot,
+    onRunFinished,
     start,
     stop,
     subscribe,

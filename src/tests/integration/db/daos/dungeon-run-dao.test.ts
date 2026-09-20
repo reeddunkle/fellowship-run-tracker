@@ -25,13 +25,16 @@ function getDungeonRun<T>(dungeonRun: Option.Option<T>): T {
   return dungeonRun.value;
 }
 
-const createDungeonRun = E.fn("test.create-dungeon-run")(function* () {
+const createDungeonRun = E.fn("test.create-dungeon-run")(function* (options?: {
+  readonly isOwnRun?: boolean;
+}) {
   const dungeonRunDAO = yield* DungeonRunDAO;
 
   return yield* dungeonRunDAO.create({
     dungeonId: MOCK_DUNGEON_ID,
     dungeonLevel: MOCK_DUNGEON_LEVEL,
     endedAt: null,
+    isOwnRun: options?.isOwnRun ?? true,
     source: "LOCAL_LOG",
     startedAt: null,
   });
@@ -48,6 +51,7 @@ describe("DungeonRunDAOLive", () => {
       expect(created.dungeonId).toBe(MOCK_DUNGEON_ID);
       expect(created.dungeonLevel).toBe(MOCK_DUNGEON_LEVEL);
       expect(created.source).toBe("LOCAL_LOG");
+      expect(created.isOwnRun).toBe(true);
       expect(created.startedAt).toBeNull();
       expect(created.endedAt).toBeNull();
       expect(created.createdAt).toBeDefined();
@@ -175,7 +179,7 @@ describe("DungeonRunDAOLive", () => {
     await runTest(program);
   });
 
-  test("deletes all dungeon runs for a dungeon and level", async () => {
+  test("deletes all dungeon runs for a dungeon and level matching ownership", async () => {
     const program = E.gen(function* () {
       const dungeonRunDAO = yield* DungeonRunDAO;
 
@@ -185,6 +189,7 @@ describe("DungeonRunDAOLive", () => {
       yield* dungeonRunDAO.deleteByDungeon({
         dungeonId: MOCK_DUNGEON_ID,
         dungeonLevel: MOCK_DUNGEON_LEVEL,
+        isOwnRun: true,
       });
 
       const firstResult = yield* dungeonRunDAO.getById({
@@ -202,6 +207,34 @@ describe("DungeonRunDAOLive", () => {
     await runTest(program);
   });
 
+  test("leaves dungeon runs with a different ownership untouched", async () => {
+    const program = E.gen(function* () {
+      const dungeonRunDAO = yield* DungeonRunDAO;
+
+      const ownRun = yield* createDungeonRun({ isOwnRun: true });
+      const notOwnRun = yield* createDungeonRun({ isOwnRun: false });
+
+      yield* dungeonRunDAO.deleteByDungeon({
+        dungeonId: MOCK_DUNGEON_ID,
+        dungeonLevel: MOCK_DUNGEON_LEVEL,
+        isOwnRun: true,
+      });
+
+      const ownResult = yield* dungeonRunDAO.getById({
+        id: ownRun.id,
+      });
+
+      const notOwnResult = yield* dungeonRunDAO.getById({
+        id: notOwnRun.id,
+      });
+
+      expect(Option.isNone(ownResult)).toBe(true);
+      expect(Option.isSome(notOwnResult)).toBe(true);
+    }).pipe(E.provide(makePersistenceTestLayer()));
+
+    await runTest(program);
+  });
+
   test("deleting dungeon runs by dungeon is idempotent when no runs exist", async () => {
     const program = E.gen(function* () {
       const dungeonRunDAO = yield* DungeonRunDAO;
@@ -209,11 +242,13 @@ describe("DungeonRunDAOLive", () => {
       yield* dungeonRunDAO.deleteByDungeon({
         dungeonId: MOCK_DUNGEON_ID,
         dungeonLevel: MOCK_DUNGEON_LEVEL,
+        isOwnRun: true,
       });
 
       yield* dungeonRunDAO.deleteByDungeon({
         dungeonId: MOCK_DUNGEON_ID,
         dungeonLevel: MOCK_DUNGEON_LEVEL,
+        isOwnRun: true,
       });
     }).pipe(E.provide(makePersistenceTestLayer()));
 

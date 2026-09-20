@@ -84,7 +84,7 @@ function TrackingMessage({
   );
 }
 
-export function HomeTrackingControls() {
+export function TrackingControls() {
   const selectedConfiguration = useSelectedConfiguration();
   const selectedConfigurationId = useSelectedConfigurationId();
 

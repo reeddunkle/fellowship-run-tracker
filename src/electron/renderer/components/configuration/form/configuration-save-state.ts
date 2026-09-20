@@ -4,8 +4,8 @@ import {
   serializeCanonicalConfiguration,
   serializeNormalizedCanonicalConfiguration,
 } from "@/application/configurations/canonicalize-configuration.ts";
-import { type DecodedConfigurationEditorValue } from "@/electron/renderer/components/configuration/configuration-form-schema.ts";
-import { saveConfigurationApiRequest } from "@/electron/renderer/components/configuration/helpers/configuration-editor-adapter";
+import { saveConfigurationApiRequest } from "@/electron/renderer/components/configuration/form/configuration-editor-adapter.ts";
+import { type DecodedConfigurationEditorValue } from "@/electron/renderer/components/configuration/form/configuration-form-schema.ts";
 import {
   type ConfigurationApiConfiguration,
   type ConfigurationApiConfigurationList,

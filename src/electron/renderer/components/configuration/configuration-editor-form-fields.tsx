@@ -6,11 +6,11 @@ import {
   hasUnsavedChanges,
   resolveConfigurationSaveState,
   selectConfigurationEditorFormState,
-} from "@/electron/renderer/components/configuration/configuration-editor-persistence.ts";
+} from "@/electron/renderer/components/configuration/form/configuration-editor-persistence.ts";
 import {
   createMilestoneEditorValue,
   type useConfigurationForm,
-} from "@/electron/renderer/components/configuration/configuration-form.ts";
+} from "@/electron/renderer/components/configuration/form/configuration-form.ts";
 import { type DungeonOption } from "@/electron/renderer/components/configuration/helpers/configuration-editor-types.ts";
 import { MilestoneEditor } from "@/electron/renderer/components/configuration/milestone/milestone-editor.tsx";
 import { Button } from "@/electron/renderer/components/ui/button.tsx";

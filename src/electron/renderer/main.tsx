@@ -3,7 +3,6 @@ import * as E from "effect/Effect";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
-import { startDungeonRunHistoryInvalidation } from "@/electron/renderer/application/dungeon-run-history-invalidation.ts";
 import { router } from "@/electron/renderer/router/router";
 import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
 import { appStore } from "@/electron/renderer/stores/app-state-store/app-state-store.ts";
@@ -31,8 +30,6 @@ browserRuntime.runPromise(
 
     dungeonRunEventStore.start();
     trackingEventStore.start();
-
-    startDungeonRunHistoryInvalidation(router);
 
     createRoot(rootElement).render(
       <StrictMode>

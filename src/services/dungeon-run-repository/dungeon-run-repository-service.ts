@@ -52,6 +52,7 @@ type ImportFellowshipLogsDungeonRunObservation = {
 type ImportFellowshipLogsDungeonRunOptions = DungeonRunHistoryOptions & {
   readonly endedAt: DateTime.Utc;
   readonly fightId: FellowshipLogsFightId;
+  readonly isOwnRun: boolean;
   readonly observations: ReadonlyArray<ImportFellowshipLogsDungeonRunObservation>;
   readonly reportCode: FellowshipLogsReportCode;
   readonly startedAt: DateTime.Utc;

@@ -5,11 +5,11 @@ import {
   ConfigurationEditorSchema,
   type ConfigurationEditorValue,
   type DecodedConfigurationEditorValue,
-} from "@/electron/renderer/components/configuration/configuration-form-schema.ts";
+} from "@/electron/renderer/components/configuration/form/configuration-form-schema.ts";
 import {
   type ConfigurationExistingSaveState,
   type ConfigurationSaveState,
-} from "@/electron/renderer/components/configuration/helpers/configuration-save-state.ts";
+} from "@/electron/renderer/components/configuration/form/configuration-save-state.ts";
 import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";
 
 export type ConfigurationSaveStateResolver = (

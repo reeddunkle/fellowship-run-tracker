@@ -18,7 +18,9 @@ type GetDungeonRunObservationsOptions = {
 };
 
 export type DungeonRunObservationHistory = {
+  readonly dungeonRunId: DungeonRunObservationModel["dungeonRunId"];
   readonly elapsedMilliseconds: number;
+  readonly isOwnRun: DungeonRunModel["isOwnRun"];
   readonly occurrence: number;
   readonly targetId: DungeonRunObservationModel["targetId"];
   readonly type: DungeonRunObservationModel["type"];

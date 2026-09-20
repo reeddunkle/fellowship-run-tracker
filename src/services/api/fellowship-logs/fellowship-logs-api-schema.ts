@@ -18,6 +18,15 @@ export const FellowshipLogsApiDungeonRunReferenceSchema = Schema.Struct({
 export type FellowshipLogsApiDungeonRunReference =
   typeof FellowshipLogsApiDungeonRunReferenceSchema.Type;
 
+export const FellowshipLogsApiImportDungeonRunOptionsSchema = Schema.Struct({
+  fightId: FellowshipLogsFightIdSchema,
+  isOwnRun: Schema.Boolean,
+  reportCode: FellowshipLogsReportCodeSchema,
+});
+
+export type FellowshipLogsApiImportDungeonRunOptions =
+  typeof FellowshipLogsApiImportDungeonRunOptionsSchema.Type;
+
 export const FellowshipLogsApiDungeonRunMetadataSchema = Schema.Struct({
   dungeonId: DungeonIdSchema,
   dungeonLevel: PositiveIntegerSchema,

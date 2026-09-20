@@ -1,7 +1,7 @@
 import * as A from "effect/Array";
 import * as Match from "effect/Match";
 
-import { type ConfigurationEditorValue } from "@/electron/renderer/components/configuration/configuration-form-schema.ts";
+import { type ConfigurationEditorValue } from "@/electron/renderer/components/configuration/form/configuration-form-schema.ts";
 import { FELLOWSHIP_EVENT } from "@/services/fellowship/constants/fellowship-event.ts";
 
 export type RequirementLocation = {

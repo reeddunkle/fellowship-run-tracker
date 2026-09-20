@@ -204,6 +204,7 @@ export const createTables = E.gen(function* () {
       dungeon_id TEXT NOT NULL,
       dungeon_level INTEGER NOT NULL CHECK (dungeon_level >= 1),
       source TEXT NOT NULL CHECK (source IN ('LOCAL_LOG', 'FELLOWSHIP_LOGS')),
+      is_own_run INTEGER NOT NULL CHECK (is_own_run IN (0, 1)),
       started_at INTEGER,
       ended_at INTEGER,
       created_at INTEGER NOT NULL,
@@ -223,6 +224,10 @@ export const createTables = E.gen(function* () {
 
   yield* sql`
     CREATE INDEX dungeon_run_source_dungeon_id_dungeon_level_started_at_index ON dungeon_run (source, dungeon_id, dungeon_level, started_at)
+  `;
+
+  yield* sql`
+    CREATE INDEX dungeon_run_is_own_run_dungeon_id_dungeon_level_started_at_index ON dungeon_run (is_own_run, dungeon_id, dungeon_level, started_at)
   `;
 
   yield* sql`

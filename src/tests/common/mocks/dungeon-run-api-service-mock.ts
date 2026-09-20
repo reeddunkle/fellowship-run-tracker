@@ -15,7 +15,11 @@ function makeDungeonRunApiServiceMock({
   },
   getHistory = () => {
     return E.succeed({
+      comparisonRunCount: 0,
+      comparisonSampleCount: 0,
       observations: [],
+      ownRunCount: 0,
+      ownSampleCount: 0,
     });
   },
 }: MakeDungeonRunApiServiceMockOptions = {}) {

@@ -146,6 +146,7 @@ export function makeFellowshipTrackerTestHarness(
         dungeonId,
         dungeonLevel,
         endedAt,
+        isOwnRun,
         startedAt,
       }) => {
         return E.succeed({
@@ -154,6 +155,7 @@ export function makeFellowshipTrackerTestHarness(
           dungeonLevel,
           endedAt,
           id: MOCK_DUNGEON_RUN_ID,
+          isOwnRun,
           source: "FELLOWSHIP_LOGS",
           startedAt,
           updatedAt: MOCK_UPDATED_AT,
@@ -166,6 +168,7 @@ export function makeFellowshipTrackerTestHarness(
           dungeonLevel,
           endedAt: null,
           id: MOCK_DUNGEON_RUN_ID,
+          isOwnRun: true,
           source: "LOCAL_LOG",
           startedAt: null,
           updatedAt: MOCK_UPDATED_AT,

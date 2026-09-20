@@ -2,7 +2,6 @@ import * as A from "effect/Array";
 import {
   ChevronsDownUpIcon,
   ChevronsUpDownIcon,
-  MenuIcon,
   PlayIcon,
   SquareDashedBottomIcon,
   SquareIcon,
@@ -12,6 +11,7 @@ import { useMemo } from "react";
 import { useDetachedWindow } from "@/electron/renderer/components/detached-window/detached-window-provider.tsx";
 import { DungeonRunDropdownMenu } from "@/electron/renderer/components/dungeon-run/dungeon-run-dropdown-menu.tsx";
 import { DungeonRunTimer } from "@/electron/renderer/components/dungeon-run/dungeon-run-timer.tsx";
+import { getDungeonRunComparisonGroupLabel } from "@/electron/renderer/components/dungeon-run/helpers/dungeon-run-comparison-group.ts";
 import { createDungeonRunMilestoneRows } from "@/electron/renderer/components/dungeon-run/helpers/dungeon-run-milestone-rows.ts";
 import { createDungeonRunTableRows } from "@/electron/renderer/components/dungeon-run/helpers/dungeon-run-table-row.ts";
 import { DungeonRunMilestone } from "@/electron/renderer/components/dungeon-run/table/dungeon-run-milestone.tsx";
@@ -21,10 +21,6 @@ import {
   DungeonRunTableTr,
 } from "@/electron/renderer/components/dungeon-run/table/dungeon-run-table.tsx";
 import { Button } from "@/electron/renderer/components/ui/button.tsx";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-} from "@/electron/renderer/components/ui/dropdown-menu.tsx";
 import { Separator } from "@/electron/renderer/components/ui/separator.tsx";
 import { Spinner } from "@/electron/renderer/components/ui/spinner.tsx";
 import {
@@ -53,7 +49,7 @@ export function DungeonRun() {
   const { trackingStatus } = useTrackingServerState();
   const { start, stop } = useTrackingActions();
   const { isPending } = useTrackingActionState();
-  const { dungeonRun } = useDungeonRunServerState();
+  const { comparisonGroup, dungeonRun } = useDungeonRunServerState();
   const { latestObservation, observations } =
     useDungeonRunInterpretationState();
 
@@ -138,19 +134,14 @@ export function DungeonRun() {
         <Button onClick={resizeToContent} size="icon" variant="outline">
           <SquareDashedBottomIcon />
         </Button>
-        <DropdownMenu modal={false}>
-          <DropdownMenuTrigger
-            render={
-              <Button size="icon" variant="outline">
-                <MenuIcon />
-              </Button>
-            }
-          />
-          <DungeonRunDropdownMenu />
-        </DropdownMenu>
+        <DungeonRunDropdownMenu />
       </div>
       <header className="grid text-2xl w-full gap-1">
         <h2 className="truncate font-semibold">{configuration.label}</h2>
+        <p className="text-sm text-muted-foreground">
+          Comparing against:{" "}
+          {getDungeonRunComparisonGroupLabel(comparisonGroup)}
+        </p>
       </header>
       <DungeonRunTable rows={tableRows}>
         <thead>

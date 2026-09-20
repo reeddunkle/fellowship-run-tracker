@@ -1,13 +1,11 @@
-import * as E from "effect/Effect";
 import * as Stream from "effect/Stream";
 import { describe, expect, test } from "vitest";
 import { render } from "vitest-browser-react";
 
 import { makeDungeonRunEventStore } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-event-store.ts";
-import {
-  DungeonRunProvider,
-  useDungeonRunDisplayState,
-} from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-provider.tsx";
+import { useDungeonRunDisplayState } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-provider.tsx";
+
+import { TestDungeonRunProvider } from "./test-dungeon-run-provider.tsx";
 
 function DungeonRunDisplayConsumer() {
   const {
@@ -52,14 +50,9 @@ describe("DungeonRunProvider display state", () => {
     });
 
     const screen = await render(
-      <DungeonRunProvider
-        eventStore={eventStore}
-        history={null}
-        historyKey={null}
-        invalidate={() => E.void}
-      >
+      <TestDungeonRunProvider eventStore={eventStore}>
         <DungeonRunDisplayConsumer />
-      </DungeonRunProvider>,
+      </TestDungeonRunProvider>,
     );
 
     await expect
@@ -75,14 +68,9 @@ describe("DungeonRunProvider display state", () => {
     });
 
     const screen = await render(
-      <DungeonRunProvider
-        eventStore={eventStore}
-        history={null}
-        historyKey={null}
-        invalidate={() => E.void}
-      >
+      <TestDungeonRunProvider eventStore={eventStore}>
         <DungeonRunDisplayConsumer />
-      </DungeonRunProvider>,
+      </TestDungeonRunProvider>,
     );
 
     await screen.getByRole("button", { name: "Expand milestone" }).click();

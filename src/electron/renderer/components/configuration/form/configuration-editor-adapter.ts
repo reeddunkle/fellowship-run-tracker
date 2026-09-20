@@ -4,7 +4,7 @@ import * as Match from "effect/Match";
 import {
   type ConfigurationEditorValue,
   type DecodedConfigurationEditorValue,
-} from "@/electron/renderer/components/configuration/configuration-form-schema.ts";
+} from "@/electron/renderer/components/configuration/form/configuration-form-schema.ts";
 import {
   type ConfigurationApiConfiguration,
   type SaveConfigurationApiRequest,

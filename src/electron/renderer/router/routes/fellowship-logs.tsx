@@ -1,17 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { getDungeons } from "@/electron/renderer/api/dungeon/dungeon-client.ts";
 import { FellowshipLogsPage } from "@/electron/renderer/components/fellowship-logs/fellowship-logs-page.tsx";
+import { loadFellowshipCatalogData } from "@/electron/renderer/router/routes/route-loaders";
 
 function FellowshipLogsRoute() {
-  const dungeons = Route.useLoaderData();
+  const { abilities, dungeons, encounters, units } = Route.useLoaderData();
 
-  return <FellowshipLogsPage dungeons={dungeons} />;
+  return (
+    <FellowshipLogsPage
+      abilities={abilities}
+      dungeons={dungeons}
+      encounters={encounters}
+      units={units}
+    />
+  );
 }
 
 export const Route = createFileRoute("/fellowship-logs")({
   component: FellowshipLogsRoute,
   loader: ({ context }) => {
-    return context.browserRuntime.runPromise(getDungeons());
+    return loadFellowshipCatalogData(context);
   },
 });

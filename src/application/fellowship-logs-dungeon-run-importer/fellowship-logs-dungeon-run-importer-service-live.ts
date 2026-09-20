@@ -17,6 +17,7 @@ const make = E.gen(function* () {
   const importReport: FellowshipLogsDungeonRunImporterServiceShape["importReport"] =
     E.fn("FellowshipLogsDungeonRunImporter.importReport")(function* ({
       fightId,
+      isOwnRun,
       reportCode,
     }) {
       const processedRun = yield* processFellowshipLogsDungeonRun({
@@ -34,6 +35,7 @@ const make = E.gen(function* () {
           dungeonLevel: processedRun.dungeonLevel,
           endedAt: processedRun.endedAt,
           fightId,
+          isOwnRun,
           observations: processedRun.observations.map((observation) => {
             return {
               observedAt: observation.timestamp,

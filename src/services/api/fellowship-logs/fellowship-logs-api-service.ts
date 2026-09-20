@@ -16,6 +16,7 @@ import {
 import {
   type FellowshipLogsApiDungeonRunMetadata,
   type FellowshipLogsApiDungeonRunReference,
+  type FellowshipLogsApiImportDungeonRunOptions,
   type FellowshipLogsApiImportDungeonRunResult,
   type FellowshipLogsApiImportedDungeonRunList,
   type FellowshipLogsApiLastKnownRateLimitData,
@@ -62,7 +63,7 @@ export type FellowshipLogsApiServiceShape = {
   >;
 
   readonly importDungeonRun: (
-    options: FellowshipLogsApiDungeonRunReference,
+    options: FellowshipLogsApiImportDungeonRunOptions,
   ) => E.Effect<
     FellowshipLogsApiImportDungeonRunResult,
     ImportFellowshipLogsDungeonRunError

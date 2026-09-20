@@ -14,6 +14,7 @@ import {
 export type UseAppStoreResult = AppState & AppStoreActions;
 
 export type UseDungeonRunAppStoreResult = DungeonRunState & {
+  readonly setComparisonGroup: AppStoreActions["setDungeonRunComparisonGroup"];
   readonly setTimeColumns: AppStoreActions["setDungeonRunTimeColumns"];
 };
 
@@ -26,6 +27,7 @@ export function useAppStore(store: AppStore = appStore): UseAppStoreResult {
 
   return {
     ...state,
+    setDungeonRunComparisonGroup: store.setDungeonRunComparisonGroup,
     setDungeonRunTimeColumns: store.setDungeonRunTimeColumns,
     setSelectedConfigurationId: store.setSelectedConfigurationId,
     setSidebarOpen: store.setSidebarOpen,
@@ -44,6 +46,7 @@ export function useDungeonRunAppStore(
 
   return {
     ...state.dungeonRun,
+    setComparisonGroup: store.setDungeonRunComparisonGroup,
     setTimeColumns: store.setDungeonRunTimeColumns,
   };
 }

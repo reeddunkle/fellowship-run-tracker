@@ -36,6 +36,7 @@ const make = E.gen(function* () {
           dungeonId,
           dungeonLevel,
           endedAt: null,
+          isOwnRun: true,
           source: "LOCAL_LOG",
           startedAt: null,
         });
@@ -55,6 +56,7 @@ const make = E.gen(function* () {
       dungeonLevel,
       endedAt,
       fightId,
+      isOwnRun,
       observations,
       reportCode,
       startedAt,
@@ -65,6 +67,7 @@ const make = E.gen(function* () {
             dungeonId,
             dungeonLevel,
             endedAt,
+            isOwnRun,
             source: "FELLOWSHIP_LOGS",
             startedAt,
           });
@@ -182,6 +185,7 @@ const make = E.gen(function* () {
     return dungeonRunDAO.deleteByDungeon({
       dungeonId,
       dungeonLevel,
+      isOwnRun: true,
     });
   };
 

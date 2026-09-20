@@ -5,25 +5,19 @@ import {
   getDungeonRunMetadataMutationOptions,
   importDungeonRunMutationOptions,
 } from "@/electron/renderer/api/fellowship-logs/fellowship-logs-mutations.ts";
-import { useFellowshipLogsStore } from "@/electron/renderer/stores/fellowship-logs-store/use-fellowship-logs-store.ts";
-import { type DungeonApiDungeonList } from "@/services/api/dungeon/dungeon-api-schema.ts";
 import { type FellowshipLogsApiDungeonRunReference } from "@/services/api/fellowship-logs/fellowship-logs-api-schema.ts";
 
-import { ImportConfirmationCard } from "./import-confirmation-card.tsx";
+import { ImportConfirmationCard } from "./import-confirmation/import-confirmation-card.tsx";
+import { type DecodedImportConfirmationFormValue } from "./import-confirmation/import-confirmation-form-schema.ts";
 import { ImportUrlForm } from "./import-url-form.tsx";
 
-type ImportDungeonRunSectionProps = {
-  readonly dungeons: DungeonApiDungeonList;
-};
-
-export function ImportDungeonRunSection({
-  dungeons,
-}: ImportDungeonRunSectionProps) {
+export function ImportDungeonRunSection() {
   const queryClient = useQueryClient();
-  const { loadLastKnownRateLimitData } = useFellowshipLogsStore();
   const [formKey, setFormKey] = useState(0);
 
-  const metadataMutation = useMutation(getDungeonRunMetadataMutationOptions());
+  const metadataMutation = useMutation(
+    getDungeonRunMetadataMutationOptions(queryClient),
+  );
   const importMutation = useMutation(
     importDungeonRunMutationOptions(queryClient),
   );
@@ -33,11 +27,7 @@ export function ImportDungeonRunSection({
 
   function handleLookup(nextReference: FellowshipLogsApiDungeonRunReference) {
     importMutation.reset();
-    metadataMutation.mutate(nextReference, {
-      onSuccess: () => {
-        loadLastKnownRateLimitData();
-      },
-    });
+    metadataMutation.mutate(nextReference);
   }
 
   function handleCancel() {
@@ -45,20 +35,25 @@ export function ImportDungeonRunSection({
     importMutation.reset();
   }
 
-  function handleConfirm() {
+  function handleConfirm({ isOwnRun }: DecodedImportConfirmationFormValue) {
     if (reference === undefined) {
       return;
     }
 
-    importMutation.mutate(reference, {
-      onSuccess: () => {
-        metadataMutation.reset();
-        setFormKey((count) => {
-          return count + 1;
-        });
-        loadLastKnownRateLimitData();
+    importMutation.mutate(
+      {
+        ...reference,
+        isOwnRun,
       },
-    });
+      {
+        onSuccess: () => {
+          metadataMutation.reset();
+          setFormKey((count) => {
+            return count + 1;
+          });
+        },
+      },
+    );
   }
 
   return (
@@ -71,9 +66,9 @@ export function ImportDungeonRunSection({
       />
       {metadataMutation.data !== undefined && reference !== undefined ? (
         <ImportConfirmationCard
-          dungeons={dungeons}
           error={importMutation.error ?? undefined}
           isImporting={importMutation.isPending}
+          key={`${reference.reportCode}:${reference.fightId}`}
           metadata={metadataMutation.data}
           onCancel={handleCancel}
           onConfirm={handleConfirm}

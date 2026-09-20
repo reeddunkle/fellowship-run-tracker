@@ -28,6 +28,7 @@ describe("FellowshipLogsDungeonRunImporter", () => {
 
         const result = yield* fellowshipLogsDungeonRunImporter.importReport({
           fightId: FIGHT_ID,
+          isOwnRun: true,
           reportCode: REPORT_CODE,
         });
 
@@ -36,6 +37,7 @@ describe("FellowshipLogsDungeonRunImporter", () => {
           readonly dungeon_level: number;
           readonly ended_at: string;
           readonly id: string;
+          readonly isOwnRun: number;
           readonly source: string;
           readonly started_at: string;
         }>`
@@ -45,7 +47,8 @@ describe("FellowshipLogsDungeonRunImporter", () => {
             dungeon_level,
             started_at,
             ended_at,
-            source
+            source,
+            is_own_run
           FROM
             dungeon_run
           WHERE
@@ -59,6 +62,7 @@ describe("FellowshipLogsDungeonRunImporter", () => {
         expect(dungeonRun).toBeDefined();
         expect(dungeonRun?.id).toBe(result.dungeonRunId);
         expect(dungeonRun?.source).toBe("FELLOWSHIP_LOGS");
+        expect(dungeonRun?.isOwnRun).toBe(1);
         expect(dungeonRun?.started_at).not.toBeNull();
         expect(dungeonRun?.ended_at).not.toBeNull();
 

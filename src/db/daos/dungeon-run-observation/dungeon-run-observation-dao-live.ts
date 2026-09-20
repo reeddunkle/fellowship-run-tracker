@@ -12,12 +12,16 @@ import { DungeonRunObservationModel } from "@/db/models/dungeon-run-observation-
 import { DungeonRunObservationDAOError } from "@/errors/dungeon-run-observation-dao-error.ts";
 import { RequirementEventTypeSchema } from "@/services/fellowship/validation/requirement-event-type-schema.ts";
 import {
+  BooleanIntSchema,
   NonEmptyStringSchema,
   PositiveIntegerSchema,
 } from "@/validation/common-schemas.ts";
+import { DungeonRunIdSchema } from "@/validation/dungeon-run/dungeon-run-id-schema.ts";
 
 const DungeonRunObservationHistorySchema = Schema.Struct({
+  dungeonRunId: DungeonRunIdSchema,
   elapsedMilliseconds: Schema.Finite,
+  isOwnRun: BooleanIntSchema,
   occurrence: PositiveIntegerSchema,
   targetId: NonEmptyStringSchema,
   type: RequirementEventTypeSchema,
@@ -100,6 +104,7 @@ const make = E.gen(function* () {
                 dungeon_run_observation.target_id,
                 dungeon_run_observation.observed_at,
                 dungeon_run.started_at,
+                dungeon_run.is_own_run,
                 ROW_NUMBER() OVER (
                   PARTITION BY
                     dungeon_run_observation.dungeon_run_id,
@@ -118,9 +123,11 @@ const make = E.gen(function* () {
                 AND dungeon_run.started_at IS NOT NULL
             )
           SELECT
+            dungeon_run_id,
             type,
             target_id,
             occurrence,
+            is_own_run,
             observed_at - started_at AS elapsed_milliseconds
           FROM
             observations
@@ -128,6 +135,7 @@ const make = E.gen(function* () {
             type,
             target_id,
             occurrence,
+            is_own_run,
             elapsed_milliseconds
         `;
 

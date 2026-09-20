@@ -13,9 +13,9 @@ import {
   hasUnsavedChanges,
   resolveConfigurationSaveState,
   selectConfigurationEditorFormState,
-} from "@/electron/renderer/components/configuration/configuration-editor-persistence.ts";
-import { type useConfigurationForm } from "@/electron/renderer/components/configuration/configuration-form.ts";
-import { ConfigurationOverwriteWarning } from "@/electron/renderer/components/configuration/configuration-save-state-indicator.tsx";
+} from "@/electron/renderer/components/configuration/form/configuration-editor-persistence.ts";
+import { type useConfigurationForm } from "@/electron/renderer/components/configuration/form/configuration-form.ts";
+import { ConfigurationOverwriteWarning } from "@/electron/renderer/components/configuration/form/configuration-save-state-indicator.tsx";
 import { Button } from "@/electron/renderer/components/ui/button.tsx";
 import {
   useConfigurationActions,

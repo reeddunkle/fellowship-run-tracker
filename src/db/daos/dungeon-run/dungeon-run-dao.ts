@@ -14,6 +14,7 @@ type CreateDungeonRunOptions = {
   readonly dungeonId: DungeonRunModel["dungeonId"];
   readonly dungeonLevel: DungeonRunModel["dungeonLevel"];
   readonly endedAt: DungeonRunModel["endedAt"];
+  readonly isOwnRun: DungeonRunModel["isOwnRun"];
   readonly source: DungeonRunModel["source"];
   readonly startedAt: DungeonRunModel["startedAt"];
 };
@@ -25,6 +26,7 @@ type DeleteDungeonRunOptions = {
 type DeleteDungeonRunsByDungeonOptions = {
   readonly dungeonId: DungeonRunModel["dungeonId"];
   readonly dungeonLevel: DungeonRunModel["dungeonLevel"];
+  readonly isOwnRun: DungeonRunModel["isOwnRun"];
 };
 
 type StartDungeonRunOptions = {

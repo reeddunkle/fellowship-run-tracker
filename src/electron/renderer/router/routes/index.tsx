@@ -1,14 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import * as E from "effect/Effect";
 
-import { HomePage } from "@/electron/renderer/components/home/home-page";
-import { FellowshipCatalogDataService } from "@/electron/renderer/services/fellowship-catalog-data/fellowship-catalog-data-service";
+import { DashboardPage } from "@/electron/renderer/components/dashboard/dashboard-page.tsx";
+import { loadFellowshipCatalogData } from "@/electron/renderer/router/routes/route-loaders";
 
 function HomeRoute() {
   const { abilities, dungeons, encounters, units } = Route.useLoaderData();
 
   return (
-    <HomePage
+    <DashboardPage
       abilities={abilities}
       dungeons={dungeons}
       encounters={encounters}
@@ -20,13 +19,6 @@ function HomeRoute() {
 export const Route = createFileRoute("/")({
   component: HomeRoute,
   loader: ({ context }) => {
-    return context.browserRuntime.runPromise(
-      E.gen(function* () {
-        const fellowshipCatalogDataService =
-          yield* FellowshipCatalogDataService;
-
-        return yield* fellowshipCatalogDataService.get;
-      }),
-    );
+    return loadFellowshipCatalogData(context);
   },
 });
