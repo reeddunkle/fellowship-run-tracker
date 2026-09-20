@@ -8,6 +8,7 @@ import { useMemo } from "react";
 
 import { formatDuration } from "@/electron/renderer/components/dungeon-run/helpers/dungeon-run-time.ts";
 import { type HistoryRequirementComparisonRow } from "@/electron/renderer/components/history/history-requirement-comparison.ts";
+import { Skeleton } from "@/electron/renderer/components/ui/skeleton.tsx";
 import { useFellowshipDataStore } from "@/electron/renderer/stores/fellowship-data/fellowship-data-store.tsx";
 import { getRequirementTargetLabel } from "@/helpers/requirement-target-label.ts";
 import { type DungeonRunApiObservationStatistics } from "@/services/api/dungeon-run/dungeon-run-api-schema.ts";
@@ -170,6 +171,48 @@ export function HistoryComparisonTable({ rows }: HistoryComparisonTableProps) {
               </tr>
             );
           })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export function HistoryComparisonTableSkeleton({
+  rows,
+}: HistoryComparisonTableProps) {
+  return (
+    <div className="overflow-x-auto rounded-lg border">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
+            {["Milestone", "Checkpoint", "My best", "Comparison"].map(
+              (label) => (
+                <th className="px-3 py-2 font-medium" key={label}>
+                  {label}
+                </th>
+              ),
+            )}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr className="border-b last:border-b-0" key={row.key}>
+              <td className="px-3 py-2 align-top text-muted-foreground">
+                {row.milestoneLabel}
+              </td>
+              <td className="px-3 py-2 align-top">
+                <Skeleton className="h-4 w-28" />
+              </td>
+              {["mine", "comparison"].map((group) => (
+                <td className="px-3 py-2 align-top" key={group}>
+                  <div className="grid gap-1">
+                    <Skeleton className="h-4 w-12" />
+                    <Skeleton className="h-3 w-40" />
+                  </div>
+                </td>
+              ))}
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>

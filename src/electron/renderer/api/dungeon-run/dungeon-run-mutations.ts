@@ -1,4 +1,10 @@
-import { mutationOptions, type QueryClient } from "@tanstack/react-query";
+import {
+  mutationOptions,
+  type QueryClient,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { useCallback } from "react";
 
 import { deleteDungeonRunHistory } from "@/electron/renderer/api/dungeon-run/dungeon-run-client.ts";
 import { getDungeonRunHistoryQueryOptions } from "@/electron/renderer/api/dungeon-run/dungeon-run-queries.ts";
@@ -27,4 +33,19 @@ export function deleteDungeonRunHistoryMutationOptions(
       });
     },
   });
+}
+
+export function useDeleteDungeonRunHistory({
+  dungeonId,
+  dungeonLevel,
+}: DeleteDungeonRunHistoryArgs) {
+  const queryClient = useQueryClient();
+  const { mutate, isPending } = useMutation(
+    deleteDungeonRunHistoryMutationOptions(queryClient),
+  );
+  const deleteHistory = useCallback(() => {
+    mutate({ dungeonId, dungeonLevel });
+  }, [mutate, dungeonId, dungeonLevel]);
+
+  return { delete: deleteHistory, isPending };
 }

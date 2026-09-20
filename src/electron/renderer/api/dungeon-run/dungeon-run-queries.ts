@@ -1,4 +1,8 @@
-import { queryOptions, useQueryClient } from "@tanstack/react-query";
+import {
+  queryOptions,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import * as E from "effect/Effect";
 import { useCallback } from "react";
 
@@ -53,6 +57,14 @@ export function getDungeonRunHistoryQueryOptions({
     ],
     staleTime: Infinity,
   });
+}
+
+export function useDungeonRunHistorySuspense(
+  args: DungeonRunHistoryQueryOptionsArgs,
+): DungeonRunApiHistory {
+  const { data } = useSuspenseQuery(getDungeonRunHistoryQueryOptions(args));
+
+  return data;
 }
 
 export function useInvalidateDungeonRunHistory(): () => void {

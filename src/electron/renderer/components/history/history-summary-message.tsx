@@ -1,3 +1,5 @@
+import { Skeleton } from "@/electron/renderer/components/ui/skeleton.tsx";
+
 type HistorySummaryMessageProps = {
   readonly emptyMessage: string;
   readonly runCount: number;
@@ -21,5 +23,14 @@ export function HistorySummaryMessage({
       {sampleCount} historical {sampleLabel} across {runCount} tracked{" "}
       {runLabel}.
     </p>
+  );
+}
+
+export function HistorySummaryMessageSkeleton() {
+  return (
+    <div className="grid gap-2 py-1">
+      <Skeleton className="h-3 w-4/5" />
+      <Skeleton className="h-3 w-1/2" />
+    </div>
   );
 }
