@@ -1,11 +1,21 @@
 import { queryOptions, useQueryClient } from "@tanstack/react-query";
+import * as E from "effect/Effect";
 import { useCallback } from "react";
 
 import { getDungeonRunHistory } from "@/electron/renderer/api/dungeon-run/dungeon-run-client.ts";
 import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
+import { type DungeonRunApiHistory } from "@/services/api/dungeon-run/dungeon-run-api-schema.ts";
 import { type DungeonId } from "@/services/fellowship/validation/fellowship-common.ts";
 
 export const DUNGEON_RUN_HISTORY_QUERY_KEY_PREFIX = ["dungeon-run", "history"];
+
+const NO_DUNGEON_RUN_HISTORY: DungeonRunApiHistory = {
+  comparisonRunCount: 0,
+  comparisonSampleCount: 0,
+  observations: [],
+  ownRunCount: 0,
+  ownSampleCount: 0,
+};
 
 type DungeonRunHistoryQueryOptionsArgs = {
   readonly dungeonId: DungeonId;
@@ -22,7 +32,18 @@ export function getDungeonRunHistoryQueryOptions({
         getDungeonRunHistory({
           dungeonId,
           dungeonLevel,
-        }),
+        }).pipe(
+          E.catch((error) => {
+            return E.logError(
+              "Failed to load dungeon run history; treating as no history.",
+              {
+                dungeonId,
+                dungeonLevel,
+                error,
+              },
+            ).pipe(E.as(NO_DUNGEON_RUN_HISTORY));
+          }),
+        ),
       );
     },
     queryKey: [

@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { HistoryIcon } from "lucide-react";
 
 import { HistorySummaryMessage } from "@/electron/renderer/components/history/history-summary-message.tsx";
-import { Button } from "@/electron/renderer/components/ui/button.tsx";
+import { buttonVariants } from "@/electron/renderer/components/ui/button.tsx";
 import { useSelectedConfigurationId } from "@/electron/renderer/stores/configurations-store/configurations-store.tsx";
 import { getOwnDungeonRunHistorySummary } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-history-summary.ts";
 import { useDungeonRunServerState } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-provider.tsx";
@@ -29,10 +29,10 @@ export function ConfigurationEditorHistory() {
         />
       </div>
       <div>
-        <Button render={<Link to="/history" />} type="button" variant="outline">
+        <Link className={buttonVariants({ variant: "outline" })} to="/history">
           <HistoryIcon />
           View history
-        </Button>
+        </Link>
       </div>
     </section>
   );

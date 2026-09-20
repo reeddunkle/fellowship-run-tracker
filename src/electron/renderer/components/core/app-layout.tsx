@@ -14,7 +14,7 @@ type AppLayoutProps = {
 export function AppLayout({ children, sidebar }: AppLayoutProps) {
   if (sidebar === undefined) {
     return (
-      <div className="flex min-h-screen flex-col scrollbar-gutter-stable">
+      <div className="flex min-h-screen flex-col">
         <AppHeader />
         <div className="min-h-0 flex-1">{children}</div>
       </div>
@@ -24,7 +24,7 @@ export function AppLayout({ children, sidebar }: AppLayoutProps) {
   return (
     <SidebarProvider sidebarWidth="20rem">
       {sidebar}
-      <SidebarInset className="min-w-0 scrollbar-gutter-stable">
+      <SidebarInset className="min-w-0">
         <div className="flex min-h-screen min-w-0 flex-1 flex-col">
           <AppHeader showSidebarTrigger />
           <div className="min-h-0 min-w-0 flex-1">{children}</div>
