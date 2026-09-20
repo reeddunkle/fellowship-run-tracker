@@ -22,33 +22,51 @@ type HistoryComparisonTableRow = HistoryRequirementComparisonRow & {
   readonly targetLabel: string;
 };
 
+const comparisonColumnLabels = {
+  checkpoint: "Checkpoint",
+  comparison: "Others",
+  milestone: "Milestone",
+  mine: "Mine",
+} as const;
+
 function StatisticsCell({
   statistics,
 }: {
   readonly statistics: DungeonRunApiObservationStatistics | undefined;
 }) {
   if (statistics === undefined) {
-    return <span className="text-muted-foreground">—</span>;
+    return <span className="block text-center text-muted-foreground">—</span>;
   }
 
   return (
-    <div className="grid gap-0.5">
-      <div className="font-medium">
-        {formatDuration(statistics.bestElapsedMilliseconds)}
-      </div>
-      <div className="text-xs text-muted-foreground">
-        avg {formatDuration(statistics.meanElapsedMilliseconds)} · median{" "}
-        {formatDuration(statistics.medianElapsedMilliseconds)} ·{" "}
-        {statistics.sampleCount === 1
-          ? "1 sample"
-          : `${statistics.sampleCount} samples`}
-      </div>
+    <div className="grid gap-1">
+      <table className="w-full border-separate border-spacing-x-3 text-right text-xs">
+        <thead className="text-muted-foreground">
+          <tr>
+            <th className="font-normal">Best</th>
+            <th className="font-normal">Avg</th>
+            <th className="font-normal">Median</th>
+            <th className="font-normal">Samples</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr className="font-medium">
+            <td>{formatDuration(statistics.bestElapsedMilliseconds)}</td>
+            <td>{formatDuration(statistics.meanElapsedMilliseconds)}</td>
+            <td>{formatDuration(statistics.medianElapsedMilliseconds)}</td>
+            <td>{statistics.sampleCount}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   );
 }
 
 const historyComparisonTableFeatures = tableFeatures({
-  columnMeta: {} as { readonly cellClassName?: string },
+  columnMeta: {} as {
+    readonly cellClassName?: string;
+    readonly headerClassName?: string;
+  },
 });
 
 const columnHelper = createColumnHelper<
@@ -59,7 +77,7 @@ const columnHelper = createColumnHelper<
 const columns = columnHelper.columns([
   columnHelper.accessor("milestoneLabel", {
     cell: (info) => info.getValue(),
-    header: "Milestone",
+    header: comparisonColumnLabels.milestone,
     meta: { cellClassName: "text-muted-foreground" },
   }),
   columnHelper.display({
@@ -72,22 +90,24 @@ const columns = columnHelper.columns([
         </>
       );
     },
-    header: "Checkpoint",
+    header: comparisonColumnLabels.checkpoint,
     id: "checkpoint",
   }),
   columnHelper.display({
     cell: ({ row }) => {
       return <StatisticsCell statistics={row.original.mine} />;
     },
-    header: "My best",
+    header: comparisonColumnLabels.mine,
     id: "mine",
+    meta: { headerClassName: "text-center" },
   }),
   columnHelper.display({
     cell: ({ row }) => {
       return <StatisticsCell statistics={row.original.comparison} />;
     },
-    header: "Comparison",
+    header: comparisonColumnLabels.comparison,
     id: "comparison",
+    meta: { headerClassName: "text-center" },
   }),
 ]);
 
@@ -134,7 +154,13 @@ export function HistoryComparisonTable({ rows }: HistoryComparisonTableProps) {
               >
                 {headerGroup.headers.map((header) => {
                   return (
-                    <th className="px-3 py-2 font-medium" key={header.id}>
+                    <th
+                      className={cn(
+                        "px-3 py-2 font-medium",
+                        header.column.columnDef.meta?.headerClassName,
+                      )}
+                      key={header.id}
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -185,13 +211,25 @@ export function HistoryComparisonTableSkeleton({
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
-            {["Milestone", "Checkpoint", "My best", "Comparison"].map(
-              (label) => (
-                <th className="px-3 py-2 font-medium" key={label}>
-                  {label}
-                </th>
-              ),
-            )}
+            {[
+              comparisonColumnLabels.milestone,
+              comparisonColumnLabels.checkpoint,
+              comparisonColumnLabels.mine,
+              comparisonColumnLabels.comparison,
+            ].map((label) => (
+              <th
+                className={cn(
+                  "px-3 py-2 font-medium",
+                  label === comparisonColumnLabels.mine ||
+                    label === comparisonColumnLabels.comparison
+                    ? "text-center"
+                    : undefined,
+                )}
+                key={label}
+              >
+                {label}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
@@ -206,8 +244,15 @@ export function HistoryComparisonTableSkeleton({
               {["mine", "comparison"].map((group) => (
                 <td className="px-3 py-2 align-top" key={group}>
                   <div className="grid gap-1">
-                    <Skeleton className="h-4 w-12" />
-                    <Skeleton className="h-3 w-40" />
+                    <div className="grid grid-cols-3 gap-3">
+                      {["best", "avg", "median"].map((statistic) => (
+                        <div className="grid gap-1" key={statistic}>
+                          <Skeleton className="h-3 w-10" />
+                          <Skeleton className="h-4 w-12" />
+                        </div>
+                      ))}
+                    </div>
+                    <Skeleton className="h-3 w-16" />
                   </div>
                 </td>
               ))}
