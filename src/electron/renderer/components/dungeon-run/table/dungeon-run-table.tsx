@@ -177,7 +177,7 @@ export function DungeonRunTable({ children, rows }: DungeonRunTableProps) {
     <DungeonRunTableContext value={contextValue}>
       <table className="w-full table-fixed border-separate border-spacing-0">
         <colgroup>
-          <col data-dungeon-run-label-col="" />
+          <col className="min-w-[16ch]" data-dungeon-run-label-col="" />
           {A.map(contextValue.visibleTimeColumns, (timeColumn) => {
             return <col key={timeColumn.value} style={{ width: "10ch" }} />;
           })}
@@ -247,7 +247,7 @@ export function DungeonRunTableTimeHeaders() {
       {A.map(visibleTimeColumns, (timeColumn) => {
         return (
           <th
-            className="min-w-[12ch] whitespace-nowrap px-2 text-right font-normal"
+            className="min-w-[12ch] whitespace-nowrap px-2 text-left font-normal"
             key={timeColumn.value}
             scope="col"
           >

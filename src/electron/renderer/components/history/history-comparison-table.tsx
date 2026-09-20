@@ -41,7 +41,7 @@ function StatisticsCell({
   return (
     <div className="grid gap-1">
       <table className="w-full border-separate border-spacing-x-3 text-right text-xs">
-        <thead className="text-muted-foreground">
+        <thead className="text-left text-muted-foreground">
           <tr>
             <th className="font-normal">Best</th>
             <th className="font-normal">Avg</th>
