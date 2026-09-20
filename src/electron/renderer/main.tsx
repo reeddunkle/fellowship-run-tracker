@@ -3,11 +3,12 @@ import * as E from "effect/Effect";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
+import { primeAppStateQueries } from "@/electron/renderer/api/app-state/app-state-queries.ts";
 import { router } from "@/electron/renderer/router/router";
 import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
-import { appStore } from "@/electron/renderer/stores/app-state-store/app-state-store.ts";
 import { dungeonRunEventStore } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-event-store.ts";
 import { trackingEventStore } from "@/electron/renderer/stores/tracking-store/tracking-event-store.ts";
+import { AppStateInitializationError } from "@/errors/app-state-error.ts";
 import { RendererInvariantError } from "@/errors/renderer-invariant-error.ts";
 
 import "./styles.css";
@@ -26,7 +27,12 @@ if (rootElement === null) {
 
 browserRuntime.runPromise(
   E.gen(function* () {
-    yield* appStore.initialize;
+    yield* E.tryPromise({
+      catch: (cause) => new AppStateInitializationError({ cause }),
+      try: () => {
+        return primeAppStateQueries(queryClient);
+      },
+    });
 
     dungeonRunEventStore.start();
     trackingEventStore.start();

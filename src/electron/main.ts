@@ -13,7 +13,7 @@ import { getEncryptionKeyDirectory } from "@/helpers/get-encryption-key-director
 import { NodePathLive } from "@/layers/node-platform-layer.ts";
 import { logCause } from "@/logging/log-cause.ts";
 import { makeElectronRuntime } from "@/runtimes/electron-runtime.ts";
-import { type AppStateService } from "@/services/app-state/app-state-service.ts";
+import { type AppStateApiService } from "@/services/api/app-state/app-state-api-service.ts";
 
 import { createWindow } from "./application/create-window.ts";
 import { runElectronApplication } from "./application/run-electron-application.ts";
@@ -51,7 +51,7 @@ function runElectronMain() {
     };
 
     function runProgram<A, ProgramError>(
-      effect: E.Effect<A, ProgramError, Path.Path | AppStateService>,
+      effect: E.Effect<A, ProgramError, Path.Path | AppStateApiService>,
     ) {
       void electronRuntime.runPromiseExit(effect.pipe(E.tapCause(logCause)));
     }

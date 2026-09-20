@@ -25,3 +25,20 @@ const BrowserLive = Layer.mergeAll(
 );
 
 export const browserRuntime = ManagedRuntime.make(BrowserLive);
+
+let isDisposed = false;
+
+export function disposeBrowserRuntime(): void {
+  if (isDisposed) {
+    return;
+  }
+
+  isDisposed = true;
+  void browserRuntime.dispose();
+}
+
+window.addEventListener("pagehide", disposeBrowserRuntime, { once: true });
+
+if (import.meta.hot !== undefined) {
+  import.meta.hot.dispose(disposeBrowserRuntime);
+}

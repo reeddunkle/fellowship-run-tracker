@@ -3,7 +3,6 @@ import { type ReactNode, useState } from "react";
 
 import { getConfigurationsQueryOptions } from "@/electron/renderer/api/configuration/configuration-queries.ts";
 import { getDungeonRunHistoryQueryOptions } from "@/electron/renderer/api/dungeon-run/dungeon-run-queries.ts";
-import { makeAppStore } from "@/electron/renderer/stores/app-state-store/app-state-store.ts";
 import { type DungeonRunEventStore } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-event-store.ts";
 import { DungeonRunProvider } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-provider.tsx";
 import { makeTrackingEventStore } from "@/electron/renderer/stores/tracking-store/tracking-event-store.ts";
@@ -14,6 +13,7 @@ import {
   type DungeonRunApiHistory,
 } from "@/services/api/dungeon-run/dungeon-run-api-schema.ts";
 import { type DungeonId } from "@/services/fellowship/validation/fellowship-common.ts";
+import { seedAppStateQueries } from "@/tests/browser/helpers/seed-app-state-queries.ts";
 import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";
 
 type TestDungeonRunHistorySeed = {
@@ -47,6 +47,15 @@ export function TestDungeonRunProvider({
       configurations,
     );
 
+    seedAppStateQueries(client, {
+      ...DEFAULT_APP_STATE,
+      dungeonRun: {
+        ...DEFAULT_APP_STATE.dungeonRun,
+        comparisonGroup,
+      },
+      selectedConfigurationId,
+    });
+
     if (history !== undefined) {
       client.setQueryData(
         getDungeonRunHistoryQueryOptions({
@@ -60,17 +69,6 @@ export function TestDungeonRunProvider({
     return client;
   });
 
-  const [testAppStore] = useState(() => {
-    return makeAppStore({
-      ...DEFAULT_APP_STATE,
-      dungeonRun: {
-        ...DEFAULT_APP_STATE.dungeonRun,
-        comparisonGroup,
-      },
-      selectedConfigurationId,
-    });
-  });
-
   const [testTrackingEventStore] = useState(() => {
     return makeTrackingEventStore();
   });
@@ -78,7 +76,6 @@ export function TestDungeonRunProvider({
   return (
     <QueryClientProvider client={queryClient}>
       <DungeonRunProvider
-        appStore={testAppStore}
         eventStore={eventStore}
         trackingEventStore={testTrackingEventStore}
       >

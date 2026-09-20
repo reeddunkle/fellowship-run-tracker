@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { render } from "vitest-browser-react";
 
 import {
@@ -109,19 +109,26 @@ test.each(["runs", "rateLimit"])(
       ...getFellowshipLogsLastKnownRateLimitDataQueryOptions(),
       queryFn: () => rateLimit.promise,
     });
+    const onCaughtError = vi.fn();
+    const failure = new Error(
+      failedSection === "runs"
+        ? "Imported runs unavailable"
+        : "Rate limit unavailable",
+    );
     try {
       const screen = await render(
         <QueryClientProvider client={client}>
           <FellowshipLogsRateLimitSection />
           <ImportedDungeonRunsList />
         </QueryClientProvider>,
+        { createRootOptions: { onCaughtError } },
       );
       if (failedSection === "runs") {
-        runs.reject(new Error("Imported runs unavailable"));
+        runs.reject(failure);
         rateLimit.resolve(null);
       } else {
         runs.resolve([]);
-        rateLimit.reject(new Error("Rate limit unavailable"));
+        rateLimit.reject(failure);
       }
       await Promise.all([runsRequest, rateLimitRequest]);
       await expect
@@ -142,6 +149,8 @@ test.each(["runs", "rateLimit"])(
           ),
         )
         .toBeVisible();
+      expect(onCaughtError).toHaveBeenCalledOnce();
+      expect(onCaughtError).toHaveBeenCalledWith(failure, expect.anything());
       await screen.unmount();
     } finally {
       client.clear();

@@ -20,13 +20,13 @@ import {
   useMemo,
 } from "react";
 
+import { useDungeonRunTimeColumns } from "@/electron/renderer/api/app-state/app-state-queries.ts";
 import { type DungeonRunComparisonElapsedMilliseconds } from "@/electron/renderer/components/dungeon-run/helpers/dungeon-run-milestone-rows.ts";
 import { type DungeonRunTableRow as DungeonRunTableRowData } from "@/electron/renderer/components/dungeon-run/helpers/dungeon-run-table-row.ts";
 import {
   formatDuration,
   formatSignedDuration,
 } from "@/electron/renderer/components/dungeon-run/helpers/dungeon-run-time.ts";
-import { useDungeonRunAppStore } from "@/electron/renderer/stores/app-state-store/use-app-store.ts";
 import {
   DUNGEON_RUN_TIME_COLUMN,
   type DungeonRunTimeColumn,
@@ -121,7 +121,7 @@ type DungeonRunTableProps = {
 };
 
 export function DungeonRunTable({ children, rows }: DungeonRunTableProps) {
-  const { timeColumns } = useDungeonRunAppStore();
+  const timeColumns = useDungeonRunTimeColumns();
 
   const orderedTimeColumns = useMemo(() => {
     return pipe(timeColumns, A.sort(TimeColumnDisplayOrder));

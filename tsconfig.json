@@ -32,5 +32,11 @@
     "noEmit": true
   },
 
-  "exclude": ["src/electron/renderer/**/*", "src/tests/browser/**/*"]
+  "exclude": [
+    "src/electron/renderer/**/*",
+    "src/tests/browser/**/*",
+    "logs/**/*",
+    "generated/**/*",
+    "fixtures/**/*"
+  ]
 }

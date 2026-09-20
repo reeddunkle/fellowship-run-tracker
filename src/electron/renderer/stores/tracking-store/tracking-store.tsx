@@ -26,14 +26,12 @@ type TrackingActionResult = {
 };
 
 type TrackingContextValue = {
-  readonly eventConnectionState: ApiEventConnectionState;
   readonly isStarting: boolean;
   readonly isStopping: boolean;
   readonly start: (configurationId: ConfigurationId) => void;
   readonly startError: unknown | undefined;
   readonly stop: () => void;
   readonly stopError: unknown | undefined;
-  readonly trackingStatus: TrackingApiStatus | null;
 };
 
 type TrackingProviderProps = {
@@ -62,11 +60,6 @@ const TrackingContext = createContext<TrackingContextValue | undefined>(
 );
 
 export function TrackingProvider({ children }: TrackingProviderProps) {
-  const trackingSnapshot = useSyncExternalStore(
-    trackingEventStore.subscribe,
-    trackingEventStore.getSnapshot,
-  );
-
   const [startState, dispatchStart, isStarting] = useActionState(
     (
       _previousState: TrackingActionResult,
@@ -110,7 +103,6 @@ export function TrackingProvider({ children }: TrackingProviderProps) {
 
   const contextValue = useMemo<TrackingContextValue>(() => {
     return {
-      eventConnectionState: trackingSnapshot.eventConnectionState,
       isStarting,
       isStopping,
       start: (configurationId) => {
@@ -127,7 +119,6 @@ export function TrackingProvider({ children }: TrackingProviderProps) {
         });
       },
       stopError: stopState.error,
-      trackingStatus: trackingSnapshot.trackingStatus,
     };
   }, [
     dispatchStart,
@@ -136,8 +127,6 @@ export function TrackingProvider({ children }: TrackingProviderProps) {
     isStopping,
     startState.error,
     stopState.error,
-    trackingSnapshot.eventConnectionState,
-    trackingSnapshot.trackingStatus,
   ]);
 
   return (
@@ -183,7 +172,10 @@ export function useTrackingActionState(): TrackingActionState {
 }
 
 export function useTrackingServerState(): TrackingServerState {
-  const { eventConnectionState, trackingStatus } = useTrackingContext();
+  const { eventConnectionState, trackingStatus } = useSyncExternalStore(
+    trackingEventStore.subscribe,
+    trackingEventStore.getSnapshot,
+  );
 
   return {
     eventConnectionState,

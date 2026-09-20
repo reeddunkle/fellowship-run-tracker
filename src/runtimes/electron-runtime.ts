@@ -9,7 +9,7 @@ import {
   NodePlatformLive,
 } from "@/layers/node-platform-layer.ts";
 import { makePersistenceLayer } from "@/layers/persistence-layer.ts";
-import { ElectronAppStateLive } from "@/services/app-state/electron-app-state-live.ts";
+import { AppStateApiServiceLive } from "@/services/api/app-state/app-state-api-service-live.ts";
 import { type DatabaseOptions } from "@/types/app-options.ts";
 
 export type MakeElectronRuntimeOptions = DatabaseOptions & {
@@ -38,7 +38,7 @@ export function makeElectronRuntime({
     appStateStorageDirectory,
   ).pipe(Layer.provide(NodePlatformLive));
 
-  const AppStateLive = ElectronAppStateLive.pipe(
+  const AppStateLive = AppStateApiServiceLive.pipe(
     Layer.provide(AppStateStorageLive),
   );
 

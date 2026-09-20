@@ -26,7 +26,7 @@ function ImportedDungeonRunsLoadError() {
 }
 
 function ImportedDungeonRunsListSkeleton({
-  numRows = 1,
+  numRows = 3,
 }: {
   numRows?: number;
 }) {

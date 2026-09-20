@@ -14,17 +14,19 @@ import {
   type DungeonRunStateApi,
 } from "@/api/websocket/dungeon-run/dungeon-run-api-message-schema.ts";
 import { type TrackingApiStatus } from "@/application/fellowship-tracker/tracking-api-schema.ts";
-import { type ApiEventConnectionState } from "@/electron/renderer/api/common.ts";
+import {
+  useDungeonRunComparisonGroup,
+  useSelectedConfigurationId,
+} from "@/electron/renderer/api/app-state/app-state-queries.ts";
+import {
+  API_EVENT_CONNECTION_STATE,
+  type ApiEventConnectionState,
+} from "@/electron/renderer/api/common.ts";
 import { useConfigurationsQuery } from "@/electron/renderer/api/configuration/configuration-queries.ts";
 import {
   useDungeonRunHistoryQuery,
   useInvalidateDungeonRunHistory,
 } from "@/electron/renderer/api/dungeon-run/dungeon-run-queries.ts";
-import {
-  type AppStore,
-  appStore,
-} from "@/electron/renderer/stores/app-state-store/app-state-store.ts";
-import { useAppStore } from "@/electron/renderer/stores/app-state-store/use-app-store.ts";
 import {
   type DungeonRunEventStore,
   type DungeonRunEventStoreSnapshot,
@@ -81,7 +83,6 @@ export type DungeonRunState = {
 type DungeonRunContextValue = DungeonRunDisplayState & DungeonRunState;
 
 type DungeonRunProviderProps = {
-  readonly appStore?: AppStore;
   readonly children: ReactNode;
   readonly eventStore?: DungeonRunEventStore;
   readonly trackingEventStore?: TrackingEventStore;
@@ -102,43 +103,21 @@ const DungeonRunContext = createContext<DungeonRunContextValue | undefined>(
   undefined,
 );
 
+type DungeonRunSources = {
+  readonly eventStore: DungeonRunEventStore;
+  readonly trackingEventStore: TrackingEventStore;
+};
+
+const DungeonRunSourcesContext = createContext<DungeonRunSources | undefined>(
+  undefined,
+);
+
 export function DungeonRunProvider({
-  appStore: appStoreOverride = appStore,
   children,
   eventStore = dungeonRunEventStore,
   trackingEventStore: trackingEventStoreOverride = defaultTrackingEventStore,
 }: DungeonRunProviderProps) {
-  const invalidateDungeonRunHistory = useInvalidateDungeonRunHistory();
-
-  const subscribeToDungeonRunEvents = useCallback(
-    (onStoreChange: () => void) => {
-      const unsubscribeSnapshot = eventStore.subscribe(onStoreChange);
-      const unsubscribeRunFinished = eventStore.onRunFinished(
-        invalidateDungeonRunHistory,
-      );
-
-      return () => {
-        unsubscribeSnapshot();
-        unsubscribeRunFinished();
-      };
-    },
-    [eventStore, invalidateDungeonRunHistory],
-  );
-
-  const dungeonRunSnapshot = useSyncExternalStore(
-    subscribeToDungeonRunEvents,
-    eventStore.getSnapshot,
-    eventStore.getSnapshot,
-  );
-
-  const trackingSnapshot = useSyncExternalStore(
-    trackingEventStoreOverride.subscribe,
-    trackingEventStoreOverride.getSnapshot,
-    trackingEventStoreOverride.getSnapshot,
-  );
-
-  const { dungeonRun: dungeonRunAppState, selectedConfigurationId } =
-    useAppStore(appStoreOverride);
+  const comparisonGroup = useDungeonRunComparisonGroup();
 
   const {
     collapseAllMilestones,
@@ -147,57 +126,50 @@ export function DungeonRunProvider({
     setMilestoneExpanded,
   } = useDungeonRunMilestoneExpansion();
 
-  const { data: configurations } = useConfigurationsQuery();
-
-  const historyConfigurationId = getHistoryConfigurationId({
-    runState: dungeonRunSnapshot.runState,
-    selectedConfigurationId,
-    trackingStatus: trackingSnapshot.trackingStatus,
-  });
-
-  const historyConfiguration = (configurations ?? []).find((configuration) => {
-    return configuration.id === historyConfigurationId;
-  });
-
-  const historyKey: DungeonRunHistoryKey | null =
-    historyConfigurationId === null || historyConfiguration === undefined
-      ? null
-      : {
-          dungeonId: historyConfiguration.dungeonId,
-          dungeonLevel: historyConfiguration.dungeonLevel,
-        };
-
-  const historyQuery = useDungeonRunHistoryQuery(historyKey);
-
-  const history = historyQuery.data ?? null;
-
   const contextValue = useMemo<DungeonRunContextValue>(() => {
     return {
       collapseAllMilestones,
-      comparisonGroup: dungeonRunAppState.comparisonGroup,
-      eventConnectionState: dungeonRunSnapshot.eventConnectionState,
+      comparisonGroup,
+      eventConnectionState: API_EVENT_CONNECTION_STATE.DISCONNECTED,
       expandAllMilestones,
-      history,
+      history: null,
       isMilestoneExpanded,
-      runState: dungeonRunSnapshot.runState,
+      runState: null,
       setMilestoneExpanded,
     };
   }, [
     collapseAllMilestones,
-    dungeonRunAppState.comparisonGroup,
-    dungeonRunSnapshot.eventConnectionState,
-    dungeonRunSnapshot.runState,
+    comparisonGroup,
     expandAllMilestones,
-    history,
     isMilestoneExpanded,
     setMilestoneExpanded,
   ]);
 
   return (
-    <DungeonRunContext.Provider value={contextValue}>
-      {children}
-    </DungeonRunContext.Provider>
+    <DungeonRunSourcesContext.Provider
+      value={{
+        eventStore,
+        trackingEventStore: trackingEventStoreOverride,
+      }}
+    >
+      <DungeonRunContext.Provider value={contextValue}>
+        {children}
+      </DungeonRunContext.Provider>
+    </DungeonRunSourcesContext.Provider>
   );
+}
+
+function useDungeonRunSources(): DungeonRunSources {
+  const sources = useContext(DungeonRunSourcesContext);
+
+  if (sources === undefined) {
+    throw new ReactContextError({
+      hookName: "useDungeonRunSources",
+      providerName: "DungeonRunProvider",
+    });
+  }
+
+  return sources;
 }
 
 function useDungeonRunContext(): DungeonRunContextValue {
@@ -214,8 +186,54 @@ function useDungeonRunContext(): DungeonRunContextValue {
 }
 
 export function useDungeonRunServerState(): DungeonRunServerState {
-  const { comparisonGroup, eventConnectionState, history, runState } =
-    useDungeonRunContext();
+  const { eventStore, trackingEventStore } = useDungeonRunSources();
+  const invalidateDungeonRunHistory = useInvalidateDungeonRunHistory();
+  const subscribeToDungeonRunEvents = useCallback(
+    (onStoreChange: () => void) => {
+      const unsubscribeSnapshot = eventStore.subscribe(onStoreChange);
+      const unsubscribeRunFinished = eventStore.onRunFinished(
+        invalidateDungeonRunHistory,
+      );
+
+      return () => {
+        unsubscribeSnapshot();
+        unsubscribeRunFinished();
+      };
+    },
+    [eventStore, invalidateDungeonRunHistory],
+  );
+  const dungeonRunSnapshot = useSyncExternalStore(
+    subscribeToDungeonRunEvents,
+    eventStore.getSnapshot,
+    eventStore.getSnapshot,
+  );
+  const trackingSnapshot = useSyncExternalStore(
+    trackingEventStore.subscribe,
+    trackingEventStore.getSnapshot,
+    trackingEventStore.getSnapshot,
+  );
+  const comparisonGroup = useDungeonRunComparisonGroup();
+  const selectedConfigurationId = useSelectedConfigurationId();
+  const { data: configurations } = useConfigurationsQuery();
+  const historyConfigurationId = getHistoryConfigurationId({
+    runState: dungeonRunSnapshot.runState,
+    selectedConfigurationId,
+    trackingStatus: trackingSnapshot.trackingStatus,
+  });
+  const historyConfiguration = (configurations ?? []).find((configuration) => {
+    return configuration.id === historyConfigurationId;
+  });
+  const historyKey: DungeonRunHistoryKey | null =
+    historyConfigurationId === null || historyConfiguration === undefined
+      ? null
+      : {
+          dungeonId: historyConfiguration.dungeonId,
+          dungeonLevel: historyConfiguration.dungeonLevel,
+        };
+  const historyQuery = useDungeonRunHistoryQuery(historyKey);
+  const history = historyQuery.data ?? null;
+  const eventConnectionState = dungeonRunSnapshot.eventConnectionState;
+  const runState = dungeonRunSnapshot.runState;
 
   const dungeonRun = runState?.dungeonRun ?? null;
   const observations = runState?.observations ?? [];

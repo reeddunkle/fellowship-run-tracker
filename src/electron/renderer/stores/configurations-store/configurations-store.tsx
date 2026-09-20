@@ -1,6 +1,8 @@
 import * as R from "effect/Record";
 import { createContext, type ReactNode, useContext, useMemo } from "react";
 
+import { useSetSelectedConfigurationId } from "@/electron/renderer/api/app-state/app-state-mutations.ts";
+import { useSelectedConfigurationId as useSelectedConfigurationIdQuery } from "@/electron/renderer/api/app-state/app-state-queries.ts";
 import {
   useDeleteConfiguration,
   useSaveConfiguration,
@@ -9,7 +11,6 @@ import {
 import { useConfigurationsSuspense } from "@/electron/renderer/api/configuration/configuration-queries.ts";
 import { saveConfigurationApiRequest } from "@/electron/renderer/components/configuration/form/configuration-editor-adapter.ts";
 import { type DecodedConfigurationEditorValue } from "@/electron/renderer/components/configuration/form/configuration-form-schema.ts";
-import { useAppStore } from "@/electron/renderer/stores/app-state-store/use-app-store.ts";
 import { ReactContextError } from "@/errors/react-context-error.ts";
 import {
   type ConfigurationApiConfiguration,
@@ -80,7 +81,8 @@ export function ConfigurationProvider({
 }: ConfigurationProviderProps) {
   const configurations = useConfigurationsSuspense();
 
-  const { selectedConfigurationId, setSelectedConfigurationId } = useAppStore();
+  const selectedConfigurationId = useSelectedConfigurationIdQuery();
+  const setSelectedConfigurationId = useSetSelectedConfigurationId();
 
   const saveMutation = useSaveConfiguration();
 

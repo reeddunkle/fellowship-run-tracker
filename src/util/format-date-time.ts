@@ -24,7 +24,8 @@ export function formatRelativeDateTimeFromMilliseconds(
 }
 
 export function formatRelativeDateTime(dateTime: DateTime.Utc): string {
-  return formatRelativeDateTimeFromMilliseconds(
-    DateTime.toEpochMillis(dateTime),
+  return dateTime.pipe(
+    DateTime.toEpochMillis,
+    formatRelativeDateTimeFromMilliseconds,
   );
 }

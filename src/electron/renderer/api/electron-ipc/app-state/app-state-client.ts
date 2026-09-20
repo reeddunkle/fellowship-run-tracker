@@ -1,31 +1,101 @@
 import * as E from "effect/Effect";
+import * as Schema from "effect/Schema";
 
-import { type AppState } from "@/electron/storage/app-state/app-state-schema.ts";
+import {
+  type AppState,
+  DungeonRunTimeColumnStateSchema,
+  ThemeSchema,
+} from "@/electron/storage/app-state/app-state-schema.ts";
 import { AppStateClientError } from "@/errors/electron-error.ts";
+import { type AppStateRpcRequest } from "@/services/api/app-state/app-state-rpc.ts";
+import {
+  type ConfigurationId,
+  ConfigurationIdSchema,
+} from "@/validation/configuration/configuration-id-schema.ts";
+import { DungeonRunComparisonGroupSchema } from "@/validation/dungeon-run/dungeon-run-comparison-group-schema.ts";
 
-export const getAppState: E.Effect<AppState, AppStateClientError> =
-  E.tryPromise({
-    catch: (cause) => {
-      return new AppStateClientError({
-        cause,
-        operation: "Get",
-      });
-    },
-    try: () => {
-      return window.electronAPI.appState.get();
-    },
-  });
+function request<Response>(
+  rpcRequest: AppStateRpcRequest,
+  responseSchema: Schema.Codec<Response, unknown>,
+  operation: AppStateRpcRequest["_tag"],
+) {
+  return E.promise(() => {
+    return window.electronAPI.appState.request(rpcRequest);
+  }).pipe(
+    E.flatMap(Schema.decodeUnknownEffect(responseSchema)),
+    E.mapError((cause) => {
+      return new AppStateClientError({ cause, operation });
+    }),
+  );
+}
 
-export function setAppState(state: AppState) {
-  return E.tryPromise({
-    catch: (cause) => {
-      return new AppStateClientError({
-        cause,
-        operation: "Set",
-      });
-    },
-    try: () => {
-      return window.electronAPI.appState.set(state);
-    },
-  });
+function command(
+  rpcRequest: AppStateRpcRequest,
+  operation: AppStateRpcRequest["_tag"],
+) {
+  return request(rpcRequest, Schema.Void, operation);
+}
+
+export const getTheme = request({ _tag: "GetTheme" }, ThemeSchema, "GetTheme");
+
+export const getSidebarOpen = request(
+  { _tag: "GetSidebarOpen" },
+  Schema.Boolean,
+  "GetSidebarOpen",
+);
+
+export const getSelectedConfigurationId: E.Effect<
+  ConfigurationId | null,
+  AppStateClientError
+> = request(
+  { _tag: "GetSelectedConfigurationId" },
+  Schema.NullOr(ConfigurationIdSchema),
+  "GetSelectedConfigurationId",
+);
+
+export const getDungeonRunTimeColumns = request(
+  { _tag: "GetDungeonRunTimeColumns" },
+  Schema.Array(DungeonRunTimeColumnStateSchema),
+  "GetDungeonRunTimeColumns",
+);
+
+export const getDungeonRunComparisonGroup = request(
+  { _tag: "GetDungeonRunComparisonGroup" },
+  DungeonRunComparisonGroupSchema,
+  "GetDungeonRunComparisonGroup",
+);
+
+export function setDungeonRunComparisonGroup(
+  comparisonGroup: typeof DungeonRunComparisonGroupSchema.Type,
+) {
+  return command(
+    { _tag: "SetDungeonRunComparisonGroup", comparisonGroup },
+    "SetDungeonRunComparisonGroup",
+  );
+}
+
+export function setDungeonRunTimeColumns(
+  timeColumns: AppState["dungeonRun"]["timeColumns"],
+) {
+  return command(
+    { _tag: "SetDungeonRunTimeColumns", timeColumns },
+    "SetDungeonRunTimeColumns",
+  );
+}
+
+export function setSelectedConfigurationId(
+  selectedConfigurationId: ConfigurationId | null,
+) {
+  return command(
+    { _tag: "SetSelectedConfigurationId", selectedConfigurationId },
+    "SetSelectedConfigurationId",
+  );
+}
+
+export function setSidebarOpen(sidebarOpen: boolean) {
+  return command({ _tag: "SetSidebarOpen", sidebarOpen }, "SetSidebarOpen");
+}
+
+export function setTheme(theme: AppState["theme"]) {
+  return command({ _tag: "SetTheme", theme }, "SetTheme");
 }

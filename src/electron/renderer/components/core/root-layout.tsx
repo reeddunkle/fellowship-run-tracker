@@ -3,7 +3,6 @@ import { getRouteApi, Outlet } from "@tanstack/react-router";
 import { SettingsProvider } from "@/electron/renderer/components/providers/settings-provider.tsx";
 import { ThemeProvider } from "@/electron/renderer/components/providers/theme-provider.tsx";
 import { TooltipProvider } from "@/electron/renderer/components/ui/tooltip.tsx";
-import { DungeonRunProvider } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-provider";
 import { LiveSplitProvider } from "@/electron/renderer/stores/live-split/live-split-store";
 import { TrackingProvider } from "@/electron/renderer/stores/tracking-store/tracking-store.tsx";
 
@@ -18,9 +17,7 @@ export function RootLayout() {
         <SettingsProvider appSettings={settings}>
           <TrackingProvider>
             <LiveSplitProvider>
-              <DungeonRunProvider>
-                <Outlet />
-              </DungeonRunProvider>
+              <Outlet />
             </LiveSplitProvider>
           </TrackingProvider>
         </SettingsProvider>

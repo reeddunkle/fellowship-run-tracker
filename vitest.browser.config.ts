@@ -1,4 +1,5 @@
 import path from "node:path";
+import tailwindcss from "@tailwindcss/vite";
 import { playwright } from "@vitest/browser-playwright";
 import { defineConfig } from "vitest/config";
 
@@ -7,8 +8,11 @@ const projectRoot = path.resolve(import.meta.dirname);
 export default defineConfig({
   optimizeDeps: {
     include: [
+      "@base-ui/react/merge-props",
+      "@base-ui/react/use-render",
       "@tanstack/react-query",
       "@tanstack/react-router",
+      "date-fns",
       "effect",
       "effect/Context",
       "effect/DateTime",
@@ -23,6 +27,7 @@ export default defineConfig({
       "effect/unstable/schema/Model",
     ],
   },
+  plugins: [tailwindcss()],
   resolve: {
     alias: {
       "@": path.resolve(projectRoot, "./src"),
@@ -41,5 +46,6 @@ export default defineConfig({
     },
     include: ["src/tests/browser/**/*.test.tsx"],
     root: projectRoot,
+    setupFiles: ["./src/tests/browser/setup.ts"],
   },
 });

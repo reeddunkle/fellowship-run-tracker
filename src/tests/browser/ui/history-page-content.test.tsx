@@ -2,23 +2,17 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { expect, test } from "vitest";
 import { render } from "vitest-browser-react";
 
-import { getConfigurationsQueryOptions } from "@/electron/renderer/api/configuration/configuration-queries.ts";
 import { getDungeonRunHistoryQueryOptions } from "@/electron/renderer/api/dungeon-run/dungeon-run-queries.ts";
 import { HistoryPageContent } from "@/electron/renderer/components/history/history-page-content.tsx";
-import { appStore } from "@/electron/renderer/stores/app-state-store/app-state-store.ts";
-import { ConfigurationProvider } from "@/electron/renderer/stores/configurations-store/configurations-store.tsx";
 import { FellowshipDataProvider } from "@/electron/renderer/stores/fellowship-data/fellowship-data-store.tsx";
 import { type DungeonRunApiHistory } from "@/services/api/dungeon-run/dungeon-run-api-schema.ts";
+import { TestConfigurationProvider } from "@/tests/browser/test-configuration-provider.tsx";
 import { MOCK_CONFIGURATION } from "@/tests/common/fixtures/configuration-fixtures.ts";
 
 test("keeps the heading visible while history suspends, then shows data", async () => {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  client.setQueryData(getConfigurationsQueryOptions().queryKey, [
-    MOCK_CONFIGURATION,
-  ]);
-  appStore.setSelectedConfigurationId(MOCK_CONFIGURATION.id);
   const pending = Promise.withResolvers<DungeonRunApiHistory>();
   const request = client.prefetchQuery({
     ...getDungeonRunHistoryQueryOptions(MOCK_CONFIGURATION),
@@ -27,7 +21,10 @@ test("keeps the heading visible while history suspends, then shows data", async 
   try {
     const screen = await render(
       <QueryClientProvider client={client}>
-        <ConfigurationProvider>
+        <TestConfigurationProvider
+          client={client}
+          configuration={MOCK_CONFIGURATION}
+        >
           <FellowshipDataProvider
             abilities={[]}
             dungeons={[]}
@@ -36,7 +33,7 @@ test("keeps the heading visible while history suspends, then shows data", async 
           >
             <HistoryPageContent />
           </FellowshipDataProvider>
-        </ConfigurationProvider>
+        </TestConfigurationProvider>
       </QueryClientProvider>,
     );
     await expect
@@ -68,6 +65,5 @@ test("keeps the heading visible while history suspends, then shows data", async 
     await screen.unmount();
   } finally {
     client.clear();
-    appStore.setSelectedConfigurationId(null);
   }
 });

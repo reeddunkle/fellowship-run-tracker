@@ -2,6 +2,14 @@ import * as A from "effect/Array";
 import { MenuIcon } from "lucide-react";
 import { useState } from "react";
 
+import {
+  useSetDungeonRunComparisonGroup,
+  useSetDungeonRunTimeColumns,
+} from "@/electron/renderer/api/app-state/app-state-mutations.ts";
+import {
+  useDungeonRunComparisonGroup,
+  useDungeonRunTimeColumns,
+} from "@/electron/renderer/api/app-state/app-state-queries.ts";
 import { useDetachedWindow } from "@/electron/renderer/components/detached-window/detached-window-provider";
 import { useDungeonRunTimeColumnsForm } from "@/electron/renderer/components/dungeon-run/dungeon-run-time-columns-form.ts";
 import { DUNGEON_RUN_COMPARISON_GROUP_OPTIONS } from "@/electron/renderer/components/dungeon-run/helpers/dungeon-run-comparison-group.ts";
@@ -16,7 +24,6 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@/electron/renderer/components/ui/native-select.tsx";
-import { useDungeonRunAppStore } from "@/electron/renderer/stores/app-state-store/use-app-store.ts";
 import { type DungeonRunTimeColumn } from "@/electron/storage/app-state/app-state-schema.ts";
 import { type DungeonRunApiComparisonGroup } from "@/services/api/dungeon-run/dungeon-run-api-schema.ts";
 
@@ -33,8 +40,10 @@ const TIME_COLUMNS_FORM_DOM_ID = "dungeon-run-time-columns-form";
 
 export function DungeonRunDropdownMenu() {
   const { portalContainer, resizeToContent } = useDetachedWindow();
-  const { comparisonGroup, setComparisonGroup, setTimeColumns, timeColumns } =
-    useDungeonRunAppStore();
+  const comparisonGroup = useDungeonRunComparisonGroup();
+  const timeColumns = useDungeonRunTimeColumns();
+  const setComparisonGroup = useSetDungeonRunComparisonGroup();
+  const setTimeColumns = useSetDungeonRunTimeColumns();
 
   const [isOpen, setIsOpen] = useState(false);
 

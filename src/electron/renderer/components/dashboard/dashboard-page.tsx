@@ -6,6 +6,7 @@ import { DetachedWindowProvider } from "@/electron/renderer/components/detached-
 import { DungeonRun } from "@/electron/renderer/components/dungeon-run/dungeon-run";
 import { LiveSplitPanel } from "@/electron/renderer/components/live-split/live-split-panel.tsx";
 import { useAppSettings } from "@/electron/renderer/components/providers/settings-provider.tsx";
+import { DungeonRunProvider } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-provider.tsx";
 import { type AbilityApiAbilityList } from "@/services/api/ability/ability-api-schema.ts";
 import { type DungeonApiDungeonList } from "@/services/api/dungeon/dungeon-api-schema.ts";
 import { type EncounterApiEncounterList } from "@/services/api/encounter/encounter-api-schema.ts";
@@ -33,16 +34,18 @@ export function DashboardPage({
       encounters={encounters}
       units={units}
     >
-      <DetachedWindowProvider>
-        <ManagedDetachedWindow>
-          <DungeonRun />
-        </ManagedDetachedWindow>
-        <main className="mx-auto grid w-full gap-6 p-6">
-          {appSettings.isLiveSplitEnabled ? <LiveSplitPanel /> : null}
-          <TrackingControls />
-          <ConfigurationEditorContainer />
-        </main>
-      </DetachedWindowProvider>
+      <DungeonRunProvider>
+        <DetachedWindowProvider>
+          <ManagedDetachedWindow>
+            <DungeonRun />
+          </ManagedDetachedWindow>
+          <main className="mx-auto grid w-full gap-6 p-6">
+            {appSettings.isLiveSplitEnabled ? <LiveSplitPanel /> : null}
+            <TrackingControls />
+            <ConfigurationEditorContainer />
+          </main>
+        </DetachedWindowProvider>
+      </DungeonRunProvider>
     </ConfigurationWorkspaceLayout>
   );
 }

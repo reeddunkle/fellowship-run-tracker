@@ -30,14 +30,12 @@ type LiveSplitActionResult = {
 };
 
 type LiveSplitContextValue = {
-  readonly eventConnectionState: ApiEventConnectionState;
   readonly connect: () => void;
   readonly connectError: unknown | undefined;
   readonly disconnect: () => void;
   readonly disconnectError: unknown | undefined;
   readonly isConnecting: boolean;
   readonly isDisconnecting: boolean;
-  readonly serverStatus: LiveSplitApiStatus | null;
 };
 
 type LiveSplitProviderProps = {
@@ -71,29 +69,6 @@ const LiveSplitContext = createContext<LiveSplitContextValue | undefined>(
 );
 
 export function LiveSplitProvider({ children }: LiveSplitProviderProps) {
-  const appSettings = useAppSettings();
-
-  const subscribe = useCallback(
-    (listener: () => void) => {
-      if (!appSettings.isLiveSplitEnabled) {
-        return () => {};
-      }
-
-      return liveSplitEventStore.subscribe(listener);
-    },
-    [appSettings.isLiveSplitEnabled],
-  );
-
-  const getSnapshot = useCallback(() => {
-    if (!appSettings.isLiveSplitEnabled) {
-      return DISABLED_LIVE_SPLIT_SNAPSHOT;
-    }
-
-    return liveSplitEventStore.getSnapshot();
-  }, [appSettings.isLiveSplitEnabled]);
-
-  const liveSplitSnapshot = useSyncExternalStore(subscribe, getSnapshot);
-
   const [connectState, dispatchConnect, isConnecting] = useActionState(
     (): Promise<LiveSplitActionResult> => {
       return liveSplitClient.connectLiveSplit().pipe(
@@ -142,10 +117,8 @@ export function LiveSplitProvider({ children }: LiveSplitProviderProps) {
         });
       },
       disconnectError: disconnectState.error,
-      eventConnectionState: liveSplitSnapshot.eventConnectionState,
       isConnecting,
       isDisconnecting,
-      serverStatus: liveSplitSnapshot.serverStatus,
     };
   }, [
     connectState.error,
@@ -154,8 +127,6 @@ export function LiveSplitProvider({ children }: LiveSplitProviderProps) {
     dispatchDisconnect,
     isConnecting,
     isDisconnecting,
-    liveSplitSnapshot.eventConnectionState,
-    liveSplitSnapshot.serverStatus,
   ]);
 
   return (
@@ -201,7 +172,31 @@ export function useLiveSplitActionState(): LiveSplitActionState {
 }
 
 export function useLiveSplitServerState(): LiveSplitServerState {
-  const { eventConnectionState, serverStatus } = useLiveSplitContext();
+  const appSettings = useAppSettings();
+
+  const subscribe = useCallback(
+    (listener: () => void) => {
+      if (!appSettings.isLiveSplitEnabled) {
+        return () => {};
+      }
+
+      return liveSplitEventStore.subscribe(listener);
+    },
+    [appSettings.isLiveSplitEnabled],
+  );
+
+  const getSnapshot = useCallback(() => {
+    if (!appSettings.isLiveSplitEnabled) {
+      return DISABLED_LIVE_SPLIT_SNAPSHOT;
+    }
+
+    return liveSplitEventStore.getSnapshot();
+  }, [appSettings.isLiveSplitEnabled]);
+
+  const { eventConnectionState, serverStatus } = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+  );
 
   return {
     eventConnectionState,

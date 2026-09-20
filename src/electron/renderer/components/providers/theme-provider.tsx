@@ -1,6 +1,7 @@
 import { createContext, type ReactNode, useContext, useEffect } from "react";
 
-import { useAppStore } from "@/electron/renderer/stores/app-state-store/use-app-store.ts";
+import { useSetTheme } from "@/electron/renderer/api/app-state/app-state-mutations.ts";
+import { useTheme as useThemeQuery } from "@/electron/renderer/api/app-state/app-state-queries.ts";
 import { type Theme } from "@/electron/storage/app-state/app-state-schema.ts";
 import { ReactContextError } from "@/errors/react-context-error.ts";
 
@@ -18,7 +19,8 @@ const ThemeProviderContext = createContext<ThemeProviderState | undefined>(
 );
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  const { setTheme, theme } = useAppStore();
+  const theme = useThemeQuery();
+  const setTheme = useSetTheme();
 
   useEffect(() => {
     const root = window.document.documentElement;

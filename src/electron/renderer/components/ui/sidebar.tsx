@@ -6,6 +6,8 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { PanelLeftIcon } from "lucide-react";
 import * as React from "react";
 
+import { useSetSidebarOpen } from "@/electron/renderer/api/app-state/app-state-mutations.ts";
+import { useSidebarOpen } from "@/electron/renderer/api/app-state/app-state-queries.ts";
 import { Button } from "@/electron/renderer/components/ui/button";
 import { Input } from "@/electron/renderer/components/ui/input";
 import {
@@ -27,7 +29,6 @@ import {
   TooltipTrigger,
 } from "@/electron/renderer/components/ui/tooltip";
 import { useIsMobile } from "@/electron/renderer/hooks/use-mobile";
-import { useAppStore } from "@/electron/renderer/stores/app-state-store/use-app-store.ts";
 import { ReactContextError } from "@/errors/react-context-error.ts";
 import { cn } from "@/util/class-names";
 
@@ -83,7 +84,8 @@ function SidebarProvider({
   const isMobile = useIsMobile();
   const [openMobile, setOpenMobile] = React.useState(false);
 
-  const { sidebarOpen, setSidebarOpen } = useAppStore();
+  const sidebarOpen = useSidebarOpen();
+  const setSidebarOpen = useSetSidebarOpen();
 
   const open = openProp ?? sidebarOpen;
 
