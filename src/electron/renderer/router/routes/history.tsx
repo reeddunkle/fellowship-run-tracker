@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { HistoryPage } from "@/electron/renderer/components/history/history-page.tsx";
-import { loadFellowshipCatalogData } from "@/electron/renderer/router/routes/route-loaders";
+import { loadFellowshipCatalogData } from "@/electron/renderer/router/route-loaders";
 
 function HistoryRoute() {
   const { abilities, dungeons, encounters, units } = Route.useLoaderData();

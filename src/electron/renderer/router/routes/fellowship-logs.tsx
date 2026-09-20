@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { FellowshipLogsPage } from "@/electron/renderer/components/fellowship-logs/fellowship-logs-page.tsx";
-import { loadFellowshipCatalogData } from "@/electron/renderer/router/routes/route-loaders";
+import { loadFellowshipCatalogData } from "@/electron/renderer/router/route-loaders";
 
 function FellowshipLogsRoute() {
   const { abilities, dungeons, encounters, units } = Route.useLoaderData();

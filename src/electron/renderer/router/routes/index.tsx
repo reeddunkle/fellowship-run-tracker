@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { DashboardPage } from "@/electron/renderer/components/dashboard/dashboard-page.tsx";
-import { loadFellowshipCatalogData } from "@/electron/renderer/router/routes/route-loaders";
+import { loadFellowshipCatalogData } from "@/electron/renderer/router/route-loaders";
 
 function HomeRoute() {
   const { abilities, dungeons, encounters, units } = Route.useLoaderData();
