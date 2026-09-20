@@ -79,9 +79,9 @@ export function HistoryPageContent() {
     <section className="grid gap-6">
       <header className="grid gap-1">
         <h1 className="text-2xl font-semibold tracking-tight">History</h1>
+        <p className="text-sm font-medium">{selectedConfiguration.label}</p>
         <p className="text-sm text-muted-foreground">
-          {selectedConfiguration.label} · {dungeonName} +{" "}
-          {selectedConfiguration.dungeonLevel}
+          {dungeonName} · Eternal {selectedConfiguration.dungeonLevel}
         </p>
       </header>
       {historyQuery.isPending ? (
