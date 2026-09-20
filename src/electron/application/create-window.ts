@@ -2,7 +2,7 @@ import * as E from "effect/Effect";
 import * as Path from "effect/Path";
 import { BrowserWindow, nativeTheme } from "electron";
 
-import { configureWindowOpenHandler } from "@/electron/application/configure-window-open-handler.ts";
+import { configureWindowOpenHandler } from "@/electron/application/window-open-handler/configure-window-open-handler.ts";
 import { ElectronWindowCreationError } from "@/errors/electron-error.ts";
 
 export type CreateWindowOptions = {

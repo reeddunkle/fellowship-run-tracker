@@ -1,11 +1,13 @@
 import { CatchBoundary } from "@tanstack/react-router";
-import * as DateTime from "effect/DateTime";
-import { Trash2Icon } from "lucide-react";
+import { ExternalLinkIcon, Trash2Icon } from "lucide-react";
 import { Suspense } from "react";
 
 import { useDeleteImportedDungeonRun } from "@/electron/renderer/api/fellowship-logs/fellowship-logs-mutations.ts";
 import { useImportedDungeonRunsSuspense } from "@/electron/renderer/api/fellowship-logs/fellowship-logs-queries.ts";
-import { Button } from "@/electron/renderer/components/ui/button.tsx";
+import {
+  Button,
+  buttonVariants,
+} from "@/electron/renderer/components/ui/button.tsx";
 import {
   Item,
   ItemActions,
@@ -15,13 +17,7 @@ import {
   ItemTitle,
 } from "@/electron/renderer/components/ui/item.tsx";
 import { Skeleton } from "@/electron/renderer/components/ui/skeleton.tsx";
-
-function formatImportedAt(importedAtMilliseconds: number): string {
-  return DateTime.formatLocal(DateTime.makeUnsafe(importedAtMilliseconds), {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
-}
+import { formatRelativeDateTimeFromMilliseconds } from "@/util/format-date-time.ts";
 
 function ImportedDungeonRunsLoadError() {
   return (
@@ -76,6 +72,8 @@ function ImportedDungeonRunsListContent() {
   return (
     <ItemGroup>
       {importedDungeonRuns.map((importedDungeonRun) => {
+        const fellowshipLogsUrl = `https://www.fellowshiplogs.com/reports/${importedDungeonRun.reportCode}?fight=${importedDungeonRun.fightId}`;
+
         return (
           <Item key={importedDungeonRun.dungeonRunId} variant="outline">
             <ItemContent>
@@ -84,12 +82,26 @@ function ImportedDungeonRunsListContent() {
                 {importedDungeonRun.dungeonLevel}
               </ItemTitle>
               <ItemDescription>
-                {importedDungeonRun.reportCode} / {importedDungeonRun.fightId}{" "}
-                &middot; imported{" "}
-                {formatImportedAt(importedDungeonRun.importedAtMilliseconds)}
+                Imported&nbsp;
+                {formatRelativeDateTimeFromMilliseconds(
+                  importedDungeonRun.importedAtMilliseconds,
+                )}
               </ItemDescription>
             </ItemContent>
             <ItemActions>
+              <a
+                className={buttonVariants({
+                  className: "w-fit rounded-full flex items-center",
+                  variant: "outline",
+                })}
+                href={fellowshipLogsUrl}
+                rel="noopener noreferrer"
+                target="_blank"
+                title={fellowshipLogsUrl}
+              >
+                Open in Fellowship Logs
+                <ExternalLinkIcon aria-hidden="true" data-icon="inline-end" />
+              </a>
               <Button
                 aria-label="Delete imported run"
                 disabled={
@@ -102,7 +114,7 @@ function ImportedDungeonRunsListContent() {
                     dungeonRunId: importedDungeonRun.dungeonRunId,
                   });
                 }}
-                size="icon-sm"
+                size="icon"
                 title="Delete imported run"
                 type="button"
                 variant="destructive"

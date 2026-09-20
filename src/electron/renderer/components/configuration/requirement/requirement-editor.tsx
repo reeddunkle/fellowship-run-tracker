@@ -271,7 +271,7 @@ export function RequirementEditor({
         <Button
           aria-label="Remove requirement"
           onClick={onRemove}
-          size="icon-sm"
+          size="icon"
           type="button"
           variant="ghost"
         >

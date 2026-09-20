@@ -340,7 +340,7 @@ export function SettingsEditor() {
                             onClick={() => {
                               field.handleChange(null);
                             }}
-                            size="icon-sm"
+                            size="icon"
                             title="Clear saved client secret"
                             type="button"
                             variant="destructive"

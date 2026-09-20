@@ -37,7 +37,7 @@ export function ConfigurationSidebarItemActions({
               isActive &&
                 "hover:bg-sidebar-accent-foreground/10 aria-expanded:bg-sidebar-accent-foreground/10 dark:hover:bg-sidebar-accent-foreground/10",
             )}
-            size="icon-xs"
+            size="icon"
             type="button"
             variant="ghost"
           />

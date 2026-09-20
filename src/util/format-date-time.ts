@@ -15,8 +15,16 @@ export function formatLocalDateTime(dateTime: DateTime.Utc): string {
   return LocalDateTimeFormatter.format(toDate(dateTime));
 }
 
-export function formatRelativeDateTime(dateTime: DateTime.Utc): string {
-  return formatDistanceToNow(toDate(dateTime), {
+export function formatRelativeDateTimeFromMilliseconds(
+  milliseconds: number,
+): string {
+  return formatDistanceToNow(milliseconds, {
     addSuffix: true,
   });
+}
+
+export function formatRelativeDateTime(dateTime: DateTime.Utc): string {
+  return formatRelativeDateTimeFromMilliseconds(
+    DateTime.toEpochMillis(dateTime),
+  );
 }

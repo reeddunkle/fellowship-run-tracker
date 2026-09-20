@@ -53,7 +53,7 @@ export function MilestoneEditor({
           <Button
             aria-label="Remove milestone"
             onClick={onRemove}
-            size="icon-sm"
+            size="icon"
             type="button"
             variant="destructive"
           >

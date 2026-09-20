@@ -55,7 +55,7 @@ export function DirectoryInput({
   return (
     <div className={cn("w-full min-w-0", className)}>
       <button
-        className="group grid h-9 w-full min-w-0 cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-stretch overflow-hidden rounded-lg border border-input bg-transparent text-left text-base outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
+        className="group grid h-10 w-full min-w-0 cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-stretch overflow-hidden rounded-lg border border-input bg-transparent text-left text-base outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
         onClick={chooseDirectory}
         type="button"
       >
