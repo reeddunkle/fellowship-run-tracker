@@ -7,7 +7,7 @@ import {
 import {
   useLiveSplitActionState,
   useLiveSplitServerState,
-} from "@/electron/renderer/stores/live-split/live-split-store.tsx";
+} from "@/electron/renderer/stores/live-split/live-split-provider.tsx";
 import { LiveSplitApiConnectionError } from "@/errors/live-split-client-error.ts";
 import { type LiveSplitApiStatus } from "@/services/api/live-split/live-split-api-schema.ts";
 import { cn } from "@/util/class-names.ts";

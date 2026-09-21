@@ -31,11 +31,11 @@ import {
   type DungeonRunEventStore,
   type DungeonRunEventStoreSnapshot,
   dungeonRunEventStore,
-} from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-event-store.ts";
+} from "@/electron/renderer/stores/dungeon-run/dungeon-run-event-store.ts";
 import {
   trackingEventStore as defaultTrackingEventStore,
   type TrackingEventStore,
-} from "@/electron/renderer/stores/tracking-store/tracking-event-store.ts";
+} from "@/electron/renderer/stores/tracking/tracking-event-store.ts";
 import { ReactContextError } from "@/errors/react-context-error.ts";
 import {
   type DungeonRunApiComparisonGroup,
@@ -73,7 +73,7 @@ function getHistoryConfigurationId({
   return selectedConfigurationId;
 }
 
-export type DungeonRunState = {
+type DungeonRunState = {
   readonly comparisonGroup: DungeonRunApiComparisonGroup;
   readonly eventConnectionState: ApiEventConnectionState;
   readonly history: DungeonRunApiHistory | null;
@@ -88,7 +88,7 @@ type DungeonRunProviderProps = {
   readonly trackingEventStore?: TrackingEventStore;
 };
 
-export type DungeonRunServerState = {
+type DungeonRunServerState = {
   readonly comparisonGroup: DungeonRunApiComparisonGroup;
   readonly dungeonRun: DungeonRunStateApi["dungeonRun"];
   readonly eventConnectionState: ApiEventConnectionState;

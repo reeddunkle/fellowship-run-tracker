@@ -33,12 +33,12 @@ import {
 import {
   ConfigurationUpdatedAtAscendingOrder,
   ConfigurationUpdatedAtDescendingOrder,
-} from "@/electron/renderer/stores/configurations-store/configuration-grouping.ts";
+} from "@/electron/renderer/stores/configuration/configuration-groups.ts";
 import {
   useConfigurationActions,
   useConfigurationGroups,
   useSelectedConfigurationId,
-} from "@/electron/renderer/stores/configurations-store/configurations-store.tsx";
+} from "@/electron/renderer/stores/configuration/configuration-provider.tsx";
 import { useFellowshipDataStore } from "@/electron/renderer/stores/fellowship-data/fellowship-data-store.tsx";
 
 import { ConfigurationSidebarItem } from "./configuration-sidebar-item.tsx";

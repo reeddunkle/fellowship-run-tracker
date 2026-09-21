@@ -207,7 +207,7 @@ export function useAppSettings(): AppSettingsApiAppSettings {
   return useSettingsState().appSettings;
 }
 
-export type SettingsSaveStatus = {
+type SettingsSaveStatus = {
   readonly error: unknown | undefined;
   readonly isSaving: boolean;
   readonly revision: number;

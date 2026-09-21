@@ -6,8 +6,8 @@ import { createRoot } from "react-dom/client";
 import { primeAppStateQueries } from "@/electron/renderer/api/app-state/app-state-queries.ts";
 import { router } from "@/electron/renderer/router/router";
 import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
-import { dungeonRunEventStore } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-event-store.ts";
-import { trackingEventStore } from "@/electron/renderer/stores/tracking-store/tracking-event-store.ts";
+import { dungeonRunEventStore } from "@/electron/renderer/stores/dungeon-run/dungeon-run-event-store.ts";
+import { trackingEventStore } from "@/electron/renderer/stores/tracking/tracking-event-store.ts";
 import { AppStateInitializationError } from "@/errors/app-state-error.ts";
 import { RendererInvariantError } from "@/errors/renderer-invariant-error.ts";
 

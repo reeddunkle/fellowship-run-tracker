@@ -2,7 +2,7 @@ import { type ReactNode } from "react";
 
 import { ConfigurationSidebar } from "@/electron/renderer/components/configuration/sidebar/configuration-sidebar.tsx";
 import { AppLayout } from "@/electron/renderer/components/core/app-layout.tsx";
-import { ConfigurationProvider } from "@/electron/renderer/stores/configurations-store/configurations-store.tsx";
+import { ConfigurationProvider } from "@/electron/renderer/stores/configuration/configuration-provider.tsx";
 import { FellowshipDataProvider } from "@/electron/renderer/stores/fellowship-data/fellowship-data-store.tsx";
 import { type AbilityApiAbilityList } from "@/services/api/ability/ability-api-schema.ts";
 import { type DungeonApiDungeonList } from "@/services/api/dungeon/dungeon-api-schema.ts";

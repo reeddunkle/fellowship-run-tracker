@@ -26,17 +26,17 @@ import { Spinner } from "@/electron/renderer/components/ui/spinner.tsx";
 import {
   useConfigurationById,
   useSelectedConfigurationId,
-} from "@/electron/renderer/stores/configurations-store/configurations-store.tsx";
+} from "@/electron/renderer/stores/configuration/configuration-provider.tsx";
 import {
   useDungeonRunDisplayState,
   useDungeonRunInterpretationState,
   useDungeonRunServerState,
-} from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-provider.tsx";
+} from "@/electron/renderer/stores/dungeon-run/dungeon-run-provider.tsx";
 import {
   useTrackingActionState,
   useTrackingActions,
   useTrackingServerState,
-} from "@/electron/renderer/stores/tracking-store/tracking-store.tsx";
+} from "@/electron/renderer/stores/tracking/tracking-provider.tsx";
 import { isNil } from "@/util/is-nil.ts";
 
 export function DungeonRun() {

@@ -1,8 +1,8 @@
-import { useForm } from "@tanstack/react-form";
 import * as E from "effect/Effect";
 import * as Match from "effect/Match";
 import * as Schema from "effect/Schema";
 
+import { useAppForm } from "@/electron/renderer/components/form/app-form.ts";
 import { FELLOWSHIP_EVENT } from "@/services/fellowship/constants/fellowship-event.ts";
 import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";
 
@@ -18,7 +18,7 @@ import {
 
 export const EMPTY_CONFIGURATION_EDITOR_VALUE: ConfigurationEditorValue = {
   dungeonId: "",
-  dungeonLevel: "",
+  dungeonLevel: undefined,
   label: "",
   milestones: [],
 };
@@ -44,8 +44,8 @@ export function createRequirementEditorValue({
   return {
     // @effect-diagnostics-next-line cryptoRandomUUID:off
     id: crypto.randomUUID(),
-    requiredCount: suggestedValues.requiredCount ?? "1",
-    startOccurrence: suggestedValues.startOccurrence ?? "1",
+    requiredCount: suggestedValues.requiredCount ?? 1,
+    startOccurrence: suggestedValues.startOccurrence ?? 1,
     targetId: suggestedValues.targetId ?? "",
     type: FELLOWSHIP_EVENT.UNIT_DEATH,
   };
@@ -77,7 +77,7 @@ export function useConfigurationForm({
   onSave,
   onUpdate,
 }: UseConfigurationFormOptions) {
-  return useForm({
+  return useAppForm({
     defaultValues,
 
     onSubmit: ({ meta, value }) => {

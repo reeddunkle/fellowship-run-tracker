@@ -4,8 +4,8 @@ import { render } from "vitest-browser-react";
 
 import { API_EVENT_CONNECTION_STATE } from "@/electron/renderer/api/common.ts";
 import { type DungeonRunEventStreamEvent } from "@/electron/renderer/api/dungeon-run/dungeon-run-event-stream.ts";
-import { makeDungeonRunEventStore } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-event-store.ts";
-import { useDungeonRunServerState } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-provider.tsx";
+import { makeDungeonRunEventStore } from "@/electron/renderer/stores/dungeon-run/dungeon-run-event-store.ts";
+import { useDungeonRunServerState } from "@/electron/renderer/stores/dungeon-run/dungeon-run-provider.tsx";
 import {
   MOCK_DUNGEON_RUN_API_MESSAGE,
   MOCK_DUNGEON_RUN_STATE_API,

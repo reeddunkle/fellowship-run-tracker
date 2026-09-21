@@ -6,7 +6,7 @@ import {
   useLiveSplitActionState,
   useLiveSplitActions,
   useLiveSplitServerState,
-} from "@/electron/renderer/stores/live-split/live-split-store.tsx";
+} from "@/electron/renderer/stores/live-split/live-split-provider.tsx";
 
 export function LiveSplitControls() {
   const { connect, disconnect } = useLiveSplitActions();

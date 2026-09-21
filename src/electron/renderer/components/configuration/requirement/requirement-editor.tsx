@@ -10,7 +10,6 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/electron/renderer/components/ui/field.tsx";
-import { Input } from "@/electron/renderer/components/ui/input.tsx";
 import {
   NativeSelect,
   NativeSelectOption,
@@ -111,7 +110,7 @@ export function RequirementEditor({
       }}
     >
       <div className="grid gap-4 sm:grid-cols-2">
-        <form.Field name={`${requirementPath}.type` as const}>
+        <form.AppField name={`${requirementPath}.type` as const}>
           {(field) => {
             const isTypeInvalid = !field.state.meta.isValid;
             const shouldShowTypeError =
@@ -180,92 +179,37 @@ export function RequirementEditor({
                 />
                 {showOccurrenceFields && (
                   <FieldGroup className="grid grid-cols-2 gap-3">
-                    <form.Field
+                    <form.AppField
                       name={`${requirementPath}.startOccurrence` as const}
                     >
                       {(startOccurrenceField) => {
-                        const isInvalid =
-                          !startOccurrenceField.state.meta.isValid;
-                        const showError =
-                          isInvalid &&
-                          startOccurrenceField.state.meta.isBlurred;
-
                         return (
-                          <Field data-invalid={showError}>
-                            <FieldLabel htmlFor={startOccurrenceField.name}>
-                              Start at
-                            </FieldLabel>
-                            <Input
-                              aria-invalid={isInvalid}
-                              id={startOccurrenceField.name}
-                              inputMode="numeric"
-                              min={1}
-                              name={startOccurrenceField.name}
-                              onBlur={startOccurrenceField.handleBlur}
-                              onChange={(event) => {
-                                startOccurrenceField.handleChange(
-                                  event.target.value,
-                                );
-                              }}
-                              type="number"
-                              value={startOccurrenceField.state.value}
-                            />
-
-                            {showError && (
-                              <FieldError
-                                errors={startOccurrenceField.state.meta.errors}
-                              />
-                            )}
-                          </Field>
+                          <startOccurrenceField.NumberField
+                            label="Start at"
+                            min={1}
+                          />
                         );
                       }}
-                    </form.Field>
+                    </form.AppField>
 
-                    <form.Field
+                    <form.AppField
                       name={`${requirementPath}.requiredCount` as const}
                     >
                       {(requiredCountField) => {
-                        const isInvalid =
-                          !requiredCountField.state.meta.isValid;
-                        const showError =
-                          isInvalid && requiredCountField.state.meta.isBlurred;
-
                         return (
-                          <Field data-invalid={showError}>
-                            <FieldLabel htmlFor={requiredCountField.name}>
-                              Count
-                            </FieldLabel>
-                            <Input
-                              aria-invalid={isInvalid}
-                              id={requiredCountField.name}
-                              inputMode="numeric"
-                              min={1}
-                              name={requiredCountField.name}
-                              onBlur={requiredCountField.handleBlur}
-                              onChange={(event) => {
-                                requiredCountField.handleChange(
-                                  event.target.value,
-                                );
-                              }}
-                              type="number"
-                              value={requiredCountField.state.value}
-                            />
-
-                            {showError && (
-                              <FieldError
-                                errors={requiredCountField.state.meta.errors}
-                              />
-                            )}
-                          </Field>
+                          <requiredCountField.NumberField
+                            label="Count"
+                            min={1}
+                          />
                         );
                       }}
-                    </form.Field>
+                    </form.AppField>
                   </FieldGroup>
                 )}
               </>
             );
           }}
-        </form.Field>
+        </form.AppField>
       </div>
       <div className="flex justify-end">
         <Button

@@ -3,9 +3,9 @@ import { HistoryIcon } from "lucide-react";
 
 import { HistorySummaryMessage } from "@/electron/renderer/components/history/history-summary-message.tsx";
 import { buttonVariants } from "@/electron/renderer/components/ui/button.tsx";
-import { useSelectedConfigurationId } from "@/electron/renderer/stores/configurations-store/configurations-store.tsx";
-import { getOwnDungeonRunHistorySummary } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-history-summary.ts";
-import { useDungeonRunServerState } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-provider.tsx";
+import { useSelectedConfigurationId } from "@/electron/renderer/stores/configuration/configuration-provider.tsx";
+import { getOwnDungeonRunHistorySummary } from "@/electron/renderer/stores/dungeon-run/dungeon-run-history-summary.ts";
+import { useDungeonRunServerState } from "@/electron/renderer/stores/dungeon-run/dungeon-run-provider.tsx";
 
 export function ConfigurationEditorHistory() {
   const selectedConfigurationId = useSelectedConfigurationId();

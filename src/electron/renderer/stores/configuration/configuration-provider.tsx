@@ -9,16 +9,18 @@ import {
   useUpdateConfiguration,
 } from "@/electron/renderer/api/configuration/configuration-mutations.ts";
 import { useConfigurationsSuspense } from "@/electron/renderer/api/configuration/configuration-queries.ts";
-import { saveConfigurationApiRequest } from "@/electron/renderer/components/configuration/form/configuration-editor-adapter.ts";
-import { type DecodedConfigurationEditorValue } from "@/electron/renderer/components/configuration/form/configuration-form-schema.ts";
 import { ReactContextError } from "@/errors/react-context-error.ts";
 import {
   type ConfigurationApiConfiguration,
   type ConfigurationApiConfigurationList,
+  type SaveConfigurationApiRequest,
 } from "@/services/api/configuration/configuration-api-schema.ts";
 import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";
 
-import { groupConfigurations } from "./configuration-grouping.ts";
+import {
+  type ConfigurationDungeonGroup,
+  groupConfigurations,
+} from "./configuration-groups.ts";
 
 function createConfigurationsById(
   configurations: ConfigurationApiConfigurationList,
@@ -45,27 +47,17 @@ type ConfigurationActionContextValue = {
   readonly isSaving: boolean;
   readonly isUpdating: boolean;
   readonly newConfiguration: () => void;
-  readonly save: (value: DecodedConfigurationEditorValue) => void;
+  readonly save: (request: SaveConfigurationApiRequest) => void;
   readonly selectConfiguration: (id: ConfigurationId) => void;
   readonly update: (
     id: ConfigurationId,
-    value: DecodedConfigurationEditorValue,
+    request: SaveConfigurationApiRequest,
   ) => void;
   readonly updateError: unknown | undefined;
 };
 
 type ConfigurationProviderProps = {
   readonly children: ReactNode;
-};
-
-export type ConfigurationLevelGroup = {
-  readonly configurations: ConfigurationApiConfigurationList;
-  readonly dungeonLevel: ConfigurationApiConfiguration["dungeonLevel"];
-};
-
-export type ConfigurationDungeonGroup = {
-  readonly dungeonId: ConfigurationApiConfiguration["dungeonId"];
-  readonly levels: ReadonlyArray<ConfigurationLevelGroup>;
 };
 
 const ConfigurationStateContext = createContext<
@@ -134,9 +126,7 @@ export function ConfigurationProvider({
       newConfiguration: () => {
         setSelectedConfigurationId(null);
       },
-      save: (value) => {
-        const request = saveConfigurationApiRequest(value);
-
+      save: (request) => {
         saveMutation.save(
           {
             request,
@@ -151,9 +141,7 @@ export function ConfigurationProvider({
       selectConfiguration: (id) => {
         setSelectedConfigurationId(id);
       },
-      update: (id, value) => {
-        const request = saveConfigurationApiRequest(value);
-
+      update: (id, request) => {
         updateMutation.update(
           {
             id,

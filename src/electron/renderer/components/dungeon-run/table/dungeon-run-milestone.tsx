@@ -13,7 +13,7 @@ import {
   DungeonRunTableTr,
 } from "@/electron/renderer/components/dungeon-run/table/dungeon-run-table.tsx";
 import { Button } from "@/electron/renderer/components/ui/button.tsx";
-import { useDungeonRunDisplayState } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-provider.tsx";
+import { useDungeonRunDisplayState } from "@/electron/renderer/stores/dungeon-run/dungeon-run-provider.tsx";
 import { useFellowshipDataStore } from "@/electron/renderer/stores/fellowship-data/fellowship-data-store.tsx";
 import { getRequirementTargetLabel } from "@/helpers/requirement-target-label.ts";
 import { cn } from "@/util/class-names.ts";

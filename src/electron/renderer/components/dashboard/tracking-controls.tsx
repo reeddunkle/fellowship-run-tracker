@@ -16,13 +16,13 @@ import {
   useConfigurationById,
   useSelectedConfiguration,
   useSelectedConfigurationId,
-} from "@/electron/renderer/stores/configurations-store/configurations-store.tsx";
-import { useDungeonRunServerState } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-provider.tsx";
+} from "@/electron/renderer/stores/configuration/configuration-provider.tsx";
+import { useDungeonRunServerState } from "@/electron/renderer/stores/dungeon-run/dungeon-run-provider.tsx";
 import {
   useTrackingActionState,
   useTrackingActions,
   useTrackingServerState,
-} from "@/electron/renderer/stores/tracking-store/tracking-store.tsx";
+} from "@/electron/renderer/stores/tracking/tracking-provider.tsx";
 import { cn } from "@/util/class-names.ts";
 
 type TrackingMessageProps = {

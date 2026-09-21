@@ -29,14 +29,14 @@ import {
   type UnitApiUnitList,
 } from "@/services/api/unit/unit-api-schema.ts";
 
-export type FellowshipDataStoreProps = {
+type FellowshipDataStoreProps = {
   readonly abilities: AbilityApiAbilityList;
   readonly dungeons: DungeonApiDungeonList;
   readonly encounters: EncounterApiEncounterList;
   readonly units: UnitApiUnitList;
 };
 
-export type FellowshipDataStoreState = FellowshipDataStoreProps & {
+type FellowshipDataStoreState = FellowshipDataStoreProps & {
   readonly abilitiesById: Readonly<Record<string, AbilityApiAbility>>;
   readonly dungeonsById: Readonly<Record<string, DungeonApiDungeon>>;
   readonly encountersById: Readonly<Record<string, EncounterApiEncounter>>;
@@ -44,7 +44,7 @@ export type FellowshipDataStoreState = FellowshipDataStoreProps & {
   readonly unitsById: Readonly<Record<string, UnitApiUnit>>;
 };
 
-export function createFellowshipDataStore(props: FellowshipDataStoreProps) {
+function createFellowshipDataStore(props: FellowshipDataStoreProps) {
   return createStore<FellowshipDataStoreState>()(() => {
     return {
       ...props,
@@ -65,14 +65,11 @@ export function createFellowshipDataStore(props: FellowshipDataStoreProps) {
   });
 }
 
-export type FellowshipDataStore = ReturnType<typeof createFellowshipDataStore>;
+type FellowshipDataStore = ReturnType<typeof createFellowshipDataStore>;
 
-export const FellowshipDataContext = createContext<FellowshipDataStore | null>(
-  null,
-);
+const FellowshipDataContext = createContext<FellowshipDataStore | null>(null);
 
-export type FellowshipDataProviderProps =
-  PropsWithChildren<FellowshipDataStoreProps>;
+type FellowshipDataProviderProps = PropsWithChildren<FellowshipDataStoreProps>;
 
 export function FellowshipDataProvider({
   abilities,

@@ -7,25 +7,16 @@ import {
 } from "@/services/fellowship/validation/fellowship-common.ts";
 import { RequirementEventTypeSchema } from "@/services/fellowship/validation/requirement-event-type-schema.ts";
 import {
-  IntegerFromStringSchema,
   NonEmptyStringSchema,
   PositiveIntegerSchema,
 } from "@/validation/common-schemas.ts";
 import { ConfigurationLabelSchema } from "@/validation/configuration/configuration-label-schema.ts";
 import { ComparisonTimeFormSchema } from "@/validation/milestone/comparison-time-form-schema.ts";
 
-const PositiveIntegerFromStringSchema = IntegerFromStringSchema.pipe(
-  Schema.decodeTo(PositiveIntegerSchema),
-);
-
-const DungeonLevelFromStringSchema = IntegerFromStringSchema.pipe(
-  Schema.decodeTo(DungeonLevelSchema),
-);
-
 const RequirementEditorSchema = Schema.Struct({
   id: Schema.String,
-  requiredCount: PositiveIntegerFromStringSchema,
-  startOccurrence: PositiveIntegerFromStringSchema,
+  requiredCount: PositiveIntegerSchema,
+  startOccurrence: PositiveIntegerSchema,
   targetId: NonEmptyStringSchema,
   type: RequirementEventTypeSchema,
 });
@@ -39,7 +30,7 @@ const MilestoneEditorSchema = Schema.Struct({
 
 export const ConfigurationEditorSchema = Schema.Struct({
   dungeonId: DungeonIdSchema,
-  dungeonLevel: DungeonLevelFromStringSchema,
+  dungeonLevel: DungeonLevelSchema,
   label: ConfigurationLabelSchema,
   milestones: Schema.Array(MilestoneEditorSchema),
 });
@@ -48,7 +39,13 @@ type EncodedRequirementEditorValue = typeof RequirementEditorSchema.Encoded;
 
 type EncodedMilestoneEditorValue = typeof MilestoneEditorSchema.Encoded;
 
-export type RequirementEditorValue = EncodedRequirementEditorValue;
+export type RequirementEditorValue = Omit<
+  EncodedRequirementEditorValue,
+  "requiredCount" | "startOccurrence"
+> & {
+  requiredCount: number | undefined;
+  startOccurrence: number | undefined;
+};
 
 export type MilestoneEditorValue = Omit<
   EncodedMilestoneEditorValue,
@@ -59,9 +56,10 @@ export type MilestoneEditorValue = Omit<
 
 export type ConfigurationEditorValue = Omit<
   typeof ConfigurationEditorSchema.Encoded,
-  "dungeonId" | "milestones"
+  "dungeonId" | "dungeonLevel" | "milestones"
 > & {
   dungeonId: string;
+  dungeonLevel: number | undefined;
   milestones: Array<MilestoneEditorValue>;
 };
 

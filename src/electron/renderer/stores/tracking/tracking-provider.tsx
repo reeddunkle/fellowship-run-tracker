@@ -13,7 +13,7 @@ import { type TrackingApiStatus } from "@/application/fellowship-tracker/trackin
 import { type ApiEventConnectionState } from "@/electron/renderer/api/common.ts";
 import * as trackingClient from "@/electron/renderer/api/tracking/tracking-client.ts";
 import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
-import { trackingEventStore } from "@/electron/renderer/stores/tracking-store/tracking-event-store.ts";
+import { trackingEventStore } from "@/electron/renderer/stores/tracking/tracking-event-store.ts";
 import { ReactContextError } from "@/errors/react-context-error.ts";
 import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";
 
@@ -38,7 +38,7 @@ type TrackingProviderProps = {
   readonly children: ReactNode;
 };
 
-export type TrackingActionState = {
+type TrackingActionState = {
   readonly isPending: boolean;
   readonly isStarting: boolean;
   readonly isStopping: boolean;
@@ -46,7 +46,7 @@ export type TrackingActionState = {
   readonly stopError: unknown | undefined;
 };
 
-export type TrackingServerState = {
+type TrackingServerState = {
   readonly eventConnectionState: ApiEventConnectionState;
   readonly trackingStatus: TrackingApiStatus | null;
 };

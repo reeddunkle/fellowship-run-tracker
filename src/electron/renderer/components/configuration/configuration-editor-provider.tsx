@@ -43,13 +43,13 @@ export type EncounterSuggestion = {
 };
 
 export type UnitDeathSuggestion = {
-  readonly requiredCount: string;
-  readonly startOccurrence: string;
+  readonly requiredCount: number;
+  readonly startOccurrence: number;
 };
 
 export type RequirementValuesForEventType = {
-  readonly requiredCount: string;
-  readonly startOccurrence: string;
+  readonly requiredCount: number;
+  readonly startOccurrence: number;
   readonly targetId: string;
 };
 
@@ -193,8 +193,8 @@ function ConfigurationEditorProviderInner({
         metadata.unitDeath.nextStartOccurrenceByTargetId.get(targetId) ?? 1;
 
       return {
-        requiredCount: "1",
-        startOccurrence: String(nextStartOccurrence),
+        requiredCount: 1,
+        startOccurrence: nextStartOccurrence,
       };
     },
     [value],
@@ -260,8 +260,8 @@ function ConfigurationEditorProviderInner({
             metadata.unitDeath.nextStartOccurrenceByTargetId.get(targetId) ?? 1;
 
           return {
-            requiredCount: "1",
-            startOccurrence: String(nextStartOccurrence),
+            requiredCount: 1,
+            startOccurrence: nextStartOccurrence,
             targetId,
           };
         }),
@@ -282,16 +282,16 @@ function ConfigurationEditorProviderInner({
             );
 
             return {
-              requiredCount: "1",
-              startOccurrence: "1",
+              requiredCount: 1,
+              startOccurrence: 1,
               targetId,
             };
           },
         ),
         Match.orElse((matchedEventType) => {
           return {
-            requiredCount: "1",
-            startOccurrence: "1",
+            requiredCount: 1,
+            startOccurrence: 1,
             targetId: getDefaultTargetId(matchedEventType),
           };
         }),

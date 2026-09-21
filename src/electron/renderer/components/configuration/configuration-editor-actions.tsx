@@ -14,19 +14,17 @@ import {
   resolveConfigurationSaveState,
   selectConfigurationEditorFormState,
 } from "@/electron/renderer/components/configuration/form/configuration-editor-persistence.ts";
-import { type useConfigurationForm } from "@/electron/renderer/components/configuration/form/configuration-form.ts";
+import { type ConfigurationFormApi } from "@/electron/renderer/components/configuration/form/configuration-form.ts";
 import { ConfigurationOverwriteWarning } from "@/electron/renderer/components/configuration/form/configuration-save-state-indicator.tsx";
 import { Button } from "@/electron/renderer/components/ui/button.tsx";
 import {
   useConfigurationActions,
   useSelectedConfiguration,
   useSelectedConfigurationId,
-} from "@/electron/renderer/stores/configurations-store/configurations-store.tsx";
-
-type ConfigurationForm = ReturnType<typeof useConfigurationForm>;
+} from "@/electron/renderer/stores/configuration/configuration-provider.tsx";
 
 type ConfigurationEditorActionsProps = {
-  readonly form: ConfigurationForm;
+  readonly form: ConfigurationFormApi;
   readonly getSaveState: ConfigurationSaveStateResolver;
 };
 

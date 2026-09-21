@@ -8,8 +8,8 @@ import {
   selectConfigurationEditorFormState,
 } from "@/electron/renderer/components/configuration/form/configuration-editor-persistence.ts";
 import {
+  type ConfigurationFormApi,
   createMilestoneEditorValue,
-  type useConfigurationForm,
 } from "@/electron/renderer/components/configuration/form/configuration-form.ts";
 import { type DungeonOption } from "@/electron/renderer/components/configuration/helpers/configuration-editor-types.ts";
 import { MilestoneEditor } from "@/electron/renderer/components/configuration/milestone/milestone-editor.tsx";
@@ -20,12 +20,11 @@ import {
   FieldError,
   FieldLabel,
 } from "@/electron/renderer/components/ui/field.tsx";
-import { Input } from "@/electron/renderer/components/ui/input.tsx";
 import {
   NativeSelect,
   NativeSelectOption,
 } from "@/electron/renderer/components/ui/native-select.tsx";
-import { useSelectedConfigurationId } from "@/electron/renderer/stores/configurations-store/configurations-store.tsx";
+import { useSelectedConfigurationId } from "@/electron/renderer/stores/configuration/configuration-provider.tsx";
 import { type RequirementEventType } from "@/services/fellowship/validation/requirement-event-type-schema.ts";
 
 export const CONFIGURATION_FORM_DOM_ID = "configuration-form";
@@ -33,24 +32,22 @@ export const CONFIGURATION_FORM_DOM_ID = "configuration-form";
 const pinnacleOptions = [
   {
     label: "Normal",
-    value: "11",
+    value: 11,
   },
   {
     label: "Hard",
-    value: "23",
+    value: 23,
   },
   {
     label: "Nightmare",
-    value: "40",
+    value: 40,
   },
 ] as const;
-
-type ConfigurationForm = ReturnType<typeof useConfigurationForm>;
 
 type ConfigurationEditorFormFieldsProps = {
   readonly dungeonOptions: ReadonlyArray<DungeonOption>;
   readonly eventTypes: ReadonlyArray<RequirementEventType>;
-  readonly form: ConfigurationForm;
+  readonly form: ConfigurationFormApi;
   readonly getSaveState: ConfigurationSaveStateResolver;
 };
 
@@ -112,37 +109,19 @@ export function ConfigurationEditorFormFields({
             >
               <div className="grid gap-4">
                 <div className="w-full max-w-lg">
-                  <form.Field name="label">
+                  <form.AppField name="label">
                     {(field) => {
-                      const isInvalid =
-                        field.state.meta.isBlurred && !field.state.meta.isValid;
-
                       return (
-                        <Field data-invalid={isInvalid}>
-                          <FieldLabel htmlFor={field.name}>
-                            Configuration label
-                          </FieldLabel>
-                          <Input
-                            aria-invalid={isInvalid}
-                            id={field.name}
-                            name={field.name}
-                            onBlur={field.handleBlur}
-                            onChange={(event) => {
-                              field.handleChange(event.target.value);
-                            }}
-                            placeholder="My configuration"
-                            value={field.state.value}
-                          />
-                          {isInvalid ? (
-                            <FieldError errors={field.state.meta.errors} />
-                          ) : null}
-                        </Field>
+                        <field.TextField
+                          label="Configuration label"
+                          placeholder="My configuration"
+                        />
                       );
                     }}
-                  </form.Field>
+                  </form.AppField>
                 </div>
                 <div className="grid justify-start gap-4 md:grid-cols-[minmax(20rem,32rem)_10rem]">
-                  <form.Field name="dungeonId">
+                  <form.AppField name="dungeonId">
                     {(field) => {
                       const isInvalid =
                         field.state.meta.isBlurred && !field.state.meta.isValid;
@@ -162,7 +141,7 @@ export function ConfigurationEditorFormFields({
 
                               if (
                                 dungeonId === "30" &&
-                                state.values.dungeonLevel === ""
+                                state.values.dungeonLevel === undefined
                               ) {
                                 form.setFieldValue(
                                   "dungeonLevel",
@@ -192,65 +171,56 @@ export function ConfigurationEditorFormFields({
                         </Field>
                       );
                     }}
-                  </form.Field>
-                  <form.Field name="dungeonLevel">
+                  </form.AppField>
+                  <form.AppField name="dungeonLevel">
                     {(field) => {
+                      const isPinnacleDungeon = state.values.dungeonId === "30";
+
+                      if (!isPinnacleDungeon) {
+                        return (
+                          <field.NumberField label="Eternal level" min={1} />
+                        );
+                      }
+
                       const isInvalid =
                         field.state.meta.isBlurred && !field.state.meta.isValid;
-
-                      const isPinnacleDungeon = state.values.dungeonId === "30";
 
                       return (
                         <Field data-invalid={isInvalid}>
                           <FieldLabel htmlFor={field.name}>
                             Eternal level
                           </FieldLabel>
-                          {isPinnacleDungeon ? (
-                            <NativeSelect
-                              aria-invalid={isInvalid}
-                              id={field.name}
-                              name={field.name}
-                              onBlur={field.handleBlur}
-                              onChange={(event) => {
-                                field.handleChange(event.target.value);
-                              }}
-                              value={field.state.value}
-                            >
-                              {pinnacleOptions.map((option) => {
-                                return (
-                                  <NativeSelectOption
-                                    key={option.value}
-                                    value={option.value}
-                                  >
-                                    {option.label}
-                                  </NativeSelectOption>
-                                );
-                              })}
-                            </NativeSelect>
-                          ) : (
-                            <Input
-                              aria-invalid={isInvalid}
-                              id={field.name}
-                              min={1}
-                              name={field.name}
-                              onBlur={field.handleBlur}
-                              onChange={(event) => {
-                                field.handleChange(event.target.value);
-                              }}
-                              type="number"
-                              value={field.state.value}
-                            />
-                          )}
+                          <NativeSelect
+                            aria-invalid={isInvalid}
+                            id={field.name}
+                            name={field.name}
+                            onBlur={field.handleBlur}
+                            onChange={(event) => {
+                              field.handleChange(Number(event.target.value));
+                            }}
+                            value={field.state.value}
+                          >
+                            {pinnacleOptions.map((option) => {
+                              return (
+                                <NativeSelectOption
+                                  key={option.value}
+                                  value={option.value}
+                                >
+                                  {option.label}
+                                </NativeSelectOption>
+                              );
+                            })}
+                          </NativeSelect>
                           {isInvalid ? (
                             <FieldError errors={field.state.meta.errors} />
                           ) : null}
                         </Field>
                       );
                     }}
-                  </form.Field>
+                  </form.AppField>
                 </div>
               </div>
-              <form.Field mode="array" name="milestones">
+              <form.AppField mode="array" name="milestones">
                 {(milestonesField) => {
                   return (
                     <section className="grid grid-cols-[repeat(auto-fit,minmax(22rem,28rem))] justify-start gap-4">
@@ -289,7 +259,7 @@ export function ConfigurationEditorFormFields({
                     </section>
                   );
                 }}
-              </form.Field>
+              </form.AppField>
             </div>
           );
         }}

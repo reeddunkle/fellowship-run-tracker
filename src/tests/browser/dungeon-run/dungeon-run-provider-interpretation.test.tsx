@@ -3,8 +3,8 @@ import { describe, expect, test } from "vitest";
 import { render } from "vitest-browser-react";
 
 import { type DungeonRunEventStreamEvent } from "@/electron/renderer/api/dungeon-run/dungeon-run-event-stream.ts";
-import { makeDungeonRunEventStore } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-event-store.ts";
-import { useDungeonRunInterpretationState } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-provider.tsx";
+import { makeDungeonRunEventStore } from "@/electron/renderer/stores/dungeon-run/dungeon-run-event-store.ts";
+import { useDungeonRunInterpretationState } from "@/electron/renderer/stores/dungeon-run/dungeon-run-provider.tsx";
 import { type DungeonRunApiHistory } from "@/services/api/dungeon-run/dungeon-run-api-schema.ts";
 import { MOCK_CONFIGURATION_WITH_MULTIPLE_MILESTONES } from "@/tests/common/fixtures/configuration-fixtures.ts";
 import {

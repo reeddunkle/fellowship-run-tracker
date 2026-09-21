@@ -8,7 +8,7 @@ import { type DungeonOption } from "@/electron/renderer/components/configuration
 import {
   useConfigurations,
   useSelectedConfiguration,
-} from "@/electron/renderer/stores/configurations-store/configurations-store.tsx";
+} from "@/electron/renderer/stores/configuration/configuration-provider.tsx";
 import { useFellowshipDataStore } from "@/electron/renderer/stores/fellowship-data/fellowship-data-store.tsx";
 import { FELLOWSHIP_EVENT } from "@/services/fellowship/constants/fellowship-event.ts";
 import { type RequirementEventType } from "@/services/fellowship/validation/requirement-event-type-schema.ts";

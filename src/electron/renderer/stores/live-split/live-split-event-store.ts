@@ -19,6 +19,11 @@ export type LiveSplitEventStoreSnapshot = {
   readonly serverStatus: LiveSplitApiStatus | null;
 };
 
+export type LiveSplitEventStore = {
+  readonly getSnapshot: () => LiveSplitEventStoreSnapshot;
+  readonly subscribe: (listener: Listener) => () => void;
+};
+
 type Listener = () => void;
 
 const initialSnapshot: LiveSplitEventStoreSnapshot = {
@@ -26,7 +31,7 @@ const initialSnapshot: LiveSplitEventStoreSnapshot = {
   serverStatus: null,
 };
 
-export function makeLiveSplitEventStore() {
+export function makeLiveSplitEventStore(): LiveSplitEventStore {
   let snapshot = initialSnapshot;
   let fiber: Fiber.Fiber<void, unknown> | undefined;
 

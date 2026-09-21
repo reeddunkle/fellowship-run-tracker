@@ -3,9 +3,9 @@ import { type ReactNode, useState } from "react";
 
 import { getConfigurationsQueryOptions } from "@/electron/renderer/api/configuration/configuration-queries.ts";
 import { getDungeonRunHistoryQueryOptions } from "@/electron/renderer/api/dungeon-run/dungeon-run-queries.ts";
-import { type DungeonRunEventStore } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-event-store.ts";
-import { DungeonRunProvider } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-provider.tsx";
-import { makeTrackingEventStore } from "@/electron/renderer/stores/tracking-store/tracking-event-store.ts";
+import { type DungeonRunEventStore } from "@/electron/renderer/stores/dungeon-run/dungeon-run-event-store.ts";
+import { DungeonRunProvider } from "@/electron/renderer/stores/dungeon-run/dungeon-run-provider.tsx";
+import { makeTrackingEventStore } from "@/electron/renderer/stores/tracking/tracking-event-store.ts";
 import { DEFAULT_APP_STATE } from "@/electron/storage/app-state/app-state-schema.ts";
 import { type ConfigurationApiConfigurationList } from "@/services/api/configuration/configuration-api-schema.ts";
 import {

@@ -124,7 +124,7 @@ export function RequirementTargetField({
   };
 
   return (
-    <form.Field name={`${requirementPath}.targetId` as const}>
+    <form.AppField name={`${requirementPath}.targetId` as const}>
       {(field) => {
         const existingOption = optionsByValue[field.state.value];
 
@@ -197,6 +197,6 @@ export function RequirementTargetField({
           </Field>
         );
       }}
-    </form.Field>
+    </form.AppField>
   );
 }

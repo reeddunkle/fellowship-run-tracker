@@ -15,11 +15,11 @@ import {
 } from "@/electron/renderer/components/history/history-summary-message.tsx";
 import { Button } from "@/electron/renderer/components/ui/button.tsx";
 import { Separator } from "@/electron/renderer/components/ui/separator.tsx";
-import { useSelectedConfiguration } from "@/electron/renderer/stores/configurations-store/configurations-store.tsx";
+import { useSelectedConfiguration } from "@/electron/renderer/stores/configuration/configuration-provider.tsx";
 import {
   getComparisonDungeonRunHistorySummary,
   getOwnDungeonRunHistorySummary,
-} from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-history-summary.ts";
+} from "@/electron/renderer/stores/dungeon-run/dungeon-run-history-summary.ts";
 import { useFellowshipDataStore } from "@/electron/renderer/stores/fellowship-data/fellowship-data-store.tsx";
 import { type ConfigurationApiConfiguration } from "@/services/api/configuration/configuration-api-schema.ts";
 

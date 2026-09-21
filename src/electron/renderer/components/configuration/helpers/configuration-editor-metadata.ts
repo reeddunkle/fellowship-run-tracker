@@ -34,14 +34,8 @@ export type CreateRequirementMetadataOptions = {
   readonly excluding?: RequirementLocation;
 };
 
-function toPositiveInteger(value: string): number | undefined {
-  const parsed = Number(value);
-
-  if (!Number.isInteger(parsed) || parsed < 1) {
-    return undefined;
-  }
-
-  return parsed;
+function isPositiveInteger(value: number | undefined): value is number {
+  return value !== undefined && Number.isInteger(value) && value >= 1;
 }
 
 function isSameRequirementLocation(
@@ -155,15 +149,12 @@ export function createRequirementMetadata(
           type: FELLOWSHIP_EVENT.UNIT_DEATH,
         },
         (unitDeathRequirement) => {
-          const startOccurrence = toPositiveInteger(
-            unitDeathRequirement.startOccurrence,
-          );
+          const { requiredCount, startOccurrence } = unitDeathRequirement;
 
-          const requiredCount = toPositiveInteger(
-            unitDeathRequirement.requiredCount,
-          );
-
-          if (startOccurrence === undefined || requiredCount === undefined) {
+          if (
+            !isPositiveInteger(startOccurrence) ||
+            !isPositiveInteger(requiredCount)
+          ) {
             return;
           }
 

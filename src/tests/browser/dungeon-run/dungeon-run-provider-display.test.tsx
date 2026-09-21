@@ -2,8 +2,8 @@ import * as Stream from "effect/Stream";
 import { describe, expect, test } from "vitest";
 import { render } from "vitest-browser-react";
 
-import { makeDungeonRunEventStore } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-event-store.ts";
-import { useDungeonRunDisplayState } from "@/electron/renderer/stores/dungeon-run-store/dungeon-run-provider.tsx";
+import { makeDungeonRunEventStore } from "@/electron/renderer/stores/dungeon-run/dungeon-run-event-store.ts";
+import { useDungeonRunDisplayState } from "@/electron/renderer/stores/dungeon-run/dungeon-run-provider.tsx";
 
 import { TestDungeonRunProvider } from "./test-dungeon-run-provider.tsx";
 

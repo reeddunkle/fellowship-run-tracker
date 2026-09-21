@@ -19,8 +19,8 @@ function createEditorRequirement(
   return {
     // @effect-diagnostics-next-line cryptoRandomUUID:off
     id: crypto.randomUUID(),
-    requiredCount: String(requirement.requiredCount),
-    startOccurrence: String(requirement.startOccurrence),
+    requiredCount: requirement.requiredCount,
+    startOccurrence: requirement.startOccurrence,
     targetId: requirement.targetId,
     type: requirement.type,
   };
@@ -31,7 +31,7 @@ export function createConfigurationEditorValue(
 ): ConfigurationEditorValue {
   return {
     dungeonId: configuration.dungeonId,
-    dungeonLevel: String(configuration.dungeonLevel),
+    dungeonLevel: configuration.dungeonLevel,
     label: configuration.label,
     milestones: configuration.milestones.map((milestone) => {
       return {

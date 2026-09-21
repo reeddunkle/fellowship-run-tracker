@@ -15,12 +15,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/electron/renderer/components/ui/card.tsx";
-import {
-  Field,
-  FieldError,
-  FieldLabel,
-} from "@/electron/renderer/components/ui/field.tsx";
-import { Input } from "@/electron/renderer/components/ui/input.tsx";
 import { FELLOWSHIP_EVENT } from "@/services/fellowship/constants/fellowship-event.ts";
 import { type RequirementEventType } from "@/services/fellowship/validation/requirement-event-type-schema.ts";
 
@@ -63,66 +57,34 @@ export function MilestoneEditor({
       </CardHeader>
       <CardContent className="grid gap-4">
         <div className="flex gap-3">
-          <form.Field name={`${milestonePath}.label` as const}>
+          <form.AppField name={`${milestonePath}.label` as const}>
             {(field) => {
-              const isInvalid =
-                field.state.meta.isBlurred && !field.state.meta.isValid;
-
               return (
-                <Field className="min-w-0 flex-1" data-invalid={isInvalid}>
-                  <FieldLabel htmlFor={field.name}>Label</FieldLabel>
-                  <Input
-                    aria-invalid={isInvalid}
-                    id={field.name}
-                    name={field.name}
-                    onBlur={field.handleBlur}
-                    onChange={(event) => {
-                      field.handleChange(event.target.value);
-                    }}
-                    placeholder="Milestone label"
-                    value={field.state.value}
-                  />
-                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
-                </Field>
+                <field.TextField
+                  fieldClassName="min-w-0 flex-1"
+                  label="Label"
+                  placeholder="Milestone label"
+                />
               );
             }}
-          </form.Field>
+          </form.AppField>
 
-          <form.Field name={`${milestonePath}.comparisonTime` as const}>
+          <form.AppField name={`${milestonePath}.comparisonTime` as const}>
             {(field) => {
-              const isInvalid =
-                field.state.meta.isBlurred && !field.state.meta.isValid;
-
               return (
-                <Field className="w-fit" data-invalid={isInvalid}>
-                  <FieldLabel htmlFor={field.name}>
-                    Goal time (optional)
-                  </FieldLabel>
-                  <Input
-                    aria-invalid={isInvalid}
-                    className="field-sizing-content"
-                    id={field.name}
-                    inputMode="text"
-                    name={field.name}
-                    onBlur={field.handleBlur}
-                    onChange={(event) => {
-                      field.handleChange(event.target.value);
-                    }}
-                    placeholder="1:15 or 1.25"
-                    value={field.state.value}
-                  />
-                  {isInvalid && (
-                    <FieldError
-                      className="whitespace-normal contain-[inline-size]"
-                      errors={field.state.meta.errors}
-                    />
-                  )}
-                </Field>
+                <field.TextField
+                  className="field-sizing-content"
+                  errorClassName="whitespace-normal contain-[inline-size]"
+                  fieldClassName="w-fit"
+                  inputMode="text"
+                  label="Goal time (optional)"
+                  placeholder="1:15 or 1.25"
+                />
               );
             }}
-          </form.Field>
+          </form.AppField>
         </div>
-        <form.Field
+        <form.AppField
           mode="array"
           name={`${milestonePath}.requirements` as const}
         >
@@ -176,7 +138,7 @@ export function MilestoneEditor({
               </div>
             );
           }}
-        </form.Field>
+        </form.AppField>
       </CardContent>
     </Card>
   );

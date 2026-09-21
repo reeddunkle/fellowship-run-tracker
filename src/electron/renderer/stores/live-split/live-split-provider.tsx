@@ -42,7 +42,7 @@ type LiveSplitProviderProps = {
   readonly children: ReactNode;
 };
 
-export type LiveSplitActionState = {
+type LiveSplitActionState = {
   readonly connectError: unknown | undefined;
   readonly disconnectError: unknown | undefined;
   readonly isConnecting: boolean;
@@ -50,7 +50,7 @@ export type LiveSplitActionState = {
   readonly isPending: boolean;
 };
 
-export type LiveSplitServerState = {
+type LiveSplitServerState = {
   readonly eventConnectionState: ApiEventConnectionState;
   readonly serverStatus: LiveSplitApiStatus | null;
 };
