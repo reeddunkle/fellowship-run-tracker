@@ -2,16 +2,18 @@ import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Stream from "effect/Stream";
 
-import { FellowshipTrackerLive } from "@/application/fellowship-tracker/fellowship-tracker-service-live.ts";
-import { FellowshipServicesLive } from "@/layers/fellowship-layer.ts";
+import { FellowshipTracker } from "@/application/fellowship-tracker/fellowship-tracker-service.ts";
 import { DungeonRunWebSocketBroadcaster } from "@/services/api/websocket-broadcaster-service.ts";
-import { AppSettingsLive } from "@/services/app-settings/app-settings-service.ts";
+import { AppSettings } from "@/services/app-settings/app-settings-service.ts";
 import { Encryption } from "@/services/encryption/encryption-service.ts";
+import { Fellowship } from "@/services/fellowship/fellowship-service.ts";
+import { FileMonitor } from "@/services/filesystem/file-monitor-service.ts";
+import { FileMonitorSource } from "@/services/filesystem/file-monitor-source-service.ts";
 import {
   LiveSplitConnectionManager,
   type LiveSplitConnectionManagerService,
 } from "@/services/live-split/core/live-split-connection-manager-service.ts";
-import { LiveSplitLive } from "@/services/live-split/core/live-split-service.ts";
+import { LiveSplit } from "@/services/live-split/core/live-split-service.ts";
 import { makeEncryptionHarness } from "@/tests/common/harnesses/encryption-harness.ts";
 import { makePersistenceTestLayer } from "@/tests/common/layers/persistence-test-layer.ts";
 
@@ -40,11 +42,12 @@ export function makeFellowshipTrackerIntegrationTestHarness({
       encryptionHarness.encryption,
     );
 
-    const AppSettingsTestLive = AppSettingsLive.pipe(
+    const AppSettingsTestLive = AppSettings.layerNoDeps.pipe(
       Layer.provide(Layer.mergeAll(PersistenceTestLive, EncryptionTestLive)),
     );
 
-    const FellowshipTestLive = FellowshipServicesLive.pipe(
+    const FellowshipTestLive = Fellowship.layerNoDeps.pipe(
+      Layer.provide(Layer.mergeAll(FileMonitor.layer, FileMonitorSource.layer)),
       Layer.provide(AppSettingsTestLive),
     );
 
@@ -67,7 +70,7 @@ export function makeFellowshipTrackerIntegrationTestHarness({
       } satisfies LiveSplitConnectionManagerService,
     );
 
-    const LiveSplitTestLive = LiveSplitLive.pipe(
+    const LiveSplitTestLive = LiveSplit.layerNoDeps.pipe(
       Layer.provide(LiveSplitConnectionManagerTestLive),
     );
 
@@ -83,7 +86,7 @@ export function makeFellowshipTrackerIntegrationTestHarness({
       DungeonRunWebSocketBroadcasterTestLive,
     );
 
-    const FellowshipTrackerTestLive = FellowshipTrackerLive.pipe(
+    const FellowshipTrackerTestLive = FellowshipTracker.layerNoDeps.pipe(
       Layer.provide(FellowshipTrackerDependenciesTestLive),
     );
 

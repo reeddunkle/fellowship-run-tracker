@@ -39,7 +39,7 @@ if (
   throw new Error("Expected combined milestone requirements.");
 }
 
-describe("ConfigurationDAOLive identity", () => {
+describe("ConfigurationDAO identity", () => {
   test("rejects saving an exact duplicate configuration", async () => {
     const duplicateConfiguration = {
       dungeonId: MOCK_FELLOWSHIP_CONFIGURATION.dungeonId,

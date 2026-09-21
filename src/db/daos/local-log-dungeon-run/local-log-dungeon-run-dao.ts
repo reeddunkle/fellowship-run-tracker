@@ -1,7 +1,9 @@
 import * as Context from "effect/Context";
 import type * as E from "effect/Effect";
+import * as Layer from "effect/Layer";
 import type * as Option from "effect/Option";
 
+import { makeLocalLogDungeonRunDAO } from "@/db/daos/local-log-dungeon-run/make-local-log-dungeon-run-dao.ts";
 import { type LocalLogDungeonRunModel } from "@/db/models/local-log-dungeon-run-model.ts";
 import { type LocalLogDungeonRunDAOError } from "@/errors/local-log-dungeon-run-dao-error.ts";
 import { type DungeonRunId } from "@/validation/dungeon-run/dungeon-run-id-schema.ts";
@@ -48,4 +50,6 @@ export class LocalLogDungeonRunDAO extends Context.Service<
   LocalLogDungeonRunDAOShape
 >()(
   "fellowship-run-tracker/db/daos/local-log-dungeon-run/local-log-dungeon-run-dao/LocalLogDungeonRunDAO",
-) {}
+) {
+  static readonly layer = Layer.effect(this, makeLocalLogDungeonRunDAO);
+}

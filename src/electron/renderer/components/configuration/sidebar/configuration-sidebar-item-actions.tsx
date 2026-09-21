@@ -1,5 +1,6 @@
 import { EllipsisVerticalIcon, Trash2Icon } from "lucide-react";
 
+import { type ConfigurationApiConfiguration } from "@/contracts/configuration/configuration-api-schema.ts";
 import { Button } from "@/electron/renderer/components/ui/button.tsx";
 import {
   Popover,
@@ -10,7 +11,6 @@ import {
   PopoverTrigger,
 } from "@/electron/renderer/components/ui/popover.tsx";
 import { Separator } from "@/electron/renderer/components/ui/separator";
-import { type ConfigurationApiConfiguration } from "@/services/api/configuration/configuration-api-schema.ts";
 import { cn } from "@/util/class-names";
 import { formatLocalDateTime } from "@/util/format-date-time.ts";
 import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";

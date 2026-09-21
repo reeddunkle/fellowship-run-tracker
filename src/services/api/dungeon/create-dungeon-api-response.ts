@@ -1,5 +1,5 @@
+import { type DungeonApiDungeon } from "@/contracts/dungeon/dungeon-api-schema.ts";
 import { type DungeonModel } from "@/db/models/dungeon-model.ts";
-import { type DungeonApiDungeon } from "@/services/api/dungeon/dungeon-api-schema.ts";
 
 export function createDungeonApiResponse(
   dungeon: DungeonModel,

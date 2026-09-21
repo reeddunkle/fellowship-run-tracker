@@ -4,13 +4,13 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
 import {
+  type AbilityApiAbility,
+  type AbilityApiAbilityList,
+} from "@/contracts/ability/ability-api-schema.ts";
+import {
   AbilityDAO,
   type AbilityDAOError,
 } from "@/db/daos/ability/ability-dao.ts";
-import {
-  type AbilityApiAbility,
-  type AbilityApiAbilityList,
-} from "@/services/api/ability/ability-api-schema.ts";
 import { createAbilityApiResponse } from "@/services/api/ability/create-ability-api-response.ts";
 
 type GetAbilityByIdOptions = {
@@ -25,14 +25,7 @@ export type AbilityApiServiceShape = {
   ) => E.Effect<Option.Option<AbilityApiAbility>, AbilityDAOError>;
 };
 
-export class AbilityApiService extends Context.Service<
-  AbilityApiService,
-  AbilityApiServiceShape
->()(
-  "fellowship-run-tracker/services/api/ability/ability-api-service/AbilityApiService",
-) {}
-
-const make = E.gen(function* () {
+const makeAbilityApiService = E.gen(function* () {
   const abilityDAO = yield* AbilityDAO;
 
   const getAll: AbilityApiServiceShape["getAll"] = () => {
@@ -55,4 +48,15 @@ const make = E.gen(function* () {
   } satisfies AbilityApiServiceShape;
 });
 
-export const AbilityApiServiceLive = Layer.effect(AbilityApiService, make);
+export class AbilityApiService extends Context.Service<
+  AbilityApiService,
+  AbilityApiServiceShape
+>()(
+  "fellowship-run-tracker/services/api/ability/ability-api-service/AbilityApiService",
+) {
+  static readonly layerNoDeps = Layer.effect(this, makeAbilityApiService);
+
+  static readonly layer = this.layerNoDeps.pipe(
+    Layer.provide(AbilityDAO.layer),
+  );
+}

@@ -3,11 +3,11 @@ import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import { describe, expect, test } from "vitest";
 
+import { type EncounterApiEncounter } from "@/contracts/encounter/encounter-api-schema.ts";
 import {
   getEncounter,
   getEncounters,
 } from "@/electron/renderer/api/encounter/encounter-client.ts";
-import { type EncounterApiEncounter } from "@/services/api/encounter/encounter-api-schema.ts";
 import { makeApiServerTestLayerWith } from "@/tests/common/layers/api-server-test-layer.ts";
 import { TestAppApiClientTestLive } from "@/tests/common/layers/app-api-client-test-layer.ts";
 import { makeEncounterApiServiceMock } from "@/tests/common/mocks/encounter-api-service-mock.ts";

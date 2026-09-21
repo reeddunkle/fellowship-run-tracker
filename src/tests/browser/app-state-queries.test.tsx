@@ -1,8 +1,8 @@
 import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, test, vi } from "vitest";
 
+import { DEFAULT_APP_STATE } from "@/contracts/app-state/app-state-schema.ts";
 import { primeAppStateQueries } from "@/electron/renderer/api/app-state/app-state-queries.ts";
-import { DEFAULT_APP_STATE } from "@/electron/storage/app-state/app-state-schema.ts";
 
 describe("app-state queries", () => {
   test("primes renderer state with granular requests", async () => {

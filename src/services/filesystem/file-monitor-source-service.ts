@@ -9,6 +9,7 @@ import * as Queue from "effect/Queue";
 import * as Stream from "effect/Stream";
 
 import { FileNotFoundError } from "@/errors/file-not-found-error.ts";
+import { NodePlatformLayer } from "@/layers/node-platform-layer.ts";
 import { getDateEpochMilliseconds } from "@/util/get-date-epoch-milliseconds.ts";
 
 import { compareFiles, type FileData, getFileId } from "./filesystem.ts";
@@ -56,13 +57,6 @@ export type FileMonitorSourceService = {
     options: StreamStatusOptions,
   ) => Stream.Stream<FileMonitorSourceStatus, PlatformError.PlatformError>;
 };
-
-export class FileMonitorSource extends Context.Service<
-  FileMonitorSource,
-  FileMonitorSourceService
->()(
-  "fellowship-run-tracker/services/filesystem/file-monitor-source-service/FileMonitorSource",
-) {}
 
 const makeFileMonitorSource = E.gen(function* () {
   const fileSystem = yield* FileSystem.FileSystem;
@@ -217,7 +211,15 @@ const makeFileMonitorSource = E.gen(function* () {
   } satisfies FileMonitorSourceService;
 });
 
-export const FileMonitorSourceLive = Layer.effect(
+export class FileMonitorSource extends Context.Service<
   FileMonitorSource,
-  makeFileMonitorSource,
-);
+  FileMonitorSourceService
+>()(
+  "fellowship-run-tracker/services/filesystem/file-monitor-source-service/FileMonitorSource",
+) {
+  static readonly layerNoDeps = Layer.effect(this, makeFileMonitorSource);
+
+  static readonly layer = this.layerNoDeps.pipe(
+    Layer.provide(NodePlatformLayer),
+  );
+}

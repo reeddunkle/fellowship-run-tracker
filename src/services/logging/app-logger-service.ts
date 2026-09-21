@@ -26,4 +26,7 @@ const FileLogger = E.gen(function* () {
   return yield* Logger.toFile(Logger.formatJson, logFileName);
 });
 
-export const AppLoggerLive = Logger.layer([Logger.consolePretty(), FileLogger]);
+export const AppLoggerLayer = Logger.layer([
+  Logger.consolePretty(),
+  FileLogger,
+]);

@@ -19,4 +19,4 @@ const makeNodeApiHttpServer = E.gen(function* () {
   });
 });
 
-export const NodeApiHttpServerLive = Layer.unwrap(makeNodeApiHttpServer);
+export const NodeApiHttpServerLayer = Layer.unwrap(makeNodeApiHttpServer);

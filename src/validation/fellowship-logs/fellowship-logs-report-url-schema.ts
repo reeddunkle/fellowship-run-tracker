@@ -3,7 +3,7 @@ import * as Schema from "effect/Schema";
 import * as SchemaGetter from "effect/SchemaGetter";
 import * as SchemaIssue from "effect/SchemaIssue";
 
-import { FellowshipLogsApiDungeonRunReferenceSchema } from "@/services/api/fellowship-logs/fellowship-logs-api-schema.ts";
+import { FellowshipLogsApiDungeonRunReferenceSchema } from "@/contracts/fellowship-logs/fellowship-logs-api-schema.ts";
 
 const REPORTS_PATH_SEGMENT = "reports";
 const FIGHT_QUERY_PARAM = "fight";

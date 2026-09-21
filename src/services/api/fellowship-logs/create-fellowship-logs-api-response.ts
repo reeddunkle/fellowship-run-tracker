@@ -1,13 +1,13 @@
 import * as DateTime from "effect/DateTime";
 
 import { type ImportFellowshipLogsDungeonRunResult } from "@/application/fellowship-logs-dungeon-run-importer/fellowship-logs-dungeon-run-importer-service.ts";
-import { type FellowshipLogsImportedDungeonRunRow } from "@/db/fellowship-logs-dungeon-run/fellowship-logs-imported-dungeon-run-row-schema.ts";
 import {
   type FellowshipLogsApiDungeonRunMetadata,
   type FellowshipLogsApiImportDungeonRunResult,
   type FellowshipLogsApiImportedDungeonRun,
   type FellowshipLogsApiLastKnownRateLimitData,
-} from "@/services/api/fellowship-logs/fellowship-logs-api-schema.ts";
+} from "@/contracts/fellowship-logs/fellowship-logs-api-schema.ts";
+import { type FellowshipLogsImportedDungeonRunRow } from "@/db/fellowship-logs-dungeon-run/fellowship-logs-imported-dungeon-run-row-schema.ts";
 import { type FellowshipLogsDungeonRunMetadata } from "@/services/fellowship-logs/fellowship-logs-service.ts";
 import { type FellowshipLogsRateLimitData } from "@/services/fellowship-logs/validation/fellowship-logs-rate-limit-schema.ts";
 

@@ -3,12 +3,12 @@ import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Redacted from "effect/Redacted";
 
-import { type AppSettingsDAOError } from "@/db/daos/app-settings/app-settings-dao.ts";
-import { type EncryptionError } from "@/errors/encryption-error.ts";
 import {
   type AppSettingsApiAppSettings,
   type AppSettingsApiUpdate,
-} from "@/services/api/app-settings/app-settings-api-schema.ts";
+} from "@/contracts/app-settings/app-settings-api-schema.ts";
+import { type AppSettingsDAOError } from "@/db/daos/app-settings/app-settings-dao.ts";
+import { type EncryptionError } from "@/errors/encryption-error.ts";
 import { createAppSettingsApiResponse } from "@/services/api/app-settings/create-app-settings-api-response.ts";
 import { AppSettings } from "@/services/app-settings/app-settings-service.ts";
 
@@ -23,14 +23,7 @@ export type AppSettingsApiServiceShape = {
   >;
 };
 
-export class AppSettingsApiService extends Context.Service<
-  AppSettingsApiService,
-  AppSettingsApiServiceShape
->()(
-  "fellowship-run-tracker/services/api/app-settings/app-settings-api-service/AppSettingsApiService",
-) {}
-
-const make = E.gen(function* () {
+const makeAppSettingsApiService = E.gen(function* () {
   const appSettingsService = yield* AppSettings;
 
   const get: AppSettingsApiServiceShape["get"] = () => {
@@ -69,7 +62,17 @@ const make = E.gen(function* () {
   } satisfies AppSettingsApiServiceShape;
 });
 
-export const AppSettingsApiServiceLive = Layer.effect(
+export class AppSettingsApiService extends Context.Service<
   AppSettingsApiService,
-  make,
-);
+  AppSettingsApiServiceShape
+>()(
+  "fellowship-run-tracker/services/api/app-settings/app-settings-api-service/AppSettingsApiService",
+) {
+  static readonly layerNoDeps = Layer.effect(this, makeAppSettingsApiService);
+
+  static readonly layerWith = (options: {
+    readonly encryptionKeyDirectory: string;
+  }) => {
+    return this.layerNoDeps.pipe(Layer.provide(AppSettings.layerWith(options)));
+  };
+}

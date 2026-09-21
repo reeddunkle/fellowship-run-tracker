@@ -1,10 +1,10 @@
 import * as E from "effect/Effect";
 
-import { AppApiClient } from "@/electron/renderer/services/app-api-client/app-api-client";
 import {
   type FellowshipLogsApiDungeonRunReference,
   type FellowshipLogsApiImportDungeonRunOptions,
-} from "@/services/api/fellowship-logs/fellowship-logs-api-schema.ts";
+} from "@/contracts/fellowship-logs/fellowship-logs-api-schema.ts";
+import { AppApiClient } from "@/electron/renderer/services/app-api-client/app-api-client";
 import { type DungeonRunId } from "@/validation/dungeon-run/dungeon-run-id-schema.ts";
 
 export function getRateLimitData() {

@@ -21,7 +21,7 @@ function getDungeon<T>(dungeon: Option.Option<T>): T {
   return dungeon.value;
 }
 
-describe("DungeonDAOLive", () => {
+describe("DungeonDAO", () => {
   test("returns all seeded dungeons", async () => {
     const program = E.gen(function* () {
       const dungeonDAO = yield* DungeonDAO;

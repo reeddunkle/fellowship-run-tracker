@@ -1,8 +1,8 @@
 import * as E from "effect/Effect";
 import { nativeTheme } from "electron";
 
-import { type Theme } from "@/electron/storage/app-state/app-state-schema.ts";
-import { AppStateApiService } from "@/services/api/app-state/app-state-api-service.ts";
+import { AppStateApiService } from "@/contracts/app-state/app-state-api-service.ts";
+import { type Theme } from "@/contracts/app-state/app-state-schema.ts";
 
 import { type CreateWindowOptions, createWindow } from "./create-window.ts";
 

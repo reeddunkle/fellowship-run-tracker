@@ -1,7 +1,9 @@
 import * as Context from "effect/Context";
 import type * as E from "effect/Effect";
+import * as Layer from "effect/Layer";
 import type * as Option from "effect/Option";
 
+import { makeDungeonRunDAO } from "@/db/daos/dungeon-run/make-dungeon-run-dao.ts";
 import { type DungeonRunModel } from "@/db/models/dungeon-run-model.ts";
 import { type DungeonRunDAOError } from "@/errors/dungeon-run-dao-error.ts";
 import { type DungeonRunId } from "@/validation/dungeon-run/dungeon-run-id-schema.ts";
@@ -70,4 +72,6 @@ export class DungeonRunDAO extends Context.Service<
   DungeonRunDAOShape
 >()(
   "fellowship-run-tracker/db/daos/dungeon-run/dungeon-run-dao/DungeonRunDAO",
-) {}
+) {
+  static readonly layer = Layer.effect(this, makeDungeonRunDAO);
+}

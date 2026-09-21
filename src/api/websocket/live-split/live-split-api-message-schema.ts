@@ -1,6 +1,6 @@
 import * as Schema from "effect/Schema";
 
-import { LiveSplitApiStatusSchema } from "@/services/api/live-split/live-split-api-schema.ts";
+import { LiveSplitApiStatusSchema } from "@/contracts/live-split/live-split-api-schema.ts";
 
 export const LiveSplitApiMessageSchema = Schema.Struct({
   status: LiveSplitApiStatusSchema,

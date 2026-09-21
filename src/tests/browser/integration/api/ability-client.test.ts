@@ -3,11 +3,11 @@ import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import { describe, expect, test } from "vitest";
 
+import { type AbilityApiAbility } from "@/contracts/ability/ability-api-schema.ts";
 import {
   getAbilities,
   getAbility,
 } from "@/electron/renderer/api/ability/ability-client.ts";
-import { type AbilityApiAbility } from "@/services/api/ability/ability-api-schema.ts";
 import { makeApiServerTestLayerWith } from "@/tests/common/layers/api-server-test-layer.ts";
 import { TestAppApiClientTestLive } from "@/tests/common/layers/app-api-client-test-layer.ts";
 import { makeAbilityApiServiceMock } from "@/tests/common/mocks/ability-api-service-mock.ts";

@@ -4,11 +4,8 @@ import * as Path from "effect/Path";
 import * as Redacted from "effect/Redacted";
 import { describe, expect, test } from "vitest";
 
-import { NodePlatformLive } from "@/layers/node-platform-layer.ts";
-import {
-  EncryptionKeyStorage,
-  makeEncryptionKeyStorageLive,
-} from "@/services/encryption/encryption-key-storage-service.ts";
+import { NodePlatformLayer } from "@/layers/node-platform-layer.ts";
+import { EncryptionKeyStorage } from "@/services/encryption/encryption-key-storage-service.ts";
 import { runTest } from "@/tests/common/run-test.ts";
 
 const ENCRYPTION_KEY_FILENAME = "encryption.key";
@@ -25,7 +22,7 @@ describe("EncryptionKeyStorage", () => {
 
         const encryptionKeyStorage = yield* EncryptionKeyStorage.pipe(
           E.provide(
-            makeEncryptionKeyStorageLive({
+            EncryptionKeyStorage.layerWith({
               encryptionKeyDirectory,
             }),
           ),
@@ -37,7 +34,7 @@ describe("EncryptionKeyStorage", () => {
           ENCRYPTION_KEY_LENGTH_BYTES,
         );
       }),
-    ).pipe(E.provide(NodePlatformLive));
+    ).pipe(E.provide(NodePlatformLayer));
 
     await runTest(program);
   });
@@ -52,7 +49,7 @@ describe("EncryptionKeyStorage", () => {
 
         const encryptionKeyStorage = yield* EncryptionKeyStorage.pipe(
           E.provide(
-            makeEncryptionKeyStorageLive({
+            EncryptionKeyStorage.layerWith({
               encryptionKeyDirectory,
             }),
           ),
@@ -63,7 +60,7 @@ describe("EncryptionKeyStorage", () => {
 
         expect(Redacted.value(secondKey)).toEqual(Redacted.value(firstKey));
       }),
-    ).pipe(E.provide(NodePlatformLive));
+    ).pipe(E.provide(NodePlatformLayer));
 
     await runTest(program);
   });
@@ -79,7 +76,7 @@ describe("EncryptionKeyStorage", () => {
 
         const encryptionKeyStorage = yield* EncryptionKeyStorage.pipe(
           E.provide(
-            makeEncryptionKeyStorageLive({
+            EncryptionKeyStorage.layerWith({
               encryptionKeyDirectory,
             }),
           ),
@@ -96,7 +93,7 @@ describe("EncryptionKeyStorage", () => {
 
         expect(Uint8Array.from(persistedKey)).toEqual(Redacted.value(key));
       }),
-    ).pipe(E.provide(NodePlatformLive));
+    ).pipe(E.provide(NodePlatformLayer));
 
     await runTest(program);
   });
@@ -123,7 +120,7 @@ describe("EncryptionKeyStorage", () => {
 
         const encryptionKeyStorage = yield* EncryptionKeyStorage.pipe(
           E.provide(
-            makeEncryptionKeyStorageLive({
+            EncryptionKeyStorage.layerWith({
               encryptionKeyDirectory,
             }),
           ),
@@ -133,7 +130,7 @@ describe("EncryptionKeyStorage", () => {
 
         expect(Redacted.value(key)).toEqual(existingKey);
       }),
-    ).pipe(E.provide(NodePlatformLive));
+    ).pipe(E.provide(NodePlatformLayer));
 
     await runTest(program);
   });
@@ -159,7 +156,7 @@ describe("EncryptionKeyStorage", () => {
 
         const encryptionKeyStorage = yield* EncryptionKeyStorage.pipe(
           E.provide(
-            makeEncryptionKeyStorageLive({
+            EncryptionKeyStorage.layerWith({
               encryptionKeyDirectory,
             }),
           ),
@@ -174,7 +171,7 @@ describe("EncryptionKeyStorage", () => {
           "Expected 32-byte encryption key, received 31 bytes.",
         );
       }),
-    ).pipe(E.provide(NodePlatformLive));
+    ).pipe(E.provide(NodePlatformLayer));
 
     await runTest(program);
   });

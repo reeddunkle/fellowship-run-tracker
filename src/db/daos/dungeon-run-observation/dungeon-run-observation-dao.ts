@@ -1,6 +1,8 @@
 import * as Context from "effect/Context";
 import type * as E from "effect/Effect";
+import * as Layer from "effect/Layer";
 
+import { makeDungeonRunObservationDAO } from "@/db/daos/dungeon-run-observation/make-dungeon-run-observation-dao.ts";
 import { type DungeonRunModel } from "@/db/models/dungeon-run-model.ts";
 import { type DungeonRunObservationModel } from "@/db/models/dungeon-run-observation-model.ts";
 import { type DungeonRunObservationDAOError } from "@/errors/dungeon-run-observation-dao-error.ts";
@@ -56,4 +58,6 @@ export class DungeonRunObservationDAO extends Context.Service<
   DungeonRunObservationDAOShape
 >()(
   "fellowship-run-tracker/db/daos/dungeon-run-observation/dungeon-run-observation-dao/DungeonRunObservationDAO",
-) {}
+) {
+  static readonly layer = Layer.effect(this, makeDungeonRunObservationDAO);
+}

@@ -126,6 +126,35 @@
       }
     }
   },
+  "overrides": [
+    {
+      "includes": ["src/electron/renderer/**", "src/tests/browser/**/*.tsx"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/electron/main.ts",
+                      "@/electron/preload.ts",
+                      "@/electron/ipc/**",
+                      "@/electron/application/**",
+                      "@/electron/storage/**",
+                      "@/services/api/**"
+                    ],
+                    "message": "Renderer/browser code must not import backend-only implementation modules. Import the matching contract from @/contracts/<domain>/ instead."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
   "vcs": {
     "clientKind": "git",
     "enabled": true,

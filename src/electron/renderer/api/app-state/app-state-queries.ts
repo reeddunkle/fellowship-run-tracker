@@ -5,12 +5,12 @@ import {
 } from "@tanstack/react-query";
 import type * as E from "effect/Effect";
 
-import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
-import { type AppState } from "@/electron/storage/app-state/app-state-schema.ts";
 import {
   AppStateApiService,
   type AppStateApiServiceShape,
-} from "@/services/api/app-state/app-state-api-service.ts";
+} from "@/contracts/app-state/app-state-api-service.ts";
+import { type AppState } from "@/contracts/app-state/app-state-schema.ts";
+import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
 import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";
 import { type DungeonRunComparisonGroupSchema } from "@/validation/dungeon-run/dungeon-run-comparison-group-schema.ts";
 

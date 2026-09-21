@@ -2,8 +2,8 @@ import * as E from "effect/Effect";
 import * as Match from "effect/Match";
 import * as Schema from "effect/Schema";
 
-import { AppStateApiService } from "@/services/api/app-state/app-state-api-service.ts";
-import { AppStateRpcRequestSchema } from "@/services/api/app-state/app-state-rpc.ts";
+import { AppStateApiService } from "@/contracts/app-state/app-state-api-service.ts";
+import { AppStateRpcRequestSchema } from "@/contracts/app-state/app-state-rpc.ts";
 
 export function handleAppStateRequest(input: unknown) {
   return E.gen(function* () {

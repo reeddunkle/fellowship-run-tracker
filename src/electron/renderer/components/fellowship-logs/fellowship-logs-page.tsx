@@ -1,10 +1,10 @@
+import { type AbilityApiAbilityList } from "@/contracts/ability/ability-api-schema.ts";
+import { type DungeonApiDungeonList } from "@/contracts/dungeon/dungeon-api-schema.ts";
+import { type EncounterApiEncounterList } from "@/contracts/encounter/encounter-api-schema.ts";
+import { type UnitApiUnitList } from "@/contracts/unit/unit-api-schema.ts";
 import { AppLayout } from "@/electron/renderer/components/core/app-layout.tsx";
 import { Separator } from "@/electron/renderer/components/ui/separator.tsx";
 import { FellowshipDataProvider } from "@/electron/renderer/stores/fellowship-data/fellowship-data-store.tsx";
-import { type AbilityApiAbilityList } from "@/services/api/ability/ability-api-schema.ts";
-import { type DungeonApiDungeonList } from "@/services/api/dungeon/dungeon-api-schema.ts";
-import { type EncounterApiEncounterList } from "@/services/api/encounter/encounter-api-schema.ts";
-import { type UnitApiUnitList } from "@/services/api/unit/unit-api-schema.ts";
 
 import { FellowshipLogsRateLimitSection } from "./fellowship-logs-rate-limit-section.tsx";
 import { ImportDungeonRunSection } from "./import-dungeon-run-section.tsx";

@@ -1,19 +1,29 @@
 import * as Context from "effect/Context";
 import type * as DateTime from "effect/DateTime";
-import type * as E from "effect/Effect";
+import * as E from "effect/Effect";
+import * as Layer from "effect/Layer";
 import type * as Schema from "effect/Schema";
 import type * as Stream from "effect/Stream";
 
+import { appConfig } from "@/app-config.ts";
 import {
   type FellowshipLogsEventDecodeError,
   type FellowshipLogsGraphQLResponseError,
   type FellowshipLogsRequestError,
 } from "@/errors/fellowship-logs-error.ts";
+import {
+  NodeHttpClientLayer,
+  NodePlatformLayer,
+} from "@/layers/node-platform-layer.ts";
+import { AppSettings } from "@/services/app-settings/app-settings-service.ts";
 import { type DungeonId } from "@/services/fellowship/validation/fellowship-common.ts";
 import { type FellowshipEvent } from "@/services/fellowship/validation/fellowship-event-schema.ts";
 import { type FellowshipLogsFightId } from "@/validation/fellowship-logs/fellowship-logs-fight-id-schema.ts";
 import { type FellowshipLogsReportCode } from "@/validation/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
+import { FELLOWSHIP_LOGS_FIXTURE_DIRECTORY } from "./fellowship-logs-fixture-paths.ts";
+import { makeFellowshipLogs } from "./make-fellowship-logs.ts";
+import { makeFellowshipLogsFixture } from "./make-fellowship-logs-fixture.ts";
 import {
   type FellowshipLogsGraphQLRequestSchema,
   type FellowshipLogsGraphQLResponse,
@@ -102,4 +112,44 @@ export class FellowshipLogs extends Context.Service<
   FellowshipLogsService
 >()(
   "fellowship-run-tracker/services/fellowship-logs/fellowship-logs-service/FellowshipLogs",
-) {}
+) {
+  static readonly layerNoDeps = Layer.effect(this, makeFellowshipLogs);
+
+  static readonly liveLayerWith = (options: {
+    readonly encryptionKeyDirectory: string;
+  }) => {
+    return this.layerNoDeps.pipe(
+      Layer.provide(AppSettings.layerWith(options)),
+      Layer.provide(NodeHttpClientLayer),
+    );
+  };
+
+  static readonly fixtureLayerWith = (options: {
+    readonly fixtureDirectory: string;
+  }) => {
+    return Layer.effect(this, makeFellowshipLogsFixture(options)).pipe(
+      Layer.provide(NodePlatformLayer),
+    );
+  };
+
+  /**
+   * Picks the live (real GraphQL API) or fixture-backed implementation based
+   * on the `FELLOWSHIP_LOGS_USE_FIXTURES` config value, read fresh each time
+   * this layer is built.
+   */
+  static readonly layerWith = (options: {
+    readonly encryptionKeyDirectory: string;
+  }) => {
+    return Layer.unwrap(
+      E.gen(function* () {
+        const useFixtures = yield* appConfig.fellowshipLogsUseFixtures;
+
+        return useFixtures
+          ? FellowshipLogs.fixtureLayerWith({
+              fixtureDirectory: FELLOWSHIP_LOGS_FIXTURE_DIRECTORY,
+            })
+          : FellowshipLogs.liveLayerWith(options);
+      }),
+    );
+  };
+}

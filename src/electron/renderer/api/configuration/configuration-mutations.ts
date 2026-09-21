@@ -8,6 +8,12 @@ import * as A from "effect/Array";
 import * as E from "effect/Effect";
 
 import {
+  type ConfigurationApiConfiguration,
+  type ConfigurationApiConfigurationList,
+  type ConfigurationApiMilestone,
+  type ConfigurationApiRequirement,
+} from "@/contracts/configuration/configuration-api-schema.ts";
+import {
   type ConfigurationIdArgs,
   type DeleteConfigurationsByDungeonAndLevelArgs,
   deleteConfiguration,
@@ -20,12 +26,6 @@ import {
 } from "@/electron/renderer/api/configuration/configuration-client.ts";
 import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
 import { QueryClientOperationError } from "@/errors/query-client-operation-error.ts";
-import {
-  type ConfigurationApiConfiguration,
-  type ConfigurationApiConfigurationList,
-  type ConfigurationApiMilestone,
-  type ConfigurationApiRequirement,
-} from "@/services/api/configuration/configuration-api-schema.ts";
 import {
   type FellowshipMilestoneDefinition,
   type FellowshipRequirement,

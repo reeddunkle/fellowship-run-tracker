@@ -6,18 +6,15 @@ import type * as PlatformError from "effect/PlatformError";
 import * as Stream from "effect/Stream";
 
 import {
-  NodeFileSystemLive,
-  NodePathLive,
-  NodePlatformLive,
+  NodeFileSystemLayer,
+  NodePathLayer,
+  NodePlatformLayer,
 } from "@/layers/node-platform-layer.ts";
-import {
-  FileMonitorSource,
-  FileMonitorSourceLive,
-} from "@/services/filesystem/file-monitor-source-service.ts";
+import { FileMonitorSource } from "@/services/filesystem/file-monitor-source-service.ts";
 
 export const FileMonitorSourceTestLive = Layer.mergeAll(
-  Layer.fresh(FileMonitorSourceLive.pipe(Layer.provide(NodePlatformLive))),
-  NodePlatformLive,
+  Layer.fresh(FileMonitorSource.layer),
+  NodePlatformLayer,
 );
 
 export function makeFileMonitorSourceFailureTestLive(
@@ -34,17 +31,17 @@ export function makeFileMonitorSourceFailureTestLive(
           return Stream.fail(watchError);
         },
       } satisfies FileSystem.FileSystem;
-    }).pipe(E.provide(NodeFileSystemLive)),
+    }).pipe(E.provide(NodeFileSystemLayer)),
   );
 
   const FileMonitorSourceFailureDependenciesLive = Layer.mergeAll(
     FailingWatchFileSystemLive,
-    NodePathLive,
+    NodePathLayer,
   );
 
   return Layer.mergeAll(
     Layer.fresh(
-      FileMonitorSourceLive.pipe(
+      FileMonitorSource.layerNoDeps.pipe(
         Layer.provide(FileMonitorSourceFailureDependenciesLive),
       ),
     ),

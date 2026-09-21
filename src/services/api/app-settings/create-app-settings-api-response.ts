@@ -1,4 +1,4 @@
-import { type AppSettingsApiAppSettings } from "@/services/api/app-settings/app-settings-api-schema.ts";
+import { type AppSettingsApiAppSettings } from "@/contracts/app-settings/app-settings-api-schema.ts";
 import { type AppSettingsValue } from "@/services/app-settings/app-settings-service.ts";
 
 export function createAppSettingsApiResponse(

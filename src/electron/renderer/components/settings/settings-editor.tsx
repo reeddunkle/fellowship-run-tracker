@@ -8,6 +8,7 @@ import {
   XCircleIcon,
 } from "lucide-react";
 
+import { type AppSettingsApiUpdate } from "@/contracts/app-settings/app-settings-api-schema.ts";
 import { useRefreshFellowshipLogsRateLimitData } from "@/electron/renderer/api/fellowship-logs/fellowship-logs-mutations.ts";
 import { FellowshipLogsRateLimitData } from "@/electron/renderer/components/fellowship-logs/fellowship-logs-rate-limit-data.tsx";
 import {
@@ -27,7 +28,6 @@ import {
 import { DirectoryInput } from "@/electron/renderer/components/ui/file-input.tsx";
 import { Input } from "@/electron/renderer/components/ui/input.tsx";
 import { Separator } from "@/electron/renderer/components/ui/separator.tsx";
-import { type AppSettingsApiUpdate } from "@/services/api/app-settings/app-settings-api-schema.ts";
 
 import { createSettingsFormValue, useSettingsForm } from "./settings-form.ts";
 import {

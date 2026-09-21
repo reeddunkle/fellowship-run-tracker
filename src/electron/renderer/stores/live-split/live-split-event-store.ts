@@ -3,6 +3,7 @@ import * as Fiber from "effect/Fiber";
 import * as Match from "effect/Match";
 import * as Stream from "effect/Stream";
 
+import { type LiveSplitApiStatus } from "@/contracts/live-split/live-split-api-schema.ts";
 import {
   API_EVENT_CONNECTION_STATE,
   type ApiEventConnectionState,
@@ -12,7 +13,6 @@ import {
   makeLiveSplitEventStream,
 } from "@/electron/renderer/api/live-split/live-split-event-stream.ts";
 import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
-import { type LiveSplitApiStatus } from "@/services/api/live-split/live-split-api-schema.ts";
 
 export type LiveSplitEventStoreSnapshot = {
   readonly eventConnectionState: ApiEventConnectionState;

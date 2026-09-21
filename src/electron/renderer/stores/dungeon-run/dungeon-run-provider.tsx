@@ -15,6 +15,10 @@ import {
 } from "@/api/websocket/dungeon-run/dungeon-run-api-message-schema.ts";
 import { type TrackingApiStatus } from "@/application/fellowship-tracker/tracking-api-schema.ts";
 import {
+  type DungeonRunApiComparisonGroup,
+  type DungeonRunApiHistory,
+} from "@/contracts/dungeon-run/dungeon-run-api-schema.ts";
+import {
   useDungeonRunComparisonGroup,
   useSelectedConfigurationId,
 } from "@/electron/renderer/api/app-state/app-state-queries.ts";
@@ -37,10 +41,6 @@ import {
   type TrackingEventStore,
 } from "@/electron/renderer/stores/tracking/tracking-event-store.ts";
 import { ReactContextError } from "@/errors/react-context-error.ts";
-import {
-  type DungeonRunApiComparisonGroup,
-  type DungeonRunApiHistory,
-} from "@/services/api/dungeon-run/dungeon-run-api-schema.ts";
 import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";
 
 import { type DungeonRunHistoryKey } from "./dungeon-run-history-key.ts";

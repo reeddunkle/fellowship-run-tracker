@@ -2,10 +2,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { expect, test } from "vitest";
 import { render } from "vitest-browser-react";
 
+import { type DungeonRunApiHistory } from "@/contracts/dungeon-run/dungeon-run-api-schema.ts";
 import { getDungeonRunHistoryQueryOptions } from "@/electron/renderer/api/dungeon-run/dungeon-run-queries.ts";
 import { HistoryPageContent } from "@/electron/renderer/components/history/history-page-content.tsx";
 import { FellowshipDataProvider } from "@/electron/renderer/stores/fellowship-data/fellowship-data-store.tsx";
-import { type DungeonRunApiHistory } from "@/services/api/dungeon-run/dungeon-run-api-schema.ts";
 import { TestConfigurationProvider } from "@/tests/browser/test-configuration-provider.tsx";
 import { MOCK_CONFIGURATION } from "@/tests/common/fixtures/configuration-fixtures.ts";
 

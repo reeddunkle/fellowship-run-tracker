@@ -43,7 +43,7 @@ const makeFellowshipCatalogDataService = E.gen(function* () {
   } satisfies FellowshipCatalogDataShape;
 });
 
-export const FellowshipCatalogDataServiceLive = Layer.effect(
+export const FellowshipCatalogDataServiceLayer = Layer.effect(
   FellowshipCatalogDataService,
   makeFellowshipCatalogDataService,
 );

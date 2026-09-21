@@ -6,14 +6,14 @@ import type * as Path from "effect/Path";
 import { app, BrowserWindow } from "electron";
 
 import { appConfig } from "@/app-config.ts";
+import { type AppStateApiService } from "@/contracts/app-state/app-state-api-service.ts";
 import { configureWindowIpc } from "@/electron/application/configure-window-ipc.ts";
 import { getAppStateStorageDirectory } from "@/helpers/get-app-state-storage-directory.ts";
 import { getDatabaseFilename } from "@/helpers/get-database-filename.ts";
 import { getEncryptionKeyDirectory } from "@/helpers/get-encryption-key-directory.ts";
-import { NodePathLive } from "@/layers/node-platform-layer.ts";
+import { NodePathLayer } from "@/layers/node-platform-layer.ts";
 import { logCause } from "@/logging/log-cause.ts";
 import { makeElectronRuntime } from "@/runtimes/electron-runtime.ts";
-import { type AppStateApiService } from "@/services/api/app-state/app-state-api-service.ts";
 
 import { createWindow } from "./application/create-window.ts";
 import { runElectronApplication } from "./application/run-electron-application.ts";
@@ -93,7 +93,7 @@ function runElectronMain() {
 void E.runPromiseExit(
   runElectronMain().pipe(
     // @effect-diagnostics-next-line strictEffectProvide:off
-    E.provide(NodePathLive),
+    E.provide(NodePathLayer),
     E.tapCause(logCause),
   ),
 );

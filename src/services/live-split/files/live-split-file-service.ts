@@ -32,13 +32,6 @@ export type LiveSplitFileService = {
   >;
 };
 
-export class LiveSplitFile extends Context.Service<
-  LiveSplitFile,
-  LiveSplitFileService
->()(
-  "fellowship-run-tracker/services/live-split/files/live-split-file-service/LiveSplitFile",
-) {}
-
 function makeLiveSplitFile(): LiveSplitFileService {
   const createLSS = ({
     configuration,
@@ -78,7 +71,11 @@ function makeLiveSplitFile(): LiveSplitFileService {
   };
 }
 
-export const LiveSplitFileLive = Layer.succeed(
+export class LiveSplitFile extends Context.Service<
   LiveSplitFile,
-  makeLiveSplitFile(),
-);
+  LiveSplitFileService
+>()(
+  "fellowship-run-tracker/services/live-split/files/live-split-file-service/LiveSplitFile",
+) {
+  static readonly layer = Layer.succeed(this, makeLiveSplitFile());
+}

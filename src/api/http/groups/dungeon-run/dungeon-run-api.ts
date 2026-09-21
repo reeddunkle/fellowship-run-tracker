@@ -3,7 +3,7 @@ import * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
 import * as HttpApiError from "effect/unstable/httpapi/HttpApiError";
 import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
 
-import { DungeonRunApiHistorySchema } from "@/services/api/dungeon-run/dungeon-run-api-schema.ts";
+import { DungeonRunApiHistorySchema } from "@/contracts/dungeon-run/dungeon-run-api-schema.ts";
 import { DungeonIdSchema } from "@/services/fellowship/validation/fellowship-common.ts";
 import { PositiveIntegerFromStringSchema } from "@/validation/common-schemas.ts";
 

@@ -3,13 +3,13 @@ import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { ConfigurationDAO } from "@/db/daos/configuration/configuration-dao.ts";
-import { type ConfigurationDAOError } from "@/errors/configuration-dao-error.ts";
 import {
   type ConfigurationApiConfiguration,
   type ConfigurationApiConfigurationList,
   type DeleteConfigurationsByDungeonAndLevelApiRequest,
-} from "@/services/api/configuration/configuration-api-schema.ts";
+} from "@/contracts/configuration/configuration-api-schema.ts";
+import { ConfigurationDAO } from "@/db/daos/configuration/configuration-dao.ts";
+import { type ConfigurationDAOError } from "@/errors/configuration-dao-error.ts";
 import { createConfigurationApiResponse } from "@/services/api/configuration/create-configuration-api-response.ts";
 import { type FellowshipMilestoneConfiguration } from "@/services/fellowship/configurations/configuration-types.ts";
 import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";
@@ -66,14 +66,7 @@ export type ConfigurationApiServiceShape = {
   ) => E.Effect<ConfigurationApiConfiguration, ConfigurationDAOError>;
 };
 
-export class ConfigurationApiService extends Context.Service<
-  ConfigurationApiService,
-  ConfigurationApiServiceShape
->()(
-  "fellowship-run-tracker/services/api/configuration/configuration-api-service/ConfigurationApiService",
-) {}
-
-const make = E.gen(function* () {
+const makeConfigurationApiService = E.gen(function* () {
   const configurationDAO = yield* ConfigurationDAO;
 
   const deleteConfiguration: ConfigurationApiServiceShape["delete"] = ({
@@ -151,7 +144,15 @@ const make = E.gen(function* () {
   } satisfies ConfigurationApiServiceShape;
 });
 
-export const ConfigurationApiServiceLive = Layer.effect(
+export class ConfigurationApiService extends Context.Service<
   ConfigurationApiService,
-  make,
-);
+  ConfigurationApiServiceShape
+>()(
+  "fellowship-run-tracker/services/api/configuration/configuration-api-service/ConfigurationApiService",
+) {
+  static readonly layerNoDeps = Layer.effect(this, makeConfigurationApiService);
+
+  static readonly layer = this.layerNoDeps.pipe(
+    Layer.provide(ConfigurationDAO.layer),
+  );
+}

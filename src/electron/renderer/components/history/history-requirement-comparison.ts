@@ -1,5 +1,5 @@
-import { type ConfigurationApiConfiguration } from "@/services/api/configuration/configuration-api-schema.ts";
-import { type DungeonRunApiObservationStatistics } from "@/services/api/dungeon-run/dungeon-run-api-schema.ts";
+import { type ConfigurationApiConfiguration } from "@/contracts/configuration/configuration-api-schema.ts";
+import { type DungeonRunApiObservationStatistics } from "@/contracts/dungeon-run/dungeon-run-api-schema.ts";
 import { type RequirementEventType } from "@/services/fellowship/validation/requirement-event-type-schema.ts";
 import { encodeRequirementObservationOccurrenceIdentity } from "@/validation/common/requirement-observation-identity-schema.ts";
 

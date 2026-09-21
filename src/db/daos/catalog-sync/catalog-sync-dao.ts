@@ -1,5 +1,6 @@
 import * as Context from "effect/Context";
 import type * as E from "effect/Effect";
+import * as Layer from "effect/Layer";
 import type * as Option from "effect/Option";
 import type * as Schema from "effect/Schema";
 import type * as SqlError from "effect/unstable/sql/SqlError";
@@ -7,6 +8,8 @@ import type * as SqlError from "effect/unstable/sql/SqlError";
 import { type CatalogSyncModel } from "@/db/models/catalog-sync-model.ts";
 import { type CatalogName } from "@/validation/catalog-sync/catalog-sync-schema.ts";
 import { type NonEmptyString } from "@/validation/common-schemas.ts";
+
+import { makeCatalogSyncDAO } from "./make-catalog-sync-dao.ts";
 
 type GetCatalogSyncByCatalogOptions = {
   readonly catalog: CatalogName;
@@ -34,4 +37,6 @@ export class CatalogSyncDAO extends Context.Service<
   CatalogSyncDAOShape
 >()(
   "fellowship-run-tracker/db/daos/catalog-sync/catalog-sync-dao/CatalogSyncDAO",
-) {}
+) {
+  static readonly layer = Layer.effect(this, makeCatalogSyncDAO);
+}

@@ -27,11 +27,7 @@ export type LiveSplitService = {
   readonly statusChanges: Stream.Stream<LiveSplitConnectionStatus>;
 };
 
-export class LiveSplit extends Context.Service<LiveSplit, LiveSplitService>()(
-  "fellowship-run-tracker/services/live-split/core/live-split-service/LiveSplit",
-) {}
-
-const make = E.gen(function* () {
+const makeLiveSplit = E.gen(function* () {
   const connectionManager = yield* LiveSplitConnectionManager;
 
   const handleRunEvent: LiveSplitService["handleRunEvent"] = (
@@ -112,4 +108,16 @@ const make = E.gen(function* () {
   } satisfies LiveSplitService;
 });
 
-export const LiveSplitLive = Layer.effect(LiveSplit, make);
+export class LiveSplit extends Context.Service<LiveSplit, LiveSplitService>()(
+  "fellowship-run-tracker/services/live-split/core/live-split-service/LiveSplit",
+) {
+  static readonly layerNoDeps = Layer.effect(this, makeLiveSplit);
+
+  static readonly layerWith = (options: {
+    readonly encryptionKeyDirectory: string;
+  }) => {
+    return this.layerNoDeps.pipe(
+      Layer.provide(LiveSplitConnectionManager.layerWith(options)),
+    );
+  };
+}

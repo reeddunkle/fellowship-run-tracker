@@ -22,28 +22,7 @@ export type WebSocketBroadcasterService = {
   readonly sendLatestToClient: (writer: WebSocketWriter) => E.Effect<void>;
 };
 
-export class DungeonRunWebSocketBroadcaster extends Context.Service<
-  DungeonRunWebSocketBroadcaster,
-  WebSocketBroadcasterService
->()(
-  "fellowship-run-tracker/services/api/websocket-broadcaster-service/DungeonRunWebSocketBroadcaster",
-) {}
-
-export class TrackingWebSocketBroadcaster extends Context.Service<
-  TrackingWebSocketBroadcaster,
-  WebSocketBroadcasterService
->()(
-  "fellowship-run-tracker/services/api/websocket-broadcaster-service/TrackingWebSocketBroadcaster",
-) {}
-
-export class LiveSplitWebSocketBroadcaster extends Context.Service<
-  LiveSplitWebSocketBroadcaster,
-  WebSocketBroadcasterService
->()(
-  "fellowship-run-tracker/services/api/websocket-broadcaster-service/LiveSplitWebSocketBroadcaster",
-) {}
-
-const make = E.gen(function* () {
+const makeWebSocketBroadcaster = E.gen(function* () {
   const clients = yield* Ref.make(HashSet.empty<WebSocketWriter>());
   const latestMessage = yield* Ref.make<string | undefined>(undefined);
 
@@ -140,17 +119,29 @@ const make = E.gen(function* () {
   } satisfies WebSocketBroadcasterService;
 });
 
-export const DungeonRunWebSocketBroadcasterLive = Layer.effect(
+export class DungeonRunWebSocketBroadcaster extends Context.Service<
   DungeonRunWebSocketBroadcaster,
-  make,
-);
+  WebSocketBroadcasterService
+>()(
+  "fellowship-run-tracker/services/api/websocket-broadcaster-service/DungeonRunWebSocketBroadcaster",
+) {
+  static readonly layer = Layer.effect(this, makeWebSocketBroadcaster);
+}
 
-export const TrackingWebSocketBroadcasterLive = Layer.effect(
+export class TrackingWebSocketBroadcaster extends Context.Service<
   TrackingWebSocketBroadcaster,
-  make,
-);
+  WebSocketBroadcasterService
+>()(
+  "fellowship-run-tracker/services/api/websocket-broadcaster-service/TrackingWebSocketBroadcaster",
+) {
+  static readonly layer = Layer.effect(this, makeWebSocketBroadcaster);
+}
 
-export const LiveSplitWebSocketBroadcasterLive = Layer.effect(
+export class LiveSplitWebSocketBroadcaster extends Context.Service<
   LiveSplitWebSocketBroadcaster,
-  make,
-);
+  WebSocketBroadcasterService
+>()(
+  "fellowship-run-tracker/services/api/websocket-broadcaster-service/LiveSplitWebSocketBroadcaster",
+) {
+  static readonly layer = Layer.effect(this, makeWebSocketBroadcaster);
+}

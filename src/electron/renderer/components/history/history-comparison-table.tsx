@@ -6,12 +6,12 @@ import {
 } from "@tanstack/react-table";
 import { useMemo } from "react";
 
+import { type DungeonRunApiObservationStatistics } from "@/contracts/dungeon-run/dungeon-run-api-schema.ts";
 import { formatDuration } from "@/electron/renderer/components/dungeon-run/helpers/dungeon-run-time.ts";
 import { type HistoryRequirementComparisonRow } from "@/electron/renderer/components/history/history-requirement-comparison.ts";
 import { Skeleton } from "@/electron/renderer/components/ui/skeleton.tsx";
 import { useFellowshipDataStore } from "@/electron/renderer/stores/fellowship-data/fellowship-data-store.tsx";
 import { getRequirementTargetLabel } from "@/helpers/requirement-target-label.ts";
-import { type DungeonRunApiObservationStatistics } from "@/services/api/dungeon-run/dungeon-run-api-schema.ts";
 import { cn } from "@/util/class-names.ts";
 
 type HistoryComparisonTableProps = {

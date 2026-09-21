@@ -1,17 +1,17 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 
+import { DEFAULT_APP_STATE } from "@/contracts/app-state/app-state-schema.ts";
+import { type ConfigurationApiConfigurationList } from "@/contracts/configuration/configuration-api-schema.ts";
+import {
+  type DungeonRunApiComparisonGroup,
+  type DungeonRunApiHistory,
+} from "@/contracts/dungeon-run/dungeon-run-api-schema.ts";
 import { getConfigurationsQueryOptions } from "@/electron/renderer/api/configuration/configuration-queries.ts";
 import { getDungeonRunHistoryQueryOptions } from "@/electron/renderer/api/dungeon-run/dungeon-run-queries.ts";
 import { type DungeonRunEventStore } from "@/electron/renderer/stores/dungeon-run/dungeon-run-event-store.ts";
 import { DungeonRunProvider } from "@/electron/renderer/stores/dungeon-run/dungeon-run-provider.tsx";
 import { makeTrackingEventStore } from "@/electron/renderer/stores/tracking/tracking-event-store.ts";
-import { DEFAULT_APP_STATE } from "@/electron/storage/app-state/app-state-schema.ts";
-import { type ConfigurationApiConfigurationList } from "@/services/api/configuration/configuration-api-schema.ts";
-import {
-  type DungeonRunApiComparisonGroup,
-  type DungeonRunApiHistory,
-} from "@/services/api/dungeon-run/dungeon-run-api-schema.ts";
 import { type DungeonId } from "@/services/fellowship/validation/fellowship-common.ts";
 import { seedAppStateQueries } from "@/tests/browser/helpers/seed-app-state-queries.ts";
 import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";

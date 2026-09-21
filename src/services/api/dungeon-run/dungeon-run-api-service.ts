@@ -2,12 +2,12 @@ import * as Context from "effect/Context";
 import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { type DungeonRunApiHistory } from "@/contracts/dungeon-run/dungeon-run-api-schema.ts";
 import { DungeonRunObservationDAO } from "@/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
 import { type DungeonRunModel } from "@/db/models/dungeon-run-model.ts";
 import { DungeonRunApiResponseError } from "@/errors/dungeon-run-api-service-error.ts";
 import { type DungeonRunObservationDAOError } from "@/errors/dungeon-run-observation-dao-error.ts";
 import { createDungeonRunApiResponse } from "@/services/api/dungeon-run/create-dungeon-run-api-response.ts";
-import { type DungeonRunApiHistory } from "@/services/api/dungeon-run/dungeon-run-api-schema.ts";
 import {
   DungeonRunRepository,
   type DungeonRunRepositoryError,
@@ -33,14 +33,7 @@ export type DungeonRunApiServiceShape = {
   ) => E.Effect<DungeonRunApiHistory, DungeonRunApiServiceError>;
 };
 
-export class DungeonRunApiService extends Context.Service<
-  DungeonRunApiService,
-  DungeonRunApiServiceShape
->()(
-  "fellowship-run-tracker/services/api/dungeon-run/dungeon-run-api-service/DungeonRunApiService",
-) {}
-
-const make = E.gen(function* () {
+const makeDungeonRunApiService = E.gen(function* () {
   const dungeonRunObservationDAO = yield* DungeonRunObservationDAO;
   const dungeonRunRepository = yield* DungeonRunRepository;
 
@@ -83,7 +76,16 @@ const make = E.gen(function* () {
   } satisfies DungeonRunApiServiceShape;
 });
 
-export const DungeonRunApiServiceLive = Layer.effect(
+export class DungeonRunApiService extends Context.Service<
   DungeonRunApiService,
-  make,
-);
+  DungeonRunApiServiceShape
+>()(
+  "fellowship-run-tracker/services/api/dungeon-run/dungeon-run-api-service/DungeonRunApiService",
+) {
+  static readonly layerNoDeps = Layer.effect(this, makeDungeonRunApiService);
+
+  static readonly layer = this.layerNoDeps.pipe(
+    Layer.provide(DungeonRunObservationDAO.layer),
+    Layer.provide(DungeonRunRepository.layer),
+  );
+}

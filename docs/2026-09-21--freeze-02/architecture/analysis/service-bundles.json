@@ -1,0 +1,283 @@
+{
+  "bundleRelationships": [
+    {
+      "bundle": "FellowshipTrackerWithDependenciesLive",
+      "comparedBundle": "ApiRuntimeLive",
+      "onlyInBundle": [],
+      "onlyInComparedBundle": [
+        "AbilityApiService",
+        "AppSettingsApiService",
+        "ConfigurationApiService",
+        "DungeonApiService",
+        "DungeonRunApiService",
+        "DungeonRunWebSocketBroadcaster",
+        "EncounterApiService",
+        "FellowshipLogsApiService",
+        "LiveSplitApiService",
+        "LiveSplitWebSocketBroadcaster",
+        "TrackingWebSocketBroadcaster",
+        "UnitApiService"
+      ],
+      "relationship": "strict-subset",
+      "sharedServices": ["FellowshipTracker"]
+    },
+    {
+      "bundle": "ApiServicesLive",
+      "comparedBundle": "ApiServicesWithDependenciesLive",
+      "onlyInBundle": [],
+      "onlyInComparedBundle": [],
+      "relationship": "equal",
+      "sharedServices": [
+        "AbilityApiService",
+        "AppSettingsApiService",
+        "ConfigurationApiService",
+        "DungeonApiService",
+        "DungeonRunApiService",
+        "EncounterApiService",
+        "FellowshipLogsApiService",
+        "LiveSplitApiService",
+        "UnitApiService"
+      ]
+    },
+    {
+      "bundle": "ApiServicesLive",
+      "comparedBundle": "ApiRuntimeLive",
+      "onlyInBundle": [],
+      "onlyInComparedBundle": [
+        "DungeonRunWebSocketBroadcaster",
+        "FellowshipTracker",
+        "LiveSplitWebSocketBroadcaster",
+        "TrackingWebSocketBroadcaster"
+      ],
+      "relationship": "strict-subset",
+      "sharedServices": [
+        "AbilityApiService",
+        "AppSettingsApiService",
+        "ConfigurationApiService",
+        "DungeonApiService",
+        "DungeonRunApiService",
+        "EncounterApiService",
+        "FellowshipLogsApiService",
+        "LiveSplitApiService",
+        "UnitApiService"
+      ]
+    },
+    {
+      "bundle": "ApiServicesWithDependenciesLive",
+      "comparedBundle": "ApiRuntimeLive",
+      "onlyInBundle": [],
+      "onlyInComparedBundle": [
+        "DungeonRunWebSocketBroadcaster",
+        "FellowshipTracker",
+        "LiveSplitWebSocketBroadcaster",
+        "TrackingWebSocketBroadcaster"
+      ],
+      "relationship": "strict-subset",
+      "sharedServices": [
+        "AbilityApiService",
+        "AppSettingsApiService",
+        "ConfigurationApiService",
+        "DungeonApiService",
+        "DungeonRunApiService",
+        "EncounterApiService",
+        "FellowshipLogsApiService",
+        "LiveSplitApiService",
+        "UnitApiService"
+      ]
+    }
+  ],
+  "bundles": [
+    {
+      "name": "LiveSplitWithDependenciesLive",
+      "requires": ["AppSettingsDAO", "Encryption"],
+      "services": ["LiveSplit"]
+    },
+    {
+      "name": "FellowshipWithDependenciesLive",
+      "requires": ["AppSettingsDAO", "Encryption"],
+      "services": ["Fellowship"]
+    },
+    {
+      "name": "FellowshipTrackerWithDependenciesLive",
+      "requires": [
+        "AppSettingsDAO",
+        "ConfigurationDAO",
+        "DungeonRunObservationDAO",
+        "DungeonRunRepository",
+        "Encryption"
+      ],
+      "services": ["FellowshipTracker"]
+    },
+    {
+      "name": "Layer.merge( FellowshipLogsWithDependenciesLive, D",
+      "requires": ["AppSettingsDAO", "Encryption", "SqlClient"],
+      "services": ["DungeonRunRepository", "FellowshipLogs"]
+    },
+    {
+      "name": "FellowshipLogsDungeonRunImporterWithDependenciesLi",
+      "requires": ["AppSettingsDAO", "Encryption", "SqlClient"],
+      "services": ["FellowshipLogsDungeonRunImporter"]
+    },
+    {
+      "name": "ApiServicesLive",
+      "requires": [
+        "AbilityDAO",
+        "AppSettings",
+        "ConfigurationDAO",
+        "DungeonDAO",
+        "DungeonRunRepository",
+        "EncounterDAO",
+        "FellowshipLogs",
+        "FellowshipLogsDungeonRunImporter",
+        "LiveSplit",
+        "SqlClient",
+        "UnitDAO"
+      ],
+      "services": [
+        "AbilityApiService",
+        "AppSettingsApiService",
+        "ConfigurationApiService",
+        "DungeonApiService",
+        "DungeonRunApiService",
+        "EncounterApiService",
+        "FellowshipLogsApiService",
+        "LiveSplitApiService",
+        "UnitApiService"
+      ]
+    },
+    {
+      "name": "ApiServicesWithDependenciesLive",
+      "requires": [
+        "AbilityDAO",
+        "AppSettingsDAO",
+        "ConfigurationDAO",
+        "DungeonDAO",
+        "DungeonRunRepository",
+        "EncounterDAO",
+        "Encryption",
+        "SqlClient",
+        "UnitDAO"
+      ],
+      "services": [
+        "AbilityApiService",
+        "AppSettingsApiService",
+        "ConfigurationApiService",
+        "DungeonApiService",
+        "DungeonRunApiService",
+        "EncounterApiService",
+        "FellowshipLogsApiService",
+        "LiveSplitApiService",
+        "UnitApiService"
+      ]
+    },
+    {
+      "name": "ApiRuntimeLive",
+      "requires": [
+        "AbilityDAO",
+        "AppSettingsDAO",
+        "ConfigurationDAO",
+        "DungeonDAO",
+        "DungeonRunObservationDAO",
+        "DungeonRunRepository",
+        "EncounterDAO",
+        "Encryption",
+        "SqlClient",
+        "UnitDAO"
+      ],
+      "services": [
+        "AbilityApiService",
+        "AppSettingsApiService",
+        "ConfigurationApiService",
+        "DungeonApiService",
+        "DungeonRunApiService",
+        "DungeonRunWebSocketBroadcaster",
+        "EncounterApiService",
+        "FellowshipLogsApiService",
+        "FellowshipTracker",
+        "LiveSplitApiService",
+        "LiveSplitWebSocketBroadcaster",
+        "TrackingWebSocketBroadcaster",
+        "UnitApiService"
+      ]
+    }
+  ],
+  "requirementReductions": [],
+  "serviceMemberships": [
+    {
+      "bundles": ["FellowshipTrackerWithDependenciesLive", "ApiRuntimeLive"],
+      "service": "FellowshipTracker"
+    },
+    {
+      "bundles": [
+        "ApiServicesLive",
+        "ApiServicesWithDependenciesLive",
+        "ApiRuntimeLive"
+      ],
+      "service": "AbilityApiService"
+    },
+    {
+      "bundles": [
+        "ApiServicesLive",
+        "ApiServicesWithDependenciesLive",
+        "ApiRuntimeLive"
+      ],
+      "service": "AppSettingsApiService"
+    },
+    {
+      "bundles": [
+        "ApiServicesLive",
+        "ApiServicesWithDependenciesLive",
+        "ApiRuntimeLive"
+      ],
+      "service": "ConfigurationApiService"
+    },
+    {
+      "bundles": [
+        "ApiServicesLive",
+        "ApiServicesWithDependenciesLive",
+        "ApiRuntimeLive"
+      ],
+      "service": "DungeonApiService"
+    },
+    {
+      "bundles": [
+        "ApiServicesLive",
+        "ApiServicesWithDependenciesLive",
+        "ApiRuntimeLive"
+      ],
+      "service": "DungeonRunApiService"
+    },
+    {
+      "bundles": [
+        "ApiServicesLive",
+        "ApiServicesWithDependenciesLive",
+        "ApiRuntimeLive"
+      ],
+      "service": "EncounterApiService"
+    },
+    {
+      "bundles": [
+        "ApiServicesLive",
+        "ApiServicesWithDependenciesLive",
+        "ApiRuntimeLive"
+      ],
+      "service": "FellowshipLogsApiService"
+    },
+    {
+      "bundles": [
+        "ApiServicesLive",
+        "ApiServicesWithDependenciesLive",
+        "ApiRuntimeLive"
+      ],
+      "service": "LiveSplitApiService"
+    },
+    {
+      "bundles": [
+        "ApiServicesLive",
+        "ApiServicesWithDependenciesLive",
+        "ApiRuntimeLive"
+      ],
+      "service": "UnitApiService"
+    }
+  ]
+}

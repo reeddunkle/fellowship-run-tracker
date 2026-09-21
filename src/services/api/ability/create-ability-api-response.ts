@@ -1,5 +1,5 @@
+import { type AbilityApiAbility } from "@/contracts/ability/ability-api-schema.ts";
 import { type AbilityModel } from "@/db/models/ability-model.ts";
-import { type AbilityApiAbility } from "@/services/api/ability/ability-api-schema.ts";
 
 export function createAbilityApiResponse(
   ability: AbilityModel,

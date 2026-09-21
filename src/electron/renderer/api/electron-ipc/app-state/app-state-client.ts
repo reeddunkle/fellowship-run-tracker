@@ -1,13 +1,13 @@
 import * as E from "effect/Effect";
 import * as Schema from "effect/Schema";
 
+import { type AppStateRpcRequest } from "@/contracts/app-state/app-state-rpc.ts";
 import {
   type AppState,
   DungeonRunTimeColumnStateSchema,
   ThemeSchema,
-} from "@/electron/storage/app-state/app-state-schema.ts";
+} from "@/contracts/app-state/app-state-schema.ts";
 import { AppStateClientError } from "@/errors/electron-error.ts";
-import { type AppStateRpcRequest } from "@/services/api/app-state/app-state-rpc.ts";
 import {
   type ConfigurationId,
   ConfigurationIdSchema,

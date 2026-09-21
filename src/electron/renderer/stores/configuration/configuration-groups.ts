@@ -6,7 +6,7 @@ import * as Record from "effect/Record";
 import {
   type ConfigurationApiConfiguration,
   type ConfigurationApiConfigurationList,
-} from "@/services/api/configuration/configuration-api-schema.ts";
+} from "@/contracts/configuration/configuration-api-schema.ts";
 
 export type ConfigurationLevelGroup = {
   readonly configurations: ConfigurationApiConfigurationList;

@@ -14,7 +14,7 @@ import { runSetupDatabaseCommand } from "@/cli/dev-cli/commands/setup-database-c
 import { makeDatabaseLayer } from "@/db/database-layer.ts";
 import { FellowshipLogsRequestError } from "@/errors/fellowship-logs-error.ts";
 import { getDatabaseFilename } from "@/helpers/get-database-filename.ts";
-import { NodePlatformWithHttpClientLive } from "@/layers/node-platform-layer.ts";
+import { NodePlatformWithHttpClientLayer } from "@/layers/node-platform-layer.ts";
 import { logCause } from "@/logging/log-cause.ts";
 
 import { parseDevCLICommand } from "./run-dev-cli.ts";
@@ -76,7 +76,7 @@ const program = parseDevCLICommand(process.argv.slice(2)).pipe(
       Match.exhaustive,
     );
   }),
-  E.provide(NodePlatformWithHttpClientLive),
+  E.provide(NodePlatformWithHttpClientLayer),
   E.tapCause(logCause),
 );
 

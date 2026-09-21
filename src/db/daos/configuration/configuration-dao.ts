@@ -1,7 +1,9 @@
 import * as Context from "effect/Context";
 import type * as E from "effect/Effect";
+import * as Layer from "effect/Layer";
 import type * as Option from "effect/Option";
 
+import { makeConfigurationDAO } from "@/db/daos/configuration/make-configuration-dao.ts";
 import { type ConfigurationModel } from "@/db/models/configuration-model.ts";
 import { type ConfigurationDAOError } from "@/errors/configuration-dao-error.ts";
 import { type FellowshipMilestoneConfiguration } from "@/services/fellowship/configurations/configuration-types.ts";
@@ -78,4 +80,6 @@ export class ConfigurationDAO extends Context.Service<
   ConfigurationDAOShape
 >()(
   "fellowship-run-tracker/db/daos/configuration/configuration-dao/ConfigurationDAO",
-) {}
+) {
+  static readonly layer = Layer.effect(this, makeConfigurationDAO);
+}

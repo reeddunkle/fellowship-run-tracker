@@ -1,6 +1,11 @@
 import * as R from "effect/Record";
 import { createContext, type ReactNode, useContext, useMemo } from "react";
 
+import {
+  type ConfigurationApiConfiguration,
+  type ConfigurationApiConfigurationList,
+  type SaveConfigurationApiRequest,
+} from "@/contracts/configuration/configuration-api-schema.ts";
 import { useSetSelectedConfigurationId } from "@/electron/renderer/api/app-state/app-state-mutations.ts";
 import { useSelectedConfigurationId as useSelectedConfigurationIdQuery } from "@/electron/renderer/api/app-state/app-state-queries.ts";
 import {
@@ -10,11 +15,6 @@ import {
 } from "@/electron/renderer/api/configuration/configuration-mutations.ts";
 import { useConfigurationsSuspense } from "@/electron/renderer/api/configuration/configuration-queries.ts";
 import { ReactContextError } from "@/errors/react-context-error.ts";
-import {
-  type ConfigurationApiConfiguration,
-  type ConfigurationApiConfigurationList,
-  type SaveConfigurationApiRequest,
-} from "@/services/api/configuration/configuration-api-schema.ts";
 import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";
 
 import {

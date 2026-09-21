@@ -9,7 +9,7 @@ import {
   type DungeonRunApiComparisonGroup,
   type DungeonRunApiHistory,
   type DungeonRunApiObservationStatistics,
-} from "@/services/api/dungeon-run/dungeon-run-api-schema.ts";
+} from "@/contracts/dungeon-run/dungeon-run-api-schema.ts";
 import {
   encodeRequirementObservationIdentity,
   encodeRequirementObservationOccurrenceIdentity,

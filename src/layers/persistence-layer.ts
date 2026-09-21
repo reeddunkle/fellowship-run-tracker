@@ -1,44 +1,59 @@
 import * as Layer from "effect/Layer";
 
 import { syncCatalogs } from "@/db/catalog-sync/sync-catalogs.ts";
-import { AbilityDAOLive } from "@/db/daos/ability/ability-dao-live.ts";
-import { AppSettingsDAOLive } from "@/db/daos/app-settings/app-settings-dao-live.ts";
-import { CatalogSyncDAOLive } from "@/db/daos/catalog-sync/catalog-sync-dao-live.ts";
-import { ConfigurationDAOLive } from "@/db/daos/configuration/configuration-dao-live.ts";
-import { DungeonDAOLive } from "@/db/daos/dungeon/dungeon-dao-live.ts";
-import { EncounterDAOLive } from "@/db/daos/encounter/encounter-dao-live.ts";
-import { UnitDAOLive } from "@/db/daos/unit/unit-dao-live.ts";
+import { AbilityDAO } from "@/db/daos/ability/ability-dao.ts";
+import { AppSettingsDAO } from "@/db/daos/app-settings/app-settings-dao.ts";
+import { CatalogSyncDAO } from "@/db/daos/catalog-sync/catalog-sync-dao.ts";
+import { ConfigurationDAO } from "@/db/daos/configuration/configuration-dao.ts";
+import { DungeonDAO } from "@/db/daos/dungeon/dungeon-dao.ts";
+import { DungeonRunDAO } from "@/db/daos/dungeon-run/dungeon-run-dao.ts";
+import { DungeonRunObservationDAO } from "@/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
+import { EncounterDAO } from "@/db/daos/encounter/encounter-dao.ts";
+import { LocalLogDungeonRunDAO } from "@/db/daos/local-log-dungeon-run/local-log-dungeon-run-dao.ts";
+import { UnitDAO } from "@/db/daos/unit/unit-dao.ts";
 import { makeDatabaseLayer } from "@/db/database-layer.ts";
-import { DungeonRunRepositoryWithDependenciesLive } from "@/layers/dungeon-run-repository-layer.ts";
-import { NodePlatformLive } from "@/layers/node-platform-layer.ts";
+import { FellowshipLogsDungeonRunDAO } from "@/db/fellowship-logs-dungeon-run/fellowship-logs-dungeon-run-dao.ts";
+import { NodePlatformLayer } from "@/layers/node-platform-layer.ts";
+import { DungeonRunRepository } from "@/services/dungeon-run-repository/dungeon-run-repository-service.ts";
 import { type DatabaseOptions } from "@/types/app-options.ts";
 
 export type MakePersistenceLayerOptions = DatabaseOptions;
 
-const PersistenceServicesLive = Layer.mergeAll(
-  AbilityDAOLive,
-  AppSettingsDAOLive,
-  CatalogSyncDAOLive,
-  ConfigurationDAOLive,
-  DungeonDAOLive,
-  DungeonRunRepositoryWithDependenciesLive,
-  EncounterDAOLive,
-  UnitDAOLive,
+/*
+ * DungeonRunRepository.layer erases its 4 DAOs internally via Layer.provide
+ * (not provideMerge), so those DAOs must also be merged in directly here to
+ * remain available to consumers (e.g. FellowshipTracker) that depend on them
+ * without going through DungeonRunRepository. The shared `.layer` references
+ * are memoized by Effect, so each DAO is still only constructed once.
+ */
+const PersistenceServicesLayer = Layer.mergeAll(
+  AbilityDAO.layer,
+  AppSettingsDAO.layer,
+  CatalogSyncDAO.layer,
+  ConfigurationDAO.layer,
+  DungeonDAO.layer,
+  DungeonRunDAO.layer,
+  DungeonRunObservationDAO.layer,
+  DungeonRunRepository.layer,
+  EncounterDAO.layer,
+  FellowshipLogsDungeonRunDAO.layer,
+  LocalLogDungeonRunDAO.layer,
+  UnitDAO.layer,
 );
 
 export function makePersistenceLayer({
   databaseFilename,
 }: MakePersistenceLayerOptions) {
-  const DatabaseLive = makeDatabaseLayer(databaseFilename);
+  const DatabaseLayer = makeDatabaseLayer(databaseFilename);
 
-  const PersistenceLive = PersistenceServicesLive.pipe(
-    Layer.provideMerge(DatabaseLive),
+  const PersistenceLayer = PersistenceServicesLayer.pipe(
+    Layer.provideMerge(DatabaseLayer),
   );
 
-  const CatalogSyncLive = Layer.effectDiscard(syncCatalogs).pipe(
-    Layer.provide(PersistenceLive),
-    Layer.provide(NodePlatformLive),
+  const CatalogSyncLayer = Layer.effectDiscard(syncCatalogs).pipe(
+    Layer.provide(PersistenceLayer),
+    Layer.provide(NodePlatformLayer),
   );
 
-  return Layer.merge(PersistenceLive, CatalogSyncLive);
+  return Layer.merge(PersistenceLayer, CatalogSyncLayer);
 }

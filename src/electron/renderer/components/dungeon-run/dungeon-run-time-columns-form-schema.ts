@@ -1,7 +1,7 @@
 import { type StandardSchemaV1 } from "@standard-schema/spec";
 import * as Schema from "effect/Schema";
 
-import { DungeonRunTimeColumnStateSchema } from "@/electron/storage/app-state/app-state-schema.ts";
+import { DungeonRunTimeColumnStateSchema } from "@/contracts/app-state/app-state-schema.ts";
 
 export const DungeonRunTimeColumnsFormSchema = Schema.Struct({
   timeColumns: Schema.Array(DungeonRunTimeColumnStateSchema),

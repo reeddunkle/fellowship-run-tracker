@@ -5,11 +5,8 @@ import * as Layer from "effect/Layer";
 import * as Redacted from "effect/Redacted";
 import { describe, expect, test } from "vitest";
 
-import { makeEncryptionKeyStorageLive } from "@/services/encryption/encryption-key-storage-service.ts";
-import {
-  Encryption,
-  EncryptionLive,
-} from "@/services/encryption/encryption-service.ts";
+import { EncryptionKeyStorage } from "@/services/encryption/encryption-key-storage-service.ts";
+import { Encryption } from "@/services/encryption/encryption-service.ts";
 import { runTest } from "@/tests/common/run-test.ts";
 
 describe("Encryption persistence", () => {
@@ -21,11 +18,11 @@ describe("Encryption persistence", () => {
         const encryptionKeyDirectory =
           yield* fileSystem.makeTempDirectoryScoped();
 
-        const firstEncryptionKeyStorageLive = makeEncryptionKeyStorageLive({
+        const firstEncryptionKeyStorageLive = EncryptionKeyStorage.layerWith({
           encryptionKeyDirectory,
         });
 
-        const FirstEncryptionLive = EncryptionLive.pipe(
+        const FirstEncryptionLive = Encryption.layerNoDeps.pipe(
           Layer.provide(firstEncryptionKeyStorageLive),
         );
 
@@ -37,11 +34,11 @@ describe("Encryption persistence", () => {
           Redacted.make("secret-value"),
         );
 
-        const secondEncryptionKeyStorageLive = makeEncryptionKeyStorageLive({
+        const secondEncryptionKeyStorageLive = EncryptionKeyStorage.layerWith({
           encryptionKeyDirectory,
         });
 
-        const SecondEncryptionLive = EncryptionLive.pipe(
+        const SecondEncryptionLive = Encryption.layerNoDeps.pipe(
           Layer.provide(secondEncryptionKeyStorageLive),
         );
 

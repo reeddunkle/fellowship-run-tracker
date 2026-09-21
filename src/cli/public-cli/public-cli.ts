@@ -12,11 +12,10 @@ import { parsePublicCLICommand } from "@/cli/public-cli/run-public-cli.ts";
 import { getDatabaseFilename } from "@/helpers/get-database-filename.ts";
 import { getEncryptionKeyDirectory } from "@/helpers/get-encryption-key-directory.ts";
 import { makeAutosplitLayer } from "@/layers/autosplit-layer.ts";
-import { makeEncryptionLayer } from "@/layers/encryption-layer.ts";
-import { makeGenerateLSSLayer } from "@/layers/generate-lss-layer.ts";
-import { NodePlatformLive } from "@/layers/node-platform-layer.ts";
+import { NodePlatformLayer } from "@/layers/node-platform-layer.ts";
 import { makePersistenceLayer } from "@/layers/persistence-layer.ts";
 import { logCause } from "@/logging/log-cause.ts";
+import { LiveSplitFile } from "@/services/live-split/files/live-split-file-service.ts";
 
 const program = E.gen(function* () {
   const command = yield* parsePublicCLICommand(process.argv.slice(2));
@@ -26,31 +25,22 @@ const program = E.gen(function* () {
       return E.gen(function* () {
         const databaseFilename = yield* getDatabaseFilename();
 
-        const PersistenceLive = makePersistenceLayer({
+        const PersistenceLayer = makePersistenceLayer({
           databaseFilename,
         });
 
-        const EncryptionLive = makeEncryptionLayer({
+        const AutosplitLayer = makeAutosplitLayer({
           encryptionKeyDirectory: getEncryptionKeyDirectory(),
-        });
+        }).pipe(Layer.provide(PersistenceLayer));
 
-        const InfrastructureLive = Layer.mergeAll(
-          PersistenceLive,
-          EncryptionLive,
-        );
-
-        const AutosplitLive = makeAutosplitLayer().pipe(
-          Layer.provide(InfrastructureLive),
-        );
-
-        const AutosplitWithDependenciesLive = Layer.mergeAll(
-          InfrastructureLive,
-          AutosplitLive,
+        const AutosplitWithDependenciesLayer = Layer.mergeAll(
+          PersistenceLayer,
+          AutosplitLayer,
         );
 
         return yield* runAutosplitCommand(input).pipe(
           // @effect-diagnostics-next-line strictEffectProvide:off
-          E.provide(AutosplitWithDependenciesLive),
+          E.provide(AutosplitWithDependenciesLayer),
         );
       });
     }),
@@ -61,18 +51,18 @@ const program = E.gen(function* () {
       return E.gen(function* () {
         const databaseFilename = yield* getDatabaseFilename();
 
-        const PersistenceLive = makePersistenceLayer({
+        const PersistenceLayer = makePersistenceLayer({
           databaseFilename,
         });
 
-        const GenerateLSSWithDependenciesLive = Layer.mergeAll(
-          PersistenceLive,
-          makeGenerateLSSLayer(),
+        const GenerateLSSWithDependenciesLayer = Layer.mergeAll(
+          PersistenceLayer,
+          LiveSplitFile.layer,
         );
 
         return yield* runGenerateLSSCommand(input).pipe(
           // @effect-diagnostics-next-line strictEffectProvide:off
-          E.provide(GenerateLSSWithDependenciesLive),
+          E.provide(GenerateLSSWithDependenciesLayer),
         );
       });
     }),
@@ -83,7 +73,7 @@ const program = E.gen(function* () {
   );
 }).pipe(
   // @effect-diagnostics-next-line strictEffectProvide:off
-  E.provide(NodePlatformLive),
+  E.provide(NodePlatformLayer),
   E.tapCause(logCause),
 );
 

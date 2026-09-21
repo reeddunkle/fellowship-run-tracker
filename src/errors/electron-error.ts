@@ -1,6 +1,6 @@
 import * as Data from "effect/Data";
 
-import { type AppStateRpcRequest } from "@/services/api/app-state/app-state-rpc.ts";
+import { type AppStateRpcRequest } from "@/contracts/app-state/app-state-rpc.ts";
 
 export class FilesClientError extends Data.TaggedError("FilesClientError")<{
   readonly cause: unknown;

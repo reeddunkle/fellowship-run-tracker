@@ -5,7 +5,7 @@ import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 import * as Stream from "effect/Stream";
 
-import { FellowshipTrackerLive } from "@/application/fellowship-tracker/fellowship-tracker-service-live.ts";
+import { FellowshipTracker } from "@/application/fellowship-tracker/fellowship-tracker-service.ts";
 import {
   ConfigurationDAO,
   type ConfigurationDAOShape,
@@ -238,7 +238,7 @@ export function makeFellowshipTrackerTestHarness(
       ),
     );
 
-    const FellowshipTrackerTestLive = FellowshipTrackerLive.pipe(
+    const FellowshipTrackerTestLive = FellowshipTracker.layerNoDeps.pipe(
       Layer.provide(FellowshipTrackerDependenciesTestLive),
     );
 

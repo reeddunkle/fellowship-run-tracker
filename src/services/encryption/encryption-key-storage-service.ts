@@ -7,6 +7,7 @@ import * as Redacted from "effect/Redacted";
 import * as Semaphore from "effect/Semaphore";
 
 import { EncryptionKeyStorageError } from "@/errors/encryption-error.ts";
+import { NodePlatformLayer } from "@/layers/node-platform-layer.ts";
 
 const ENCRYPTION_KEY_FILENAME = "encryption.key";
 const ENCRYPTION_KEY_LENGTH_BYTES = 32;
@@ -25,136 +26,135 @@ export class EncryptionKeyStorage extends Context.Service<
   EncryptionKeyStorageShape
 >()(
   "fellowship-run-tracker/services/encryption/encryption-key-storage-service/EncryptionKeyStorage",
-) {}
+) {
+  static readonly layerWith = (options: {
+    readonly encryptionKeyDirectory: string;
+  }) => {
+    return Layer.effect(
+      this,
+      makeEncryptionKeyStorage(options.encryptionKeyDirectory),
+    ).pipe(Layer.provide(NodePlatformLayer));
+  };
+}
 
-export function makeEncryptionKeyStorageLive({
-  encryptionKeyDirectory,
-}: {
-  readonly encryptionKeyDirectory: string;
-}) {
-  return Layer.effect(
-    EncryptionKeyStorage,
-    E.gen(function* () {
-      const fileSystem = yield* FileSystem.FileSystem;
-      const path = yield* Path.Path;
-      const semaphore = yield* Semaphore.make(1);
+function makeEncryptionKeyStorage(encryptionKeyDirectory: string) {
+  return E.gen(function* () {
+    const fileSystem = yield* FileSystem.FileSystem;
+    const path = yield* Path.Path;
+    const semaphore = yield* Semaphore.make(1);
 
-      const readKey = E.fn("EncryptionKeyStorage.readKey")(function* (
-        keyPath: string,
-      ) {
-        const key = yield* fileSystem.readFile(keyPath).pipe(
+    const readKey = E.fn("EncryptionKeyStorage.readKey")(function* (
+      keyPath: string,
+    ) {
+      const key = yield* fileSystem.readFile(keyPath).pipe(
+        E.mapError((cause) => {
+          return new EncryptionKeyStorageError({
+            cause,
+            operation: "ReadKey",
+            path: keyPath,
+          });
+        }),
+      );
+
+      if (key.byteLength !== ENCRYPTION_KEY_LENGTH_BYTES) {
+        return yield* new EncryptionKeyStorageError({
+          cause: new Error(
+            `Expected ${ENCRYPTION_KEY_LENGTH_BYTES}-byte encryption key, received ${key.byteLength} bytes.`,
+          ),
+          operation: "ReadKey",
+          path: keyPath,
+        });
+      }
+
+      return Redacted.make(Uint8Array.from(key));
+    });
+
+    const generateKey = E.fn("EncryptionKeyStorage.generateKey")(function* () {
+      return yield* E.try({
+        catch: (cause) => {
+          return new EncryptionKeyStorageError({
+            cause,
+            operation: "GenerateKey",
+          });
+        },
+        try: () => {
+          const key = new Uint8Array(ENCRYPTION_KEY_LENGTH_BYTES);
+
+          crypto.getRandomValues(key);
+
+          return Redacted.make(key);
+        },
+      });
+    });
+
+    const writeKey = E.fn("EncryptionKeyStorage.writeKey")(function* (
+      keyPath: string,
+      key: EncryptionKey,
+    ) {
+      yield* fileSystem
+        .writeFile(keyPath, Redacted.value(key), {
+          flag: "wx",
+          mode: 0o600,
+        })
+        .pipe(
           E.mapError((cause) => {
             return new EncryptionKeyStorageError({
               cause,
-              operation: "ReadKey",
+              operation: "WriteKey",
               path: keyPath,
             });
           }),
         );
+    });
 
-        if (key.byteLength !== ENCRYPTION_KEY_LENGTH_BYTES) {
-          return yield* new EncryptionKeyStorageError({
-            cause: new Error(
-              `Expected ${ENCRYPTION_KEY_LENGTH_BYTES}-byte encryption key, received ${key.byteLength} bytes.`,
-            ),
-            operation: "ReadKey",
-            path: keyPath,
-          });
-        }
+    const getOrCreateKey: EncryptionKeyStorageShape["getOrCreateKey"] = () => {
+      return semaphore.withPermits(1)(
+        E.gen(function* () {
+          const keyPath = path.join(
+            encryptionKeyDirectory,
+            ENCRYPTION_KEY_FILENAME,
+          );
 
-        return Redacted.make(Uint8Array.from(key));
-      });
-
-      const generateKey = E.fn("EncryptionKeyStorage.generateKey")(
-        function* () {
-          return yield* E.try({
-            catch: (cause) => {
-              return new EncryptionKeyStorageError({
-                cause,
-                operation: "GenerateKey",
-              });
-            },
-            try: () => {
-              const key = new Uint8Array(ENCRYPTION_KEY_LENGTH_BYTES);
-
-              crypto.getRandomValues(key);
-
-              return Redacted.make(key);
-            },
-          });
-        },
-      );
-
-      const writeKey = E.fn("EncryptionKeyStorage.writeKey")(function* (
-        keyPath: string,
-        key: EncryptionKey,
-      ) {
-        yield* fileSystem
-          .writeFile(keyPath, Redacted.value(key), {
-            flag: "wx",
-            mode: 0o600,
-          })
-          .pipe(
+          const keyExists = yield* fileSystem.exists(keyPath).pipe(
             E.mapError((cause) => {
               return new EncryptionKeyStorageError({
                 cause,
-                operation: "WriteKey",
+                operation: "CheckKeyExists",
                 path: keyPath,
               });
             }),
           );
-      });
 
-      const getOrCreateKey: EncryptionKeyStorageShape["getOrCreateKey"] =
-        () => {
-          return semaphore.withPermits(1)(
-            E.gen(function* () {
-              const keyPath = path.join(
-                encryptionKeyDirectory,
-                ENCRYPTION_KEY_FILENAME,
-              );
+          if (keyExists) {
+            return yield* readKey(keyPath);
+          }
 
-              const keyExists = yield* fileSystem.exists(keyPath).pipe(
-                E.mapError((cause) => {
-                  return new EncryptionKeyStorageError({
-                    cause,
-                    operation: "CheckKeyExists",
-                    path: keyPath,
-                  });
-                }),
-              );
+          yield* fileSystem
+            .makeDirectory(encryptionKeyDirectory, {
+              mode: 0o700,
+              recursive: true,
+            })
+            .pipe(
+              E.mapError((cause) => {
+                return new EncryptionKeyStorageError({
+                  cause,
+                  operation: "CreateDirectory",
+                  path: encryptionKeyDirectory,
+                });
+              }),
+            );
 
-              if (keyExists) {
-                return yield* readKey(keyPath);
-              }
+          const key = yield* generateKey();
 
-              yield* fileSystem
-                .makeDirectory(encryptionKeyDirectory, {
-                  mode: 0o700,
-                  recursive: true,
-                })
-                .pipe(
-                  E.mapError((cause) => {
-                    return new EncryptionKeyStorageError({
-                      cause,
-                      operation: "CreateDirectory",
-                      path: encryptionKeyDirectory,
-                    });
-                  }),
-                );
+          yield* writeKey(keyPath, key);
 
-              const key = yield* generateKey();
+          return key;
+        }),
+      );
+    };
 
-              yield* writeKey(keyPath, key);
-
-              return key;
-            }),
-          );
-        };
-
-      return {
-        getOrCreateKey,
-      } satisfies EncryptionKeyStorageShape;
-    }),
-  );
+    return {
+      getOrCreateKey,
+    } satisfies EncryptionKeyStorageShape;
+  });
 }

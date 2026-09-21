@@ -16,4 +16,4 @@ const runApiLifecycle = E.gen(function* () {
   yield* publishTrackingStatusChanges.pipe(E.forkScoped);
 });
 
-export const ApiLifecycleLive = Layer.effectDiscard(runApiLifecycle);
+export const ApiLifecycleLayer = Layer.effectDiscard(runApiLifecycle);

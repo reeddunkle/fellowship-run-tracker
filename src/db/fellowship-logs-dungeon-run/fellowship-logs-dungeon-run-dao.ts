@@ -1,8 +1,10 @@
 import * as Context from "effect/Context";
 import type * as E from "effect/Effect";
+import * as Layer from "effect/Layer";
 import type * as Option from "effect/Option";
 
 import { type FellowshipLogsImportedDungeonRunRow } from "@/db/fellowship-logs-dungeon-run/fellowship-logs-imported-dungeon-run-row-schema.ts";
+import { makeFellowshipLogsDungeonRunDAO } from "@/db/fellowship-logs-dungeon-run/make-fellowship-logs-dungeon-run-dao.ts";
 import { type FellowshipLogsDungeonRunModel } from "@/db/models/fellowship-logs-dungeon-run-model.ts";
 import { type FellowshipLogsDungeonRunDAOError } from "@/errors/fellowship-logs-dungeon-run-dao-error.ts";
 import { type DungeonRunId } from "@/validation/dungeon-run/dungeon-run-id-schema.ts";
@@ -57,4 +59,6 @@ export class FellowshipLogsDungeonRunDAO extends Context.Service<
   FellowshipLogsDungeonRunDAOShape
 >()(
   "fellowship-run-tracker/db/fellowship-logs-dungeon-run/fellowship-logs-dungeon-run-dao/FellowshipLogsDungeonRunDAO",
-) {}
+) {
+  static readonly layer = Layer.effect(this, makeFellowshipLogsDungeonRunDAO);
+}

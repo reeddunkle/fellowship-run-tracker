@@ -1,4 +1,4 @@
-import { type AppStateRpcRequest } from "@/services/api/app-state/app-state-rpc.ts";
+import { type AppStateRpcRequest } from "@/contracts/app-state/app-state-rpc.ts";
 
 declare global {
   interface Window {

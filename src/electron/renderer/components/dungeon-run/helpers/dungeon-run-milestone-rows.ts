@@ -2,9 +2,9 @@ import * as A from "effect/Array";
 import { pipe } from "effect/Function";
 import * as Option from "effect/Option";
 
+import { type ConfigurationApiConfiguration } from "@/contracts/configuration/configuration-api-schema.ts";
 import { getComparisonElapsedMilliseconds } from "@/electron/renderer/components/dungeon-run/helpers/dungeon-run-time.ts";
 import { type DungeonRunObservationInterpretation } from "@/electron/renderer/stores/dungeon-run/dungeon-run-interpretation.ts";
-import { type ConfigurationApiConfiguration } from "@/services/api/configuration/configuration-api-schema.ts";
 
 type Milestone = ConfigurationApiConfiguration["milestones"][number];
 

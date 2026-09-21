@@ -1,9 +1,9 @@
+import { type AbilityApiAbilityList } from "@/contracts/ability/ability-api-schema.ts";
+import { type DungeonApiDungeonList } from "@/contracts/dungeon/dungeon-api-schema.ts";
+import { type EncounterApiEncounterList } from "@/contracts/encounter/encounter-api-schema.ts";
+import { type UnitApiUnitList } from "@/contracts/unit/unit-api-schema.ts";
 import { ConfigurationWorkspaceLayout } from "@/electron/renderer/components/core/configuration-workspace-layout.tsx";
 import { HistoryPageContent } from "@/electron/renderer/components/history/history-page-content.tsx";
-import { type AbilityApiAbilityList } from "@/services/api/ability/ability-api-schema.ts";
-import { type DungeonApiDungeonList } from "@/services/api/dungeon/dungeon-api-schema.ts";
-import { type EncounterApiEncounterList } from "@/services/api/encounter/encounter-api-schema.ts";
-import { type UnitApiUnitList } from "@/services/api/unit/unit-api-schema.ts";
 
 type HistoryPageProps = {
   readonly abilities: AbilityApiAbilityList;

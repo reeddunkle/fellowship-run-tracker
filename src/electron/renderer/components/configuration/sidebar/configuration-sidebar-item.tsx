@@ -1,10 +1,10 @@
 import { FileTextIcon } from "lucide-react";
 
+import { type ConfigurationApiConfiguration } from "@/contracts/configuration/configuration-api-schema.ts";
 import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/electron/renderer/components/ui/sidebar.tsx";
-import { type ConfigurationApiConfiguration } from "@/services/api/configuration/configuration-api-schema.ts";
 import { formatRelativeDateTime } from "@/util/format-date-time.ts";
 import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";
 

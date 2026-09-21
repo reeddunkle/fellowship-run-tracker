@@ -3,8 +3,8 @@ import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import { describe, expect, test } from "vitest";
 
+import { type UnitApiUnit } from "@/contracts/unit/unit-api-schema.ts";
 import { getUnit, getUnits } from "@/electron/renderer/api/unit/unit-client.ts";
-import { type UnitApiUnit } from "@/services/api/unit/unit-api-schema.ts";
 import { makeApiServerTestLayerWith } from "@/tests/common/layers/api-server-test-layer.ts";
 import { TestAppApiClientTestLive } from "@/tests/common/layers/app-api-client-test-layer.ts";
 import { makeUnitApiServiceMock } from "@/tests/common/mocks/unit-api-service-mock.ts";

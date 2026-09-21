@@ -1,4 +1,4 @@
-import { type DungeonRunApiComparisonGroup } from "@/services/api/dungeon-run/dungeon-run-api-schema.ts";
+import { type DungeonRunApiComparisonGroup } from "@/contracts/dungeon-run/dungeon-run-api-schema.ts";
 
 export const DUNGEON_RUN_COMPARISON_GROUP_OPTIONS = [
   {

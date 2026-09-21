@@ -6,15 +6,15 @@ import {
 import * as NodeServices from "@effect/platform-node/NodeServices";
 import * as Layer from "effect/Layer";
 
-export const NodeFileSystemLive = NodeFileSystem.layer;
+export const NodeFileSystemLayer = NodeFileSystem.layer;
 
-export const NodePathLive = NodePath.layer;
+export const NodePathLayer = NodePath.layer;
 
-export const NodeHttpClientLive = NodeHttpClient.layerNodeHttp;
+export const NodeHttpClientLayer = NodeHttpClient.layerNodeHttp;
 
-export const NodePlatformLive = NodeServices.layer;
+export const NodePlatformLayer = NodeServices.layer;
 
-export const NodePlatformWithHttpClientLive = Layer.mergeAll(
-  NodePlatformLive,
-  NodeHttpClientLive,
+export const NodePlatformWithHttpClientLayer = Layer.mergeAll(
+  NodePlatformLayer,
+  NodeHttpClientLayer,
 );

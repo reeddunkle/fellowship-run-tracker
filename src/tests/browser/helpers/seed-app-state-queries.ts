@@ -1,5 +1,6 @@
 import { type QueryClient } from "@tanstack/react-query";
 
+import { type AppState } from "@/contracts/app-state/app-state-schema.ts";
 import {
   getDungeonRunComparisonGroupQueryOptions,
   getDungeonRunTimeColumnsQueryOptions,
@@ -7,7 +8,6 @@ import {
   getSidebarOpenQueryOptions,
   getThemeQueryOptions,
 } from "@/electron/renderer/api/app-state/app-state-queries.ts";
-import { type AppState } from "@/electron/storage/app-state/app-state-schema.ts";
 
 export function seedAppStateQueries(
   queryClient: QueryClient,

@@ -6,7 +6,7 @@ import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
 import {
   UnitApiUnitListSchema,
   UnitApiUnitSchema,
-} from "@/services/api/unit/unit-api-schema.ts";
+} from "@/contracts/unit/unit-api-schema.ts";
 import { NonEmptyStringSchema } from "@/validation/common-schemas.ts";
 
 const UNITS_ROUTE = "/units" as const;

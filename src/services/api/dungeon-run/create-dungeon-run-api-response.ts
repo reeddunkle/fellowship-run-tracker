@@ -4,12 +4,12 @@ import { pipe } from "effect/Function";
 import * as Order from "effect/Order";
 import * as Schema from "effect/Schema";
 
-import { type DungeonRunObservationHistory } from "@/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
 import {
   type DungeonRunApiComparisonGroup,
   type DungeonRunApiHistory,
   type DungeonRunApiObservationStatistics,
-} from "@/services/api/dungeon-run/dungeon-run-api-schema.ts";
+} from "@/contracts/dungeon-run/dungeon-run-api-schema.ts";
+import { type DungeonRunObservationHistory } from "@/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
 import { getMean } from "@/util/statistics/get-mean.ts";
 import { getMedian } from "@/util/statistics/get-median.ts";
 import { getMinimum } from "@/util/statistics/get-minimum.ts";

@@ -7,6 +7,7 @@ import type * as PlatformError from "effect/PlatformError";
 import * as Stream from "effect/Stream";
 
 import { type FileNotFoundError } from "@/errors/file-not-found-error.ts";
+import { NodePlatformLayer } from "@/layers/node-platform-layer.ts";
 
 import { FileMonitorSource } from "./file-monitor-source-service.ts";
 import {
@@ -57,13 +58,6 @@ export type FileMonitorService = {
     options: StreamLinesOptions,
   ) => Stream.Stream<string, PlatformError.PlatformError>;
 };
-
-export class FileMonitor extends Context.Service<
-  FileMonitor,
-  FileMonitorService
->()(
-  "fellowship-run-tracker/services/filesystem/file-monitor-service/FileMonitor",
-) {}
 
 type ReadFileRangeOptions = {
   readonly bytesToRead: FileSystem.Size;
@@ -275,4 +269,15 @@ const makeFileMonitor = E.gen(function* () {
   } satisfies FileMonitorService;
 });
 
-export const FileMonitorLive = Layer.effect(FileMonitor, makeFileMonitor);
+export class FileMonitor extends Context.Service<
+  FileMonitor,
+  FileMonitorService
+>()(
+  "fellowship-run-tracker/services/filesystem/file-monitor-service/FileMonitor",
+) {
+  static readonly layerNoDeps = Layer.effect(this, makeFileMonitor);
+
+  static readonly layer = this.layerNoDeps.pipe(
+    Layer.provide(Layer.mergeAll(FileMonitorSource.layer, NodePlatformLayer)),
+  );
+}

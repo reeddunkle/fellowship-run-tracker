@@ -1,5 +1,9 @@
 import { CheckIcon, XIcon } from "lucide-react";
 
+import {
+  type FellowshipLogsApiDungeonRunMetadata,
+  type FellowshipLogsApiDungeonRunReference,
+} from "@/contracts/fellowship-logs/fellowship-logs-api-schema.ts";
 import { Button } from "@/electron/renderer/components/ui/button.tsx";
 import {
   Card,
@@ -11,10 +15,6 @@ import { Checkbox } from "@/electron/renderer/components/ui/checkbox.tsx";
 import { Field, FieldLabel } from "@/electron/renderer/components/ui/field.tsx";
 import { Spinner } from "@/electron/renderer/components/ui/spinner.tsx";
 import { useFellowshipDataStore } from "@/electron/renderer/stores/fellowship-data/fellowship-data-store.tsx";
-import {
-  type FellowshipLogsApiDungeonRunMetadata,
-  type FellowshipLogsApiDungeonRunReference,
-} from "@/services/api/fellowship-logs/fellowship-logs-api-schema.ts";
 
 import { useImportConfirmationForm } from "./import-confirmation-form.ts";
 import { type DecodedImportConfirmationFormValue } from "./import-confirmation-form-schema.ts";

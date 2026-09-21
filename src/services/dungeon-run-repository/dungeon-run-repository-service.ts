@@ -1,8 +1,13 @@
 import * as Context from "effect/Context";
 import type * as DateTime from "effect/DateTime";
 import type * as E from "effect/Effect";
+import * as Layer from "effect/Layer";
 import type * as SqlError from "effect/unstable/sql/SqlError";
 
+import { DungeonRunDAO } from "@/db/daos/dungeon-run/dungeon-run-dao.ts";
+import { DungeonRunObservationDAO } from "@/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
+import { LocalLogDungeonRunDAO } from "@/db/daos/local-log-dungeon-run/local-log-dungeon-run-dao.ts";
+import { FellowshipLogsDungeonRunDAO } from "@/db/fellowship-logs-dungeon-run/fellowship-logs-dungeon-run-dao.ts";
 import { type FellowshipLogsImportedDungeonRunRow } from "@/db/fellowship-logs-dungeon-run/fellowship-logs-imported-dungeon-run-row-schema.ts";
 import { type DungeonRunModel } from "@/db/models/dungeon-run-model.ts";
 import { type DungeonRunDAOError } from "@/errors/dungeon-run-dao-error.ts";
@@ -14,6 +19,8 @@ import { type RequirementEventType } from "@/services/fellowship/validation/requ
 import { type DungeonRunId } from "@/validation/dungeon-run/dungeon-run-id-schema.ts";
 import { type FellowshipLogsFightId } from "@/validation/fellowship-logs/fellowship-logs-fight-id-schema.ts";
 import { type FellowshipLogsReportCode } from "@/validation/fellowship-logs/fellowship-logs-report-code-schema.ts";
+
+import { makeDungeonRunRepository } from "./make-dungeon-run-repository-service.ts";
 
 export type DungeonRunRepositoryError =
   | DungeonRunDAOError
@@ -102,4 +109,13 @@ export class DungeonRunRepository extends Context.Service<
   DungeonRunRepositoryShape
 >()(
   "fellowship-run-tracker/services/dungeon-run-repository/dungeon-run-repository-service/DungeonRunRepository",
-) {}
+) {
+  static readonly layerNoDeps = Layer.effect(this, makeDungeonRunRepository);
+
+  static readonly layer = this.layerNoDeps.pipe(
+    Layer.provide(DungeonRunDAO.layer),
+    Layer.provide(DungeonRunObservationDAO.layer),
+    Layer.provide(FellowshipLogsDungeonRunDAO.layer),
+    Layer.provide(LocalLogDungeonRunDAO.layer),
+  );
+}

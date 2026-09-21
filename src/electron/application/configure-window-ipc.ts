@@ -2,6 +2,7 @@ import type * as ManagedRuntime from "effect/ManagedRuntime";
 import type * as Path from "effect/Path";
 import { ipcMain } from "electron";
 
+import { type AppStateApiService } from "@/contracts/app-state/app-state-api-service.ts";
 import { ELECTRON_IPC_CHANNEL } from "@/electron/ipc/electron-ipc-channel.ts";
 import { handleAppStateRequest } from "@/electron/ipc/handlers/app-state-handlers.ts";
 import { getFileDirectoryPath } from "@/electron/ipc/handlers/get-file-directory-path.ts";
@@ -9,7 +10,6 @@ import {
   resizeWindowToContent,
   showWindow,
 } from "@/electron/ipc/handlers/window-handlers.ts";
-import { type AppStateApiService } from "@/services/api/app-state/app-state-api-service.ts";
 
 export function configureWindowIpc<RuntimeError>(
   runtime: ManagedRuntime.ManagedRuntime<

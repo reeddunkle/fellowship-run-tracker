@@ -40,7 +40,7 @@ const createDungeonRun = E.fn("test.create-dungeon-run")(function* (options?: {
   });
 });
 
-describe("DungeonRunDAOLive", () => {
+describe("DungeonRunDAO", () => {
   test("creates and retrieves a dungeon run", async () => {
     const program = E.gen(function* () {
       const dungeonRunDAO = yield* DungeonRunDAO;

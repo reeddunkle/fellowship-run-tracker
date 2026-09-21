@@ -1,6 +1,6 @@
 import * as Match from "effect/Match";
 
-import { type LiveSplitApiStatus } from "@/services/api/live-split/live-split-api-schema.ts";
+import { type LiveSplitApiStatus } from "@/contracts/live-split/live-split-api-schema.ts";
 import { type LiveSplitConnectionStatus } from "@/services/live-split/core/live-split-connection-manager-service.ts";
 
 export function createLiveSplitApiResponse(

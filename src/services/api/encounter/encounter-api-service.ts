@@ -4,14 +4,14 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
 import {
+  type EncounterApiEncounter,
+  type EncounterApiEncounterList,
+} from "@/contracts/encounter/encounter-api-schema.ts";
+import {
   EncounterDAO,
   type EncounterDAOError,
 } from "@/db/daos/encounter/encounter-dao.ts";
 import { createEncounterApiResponse } from "@/services/api/encounter/create-encounter-api-response.ts";
-import {
-  type EncounterApiEncounter,
-  type EncounterApiEncounterList,
-} from "@/services/api/encounter/encounter-api-schema.ts";
 import { type DungeonId } from "@/services/fellowship/validation/fellowship-common.ts";
 
 type GetEncounterByIdOptions = {
@@ -27,14 +27,7 @@ export type EncounterApiServiceShape = {
   ) => E.Effect<Option.Option<EncounterApiEncounter>, EncounterDAOError>;
 };
 
-export class EncounterApiService extends Context.Service<
-  EncounterApiService,
-  EncounterApiServiceShape
->()(
-  "fellowship-run-tracker/services/api/encounter/encounter-api-service/EncounterApiService",
-) {}
-
-const make = E.gen(function* () {
+const makeEncounterApiService = E.gen(function* () {
   const encounterDAO = yield* EncounterDAO;
 
   const getAll: EncounterApiServiceShape["getAll"] = () => {
@@ -60,4 +53,15 @@ const make = E.gen(function* () {
   } satisfies EncounterApiServiceShape;
 });
 
-export const EncounterApiServiceLive = Layer.effect(EncounterApiService, make);
+export class EncounterApiService extends Context.Service<
+  EncounterApiService,
+  EncounterApiServiceShape
+>()(
+  "fellowship-run-tracker/services/api/encounter/encounter-api-service/EncounterApiService",
+) {
+  static readonly layerNoDeps = Layer.effect(this, makeEncounterApiService);
+
+  static readonly layer = this.layerNoDeps.pipe(
+    Layer.provide(EncounterDAO.layer),
+  );
+}

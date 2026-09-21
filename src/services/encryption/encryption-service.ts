@@ -26,11 +26,7 @@ export type EncryptionShape = {
   ) => E.Effect<EncryptedValue, EncryptionError>;
 };
 
-export class Encryption extends Context.Service<Encryption, EncryptionShape>()(
-  "fellowship-run-tracker/services/encryption/encryption-service/Encryption",
-) {}
-
-const makeEncryptionLive = E.gen(function* () {
+const makeEncryption = E.gen(function* () {
   const encryptionKeyStorage = yield* EncryptionKeyStorage;
 
   const decodeEncryptedValue = Schema.decodeUnknownEffect(EncryptedValueSchema);
@@ -181,4 +177,16 @@ const makeEncryptionLive = E.gen(function* () {
   } satisfies EncryptionShape;
 });
 
-export const EncryptionLive = Layer.effect(Encryption, makeEncryptionLive);
+export class Encryption extends Context.Service<Encryption, EncryptionShape>()(
+  "fellowship-run-tracker/services/encryption/encryption-service/Encryption",
+) {
+  static readonly layerNoDeps = Layer.effect(this, makeEncryption);
+
+  static readonly layerWith = (options: {
+    readonly encryptionKeyDirectory: string;
+  }) => {
+    return this.layerNoDeps.pipe(
+      Layer.provide(EncryptionKeyStorage.layerWith(options)),
+    );
+  };
+}

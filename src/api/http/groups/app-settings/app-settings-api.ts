@@ -5,7 +5,7 @@ import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
 import {
   AppSettingsApiAppSettingsSchema,
   AppSettingsApiUpdateSchema,
-} from "@/services/api/app-settings/app-settings-api-schema.ts";
+} from "@/contracts/app-settings/app-settings-api-schema.ts";
 
 const APP_SETTINGS_ROUTE = "/app-settings" as const;
 

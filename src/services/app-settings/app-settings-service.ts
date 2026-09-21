@@ -44,13 +44,6 @@ export type AppSettingsShape = {
   readonly streamChanges: () => Stream.Stream<AppSettingsValue>;
 };
 
-export class AppSettings extends Context.Service<
-  AppSettings,
-  AppSettingsShape
->()(
-  "fellowship-run-tracker/services/app-settings/app-settings-service/AppSettings",
-) {}
-
 const makeAppSettings = E.gen(function* () {
   const appSettingsDAO = yield* AppSettingsDAO;
   const encryption = yield* Encryption;
@@ -170,4 +163,20 @@ const makeAppSettings = E.gen(function* () {
   } satisfies AppSettingsShape;
 });
 
-export const AppSettingsLive = Layer.effect(AppSettings, makeAppSettings);
+export class AppSettings extends Context.Service<
+  AppSettings,
+  AppSettingsShape
+>()(
+  "fellowship-run-tracker/services/app-settings/app-settings-service/AppSettings",
+) {
+  static readonly layerNoDeps = Layer.effect(this, makeAppSettings);
+
+  static readonly layerWith = (options: {
+    readonly encryptionKeyDirectory: string;
+  }) => {
+    return this.layerNoDeps.pipe(
+      Layer.provide(AppSettingsDAO.layer),
+      Layer.provide(Encryption.layerWith(options)),
+    );
+  };
+}

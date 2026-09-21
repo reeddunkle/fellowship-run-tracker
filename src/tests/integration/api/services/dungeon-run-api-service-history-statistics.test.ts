@@ -99,7 +99,7 @@ const seedHistoryFixture = E.gen(function* () {
   });
 });
 
-describe("DungeonRunApiServiceLive against real seeded data", () => {
+describe("DungeonRunApiService against real seeded data", () => {
   test("computes best/mean/median and run/sample counts per ownership group", async () => {
     const harness = makeDungeonRunApiServiceIntegrationTestHarness();
 

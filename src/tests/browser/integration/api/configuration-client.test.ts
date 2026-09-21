@@ -3,6 +3,7 @@ import * as Layer from "effect/Layer";
 import * as Result from "effect/Result";
 import { describe, expect, test } from "vitest";
 
+import { type ConfigurationApiConfiguration } from "@/contracts/configuration/configuration-api-schema.ts";
 import {
   deleteConfiguration,
   getConfiguration,
@@ -10,7 +11,6 @@ import {
   saveConfiguration,
   updateConfiguration,
 } from "@/electron/renderer/api/configuration/configuration-client.ts";
-import { type ConfigurationApiConfiguration } from "@/services/api/configuration/configuration-api-schema.ts";
 import {
   MOCK_CONFIGURATION,
   MOCK_CONFIGURATION_FINGERPRINT,

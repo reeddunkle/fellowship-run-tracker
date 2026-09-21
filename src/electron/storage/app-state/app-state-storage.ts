@@ -8,10 +8,13 @@ import * as Result from "effect/Result";
 import type * as Schema from "effect/Schema";
 import * as KeyValueStore from "effect/unstable/persistence/KeyValueStore";
 
+import {
+  type AppState,
+  DEFAULT_APP_STATE,
+} from "@/contracts/app-state/app-state-schema.ts";
 import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";
 import { type DungeonRunComparisonGroupSchema } from "@/validation/dungeon-run/dungeon-run-comparison-group-schema.ts";
 
-import { type AppState, DEFAULT_APP_STATE } from "./app-state-schema.ts";
 import { migratePersistedAppState } from "./persistence/app-state-migrations.ts";
 import {
   CURRENT_APP_STATE_VERSION,
@@ -68,13 +71,6 @@ export type AppStateStorageShape = {
     theme: AppState["theme"],
   ) => E.Effect<void, AppStateStorageError>;
 };
-
-export class AppStateStorage extends Context.Service<
-  AppStateStorage,
-  AppStateStorageShape
->()(
-  "fellowship-run-tracker/electron/storage/app-state/app-state-storage/AppStateStorage",
-) {}
 
 type AppStateUpdate =
   | {
@@ -327,3 +323,10 @@ export const makeAppStateStorage = E.gen(function* () {
     setTheme,
   } satisfies AppStateStorageShape;
 });
+
+export class AppStateStorage extends Context.Service<
+  AppStateStorage,
+  AppStateStorageShape
+>()(
+  "fellowship-run-tracker/electron/storage/app-state/app-state-storage/AppStateStorage",
+) {}

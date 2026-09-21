@@ -4,17 +4,17 @@ import * as HttpApiError from "effect/unstable/httpapi/HttpApiError";
 import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
 
 import {
-  FellowshipLogsApiRunNotFinishedErrorSchema,
-  FellowshipLogsApiRunNotFoundErrorSchema,
-} from "@/errors/fellowship-logs-dungeon-run-import-error.ts";
-import {
   FellowshipLogsApiDungeonRunMetadataSchema,
   FellowshipLogsApiDungeonRunReferenceSchema,
   FellowshipLogsApiImportDungeonRunOptionsSchema,
   FellowshipLogsApiImportDungeonRunResultSchema,
   FellowshipLogsApiImportedDungeonRunListSchema,
   FellowshipLogsApiLastKnownRateLimitDataSchema,
-} from "@/services/api/fellowship-logs/fellowship-logs-api-schema.ts";
+} from "@/contracts/fellowship-logs/fellowship-logs-api-schema.ts";
+import {
+  FellowshipLogsApiRunNotFinishedErrorSchema,
+  FellowshipLogsApiRunNotFoundErrorSchema,
+} from "@/errors/fellowship-logs-dungeon-run-import-error.ts";
 import { DungeonRunIdSchema } from "@/validation/dungeon-run/dungeon-run-id-schema.ts";
 
 const FELLOWSHIP_LOGS_ROUTE = "/fellowship-logs" as const;

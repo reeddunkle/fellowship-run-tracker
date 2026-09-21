@@ -47,14 +47,7 @@ export type FellowshipService = {
   ) => Stream.Stream<FellowshipEvent, FileMonitorError>;
 };
 
-export class Fellowship extends Context.Service<
-  Fellowship,
-  FellowshipService
->()(
-  "fellowship-run-tracker/services/fellowship/fellowship-service/Fellowship",
-) {}
-
-const makeFellowshipLive = E.gen(function* () {
+const makeFellowship = E.gen(function* () {
   const appSettings = yield* AppSettings;
   const fileMonitor = yield* FileMonitor;
   const fileMonitorSource = yield* FileMonitorSource;
@@ -129,4 +122,20 @@ const makeFellowshipLive = E.gen(function* () {
   } satisfies FellowshipService;
 });
 
-export const FellowshipLive = Layer.effect(Fellowship, makeFellowshipLive);
+export class Fellowship extends Context.Service<
+  Fellowship,
+  FellowshipService
+>()(
+  "fellowship-run-tracker/services/fellowship/fellowship-service/Fellowship",
+) {
+  static readonly layerNoDeps = Layer.effect(this, makeFellowship);
+
+  static readonly layerWith = (options: {
+    readonly encryptionKeyDirectory: string;
+  }) => {
+    return this.layerNoDeps.pipe(
+      Layer.provide(Layer.mergeAll(FileMonitor.layer, FileMonitorSource.layer)),
+      Layer.provide(AppSettings.layerWith(options)),
+    );
+  };
+}

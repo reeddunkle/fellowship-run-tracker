@@ -3,10 +3,7 @@ import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 import { describe, expect, test } from "vitest";
 
-import {
-  FellowshipLogsApiService,
-  FellowshipLogsApiServiceLive,
-} from "@/services/api/fellowship-logs/fellowship-logs-api-service.ts";
+import { FellowshipLogsApiService } from "@/services/api/fellowship-logs/fellowship-logs-api-service.ts";
 import { makeFellowshipLogsDungeonRunImporterIntegrationTestHarness } from "@/tests/common/harnesses/fellowship-logs-dungeon-run-importer-integration-test-harness.ts";
 import { runTest } from "@/tests/common/run-test.ts";
 import { FellowshipLogsFightIdSchema } from "@/validation/fellowship-logs/fellowship-logs-fight-id-schema.ts";
@@ -18,14 +15,13 @@ const REPORT_CODE = Schema.decodeSync(FellowshipLogsReportCodeSchema)(
 
 const FIGHT_ID = Schema.decodeSync(FellowshipLogsFightIdSchema)(15);
 
-describe("FellowshipLogsApiServiceLive imported dungeon runs", () => {
+describe("FellowshipLogsApiService imported dungeon runs", () => {
   test("lists and deletes an imported run", async () => {
     const harness =
       makeFellowshipLogsDungeonRunImporterIntegrationTestHarness();
 
-    const FellowshipLogsApiServiceTestLive = FellowshipLogsApiServiceLive.pipe(
-      Layer.provide(harness.layer),
-    );
+    const FellowshipLogsApiServiceTestLive =
+      FellowshipLogsApiService.layerNoDeps.pipe(Layer.provide(harness.layer));
 
     const TestLive = Layer.merge(
       harness.layer,
@@ -66,9 +62,8 @@ describe("FellowshipLogsApiServiceLive imported dungeon runs", () => {
     const harness =
       makeFellowshipLogsDungeonRunImporterIntegrationTestHarness();
 
-    const FellowshipLogsApiServiceTestLive = FellowshipLogsApiServiceLive.pipe(
-      Layer.provide(harness.layer),
-    );
+    const FellowshipLogsApiServiceTestLive =
+      FellowshipLogsApiService.layerNoDeps.pipe(Layer.provide(harness.layer));
 
     const TestLive = Layer.merge(
       harness.layer,

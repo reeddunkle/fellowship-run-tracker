@@ -1,5 +1,6 @@
 import * as Context from "effect/Context";
 import type * as E from "effect/Effect";
+import * as Layer from "effect/Layer";
 import type * as Option from "effect/Option";
 import type * as Schema from "effect/Schema";
 import type * as SqlError from "effect/unstable/sql/SqlError";
@@ -12,6 +13,8 @@ import {
   type LiveSplitHost,
   type LiveSplitPort,
 } from "@/validation/app-settings/app-settings-schema.ts";
+
+import { makeAppSettingsDAO } from "./make-app-settings-dao.ts";
 
 export type AppSettingsDAOError = SqlError.SqlError | Schema.SchemaError;
 
@@ -44,4 +47,6 @@ export class AppSettingsDAO extends Context.Service<
   AppSettingsDAOShape
 >()(
   "fellowship-run-tracker/db/daos/app-settings/app-settings-dao/AppSettingsDAO",
-) {}
+) {
+  static readonly layer = Layer.effect(this, makeAppSettingsDAO);
+}

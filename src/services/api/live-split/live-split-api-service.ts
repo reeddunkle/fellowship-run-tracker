@@ -3,9 +3,9 @@ import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Stream from "effect/Stream";
 
+import { type LiveSplitApiStatus } from "@/contracts/live-split/live-split-api-schema.ts";
 import { type LiveSplitConnectionError } from "@/errors/live-split-client-error.ts";
 import { createLiveSplitApiResponse } from "@/services/api/live-split/create-live-split-api-response.ts";
-import { type LiveSplitApiStatus } from "@/services/api/live-split/live-split-api-schema.ts";
 import { LiveSplit } from "@/services/live-split/core/live-split-service.ts";
 
 export type LiveSplitApiServiceShape = {
@@ -21,14 +21,7 @@ export type LiveSplitApiServiceShape = {
   readonly statusChanges: Stream.Stream<LiveSplitApiStatus>;
 };
 
-export class LiveSplitApiService extends Context.Service<
-  LiveSplitApiService,
-  LiveSplitApiServiceShape
->()(
-  "fellowship-run-tracker/services/api/live-split/live-split-api-service/LiveSplitApiService",
-) {}
-
-const make = E.gen(function* () {
+const makeLiveSplitApiService = E.gen(function* () {
   const liveSplit = yield* LiveSplit;
 
   const getStatus: LiveSplitApiServiceShape["getStatus"] = () => {
@@ -62,4 +55,17 @@ const make = E.gen(function* () {
   } satisfies LiveSplitApiServiceShape;
 });
 
-export const LiveSplitApiServiceLive = Layer.effect(LiveSplitApiService, make);
+export class LiveSplitApiService extends Context.Service<
+  LiveSplitApiService,
+  LiveSplitApiServiceShape
+>()(
+  "fellowship-run-tracker/services/api/live-split/live-split-api-service/LiveSplitApiService",
+) {
+  static readonly layerNoDeps = Layer.effect(this, makeLiveSplitApiService);
+
+  static readonly layerWith = (options: {
+    readonly encryptionKeyDirectory: string;
+  }) => {
+    return this.layerNoDeps.pipe(Layer.provide(LiveSplit.layerWith(options)));
+  };
+}

@@ -4,7 +4,7 @@ import * as Layer from "effect/Layer";
 
 import { DungeonRunDAO } from "@/db/daos/dungeon-run/dungeon-run-dao.ts";
 import { DungeonRunObservationDAO } from "@/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
-import { DungeonRunApiServiceLive } from "@/services/api/dungeon-run/dungeon-run-api-service.ts";
+import { DungeonRunApiService } from "@/services/api/dungeon-run/dungeon-run-api-service.ts";
 import { type DungeonId } from "@/services/fellowship/validation/fellowship-common.ts";
 import { type RequirementEventType } from "@/services/fellowship/validation/requirement-event-type-schema.ts";
 import { makePersistenceTestLayer } from "@/tests/common/layers/persistence-test-layer.ts";
@@ -18,7 +18,7 @@ export function makeDungeonRunApiServiceIntegrationTestHarness({
 }: MakeDungeonRunApiServiceIntegrationTestHarnessOptions = {}) {
   const PersistenceTestLive = makePersistenceTestLayer(databaseFilename);
 
-  const DungeonRunApiServiceTestLive = DungeonRunApiServiceLive.pipe(
+  const DungeonRunApiServiceTestLive = DungeonRunApiService.layer.pipe(
     Layer.provide(PersistenceTestLive),
   );
 

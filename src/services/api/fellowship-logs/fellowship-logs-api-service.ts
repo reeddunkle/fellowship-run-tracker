@@ -6,13 +6,6 @@ import {
   FellowshipLogsDungeonRunImporter,
   type ImportFellowshipLogsDungeonRunError,
 } from "@/application/fellowship-logs-dungeon-run-importer/fellowship-logs-dungeon-run-importer-service.ts";
-import { type DungeonRunDAOError } from "@/errors/dungeon-run-dao-error.ts";
-import {
-  createFellowshipLogsDungeonRunMetadataApiResponse,
-  createFellowshipLogsImportDungeonRunApiResponse,
-  createFellowshipLogsImportedDungeonRunApiResponse,
-  createFellowshipLogsRateLimitDataApiResponse,
-} from "@/services/api/fellowship-logs/create-fellowship-logs-api-response.ts";
 import {
   type FellowshipLogsApiDungeonRunMetadata,
   type FellowshipLogsApiDungeonRunReference,
@@ -20,7 +13,14 @@ import {
   type FellowshipLogsApiImportDungeonRunResult,
   type FellowshipLogsApiImportedDungeonRunList,
   type FellowshipLogsApiLastKnownRateLimitData,
-} from "@/services/api/fellowship-logs/fellowship-logs-api-schema.ts";
+} from "@/contracts/fellowship-logs/fellowship-logs-api-schema.ts";
+import { type DungeonRunDAOError } from "@/errors/dungeon-run-dao-error.ts";
+import {
+  createFellowshipLogsDungeonRunMetadataApiResponse,
+  createFellowshipLogsImportDungeonRunApiResponse,
+  createFellowshipLogsImportedDungeonRunApiResponse,
+  createFellowshipLogsRateLimitDataApiResponse,
+} from "@/services/api/fellowship-logs/create-fellowship-logs-api-response.ts";
 import {
   DungeonRunRepository,
   type DungeonRunRepositoryError,
@@ -70,14 +70,7 @@ export type FellowshipLogsApiServiceShape = {
   >;
 };
 
-export class FellowshipLogsApiService extends Context.Service<
-  FellowshipLogsApiService,
-  FellowshipLogsApiServiceShape
->()(
-  "fellowship-run-tracker/services/api/fellowship-logs/fellowship-logs-api-service/FellowshipLogsApiService",
-) {}
-
-const make = E.gen(function* () {
+const makeFellowshipLogsApiService = E.gen(function* () {
   const dungeonRunRepository = yield* DungeonRunRepository;
   const fellowshipLogs = yield* FellowshipLogs;
   const fellowshipLogsDungeonRunImporter =
@@ -136,7 +129,24 @@ const make = E.gen(function* () {
   } satisfies FellowshipLogsApiServiceShape;
 });
 
-export const FellowshipLogsApiServiceLive = Layer.effect(
+export class FellowshipLogsApiService extends Context.Service<
   FellowshipLogsApiService,
-  make,
-);
+  FellowshipLogsApiServiceShape
+>()(
+  "fellowship-run-tracker/services/api/fellowship-logs/fellowship-logs-api-service/FellowshipLogsApiService",
+) {
+  static readonly layerNoDeps = Layer.effect(
+    this,
+    makeFellowshipLogsApiService,
+  );
+
+  static readonly layerWith = (options: {
+    readonly encryptionKeyDirectory: string;
+  }) => {
+    return this.layerNoDeps.pipe(
+      Layer.provide(DungeonRunRepository.layer),
+      Layer.provide(FellowshipLogs.layerWith(options)),
+      Layer.provide(FellowshipLogsDungeonRunImporter.layerWith(options)),
+    );
+  };
+}

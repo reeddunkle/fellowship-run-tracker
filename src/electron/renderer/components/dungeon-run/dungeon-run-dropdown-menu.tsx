@@ -2,6 +2,8 @@ import * as A from "effect/Array";
 import { MenuIcon } from "lucide-react";
 import { useState } from "react";
 
+import { type DungeonRunTimeColumn } from "@/contracts/app-state/app-state-schema.ts";
+import { type DungeonRunApiComparisonGroup } from "@/contracts/dungeon-run/dungeon-run-api-schema.ts";
 import {
   useSetDungeonRunComparisonGroup,
   useSetDungeonRunTimeColumns,
@@ -24,8 +26,6 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@/electron/renderer/components/ui/native-select.tsx";
-import { type DungeonRunTimeColumn } from "@/electron/storage/app-state/app-state-schema.ts";
-import { type DungeonRunApiComparisonGroup } from "@/services/api/dungeon-run/dungeon-run-api-schema.ts";
 
 const TIME_COLUMN_LABELS: Record<DungeonRunTimeColumn, string> = {
   AVERAGE_DELTA: "Average",

@@ -2,6 +2,7 @@ import { CatchBoundary } from "@tanstack/react-router";
 import { HistoryIcon } from "lucide-react";
 import { Suspense } from "react";
 
+import { type ConfigurationApiConfiguration } from "@/contracts/configuration/configuration-api-schema.ts";
 import { useDeleteDungeonRunHistory } from "@/electron/renderer/api/dungeon-run/dungeon-run-mutations.ts";
 import { useDungeonRunHistorySuspense } from "@/electron/renderer/api/dungeon-run/dungeon-run-queries.ts";
 import {
@@ -21,7 +22,6 @@ import {
   getOwnDungeonRunHistorySummary,
 } from "@/electron/renderer/stores/dungeon-run/dungeon-run-history-summary.ts";
 import { useFellowshipDataStore } from "@/electron/renderer/stores/fellowship-data/fellowship-data-store.tsx";
-import { type ConfigurationApiConfiguration } from "@/services/api/configuration/configuration-api-schema.ts";
 
 export function HistoryPageContent() {
   const selectedConfiguration = useSelectedConfiguration();

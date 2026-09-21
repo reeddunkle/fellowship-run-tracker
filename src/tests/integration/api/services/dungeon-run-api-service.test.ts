@@ -5,17 +5,10 @@ import { describe, expect, test } from "vitest";
 
 import {
   DungeonRunObservationDAO,
-  type DungeonRunObservationDAOShape,
   type DungeonRunObservationHistory,
 } from "@/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
-import {
-  DungeonRunApiService,
-  DungeonRunApiServiceLive,
-} from "@/services/api/dungeon-run/dungeon-run-api-service.ts";
-import {
-  DungeonRunRepository,
-  type DungeonRunRepositoryShape,
-} from "@/services/dungeon-run-repository/dungeon-run-repository-service.ts";
+import { DungeonRunApiService } from "@/services/api/dungeon-run/dungeon-run-api-service.ts";
+import { DungeonRunRepository } from "@/services/dungeon-run-repository/dungeon-run-repository-service.ts";
 import {
   MOCK_DUNGEON_ID,
   MOCK_DUNGEON_LEVEL,
@@ -74,19 +67,12 @@ const observations = [
   },
 ] satisfies ReadonlyArray<DungeonRunObservationHistory>;
 
-function makeDungeonRunRepositoryTest({
+function makeDungeonRunRepositoryTestLayer({
   onDeleteHistory,
 }: {
   readonly onDeleteHistory?: (() => void) | undefined;
-} = {}): DungeonRunRepositoryShape {
-  return {
-    completeLocal: () =>
-      E.die("Unexpected DungeonRunRepository.completeLocal call."),
-    createFellowshipLogsDungeonRun: () =>
-      E.die("Unexpected DungeonRunRepository.importFellowshipLogs call."),
-    createLocal: () =>
-      E.die("Unexpected DungeonRunRepository.createLocal call."),
-    delete: () => E.die("Unexpected DungeonRunRepository.delete call."),
+} = {}) {
+  return Layer.mock(DungeonRunRepository, {
     deleteHistory: ({ dungeonId, dungeonLevel }) => {
       return E.sync(() => {
         expect(dungeonId).toBe(MOCK_DUNGEON_ID);
@@ -94,27 +80,17 @@ function makeDungeonRunRepositoryTest({
         onDeleteHistory?.();
       });
     },
-    exitLocal: () => E.die("Unexpected DungeonRunRepository.exitLocal call."),
-    interruptLocal: () =>
-      E.die("Unexpected DungeonRunRepository.interruptLocal call."),
-    listFellowshipLogsDungeonRuns: () =>
-      E.die(
-        "Unexpected DungeonRunRepository.listFellowshipLogsDungeonRuns call.",
-      ),
-    startLocal: () => E.die("Unexpected DungeonRunRepository.startLocal call."),
-  };
+  });
 }
 
-function makeDungeonRunObservationDAOTest({
+function makeDungeonRunObservationDAOTestLayer({
   history,
   onGetHistory,
 }: {
   readonly history: ReadonlyArray<DungeonRunObservationHistory>;
   readonly onGetHistory?: (() => void) | undefined;
-}): DungeonRunObservationDAOShape {
-  return {
-    getByDungeonRunId: () =>
-      E.die("Unexpected DungeonRunObservationDAO.getByDungeonRunId call."),
+}) {
+  return Layer.mock(DungeonRunObservationDAO, {
     getHistoryByDungeon: ({ dungeonId, dungeonLevel }) => {
       return E.sync(() => {
         expect(dungeonId).toBe(MOCK_DUNGEON_ID);
@@ -125,8 +101,7 @@ function makeDungeonRunObservationDAOTest({
         return history;
       });
     },
-    observe: () => E.die("Unexpected DungeonRunObservationDAO.observe call."),
-  };
+  });
 }
 
 function makeTestLayer({
@@ -138,29 +113,17 @@ function makeTestLayer({
   readonly onDeleteHistory?: () => void;
   readonly onGetHistory?: () => void;
 } = {}) {
-  const DungeonRunRepositoryTest = Layer.succeed(
-    DungeonRunRepository,
-    makeDungeonRunRepositoryTest({
-      onDeleteHistory,
-    }),
-  );
-
-  const DungeonRunObservationDAOTest = Layer.succeed(
-    DungeonRunObservationDAO,
-    makeDungeonRunObservationDAOTest({
-      history,
-      onGetHistory,
-    }),
-  );
-
-  return DungeonRunApiServiceLive.pipe(
+  return DungeonRunApiService.layerNoDeps.pipe(
     Layer.provide(
-      Layer.mergeAll(DungeonRunObservationDAOTest, DungeonRunRepositoryTest),
+      Layer.mergeAll(
+        makeDungeonRunObservationDAOTestLayer({ history, onGetHistory }),
+        makeDungeonRunRepositoryTestLayer({ onDeleteHistory }),
+      ),
     ),
   );
 }
 
-describe("DungeonRunApiServiceLive", () => {
+describe("DungeonRunApiService", () => {
   test("returns dungeon run history grouped by ownership for a dungeon and level", async () => {
     const program = E.gen(function* () {
       const dungeonRunApiService = yield* DungeonRunApiService;

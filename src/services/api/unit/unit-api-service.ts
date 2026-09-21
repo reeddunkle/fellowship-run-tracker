@@ -3,12 +3,12 @@ import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { UnitDAO, type UnitDAOError } from "@/db/daos/unit/unit-dao.ts";
-import { createUnitApiResponse } from "@/services/api/unit/create-unit-api-response.ts";
 import {
   type UnitApiUnit,
   type UnitApiUnitList,
-} from "@/services/api/unit/unit-api-schema.ts";
+} from "@/contracts/unit/unit-api-schema.ts";
+import { UnitDAO, type UnitDAOError } from "@/db/daos/unit/unit-dao.ts";
+import { createUnitApiResponse } from "@/services/api/unit/create-unit-api-response.ts";
 
 type GetUnitByIdOptions = {
   readonly id: string;
@@ -22,14 +22,7 @@ export type UnitApiServiceShape = {
   ) => E.Effect<Option.Option<UnitApiUnit>, UnitDAOError>;
 };
 
-export class UnitApiService extends Context.Service<
-  UnitApiService,
-  UnitApiServiceShape
->()(
-  "fellowship-run-tracker/services/api/unit/unit-api-service/UnitApiService",
-) {}
-
-const make = E.gen(function* () {
+const makeUnitApiService = E.gen(function* () {
   const unitDAO = yield* UnitDAO;
 
   const getAll: UnitApiServiceShape["getAll"] = () => {
@@ -52,4 +45,13 @@ const make = E.gen(function* () {
   } satisfies UnitApiServiceShape;
 });
 
-export const UnitApiServiceLive = Layer.effect(UnitApiService, make);
+export class UnitApiService extends Context.Service<
+  UnitApiService,
+  UnitApiServiceShape
+>()(
+  "fellowship-run-tracker/services/api/unit/unit-api-service/UnitApiService",
+) {
+  static readonly layerNoDeps = Layer.effect(this, makeUnitApiService);
+
+  static readonly layer = this.layerNoDeps.pipe(Layer.provide(UnitDAO.layer));
+}

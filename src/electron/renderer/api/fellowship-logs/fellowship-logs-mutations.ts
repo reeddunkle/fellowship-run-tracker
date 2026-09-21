@@ -6,6 +6,11 @@ import {
 } from "@tanstack/react-query";
 import * as E from "effect/Effect";
 
+import {
+  type FellowshipLogsApiDungeonRunReference,
+  type FellowshipLogsApiImportDungeonRunOptions,
+  type FellowshipLogsApiImportedDungeonRunList,
+} from "@/contracts/fellowship-logs/fellowship-logs-api-schema.ts";
 import { DUNGEON_RUN_HISTORY_QUERY_KEY_PREFIX } from "@/electron/renderer/api/dungeon-run/dungeon-run-queries.ts";
 import {
   getDungeonRunMetadata,
@@ -14,11 +19,6 @@ import {
 } from "@/electron/renderer/api/fellowship-logs/fellowship-logs-client.ts";
 import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
 import { QueryClientOperationError } from "@/errors/query-client-operation-error.ts";
-import {
-  type FellowshipLogsApiDungeonRunReference,
-  type FellowshipLogsApiImportDungeonRunOptions,
-  type FellowshipLogsApiImportedDungeonRunList,
-} from "@/services/api/fellowship-logs/fellowship-logs-api-schema.ts";
 
 import {
   type DeleteImportedDungeonRunArgs,

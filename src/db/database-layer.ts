@@ -39,32 +39,32 @@ function configureDatabase() {
 }
 
 export function makeDatabaseLayer(filename: string) {
-  const PlatformLive = Layer.mergeAll(NodeFileSystem.layer, NodePath.layer);
+  const PlatformLayer = Layer.mergeAll(NodeFileSystem.layer, NodePath.layer);
 
-  const SqliteLive = SqliteClient.layer({
+  const SqliteLayer = SqliteClient.layer({
     filename,
     transformQueryNames: EString.camelToSnake,
     transformResultNames: EString.snakeToCamel,
   });
 
-  const PrepareDatabaseLive = Layer.effectDiscard(
+  const PrepareDatabaseLayer = Layer.effectDiscard(
     prepareDatabaseDirectory(filename),
-  ).pipe(Layer.provide(PlatformLive));
+  ).pipe(Layer.provide(PlatformLayer));
 
-  const PreparedSqliteLive = PrepareDatabaseLive.pipe(
-    Layer.flatMap(() => SqliteLive),
+  const PreparedSqliteLayer = PrepareDatabaseLayer.pipe(
+    Layer.flatMap(() => SqliteLayer),
   );
 
-  const ConfiguredSqliteLive = Layer.effectDiscard(configureDatabase()).pipe(
-    Layer.provideMerge(PreparedSqliteLive),
+  const ConfiguredSqliteLayer = Layer.effectDiscard(configureDatabase()).pipe(
+    Layer.provideMerge(PreparedSqliteLayer),
   );
 
-  const MigrationDependenciesLive = Layer.mergeAll(
-    ConfiguredSqliteLive,
-    PlatformLive,
+  const MigrationDependenciesLayer = Layer.mergeAll(
+    ConfiguredSqliteLayer,
+    PlatformLayer,
   );
 
   return Layer.effectDiscard(migrateDatabase).pipe(
-    Layer.provideMerge(MigrationDependenciesLive),
+    Layer.provideMerge(MigrationDependenciesLayer),
   );
 }

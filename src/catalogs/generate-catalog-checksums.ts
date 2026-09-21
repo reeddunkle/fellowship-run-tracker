@@ -100,9 +100,9 @@ export const CATALOG_CHECKSUMS = ${encodedChecksums} as const;
   yield* fixWithBiome([OUTPUT_FILE_PATH]);
 });
 
-const RuntimeLive = Layer.mergeAll(NodeCrypto.layer, NodeServices.layer);
+const RuntimeLayer = Layer.mergeAll(NodeCrypto.layer, NodeServices.layer);
 
-const runtime = ManagedRuntime.make(RuntimeLive);
+const runtime = ManagedRuntime.make(RuntimeLayer);
 
 try {
   await runtime.runPromise(generateCatalogChecksums);

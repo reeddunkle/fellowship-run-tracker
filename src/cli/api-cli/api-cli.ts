@@ -7,8 +7,7 @@ import { parseApiCLICommand } from "@/cli/api-cli/run-api-cli.ts";
 import { getDatabaseFilename } from "@/helpers/get-database-filename.ts";
 import { getEncryptionKeyDirectory } from "@/helpers/get-encryption-key-directory.ts";
 import { makeApiLayer } from "@/layers/api-layer.ts";
-import { makeEncryptionLayer } from "@/layers/encryption-layer.ts";
-import { NodePathLive } from "@/layers/node-platform-layer.ts";
+import { NodePathLayer } from "@/layers/node-platform-layer.ts";
 import { makePersistenceLayer } from "@/layers/persistence-layer.ts";
 import { logCause } from "@/logging/log-cause.ts";
 
@@ -16,21 +15,17 @@ function runServeCommand() {
   return E.gen(function* () {
     const databaseFilename = yield* getDatabaseFilename();
 
-    const PersistenceLive = makePersistenceLayer({
+    const PersistenceLayer = makePersistenceLayer({
       databaseFilename,
     });
 
-    const EncryptionLive = makeEncryptionLayer({
+    const ApiLayer = makeApiLayer({
       encryptionKeyDirectory: getEncryptionKeyDirectory(),
-    });
-
-    const ApiLive = makeApiLayer().pipe(
-      Layer.provide(Layer.mergeAll(PersistenceLive, EncryptionLive)),
-    );
+    }).pipe(Layer.provide(PersistenceLayer));
 
     return yield* E.never.pipe(
       // @effect-diagnostics-next-line strictEffectProvide:off
-      E.provide(ApiLive),
+      E.provide(ApiLayer),
     );
   });
 }
@@ -43,7 +38,7 @@ const program = parseApiCLICommand(process.argv.slice(2)).pipe(
     );
   }),
   // @effect-diagnostics-next-line strictEffectProvide:off
-  E.provide(NodePathLive),
+  E.provide(NodePathLayer),
   E.tapCause(logCause),
 );
 

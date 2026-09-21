@@ -1,10 +1,10 @@
 import * as E from "effect/Effect";
 
-import { AppApiClient } from "@/electron/renderer/services/app-api-client/app-api-client";
 import {
   type DeleteConfigurationsByDungeonAndLevelApiRequest,
   type SaveConfigurationApiRequest,
-} from "@/services/api/configuration/configuration-api-schema.ts";
+} from "@/contracts/configuration/configuration-api-schema.ts";
+import { AppApiClient } from "@/electron/renderer/services/app-api-client/app-api-client";
 import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";
 
 export type ConfigurationIdArgs = {

@@ -8,26 +8,26 @@ import {
 import { createStore, useStore } from "zustand";
 
 import {
+  type AbilityApiAbility,
+  type AbilityApiAbilityList,
+} from "@/contracts/ability/ability-api-schema.ts";
+import {
+  type DungeonApiDungeon,
+  type DungeonApiDungeonList,
+} from "@/contracts/dungeon/dungeon-api-schema.ts";
+import {
+  type EncounterApiEncounter,
+  type EncounterApiEncounterList,
+} from "@/contracts/encounter/encounter-api-schema.ts";
+import {
+  type UnitApiUnit,
+  type UnitApiUnitList,
+} from "@/contracts/unit/unit-api-schema.ts";
+import {
   createRequirementTargetsByEventType,
   type RequirementTargetsByEventType,
 } from "@/electron/renderer/stores/fellowship-data/create-requirement-target-data.ts";
 import { ReactContextError } from "@/errors/react-context-error.ts";
-import {
-  type AbilityApiAbility,
-  type AbilityApiAbilityList,
-} from "@/services/api/ability/ability-api-schema.ts";
-import {
-  type DungeonApiDungeon,
-  type DungeonApiDungeonList,
-} from "@/services/api/dungeon/dungeon-api-schema.ts";
-import {
-  type EncounterApiEncounter,
-  type EncounterApiEncounterList,
-} from "@/services/api/encounter/encounter-api-schema.ts";
-import {
-  type UnitApiUnit,
-  type UnitApiUnitList,
-} from "@/services/api/unit/unit-api-schema.ts";
 
 type FellowshipDataStoreProps = {
   readonly abilities: AbilityApiAbilityList;

@@ -5,7 +5,7 @@ import * as SqlClient from "effect/unstable/sql/SqlClient";
 import { describe, expect, test } from "vitest";
 
 import { makeDatabaseLayer } from "@/db/database-layer.ts";
-import { NodePlatformLive } from "@/layers/node-platform-layer.ts";
+import { NodePlatformLayer } from "@/layers/node-platform-layer.ts";
 import { runTest } from "@/tests/common/run-test.ts";
 
 describe("DatabaseLayer", () => {
@@ -95,7 +95,7 @@ describe("DatabaseLayer", () => {
           expect(result.length).toBeGreaterThan(0);
         }).pipe(E.provide(makeDatabaseLayer(databaseFilename)));
       }),
-    ).pipe(E.provide(NodePlatformLive));
+    ).pipe(E.provide(NodePlatformLayer));
 
     await runTest(program);
   });

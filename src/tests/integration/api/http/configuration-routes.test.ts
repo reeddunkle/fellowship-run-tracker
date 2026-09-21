@@ -11,12 +11,12 @@ import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { describe, expect, test } from "vitest";
 
 import { AppHttpApi } from "@/api/http/http-api.ts";
-import { ConfigurationDAOError } from "@/errors/configuration-dao-error.ts";
 import {
   type ConfigurationApiConfiguration,
   ConfigurationApiConfigurationListSchema,
   ConfigurationApiConfigurationSchema,
-} from "@/services/api/configuration/configuration-api-schema.ts";
+} from "@/contracts/configuration/configuration-api-schema.ts";
+import { ConfigurationDAOError } from "@/errors/configuration-dao-error.ts";
 import {
   MOCK_CONFIGURATION,
   MOCK_CONFIGURATION_FINGERPRINT,

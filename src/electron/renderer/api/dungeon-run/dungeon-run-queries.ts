@@ -8,9 +8,9 @@ import {
 import * as E from "effect/Effect";
 import { useCallback } from "react";
 
+import { type DungeonRunApiHistory } from "@/contracts/dungeon-run/dungeon-run-api-schema.ts";
 import { getDungeonRunHistory } from "@/electron/renderer/api/dungeon-run/dungeon-run-client.ts";
 import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
-import { type DungeonRunApiHistory } from "@/services/api/dungeon-run/dungeon-run-api-schema.ts";
 import { type DungeonId } from "@/services/fellowship/validation/fellowship-common.ts";
 
 export const DUNGEON_RUN_HISTORY_QUERY_KEY_PREFIX = ["dungeon-run", "history"];

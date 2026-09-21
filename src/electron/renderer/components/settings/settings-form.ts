@@ -2,7 +2,7 @@ import { useForm } from "@tanstack/react-form";
 import * as E from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-import { type AppSettingsApiAppSettings } from "@/services/api/app-settings/app-settings-api-schema.ts";
+import { type AppSettingsApiAppSettings } from "@/contracts/app-settings/app-settings-api-schema.ts";
 
 import {
   type DecodedSettingsFormValue,

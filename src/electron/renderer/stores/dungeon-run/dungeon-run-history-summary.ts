@@ -1,4 +1,4 @@
-import { type DungeonRunApiHistory } from "@/services/api/dungeon-run/dungeon-run-api-schema.ts";
+import { type DungeonRunApiHistory } from "@/contracts/dungeon-run/dungeon-run-api-schema.ts";
 
 export type DungeonRunHistorySummary = {
   readonly runCount: number;

@@ -1,10 +1,13 @@
 import * as Context from "effect/Context";
 import type * as E from "effect/Effect";
+import * as Layer from "effect/Layer";
 import type * as Option from "effect/Option";
 import type * as Schema from "effect/Schema";
 import type * as SqlError from "effect/unstable/sql/SqlError";
 
 import { type AbilityModel } from "@/db/models/ability-model.ts";
+
+import { makeAbilityDAO } from "./make-ability-dao.ts";
 
 type GetAbilityByIdOptions = {
   readonly id: string;
@@ -22,4 +25,6 @@ export type AbilityDAOShape = {
 
 export class AbilityDAO extends Context.Service<AbilityDAO, AbilityDAOShape>()(
   "fellowship-run-tracker/db/daos/ability/ability-dao/AbilityDAO",
-) {}
+) {
+  static readonly layer = Layer.effect(this, makeAbilityDAO);
+}

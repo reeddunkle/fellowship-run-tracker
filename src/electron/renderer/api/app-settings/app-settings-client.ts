@@ -1,7 +1,7 @@
 import * as E from "effect/Effect";
 
+import { type AppSettingsApiUpdate } from "@/contracts/app-settings/app-settings-api-schema.ts";
 import { AppApiClient } from "@/electron/renderer/services/app-api-client/app-api-client";
-import { type AppSettingsApiUpdate } from "@/services/api/app-settings/app-settings-api-schema.ts";
 
 export function getAppSettings() {
   return E.gen(function* () {

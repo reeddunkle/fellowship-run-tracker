@@ -53,7 +53,7 @@ const makeDungeonRunObservationTestContext = E.gen(function* () {
   };
 });
 
-describe("DungeonRunObservationDAOLive", () => {
+describe("DungeonRunObservationDAO", () => {
   test("observes and retrieves dungeon run observations", async () => {
     const program = E.gen(function* () {
       const { dungeonRun, dungeonRunObservationDAO } =

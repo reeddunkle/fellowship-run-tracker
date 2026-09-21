@@ -10,6 +10,7 @@ import {
   useSyncExternalStore,
 } from "react";
 
+import { type LiveSplitApiStatus } from "@/contracts/live-split/live-split-api-schema.ts";
 import {
   API_EVENT_CONNECTION_STATE,
   type ApiEventConnectionState,
@@ -18,7 +19,6 @@ import * as liveSplitClient from "@/electron/renderer/api/live-split/live-split-
 import { useAppSettings } from "@/electron/renderer/components/providers/settings-provider.tsx";
 import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
 import { ReactContextError } from "@/errors/react-context-error.ts";
-import { type LiveSplitApiStatus } from "@/services/api/live-split/live-split-api-schema.ts";
 
 import {
   type LiveSplitEventStoreSnapshot,

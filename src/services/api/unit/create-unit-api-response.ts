@@ -1,5 +1,5 @@
+import { type UnitApiUnit } from "@/contracts/unit/unit-api-schema.ts";
 import { type UnitModel } from "@/db/models/unit-model.ts";
-import { type UnitApiUnit } from "@/services/api/unit/unit-api-schema.ts";
 
 export function createUnitApiResponse(unit: UnitModel): UnitApiUnit {
   return {

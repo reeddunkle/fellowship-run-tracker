@@ -6,7 +6,7 @@ import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
 import {
   DungeonApiDungeonListSchema,
   DungeonApiDungeonSchema,
-} from "@/services/api/dungeon/dungeon-api-schema.ts";
+} from "@/contracts/dungeon/dungeon-api-schema.ts";
 import { DungeonIdSchema } from "@/services/fellowship/validation/fellowship-common.ts";
 
 const DUNGEONS_ROUTE = "/dungeons" as const;

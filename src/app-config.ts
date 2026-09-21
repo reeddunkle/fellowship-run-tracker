@@ -39,6 +39,9 @@ export const appConfig = {
     FellowshipLogsClientSecretSchema,
     "FELLOWSHIP_LOGS_CLIENT_SECRET",
   ).pipe(Config.option),
+  fellowshipLogsUseFixtures: Config.boolean(
+    "FELLOWSHIP_LOGS_USE_FIXTURES",
+  ).pipe(Config.withDefault(true)),
   liveSplitHost: Config.schema(LiveSplitHostSchema, "LIVE_SPLIT_HOST"),
   liveSplitPort: Config.schema(LiveSplitPortSchema, "LIVE_SPLIT_PORT"),
   publicApiHost: Config.schema(PublicApiHostSchema, "PUBLIC_API_HOST"),

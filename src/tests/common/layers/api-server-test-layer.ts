@@ -13,9 +13,9 @@ import { type FellowshipLogsApiService } from "@/services/api/fellowship-logs/fe
 import { type LiveSplitApiService } from "@/services/api/live-split/live-split-api-service.ts";
 import { type UnitApiService } from "@/services/api/unit/unit-api-service.ts";
 import {
-  DungeonRunWebSocketBroadcasterLive,
-  LiveSplitWebSocketBroadcasterLive,
-  TrackingWebSocketBroadcasterLive,
+  DungeonRunWebSocketBroadcaster,
+  LiveSplitWebSocketBroadcaster,
+  TrackingWebSocketBroadcaster,
 } from "@/services/api/websocket-broadcaster-service.ts";
 import { AbilityApiServiceMock } from "@/tests/common/mocks/ability-api-service-mock.ts";
 import { AppSettingsApiServiceMock } from "@/tests/common/mocks/app-settings-api-service-mock.ts";
@@ -76,9 +76,9 @@ export function makeApiServerTestLayer(
 ) {
   const ApiServerDependenciesTest = Layer.mergeAll(
     apiServicesLayer,
-    DungeonRunWebSocketBroadcasterLive,
-    LiveSplitWebSocketBroadcasterLive,
-    TrackingWebSocketBroadcasterLive,
+    DungeonRunWebSocketBroadcaster.layer,
+    LiveSplitWebSocketBroadcaster.layer,
+    TrackingWebSocketBroadcaster.layer,
     NodeHttpServer.layerTest,
   );
 

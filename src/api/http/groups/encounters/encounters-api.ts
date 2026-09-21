@@ -6,7 +6,7 @@ import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
 import {
   EncounterApiEncounterListSchema,
   EncounterApiEncounterSchema,
-} from "@/services/api/encounter/encounter-api-schema.ts";
+} from "@/contracts/encounter/encounter-api-schema.ts";
 import { DungeonIdSchema } from "@/services/fellowship/validation/fellowship-common.ts";
 import { NonEmptyStringSchema } from "@/validation/common-schemas.ts";
 

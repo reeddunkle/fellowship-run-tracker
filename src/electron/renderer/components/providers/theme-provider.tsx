@@ -1,8 +1,8 @@
 import { createContext, type ReactNode, useContext, useEffect } from "react";
 
+import { type Theme } from "@/contracts/app-state/app-state-schema.ts";
 import { useSetTheme } from "@/electron/renderer/api/app-state/app-state-mutations.ts";
 import { useTheme as useThemeQuery } from "@/electron/renderer/api/app-state/app-state-queries.ts";
-import { type Theme } from "@/electron/storage/app-state/app-state-schema.ts";
 import { ReactContextError } from "@/errors/react-context-error.ts";
 
 type ThemeProviderProps = {

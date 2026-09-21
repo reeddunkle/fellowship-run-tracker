@@ -2,13 +2,13 @@ import * as A from "effect/Array";
 import * as Match from "effect/Match";
 
 import {
+  type ConfigurationApiConfiguration,
+  type SaveConfigurationApiRequest,
+} from "@/contracts/configuration/configuration-api-schema.ts";
+import {
   type ConfigurationEditorValue,
   type DecodedConfigurationEditorValue,
 } from "@/electron/renderer/components/configuration/form/configuration-form-schema.ts";
-import {
-  type ConfigurationApiConfiguration,
-  type SaveConfigurationApiRequest,
-} from "@/services/api/configuration/configuration-api-schema.ts";
 import { FELLOWSHIP_EVENT } from "@/services/fellowship/constants/fellowship-event.ts";
 import { type FellowshipRequirement } from "@/services/fellowship/validation/fellowship-configuration-file-schema.ts";
 import { formatComparisonTime } from "@/validation/milestone/comparison-time-form-schema.ts";

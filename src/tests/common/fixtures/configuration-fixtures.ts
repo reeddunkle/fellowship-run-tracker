@@ -4,7 +4,7 @@ import * as Schema from "effect/Schema";
 import {
   type ConfigurationApiConfiguration,
   type SaveConfigurationApiRequest,
-} from "@/services/api/configuration/configuration-api-schema.ts";
+} from "@/contracts/configuration/configuration-api-schema.ts";
 import { type FellowshipMilestoneConfiguration } from "@/services/fellowship/configurations/configuration-types.ts";
 import { ConfigurationDefinitionIdSchema } from "@/validation/configuration/configuration-definition-id-schema.ts";
 import { ConfigurationFingerprintSchema } from "@/validation/configuration/configuration-fingerprint-schema.ts";

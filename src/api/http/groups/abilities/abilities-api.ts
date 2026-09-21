@@ -6,7 +6,7 @@ import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
 import {
   AbilityApiAbilityListSchema,
   AbilityApiAbilitySchema,
-} from "@/services/api/ability/ability-api-schema.ts";
+} from "@/contracts/ability/ability-api-schema.ts";
 import { NonEmptyStringSchema } from "@/validation/common-schemas.ts";
 
 const ABILITIES_ROUTE = "/abilities" as const;

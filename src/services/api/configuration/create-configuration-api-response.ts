@@ -1,11 +1,11 @@
 import * as A from "effect/Array";
 
-import { type PersistedConfiguration } from "@/db/daos/configuration/configuration-dao.ts";
 import {
   type ConfigurationApiConfiguration,
   type ConfigurationApiMilestone,
   type ConfigurationApiRequirement,
-} from "@/services/api/configuration/configuration-api-schema.ts";
+} from "@/contracts/configuration/configuration-api-schema.ts";
+import { type PersistedConfiguration } from "@/db/daos/configuration/configuration-dao.ts";
 import { type FellowshipMilestoneConfiguration } from "@/services/fellowship/configurations/configuration-types.ts";
 import { getRequirementLookup } from "@/services/fellowship/requirements/requirement-lookup.ts";
 import { type FellowshipRequirement } from "@/services/fellowship/validation/fellowship-configuration-file-schema.ts";

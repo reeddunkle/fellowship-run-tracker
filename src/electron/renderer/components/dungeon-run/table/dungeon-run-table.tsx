@@ -20,6 +20,10 @@ import {
   useMemo,
 } from "react";
 
+import {
+  DUNGEON_RUN_TIME_COLUMN,
+  type DungeonRunTimeColumn,
+} from "@/contracts/app-state/app-state-schema.ts";
 import { useDungeonRunTimeColumns } from "@/electron/renderer/api/app-state/app-state-queries.ts";
 import { type DungeonRunComparisonElapsedMilliseconds } from "@/electron/renderer/components/dungeon-run/helpers/dungeon-run-milestone-rows.ts";
 import { type DungeonRunTableRow as DungeonRunTableRowData } from "@/electron/renderer/components/dungeon-run/helpers/dungeon-run-table-row.ts";
@@ -27,10 +31,6 @@ import {
   formatDuration,
   formatSignedDuration,
 } from "@/electron/renderer/components/dungeon-run/helpers/dungeon-run-time.ts";
-import {
-  DUNGEON_RUN_TIME_COLUMN,
-  type DungeonRunTimeColumn,
-} from "@/electron/storage/app-state/app-state-schema.ts";
 import { ReactContextError } from "@/errors/react-context-error.ts";
 import { cn } from "@/util/class-names.ts";
 

@@ -3,15 +3,15 @@ import { expect, test, vi } from "vitest";
 import { render } from "vitest-browser-react";
 
 import {
+  type FellowshipLogsApiImportedDungeonRunList,
+  type FellowshipLogsApiLastKnownRateLimitData,
+} from "@/contracts/fellowship-logs/fellowship-logs-api-schema.ts";
+import {
   getFellowshipLogsDungeonRunsQueryOptions,
   getFellowshipLogsLastKnownRateLimitDataQueryOptions,
 } from "@/electron/renderer/api/fellowship-logs/fellowship-logs-queries.ts";
 import { FellowshipLogsRateLimitSection } from "@/electron/renderer/components/fellowship-logs/fellowship-logs-rate-limit-section.tsx";
 import { ImportedDungeonRunsList } from "@/electron/renderer/components/fellowship-logs/imported-dungeon-runs-list.tsx";
-import {
-  type FellowshipLogsApiImportedDungeonRunList,
-  type FellowshipLogsApiLastKnownRateLimitData,
-} from "@/services/api/fellowship-logs/fellowship-logs-api-schema.ts";
 
 test("loads each Fellowship Logs section independently with skeletons", async () => {
   const client = new QueryClient({

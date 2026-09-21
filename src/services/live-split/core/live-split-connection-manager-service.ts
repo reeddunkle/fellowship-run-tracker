@@ -34,13 +34,6 @@ export type LiveSplitConnectionManagerService = {
   readonly statusChanges: Stream.Stream<LiveSplitConnectionStatus>;
 };
 
-export class LiveSplitConnectionManager extends Context.Service<
-  LiveSplitConnectionManager,
-  LiveSplitConnectionManagerService
->()(
-  "fellowship-run-tracker/services/live-split/core/live-split-connection-manager-service/LiveSplitConnectionManager",
-) {}
-
 const DISCONNECTED_STATUS = {
   _tag: "Disconnected",
 } satisfies LiveSplitConnectionStatus;
@@ -49,7 +42,7 @@ const CONNECTED_STATUS = {
   _tag: "Connected",
 } satisfies LiveSplitConnectionStatus;
 
-const make = E.gen(function* () {
+const makeLiveSplitConnectionManager = E.gen(function* () {
   const appSettings = yield* AppSettings;
 
   const clientRef = yield* ScopedRef.make<
@@ -172,7 +165,20 @@ const make = E.gen(function* () {
   } satisfies LiveSplitConnectionManagerService;
 });
 
-export const LiveSplitConnectionManagerLive = Layer.effect(
+export class LiveSplitConnectionManager extends Context.Service<
   LiveSplitConnectionManager,
-  make,
-);
+  LiveSplitConnectionManagerService
+>()(
+  "fellowship-run-tracker/services/live-split/core/live-split-connection-manager-service/LiveSplitConnectionManager",
+) {
+  static readonly layerNoDeps = Layer.effect(
+    this,
+    makeLiveSplitConnectionManager,
+  );
+
+  static readonly layerWith = (options: {
+    readonly encryptionKeyDirectory: string;
+  }) => {
+    return this.layerNoDeps.pipe(Layer.provide(AppSettings.layerWith(options)));
+  };
+}

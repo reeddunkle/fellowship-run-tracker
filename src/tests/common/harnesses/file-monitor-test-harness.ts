@@ -9,11 +9,8 @@ import * as Ref from "effect/Ref";
 import * as Stream from "effect/Stream";
 
 import { FileNotFoundError } from "@/errors/file-not-found-error.ts";
-import { NodePlatformLive } from "@/layers/node-platform-layer.ts";
-import {
-  FileMonitor,
-  FileMonitorLive,
-} from "@/services/filesystem/file-monitor-service.ts";
+import { NodePlatformLayer } from "@/layers/node-platform-layer.ts";
+import { FileMonitor } from "@/services/filesystem/file-monitor-service.ts";
 import {
   FileMonitorSource,
   type FileMonitorSourceService,
@@ -176,8 +173,8 @@ export function makeFileMonitorTestHarness() {
       fileMonitorSource,
     );
 
-    const FileMonitorTestDependenciesLive = FileMonitorLive.pipe(
-      Layer.provide(Layer.mergeAll(FileMonitorSourceMock, NodePlatformLive)),
+    const FileMonitorTestDependenciesLive = FileMonitor.layerNoDeps.pipe(
+      Layer.provide(Layer.mergeAll(FileMonitorSourceMock, NodePlatformLayer)),
     );
 
     const fileMonitor = yield* FileMonitor.pipe(
@@ -205,4 +202,4 @@ export function makeFileMonitorTestHarness() {
   });
 }
 
-export const FileMonitorTestDependenciesLive = NodePlatformLive;
+export const FileMonitorTestDependenciesLive = NodePlatformLayer;

@@ -5,7 +5,6 @@ import { describe, expect, test } from "vitest";
 
 import {
   DungeonRunWebSocketBroadcaster,
-  DungeonRunWebSocketBroadcasterLive,
   type WebSocketWriter,
 } from "@/services/api/websocket-broadcaster-service.ts";
 import { runTest } from "@/tests/common/run-test.ts";
@@ -39,7 +38,7 @@ describe("WebSocketBroadcaster", () => {
         yield* webSocketBroadcaster.publish("second");
 
         expect(yield* Ref.get(messages)).toEqual(["first", "second"]);
-      }).pipe(E.provide(DungeonRunWebSocketBroadcasterLive)),
+      }).pipe(E.provide(DungeonRunWebSocketBroadcaster.layer)),
     );
 
     await runTest(program);
@@ -82,7 +81,7 @@ describe("WebSocketBroadcaster", () => {
 
         expect(yield* Ref.get(healthyMessages)).toEqual(["first", "second"]);
         expect(yield* webSocketBroadcaster.clientCount).toBe(1);
-      }).pipe(E.provide(DungeonRunWebSocketBroadcasterLive)),
+      }).pipe(E.provide(DungeonRunWebSocketBroadcaster.layer)),
     );
 
     await runTest(program);
@@ -106,7 +105,7 @@ describe("WebSocketBroadcaster", () => {
         yield* webSocketBroadcaster.sendLatestToClient(writer);
 
         expect(yield* Ref.get(messages)).toEqual(["second"]);
-      }).pipe(E.provide(DungeonRunWebSocketBroadcasterLive)),
+      }).pipe(E.provide(DungeonRunWebSocketBroadcaster.layer)),
     );
 
     await runTest(program);
@@ -127,7 +126,7 @@ describe("WebSocketBroadcaster", () => {
         yield* webSocketBroadcaster.sendLatestToClient(writer);
 
         expect(yield* Ref.get(messages)).toEqual([]);
-      }).pipe(E.provide(DungeonRunWebSocketBroadcasterLive)),
+      }).pipe(E.provide(DungeonRunWebSocketBroadcaster.layer)),
     );
 
     await runTest(program);
@@ -149,7 +148,7 @@ describe("WebSocketBroadcaster", () => {
          * so the writer failure must not escape.
          */
         yield* webSocketBroadcaster.sendLatestToClient(failingWriter);
-      }).pipe(E.provide(DungeonRunWebSocketBroadcasterLive)),
+      }).pipe(E.provide(DungeonRunWebSocketBroadcaster.layer)),
     );
 
     await runTest(program);

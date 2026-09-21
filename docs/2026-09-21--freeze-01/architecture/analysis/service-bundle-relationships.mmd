@@ -1,0 +1,9 @@
+flowchart LR
+  FellowshipTrackerWithDependenciesLive["FellowshipTrackerWithDependenciesLive"]
+  ApiRuntimeLive["ApiRuntimeLive"]
+  ApiServicesLive["ApiServicesLive"]
+  ApiServicesWithDependenciesLive["ApiServicesWithDependenciesLive"]
+  FellowshipTrackerWithDependenciesLive -->|"strict subset · 1 shared"| ApiRuntimeLive
+  ApiServicesLive ---|"equal · 9 services"| ApiServicesWithDependenciesLive
+  ApiServicesLive -->|"strict subset · 9 shared"| ApiRuntimeLive
+  ApiServicesWithDependenciesLive -->|"strict subset · 9 shared"| ApiRuntimeLive

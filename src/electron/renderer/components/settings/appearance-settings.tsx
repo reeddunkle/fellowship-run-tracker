@@ -1,6 +1,7 @@
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
+import { ThemeSchema } from "@/contracts/app-state/app-state-schema.ts";
 import { useTheme } from "@/electron/renderer/components/providers/theme-provider.tsx";
 import { Card, CardContent } from "@/electron/renderer/components/ui/card.tsx";
 import { Field, FieldLabel } from "@/electron/renderer/components/ui/field.tsx";
@@ -8,7 +9,6 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@/electron/renderer/components/ui/native-select.tsx";
-import { ThemeSchema } from "@/electron/storage/app-state/app-state-schema.ts";
 
 const themeOptions = [
   { label: "System", value: "system" },

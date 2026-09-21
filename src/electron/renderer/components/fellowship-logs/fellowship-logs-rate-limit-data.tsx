@@ -1,4 +1,4 @@
-import { type FellowshipLogsApiRateLimitData } from "@/services/api/fellowship-logs/fellowship-logs-api-schema.ts";
+import { type FellowshipLogsApiRateLimitData } from "@/contracts/fellowship-logs/fellowship-logs-api-schema.ts";
 import { cn } from "@/util/class-names.ts";
 
 type FellowshipLogsRateLimitDataProps = {

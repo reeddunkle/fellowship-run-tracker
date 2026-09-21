@@ -3,6 +3,7 @@ import * as E from "effect/Effect";
 import * as Schema from "effect/Schema";
 import { SearchIcon } from "lucide-react";
 
+import { type FellowshipLogsApiDungeonRunReference } from "@/contracts/fellowship-logs/fellowship-logs-api-schema.ts";
 import { Button } from "@/electron/renderer/components/ui/button.tsx";
 import {
   Field,
@@ -11,7 +12,6 @@ import {
   FieldLabel,
 } from "@/electron/renderer/components/ui/field.tsx";
 import { Input } from "@/electron/renderer/components/ui/input.tsx";
-import { type FellowshipLogsApiDungeonRunReference } from "@/services/api/fellowship-logs/fellowship-logs-api-schema.ts";
 import { getErrorTag } from "@/util/get-error-tag.ts";
 
 import {

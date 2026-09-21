@@ -18,4 +18,4 @@ const makeAppApiClient = HttpApiClient.make(AppHttpApi, {
   baseUrl: getApiBaseUrl(),
 });
 
-export const AppApiClientLive = Layer.effect(AppApiClient, makeAppApiClient);
+export const AppApiClientLayer = Layer.effect(AppApiClient, makeAppApiClient);

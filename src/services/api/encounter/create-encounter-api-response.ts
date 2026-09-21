@@ -1,5 +1,5 @@
+import { type EncounterApiEncounter } from "@/contracts/encounter/encounter-api-schema.ts";
 import { type EncounterModel } from "@/db/models/encounter-model.ts";
-import { type EncounterApiEncounter } from "@/services/api/encounter/encounter-api-schema.ts";
 
 export function createEncounterApiResponse(
   encounter: EncounterModel,

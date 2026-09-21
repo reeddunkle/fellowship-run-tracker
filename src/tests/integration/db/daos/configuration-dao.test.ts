@@ -9,7 +9,7 @@ import {
   ConfigurationDAO,
   type PersistedConfiguration,
 } from "@/db/daos/configuration/configuration-dao.ts";
-import { NodePlatformLive } from "@/layers/node-platform-layer.ts";
+import { NodePlatformLayer } from "@/layers/node-platform-layer.ts";
 import { type FellowshipMilestoneConfiguration } from "@/services/fellowship/configurations/configuration-types.ts";
 import {
   MOCK_ALTERNATE_DUNGEON_ID,
@@ -33,7 +33,7 @@ function getPersistedConfiguration(
   return persisted.value;
 }
 
-describe("ConfigurationDAOLive", () => {
+describe("ConfigurationDAO", () => {
   test("creates and retrieves a configuration", async () => {
     const program = E.gen(function* () {
       const configurationDAO = yield* ConfigurationDAO;
@@ -305,7 +305,7 @@ describe("ConfigurationDAOLive", () => {
 
         expect(persisted).toEqual(created);
       }),
-    ).pipe(E.provide(NodePlatformLive));
+    ).pipe(E.provide(NodePlatformLayer));
 
     await runTest(program);
   });

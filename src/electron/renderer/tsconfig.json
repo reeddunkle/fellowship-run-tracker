@@ -9,8 +9,7 @@
     "jsx": "react-jsx"
   },
   "include": [
-    "../../electron/**/*.ts",
-    "../../services/api/**/*.ts",
+    "../../contracts/**/*.ts",
     "../../types/vite-env.d.ts",
     "../../util/**/*.ts",
     "../../validation/**/*.ts",

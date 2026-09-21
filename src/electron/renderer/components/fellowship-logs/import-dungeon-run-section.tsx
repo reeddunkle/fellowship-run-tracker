@@ -1,10 +1,10 @@
 import { useState } from "react";
 
+import { type FellowshipLogsApiDungeonRunReference } from "@/contracts/fellowship-logs/fellowship-logs-api-schema.ts";
 import {
   useDungeonRunMetadata,
   useImportDungeonRun,
 } from "@/electron/renderer/api/fellowship-logs/fellowship-logs-mutations.ts";
-import { type FellowshipLogsApiDungeonRunReference } from "@/services/api/fellowship-logs/fellowship-logs-api-schema.ts";
 
 import { ImportConfirmationCard } from "./import-confirmation/import-confirmation-card.tsx";
 import { type DecodedImportConfirmationFormValue } from "./import-confirmation/import-confirmation-form-schema.ts";

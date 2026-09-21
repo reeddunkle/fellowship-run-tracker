@@ -7,6 +7,8 @@ import {
 } from "@tanstack/react-query";
 import * as E from "effect/Effect";
 
+import { AppStateApiService } from "@/contracts/app-state/app-state-api-service.ts";
+import { type AppState } from "@/contracts/app-state/app-state-schema.ts";
 import {
   getDungeonRunComparisonGroupQueryOptions,
   getDungeonRunTimeColumnsQueryOptions,
@@ -15,9 +17,7 @@ import {
   getThemeQueryOptions,
 } from "@/electron/renderer/api/app-state/app-state-queries.ts";
 import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
-import { type AppState } from "@/electron/storage/app-state/app-state-schema.ts";
 import { QueryClientOperationError } from "@/errors/query-client-operation-error.ts";
-import { AppStateApiService } from "@/services/api/app-state/app-state-api-service.ts";
 import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";
 import { type DungeonRunComparisonGroupSchema } from "@/validation/dungeon-run/dungeon-run-comparison-group-schema.ts";
 

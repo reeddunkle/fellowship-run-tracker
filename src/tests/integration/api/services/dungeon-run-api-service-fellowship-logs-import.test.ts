@@ -5,10 +5,7 @@ import * as SqlClient from "effect/unstable/sql/SqlClient";
 import { describe, expect, test } from "vitest";
 
 import { FellowshipLogsDungeonRunImporter } from "@/application/fellowship-logs-dungeon-run-importer/fellowship-logs-dungeon-run-importer-service.ts";
-import {
-  DungeonRunApiService,
-  DungeonRunApiServiceLive,
-} from "@/services/api/dungeon-run/dungeon-run-api-service.ts";
+import { DungeonRunApiService } from "@/services/api/dungeon-run/dungeon-run-api-service.ts";
 import { DungeonIdSchema } from "@/services/fellowship/validation/fellowship-common.ts";
 import { makeFellowshipLogsDungeonRunImporterIntegrationTestHarness } from "@/tests/common/harnesses/fellowship-logs-dungeon-run-importer-integration-test-harness.ts";
 import { runTest } from "@/tests/common/run-test.ts";
@@ -21,12 +18,12 @@ const REPORT_CODE = Schema.decodeSync(FellowshipLogsReportCodeSchema)(
 
 const FIGHT_ID = Schema.decodeSync(FellowshipLogsFightIdSchema)(15);
 
-describe("DungeonRunApiServiceLive with Fellowship Logs import", () => {
+describe("DungeonRunApiService with Fellowship Logs import", () => {
   test("returns history created from imported Fellowship Logs observations", async () => {
     const harness =
       makeFellowshipLogsDungeonRunImporterIntegrationTestHarness();
 
-    const DungeonRunApiServiceTestLive = DungeonRunApiServiceLive.pipe(
+    const DungeonRunApiServiceTestLive = DungeonRunApiService.layer.pipe(
       Layer.provide(harness.layer),
     );
 

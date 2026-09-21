@@ -1,6 +1,6 @@
 import * as Schema from "effect/Schema";
 
-import { AppStateSchema } from "../app-state-schema.ts";
+import { AppStateSchema } from "@/contracts/app-state/app-state-schema.ts";
 
 export const PersistedAppStateV1Schema = Schema.Struct({
   state: AppStateSchema,

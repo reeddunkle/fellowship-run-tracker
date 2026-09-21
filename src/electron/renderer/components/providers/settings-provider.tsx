@@ -10,15 +10,15 @@ import {
   useOptimistic,
 } from "react";
 
+import {
+  type AppSettingsApiAppSettings,
+  type AppSettingsApiUpdate,
+} from "@/contracts/app-settings/app-settings-api-schema.ts";
 import * as appSettingsClient from "@/electron/renderer/api/app-settings/app-settings-client.ts";
 import * as filesClient from "@/electron/renderer/api/electron-ipc/files/files-client.ts";
 import { browserRuntime } from "@/electron/renderer/runtimes/browser-runtime.ts";
 import { ReactContextError } from "@/errors/react-context-error.ts";
 import { RouterInvalidationError } from "@/errors/router-invalidation-error.ts";
-import {
-  type AppSettingsApiAppSettings,
-  type AppSettingsApiUpdate,
-} from "@/services/api/app-settings/app-settings-api-schema.ts";
 
 type SettingsProviderProps = {
   readonly appSettings: AppSettingsApiAppSettings;

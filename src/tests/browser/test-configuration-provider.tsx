@@ -1,10 +1,10 @@
 import { type QueryClient } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 
+import { DEFAULT_APP_STATE } from "@/contracts/app-state/app-state-schema.ts";
+import { type ConfigurationApiConfiguration } from "@/contracts/configuration/configuration-api-schema.ts";
 import { getConfigurationsQueryOptions } from "@/electron/renderer/api/configuration/configuration-queries.ts";
 import { ConfigurationProvider } from "@/electron/renderer/stores/configuration/configuration-provider.tsx";
-import { DEFAULT_APP_STATE } from "@/electron/storage/app-state/app-state-schema.ts";
-import { type ConfigurationApiConfiguration } from "@/services/api/configuration/configuration-api-schema.ts";
 import { seedAppStateQueries } from "@/tests/browser/helpers/seed-app-state-queries.ts";
 
 export function TestConfigurationProvider({

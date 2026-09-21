@@ -4,11 +4,10 @@ import * as Layer from "effect/Layer";
 import type * as PlatformError from "effect/PlatformError";
 import type * as Scope from "effect/Scope";
 
-import { NodePlatformLive } from "@/layers/node-platform-layer.ts";
-import { makeEncryptionKeyStorageLive } from "@/services/encryption/encryption-key-storage-service.ts";
+import { NodePlatformLayer } from "@/layers/node-platform-layer.ts";
+import { EncryptionKeyStorage } from "@/services/encryption/encryption-key-storage-service.ts";
 import {
   Encryption,
-  EncryptionLive,
   type EncryptionShape,
 } from "@/services/encryption/encryption-service.ts";
 
@@ -27,11 +26,11 @@ export function makeEncryptionHarness(): E.Effect<
 
     const encryptionKeyDirectory = yield* fileSystem.makeTempDirectoryScoped();
 
-    const encryptionKeyStorageLive = makeEncryptionKeyStorageLive({
+    const encryptionKeyStorageLive = EncryptionKeyStorage.layerWith({
       encryptionKeyDirectory,
     });
 
-    const EncryptionTestLive = EncryptionLive.pipe(
+    const EncryptionTestLive = Encryption.layerNoDeps.pipe(
       Layer.provide(encryptionKeyStorageLive),
     );
 
@@ -41,5 +40,5 @@ export function makeEncryptionHarness(): E.Effect<
       encryption,
       encryptionKeyDirectory,
     } satisfies EncryptionHarness;
-  }).pipe(E.provide(NodePlatformLive));
+  }).pipe(E.provide(NodePlatformLayer));
 }

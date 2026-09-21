@@ -4,12 +4,12 @@ import {
   serializeCanonicalConfiguration,
   serializeNormalizedCanonicalConfiguration,
 } from "@/application/configurations/canonicalize-configuration.ts";
-import { saveConfigurationApiRequest } from "@/electron/renderer/components/configuration/form/configuration-editor-adapter.ts";
-import { type DecodedConfigurationEditorValue } from "@/electron/renderer/components/configuration/form/configuration-form-schema.ts";
 import {
   type ConfigurationApiConfiguration,
   type ConfigurationApiConfigurationList,
-} from "@/services/api/configuration/configuration-api-schema.ts";
+} from "@/contracts/configuration/configuration-api-schema.ts";
+import { saveConfigurationApiRequest } from "@/electron/renderer/components/configuration/form/configuration-editor-adapter.ts";
+import { type DecodedConfigurationEditorValue } from "@/electron/renderer/components/configuration/form/configuration-form-schema.ts";
 import { type ConfigurationId } from "@/validation/configuration/configuration-id-schema.ts";
 
 type ConfigurationCreateSaveState = {
