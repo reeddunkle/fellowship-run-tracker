@@ -1,0 +1,316 @@
+{
+  "type": "object",
+  "properties": {
+    "dungeonId": {
+      "type": "string",
+      "allOf": [
+        {
+          "minLength": 1
+        }
+      ]
+    },
+    "dungeonLevel": {
+      "type": "integer",
+      "allOf": [
+        {
+          "minimum": 1
+        }
+      ]
+    },
+    "milestones": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "comparisonTime": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "allOf": [
+                  {
+                    "minimum": 0
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "label": {
+            "type": "string",
+            "allOf": [
+              {
+                "minLength": 1
+              }
+            ]
+          },
+          "requirements": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "$ref": "#/$defs/Union_"
+              }
+            ],
+            "minItems": 1,
+            "items": {
+              "$ref": "#/$defs/Union_"
+            }
+          }
+        },
+        "required": [
+          "comparisonTime",
+          "label",
+          "requirements"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "dungeonId",
+    "dungeonLevel",
+    "milestones"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "Union_": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "abilityId": {
+              "type": "string",
+              "allOf": [
+                {
+                  "minLength": 1
+                }
+              ]
+            },
+            "requiredCount": {
+              "type": "integer",
+              "allOf": [
+                {
+                  "minimum": 1
+                }
+              ]
+            },
+            "startOccurrence": {
+              "type": "integer",
+              "allOf": [
+                {
+                  "minimum": 1
+                }
+              ]
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "ABILITY_ACTIVATED"
+              ]
+            }
+          },
+          "required": [
+            "abilityId",
+            "requiredCount",
+            "startOccurrence",
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "requiredCount": {
+              "type": "integer",
+              "allOf": [
+                {
+                  "minimum": 1
+                }
+              ]
+            },
+            "startOccurrence": {
+              "type": "integer",
+              "allOf": [
+                {
+                  "minimum": 1
+                }
+              ]
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "DUNGEON_END"
+              ]
+            }
+          },
+          "required": [
+            "requiredCount",
+            "startOccurrence",
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "requiredCount": {
+              "type": "integer",
+              "allOf": [
+                {
+                  "minimum": 1
+                }
+              ]
+            },
+            "startOccurrence": {
+              "type": "integer",
+              "allOf": [
+                {
+                  "minimum": 1
+                }
+              ]
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "DUNGEON_START"
+              ]
+            }
+          },
+          "required": [
+            "requiredCount",
+            "startOccurrence",
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "encounterId": {
+              "type": "string",
+              "allOf": [
+                {
+                  "minLength": 1
+                }
+              ]
+            },
+            "requiredCount": {
+              "type": "integer",
+              "allOf": [
+                {
+                  "minimum": 1
+                }
+              ]
+            },
+            "startOccurrence": {
+              "type": "integer",
+              "allOf": [
+                {
+                  "minimum": 1
+                }
+              ]
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "ENCOUNTER_END"
+              ]
+            }
+          },
+          "required": [
+            "encounterId",
+            "requiredCount",
+            "startOccurrence",
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "encounterId": {
+              "type": "string",
+              "allOf": [
+                {
+                  "minLength": 1
+                }
+              ]
+            },
+            "requiredCount": {
+              "type": "integer",
+              "allOf": [
+                {
+                  "minimum": 1
+                }
+              ]
+            },
+            "startOccurrence": {
+              "type": "integer",
+              "allOf": [
+                {
+                  "minimum": 1
+                }
+              ]
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "ENCOUNTER_START"
+              ]
+            }
+          },
+          "required": [
+            "encounterId",
+            "requiredCount",
+            "startOccurrence",
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "requiredCount": {
+              "type": "integer",
+              "allOf": [
+                {
+                  "minimum": 1
+                }
+              ]
+            },
+            "startOccurrence": {
+              "type": "integer",
+              "allOf": [
+                {
+                  "minimum": 1
+                }
+              ]
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "UNIT_DEATH"
+              ]
+            },
+            "unitTypeId": {
+              "type": "string",
+              "allOf": [
+                {
+                  "minLength": 1
+                }
+              ]
+            }
+          },
+          "required": [
+            "requiredCount",
+            "startOccurrence",
+            "type",
+            "unitTypeId"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

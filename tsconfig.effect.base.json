@@ -12,7 +12,12 @@
         "diagnosticSeverity": {},
         "overrides": [
           {
-            "include": ["src/**/*.ts", "src/**/*.tsx"],
+            "include": [
+              "apps/*/src/**/*.ts",
+              "apps/*/src/**/*.tsx",
+              "packages/*/src/**/*.ts",
+              "packages/*/src/**/*.tsx"
+            ],
             "options": {
               "diagnosticSeverity": {
                 "abortControllerInEffect": "warning",
@@ -49,7 +54,12 @@
             }
           },
           {
-            "include": ["src/tests/**/*.ts", "src/tests/**/*.tsx"],
+            "include": [
+              "apps/*/src/tests/**/*.ts",
+              "apps/*/src/tests/**/*.tsx",
+              "packages/*/src/tests/**/*.ts",
+              "packages/*/src/tests/**/*.tsx"
+            ],
             "options": {
               "diagnosticSeverity": {
                 "asyncFunction": "off",

@@ -1,0 +1,42 @@
+{
+  "compilerOptions": {
+    "module": "nodenext",
+    "moduleDetection": "force",
+    "target": "esnext",
+    "lib": ["esnext"],
+    "types": ["node"],
+
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "noUncheckedSideEffectImports": true,
+    "skipLibCheck": true,
+
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+
+    "allowImportingTsExtensions": true,
+    "noEmit": true
+  },
+
+  "references": [
+    { "path": "../../packages/shared" },
+    { "path": "../../packages/api-contract" },
+    { "path": "../../packages/db" },
+    { "path": "../../packages/ui" },
+    { "path": "../api" }
+  ],
+
+  "exclude": ["src/renderer/**/*", "src/tests/browser/**/*", "src/preload.ts"]
+}

@@ -1,0 +1,23 @@
+import * as Schema from "effect/Schema";
+
+import { NonEmptyStringSchema } from "@frt/shared/validation/common-schemas.ts";
+
+const ExternalMobDataEntrySchema = Schema.Struct({
+  DevKey: NonEmptyStringSchema,
+  DevName: NonEmptyStringSchema,
+  DevZoneName: NonEmptyStringSchema,
+  FoundInZoneFSLIDs: Schema.Array(Schema.Finite),
+  FoundInZoneGameIDs: Schema.Array(Schema.Finite),
+  FSLName: NonEmptyStringSchema,
+  KillScore: Schema.NullOr(Schema.Finite),
+  PlacedInZones: Schema.Array(NonEmptyStringSchema),
+});
+
+// type ExternalMobDataEntry = typeof ExternalMobDataEntrySchema.Type;
+
+export const ExternalMobDataSchema = Schema.Record(
+  NonEmptyStringSchema,
+  ExternalMobDataEntrySchema,
+);
+
+export type ExternalMobData = typeof ExternalMobDataSchema.Type;

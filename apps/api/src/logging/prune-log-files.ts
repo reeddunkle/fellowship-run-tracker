@@ -1,0 +1,174 @@
+import * as DateTime from "effect/DateTime";
+import * as E from "effect/Effect";
+import * as FileSystem from "effect/FileSystem";
+import * as Option from "effect/Option";
+import * as Path from "effect/Path";
+
+import { isLogFileName } from "@frt/api/logging/log-file-path.ts";
+
+// Sessions that logged nothing at WARN or above.
+const CLEAN_SESSION_RETENTION_DAYS = 30;
+
+// Sessions that logged a warning or error are kept longer for troubleshooting.
+const PROBLEM_SESSION_RETENTION_DAYS = 90;
+
+// Bounds disk use regardless of age (including the current session's file).
+const MAX_LOG_FILES = 200;
+
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+
+const PROBLEM_LEVEL_MARKERS = [
+  '"level":"WARN"',
+  '"level":"ERROR"',
+  '"level":"FATAL"',
+];
+
+const FILE_OPERATION_CONCURRENCY = 8;
+
+type LogFile = {
+  readonly ageDays: number;
+  readonly modifiedAtEpochMilliseconds: number;
+  readonly path: string;
+};
+
+export type PruneLogFilesOptions = {
+  readonly currentLogFilePath: string;
+  readonly directory: string;
+};
+
+/**
+ * Deletes old session log files:
+ * - older than {@link PROBLEM_SESSION_RETENTION_DAYS} days,
+ * - older than {@link CLEAN_SESSION_RETENTION_DAYS} days without any
+ *   WARN/ERROR/FATAL entry,
+ * - the oldest beyond {@link MAX_LOG_FILES}.
+ *
+ * Never touches the current session's file or files that don't look like log
+ * files. Failing to delete an individual file (e.g. one another running
+ * process still has open) is logged and skipped.
+ */
+export const pruneLogFiles = E.fn("pruneLogFiles")(function* ({
+  currentLogFilePath,
+  directory,
+}: PruneLogFilesOptions) {
+  const fileSystem = yield* FileSystem.FileSystem;
+  const path = yield* Path.Path;
+  const nowEpochMilliseconds = DateTime.toEpochMillis(yield* DateTime.now);
+
+  const directoryExists = yield* fileSystem.exists(directory);
+
+  if (!directoryExists) {
+    return;
+  }
+
+  const fileNames = yield* fileSystem.readDirectory(directory);
+
+  const candidatePaths = fileNames
+    .filter(isLogFileName)
+    .map((fileName) => {
+      return path.join(directory, fileName);
+    })
+    .filter((filePath) => {
+      return path.resolve(filePath) !== path.resolve(currentLogFilePath);
+    });
+
+  const logFiles = yield* E.forEach(
+    candidatePaths,
+    (filePath) => {
+      return fileSystem.stat(filePath).pipe(
+        E.map((info): LogFile => {
+          const modifiedAtEpochMilliseconds = Option.match(info.mtime, {
+            // Without a modified time, treat the file as new.
+            onNone: () => nowEpochMilliseconds,
+            onSome: (mtime) => mtime.getTime(),
+          });
+
+          return {
+            ageDays:
+              (nowEpochMilliseconds - modifiedAtEpochMilliseconds) /
+              MILLISECONDS_PER_DAY,
+            modifiedAtEpochMilliseconds,
+            path: filePath,
+          };
+        }),
+      );
+    },
+    { concurrency: FILE_OPERATION_CONCURRENCY },
+  );
+
+  const expiredFiles = logFiles.filter((logFile) => {
+    return logFile.ageDays > PROBLEM_SESSION_RETENTION_DAYS;
+  });
+
+  const agingFiles = logFiles.filter((logFile) => {
+    return (
+      logFile.ageDays > CLEAN_SESSION_RETENTION_DAYS &&
+      logFile.ageDays <= PROBLEM_SESSION_RETENTION_DAYS
+    );
+  });
+
+  const agingFileProblems = yield* E.forEach(
+    agingFiles,
+    (logFile) => {
+      return fileSystem.readFileString(logFile.path).pipe(
+        E.map((contents) => {
+          return {
+            hasProblems: PROBLEM_LEVEL_MARKERS.some((marker) => {
+              return contents.includes(marker);
+            }),
+            logFile,
+          };
+        }),
+      );
+    },
+    { concurrency: FILE_OPERATION_CONCURRENCY },
+  );
+
+  const cleanAgingFiles = agingFileProblems
+    .filter(({ hasProblems }) => {
+      return !hasProblems;
+    })
+    .map(({ logFile }) => {
+      return logFile;
+    });
+
+  const deletedByAge = new Set(
+    [...expiredFiles, ...cleanAgingFiles].map((logFile) => {
+      return logFile.path;
+    }),
+  );
+
+  // One slot is taken by the current session's file.
+  const filesOverCap = logFiles
+    .filter((logFile) => {
+      return !deletedByAge.has(logFile.path);
+    })
+    .toSorted((first, second) => {
+      return (
+        second.modifiedAtEpochMilliseconds - first.modifiedAtEpochMilliseconds
+      );
+    })
+    .slice(MAX_LOG_FILES - 1);
+
+  const filesToDelete = [
+    ...deletedByAge,
+    ...filesOverCap.map((logFile) => {
+      return logFile.path;
+    }),
+  ];
+
+  yield* E.forEach(
+    filesToDelete,
+    (filePath) => {
+      return fileSystem.remove(filePath).pipe(
+        E.catch((cause) => {
+          return E.logDebug("Failed to delete an old log file.", {
+            cause,
+            filePath,
+          });
+        }),
+      );
+    },
+    { concurrency: FILE_OPERATION_CONCURRENCY, discard: true },
+  );
+});

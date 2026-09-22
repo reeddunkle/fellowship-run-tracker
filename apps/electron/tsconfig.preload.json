@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // The preload script runs in the renderer, where browser globals (e.g.
+    // `File`) are the DOM versions rather than Node's.
+    "lib": ["esnext", "DOM", "DOM.Iterable"]
+  },
+  "include": ["src/preload.ts"],
+  "exclude": []
+}

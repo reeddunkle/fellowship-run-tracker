@@ -1,0 +1,32 @@
+{
+  "name": "@frt/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*.ts": "./src/*.ts",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "clean": "git clean -Xdfq -- dist tsconfig.effect.tsbuildinfo",
+    "format:test-sql": "prettier --write --log-level warn \"src/tests/**/*.ts\"",
+    "typecheck": "tsc --project tsconfig.effect.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@effect/platform-node": "catalog:effect",
+    "@frt/api-contract": "workspace:*",
+    "@frt/db": "workspace:*",
+    "@frt/shared": "workspace:*",
+    "effect": "catalog:effect",
+    "env-paths": "catalog:runtime"
+  },
+  "devDependencies": {
+    "@effect/tsgo": "catalog:effect",
+    "@effect/tsgo-win32-x64": "catalog:effect",
+    "@types/node": "catalog:node",
+    "prettier": "catalog:prettier",
+    "typescript": "catalog:typescript",
+    "vitest": "catalog:testing"
+  }
+}

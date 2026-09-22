@@ -1,0 +1,35 @@
+{
+  "name": "@frt/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*.ts": "./src/*.ts",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "clean": "git clean -Xdfq -- dist tsconfig.effect.tsbuildinfo",
+    "format:sql": "run-s format:sql:prettier format:sql:biome",
+    "format:sql:biome": "biome check --write src",
+    "format:sql:prettier": "prettier --write --log-level warn \"src/**/*.ts\"",
+    "typecheck": "tsc --project tsconfig.effect.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@effect/platform-node": "catalog:effect",
+    "@effect/sql-sqlite-node": "catalog:effect",
+    "@frt/api-contract": "workspace:*",
+    "@frt/shared": "workspace:*",
+    "effect": "catalog:effect"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "catalog:biome",
+    "@effect/tsgo": "catalog:effect",
+    "@effect/tsgo-win32-x64": "catalog:effect",
+    "@types/node": "catalog:node",
+    "npm-run-all2": "catalog:tooling",
+    "prettier": "catalog:prettier",
+    "typescript": "catalog:typescript",
+    "vitest": "catalog:testing"
+  }
+}

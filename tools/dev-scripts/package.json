@@ -1,0 +1,30 @@
+{
+  "name": "@frt/dev-scripts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*.ts": "./src/*.ts",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "clean": "git clean -Xdfq -- dist tsconfig.effect.tsbuildinfo",
+    "clean:node-modules": "node src/clean-node-modules.ts",
+    "generate:catalog-checksums": "tsx src/generate-catalog-checksums.ts",
+    "typecheck": "tsc --project tsconfig.effect.json"
+  },
+  "dependencies": {
+    "@effect/platform-node": "catalog:effect",
+    "@frt/api": "workspace:*",
+    "@frt/db": "workspace:*",
+    "@frt/shared": "workspace:*",
+    "effect": "catalog:effect"
+  },
+  "devDependencies": {
+    "@effect/tsgo": "catalog:effect",
+    "@effect/tsgo-win32-x64": "catalog:effect",
+    "@types/node": "catalog:node",
+    "tsx": "catalog:typescript",
+    "typescript": "catalog:typescript"
+  }
+}

@@ -6,7 +6,6 @@
   // [STABLE]
   "biome.enabled": true,
   "biome.requireConfiguration": true,
-  "biome.configurationPath": "./biome.vscode.jsonc",
 
   "prettier.requireConfig": true,
 
@@ -30,7 +29,7 @@
   "json.schemas": [
     {
       "fileMatch": ["/configurations/fellowship/*.json"],
-      "url": "./generated/schemas/milestone-configuration.json"
+      "url": "./packages/json-schemas/generated/milestone-configuration.json"
     }
   ],
 

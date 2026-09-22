@@ -1,0 +1,9 @@
+{
+  "$schema": "../../node_modules/@effect/tsgo/schema.json",
+  "extends": ["./tsconfig.json", "../../tsconfig.effect.base.json"],
+  "references": [
+    { "path": "../../apps/api/tsconfig.effect.json" },
+    { "path": "../../packages/db/tsconfig.effect.json" },
+    { "path": "../../packages/shared/tsconfig.effect.json" }
+  ]
+}

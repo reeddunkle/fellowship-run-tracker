@@ -1,9 +1,31 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "tools/*"
+
+# Electron Forge (used to package apps/electron) can't resolve dependencies
+# through pnpm's default symlinked node_modules structure.
+# https://www.electronforge.io/
+nodeLinker: hoisted
+
 minimumReleaseAge: 10080 # Minutes -- (7 days)
 minimumReleaseAgeExclude:
   - "@biomejs/*"
   - '@effect/tsgo*'
   - "@types/node"
   - "tsx"
+
+overrides:
+  # @electron-forge/core-utils pins @electron/rebuild@^3.7.0, which depends on
+  # @electron/node-gyp via a pinned git commit instead of the npm registry.
+  # Force resolution to the equivalent npm-published version so pnpm's
+  # blockExoticSubdeps protection doesn't need to be disabled repo-wide.
+  '@electron/node-gyp': '10.2.0-electron.2'
+
+  # @effect/platform-node depends on @effect/platform-node-shared via a caret
+  # range (e.g. ^4.0.0-beta.107), which semver lets resolve to a newer rc that
+  # requires a newer `effect` than the catalog's. Keep it on the catalog version.
+  '@effect/platform-node-shared': 'catalog:effect'
 
 allowBuilds:
   '@playwright/browser-chromium': true # Playwright uses for browser tests
@@ -18,6 +40,7 @@ catalogs:
   effect:
     # Match versions
     "@effect/platform-node": "4.0.0-beta.107"
+    "@effect/platform-node-shared": "4.0.0-beta.107"
     "@effect/sql-sqlite-node": "4.0.0-beta.107"
     "effect": "4.0.0-beta.107"
 
@@ -26,10 +49,16 @@ catalogs:
     "@effect/tsgo-win32-x64": "0.45.0"
   electron:
     "electron": "^44.3.0"
+    "@electron-forge/cli": "^7.10.2"
+    "@electron-forge/maker-zip": "^7.10.2"
+    "@electron-forge/plugin-auto-unpack-natives": "^7.10.2"
+    "@electron-forge/plugin-fuses": "^7.10.2"
+    "@electron/fuses": "^1.8.0"
+    "@vercel/nft": "1.11.0"
   mermaid:
     "@mermaid-js/mermaid-cli": "^11.17.0"
   node:
-    "@types/node": ^26.6.1
+    "@types/node": ^24.13.6
   prettier:
     "prettier-plugin-embed": "^0.5.1"
     "prettier-plugin-sql": "^0.20.0"
@@ -42,7 +71,7 @@ catalogs:
   state-management:
     "zustand": "^5.0.15"
   runtime:
-    "dotenv": 17.4.2
+    "env-paths": 4.0.0
   tailwind:
     "@tailwindcss/vite": "^4.3.3"
     "class-variance-authority": "^0.7.1"

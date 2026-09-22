@@ -1,0 +1,36 @@
+import * as Context from "effect/Context";
+import type * as E from "effect/Effect";
+import * as Layer from "effect/Layer";
+import type * as Option from "effect/Option";
+import type * as Schema from "effect/Schema";
+import type * as SqlError from "effect/unstable/sql/SqlError";
+
+import { type EncounterModel } from "@frt/db/models/encounter-model.ts";
+import { type DungeonId } from "@frt/shared/fellowship/validation/fellowship-common.ts";
+
+import { makeEncounterDAO } from "./make-encounter-dao.ts";
+
+type GetEncounterByIdOptions = {
+  readonly dungeonId: DungeonId;
+  readonly id: string;
+};
+
+export type EncounterDAOError = SqlError.SqlError | Schema.SchemaError;
+
+export type EncounterDAOShape = {
+  readonly getAll: () => E.Effect<
+    ReadonlyArray<EncounterModel>,
+    EncounterDAOError
+  >;
+
+  readonly getById: (
+    options: GetEncounterByIdOptions,
+  ) => E.Effect<Option.Option<EncounterModel>, EncounterDAOError>;
+};
+
+export class EncounterDAO extends Context.Service<
+  EncounterDAO,
+  EncounterDAOShape
+>()("@frt/db/daos/encounter/encounter-dao/EncounterDAO") {
+  static readonly layer = Layer.effect(this, makeEncounterDAO);
+}

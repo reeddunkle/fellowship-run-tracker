@@ -10,7 +10,10 @@
               ":URL:",
               ":BLANK_LINE:",
               ":PACKAGE_WITH_PROTOCOL:",
-              ":PACKAGE:",
+              ":BLANK_LINE:",
+              [":PACKAGE:", "!@frt/**"],
+              ":BLANK_LINE:",
+              "@frt/**",
               ":BLANK_LINE:",
               ":ALIAS:",
               ":BLANK_LINE:",
@@ -46,9 +49,10 @@
     "ignoreUnknown": false,
     "includes": [
       "**/*.{js,cjs,mjs,ts,tsx,json,jsonc,md,css}",
-      "!src/electron/renderer/router/routeTree.gen.ts",
-      "!src/catalogs/generated/**/*.{ts}",
-      "!src/services/fellowship-logs/fixtures/**/*.{json}"
+      "!apps/electron/src/renderer/router/routeTree.gen.ts",
+      "!apps/api/src/services/fellowship-logs/fixtures/**/*.{json}",
+      "!packages/db/src/catalogs/generated/**/*.{ts}",
+      "!packages/json-schemas/generated/**/*.{json}"
     ]
   },
   "formatter": {
@@ -91,6 +95,10 @@
           }
         }
       },
+      "nursery": {
+        "noContinue": "on",
+        "noShadow": "on"
+      },
       "performance": {
         "noAccumulatingSpread": "on",
         "noBarrelFile": "on"
@@ -128,7 +136,10 @@
   },
   "overrides": [
     {
-      "includes": ["src/electron/renderer/**", "src/tests/browser/**/*.tsx"],
+      "includes": [
+        "apps/electron/src/renderer/**",
+        "apps/electron/src/tests/browser/**/*.tsx"
+      ],
       "linter": {
         "rules": {
           "style": {
@@ -138,14 +149,22 @@
                 "patterns": [
                   {
                     "group": [
-                      "@/electron/main.ts",
-                      "@/electron/preload.ts",
-                      "@/electron/ipc/**",
-                      "@/electron/application/**",
-                      "@/electron/storage/**",
-                      "@/services/api/**"
+                      // Electron main process.
+                      "@/bootstrap.ts",
+                      "@/main.ts",
+                      "@/preload.ts",
+                      "@/application/**",
+                      "@/ipc/**",
+                      "@/runtimes/**",
+                      "@/storage/**",
+                      "@/services/app-state/app-state-api-service-layer.ts",
+                      // API service implementations.
+                      "@frt/api/services/**",
+                      // Persistence (test fixtures are fine).
+                      "@frt/db/**",
+                      "!@frt/db/tests/**"
                     ],
-                    "message": "Renderer/browser code must not import backend-only implementation modules. Import the matching contract from @/contracts/<domain>/ instead."
+                    "message": "Renderer/browser code must not import backend-only implementation modules. Import the matching contract from @frt/api-contract or @frt/shared instead."
                   }
                 ]
               }

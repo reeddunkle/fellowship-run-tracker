@@ -1,42 +1,11 @@
 {
-  "compilerOptions": {
-    "module": "nodenext",
-    "moduleDetection": "force",
-    "target": "esnext",
-    "lib": ["esnext"],
-    "types": ["node"],
-
-    "paths": {
-      "@/*": ["./src/*"]
-    },
-
-    "jsx": "react-jsx",
-
-    "strict": true,
-    "exactOptionalPropertyTypes": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true,
-    "noImplicitReturns": true,
-    "noUnusedLocals": true,
-
-    "isolatedModules": true,
-    "verbatimModuleSyntax": true,
-    "noUncheckedSideEffectImports": true,
-    "skipLibCheck": true,
-
-    "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
-
-    "allowImportingTsExtensions": true,
-    "noEmit": true
-  },
-
-  "exclude": [
-    "src/electron/renderer/**/*",
-    "src/tests/browser/**/*",
-    "logs/**/*",
-    "generated/**/*",
-    "fixtures/**/*"
+  "files": [],
+  "references": [
+    { "path": "./packages/shared" },
+    { "path": "./packages/api-contract" },
+    { "path": "./packages/ui" },
+    { "path": "./apps/api" },
+    { "path": "./apps/electron" },
+    { "path": "./tools/dev-scripts" }
   ]
 }

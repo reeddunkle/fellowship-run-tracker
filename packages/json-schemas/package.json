@@ -1,0 +1,25 @@
+{
+  "name": "@frt/json-schemas",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./milestone-configuration.json": "./generated/milestone-configuration.json",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "clean": "git clean -Xdfq -- dist tsconfig.effect.tsbuildinfo",
+    "generate": "tsx src/generate-milestone-configuration-json-schema.ts",
+    "typecheck": "tsc --project tsconfig.effect.json"
+  },
+  "devDependencies": {
+    "@effect/platform-node": "catalog:effect",
+    "@effect/tsgo": "catalog:effect",
+    "@effect/tsgo-win32-x64": "catalog:effect",
+    "@frt/shared": "workspace:*",
+    "@types/node": "catalog:node",
+    "effect": "catalog:effect",
+    "tsx": "catalog:typescript",
+    "typescript": "catalog:typescript"
+  }
+}

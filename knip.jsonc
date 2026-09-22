@@ -1,20 +1,65 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema-jsonc.json",
-  "entry": [
-    "src/**/*.test.{ts,tsx}",
-    "src/application/**/*.{ts,tsx}",
-    "src/electron/**/*.{ts,tsx}"
-  ],
-  "project": [
-    "src/**/*.{ts,tsx,css}",
-    "scripts/**/*.ts",
-    "!src/services/fellowship/constants/all-fellowship-events.ts"
-  ],
   "ignoreDependencies": [
+    // Loaded by the TypeScript language service/`effect-tsgo` rather than
+    // imported (`@effect/language-service` is the tsconfig plugin name
+    // `@effect/tsgo` provides).
     "@effect/language-service",
+    "@effect/tsgo",
     "@effect/tsgo-win32-x64",
-    "@fontsource-variable/geist",
-    "@mermaid-js/mermaid-cli",
+    // Browser binary for the Playwright-based browser tests.
     "@playwright/browser-chromium"
-  ]
+  ],
+  "workspaces": {
+    ".": {
+      "entry": [],
+      // Run as the `mmdc` binary by the layer graph rendering script.
+      "ignoreDependencies": ["@mermaid-js/mermaid-cli"],
+      "project": []
+    },
+    "apps/api": {
+      // Every file is a package entry via the `./*.ts` wildcard export; still
+      // report exports no other file or workspace uses.
+      // Reference list of every Fellowship combat log event; kept on purpose.
+      "ignore": ["src/services/fellowship/constants/all-fellowship-events.ts"],
+      "includeEntryExports": true,
+      "project": ["src/**/*.ts"]
+    },
+    "apps/cli": {
+      "project": ["src/**/*.ts"]
+    },
+    "apps/electron": {
+      "entry": ["src/bootstrap.ts", "src/preload.ts", "forge.config.js"],
+      "ignore": ["src/renderer/router/routeTree.gen.ts"],
+      "ignoreDependencies": [
+        // Referenced by name in `forge.config.js` makers.
+        "@electron-forge/maker-zip",
+        // Only referenced from CSS `url(...)`s, which knip doesn't follow.
+        "@fontsource-variable/geist"
+      ],
+      "project": ["src/**/*.{ts,tsx,css}", "*.{ts,js}"]
+    },
+    "packages/*": {
+      "includeEntryExports": true,
+      "project": ["src/**/*.{ts,tsx}"]
+    },
+    "packages/json-schemas": {
+      // Generator script run from the package's `generate` script; the package
+      // itself exports only the generated JSON.
+      "entry": ["src/*.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    // shadcn/ui components: exports every part of each component whether or
+    // not the app uses it yet, so unused exports aren't reported (or removed
+    // by `knip:fix`). Unused files still are.
+    "packages/ui": {
+      "project": ["src/**/*.{ts,tsx}"]
+    },
+    "tools/dev-scripts": {
+      // Standalone scripts, run from package.json scripts or by hand.
+      "entry": ["src/*.{ts,js}"],
+      "includeEntryExports": true,
+      "project": ["src/**/*.{ts,js}"]
+    }
+  }
 }

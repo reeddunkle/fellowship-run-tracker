@@ -1,0 +1,114 @@
+flowchart TB
+  subgraph 2 ["`TrackingWebSocketBroadcaster.layer`"]
+    subgraph 2_wrap[" "]
+      subgraph 2_provides [Provides]
+        2_provides_0["TrackingWebSocketBroadcaster"]
+      end
+      style 2_provides stroke:none
+    end
+    style 2_wrap fill:transparent
+    style 2_wrap stroke:none
+  end
+  style 2 fill:transparent
+  subgraph 4 ["`LiveSplitWebSocketBroadcaster.layer`"]
+    subgraph 4_wrap[" "]
+      subgraph 4_provides [Provides]
+        4_provides_0["LiveSplitWebSocketBroadcaster"]
+      end
+      style 4_provides stroke:none
+    end
+    style 4_wrap fill:transparent
+    style 4_wrap stroke:none
+  end
+  style 4 fill:transparent
+  subgraph 6 ["`DungeonRunWebSocketBroadcaster.layer`"]
+    subgraph 6_wrap[" "]
+      subgraph 6_provides [Provides]
+        6_provides_0["DungeonRunWebSocketBroadcaster"]
+      end
+      style 6_provides stroke:none
+    end
+    style 6_wrap fill:transparent
+    style 6_wrap stroke:none
+  end
+  style 6 fill:transparent
+  subgraph 8 ["`FellowshipTracker.layerWith(options)`"]
+    subgraph 8_wrap[" "]
+      subgraph 8_requires [Requires]
+        8_requires_0["SqlClient"]
+      end
+      style 8_requires stroke:none
+      subgraph 8_provides [Provides]
+        8_provides_0["FellowshipTracker"]
+      end
+      style 8_provides stroke:none
+    end
+    style 8_wrap fill:transparent
+    style 8_wrap stroke:none
+  end
+  style 8 fill:transparent
+  subgraph 9 ["`makeApiServicesLayer(options)`"]
+    subgraph 9_wrap[" "]
+      subgraph 9_requires [Requires]
+        9_requires_0["SqlClient"]
+      end
+      style 9_requires stroke:none
+      subgraph 9_provides [Provides]
+        9_provides_0["AbilityApiService"]
+        9_provides_1["AppSettingsApiService"]
+        9_provides_2["ConfigurationApiService"]
+        9_provides_3["DungeonApiService"]
+        9_provides_4["DungeonRunApiService"]
+        9_provides_5["EncounterApiService"]
+        9_provides_6["FellowshipLogsApiService"]
+        9_provides_7["LiveSplitApiService"]
+        9_provides_8["UnitApiService"]
+      end
+      style 9_provides stroke:none
+    end
+    style 9_wrap fill:transparent
+    style 9_wrap stroke:none
+  end
+  style 9 fill:transparent
+  subgraph 10 ["`ApiRuntimeLayer`"]
+    subgraph 10_wrap[" "]
+      subgraph 10_requires [Requires]
+        10_requires_0["SqlClient"]
+      end
+      style 10_requires stroke:none
+      subgraph 10_provides [Provides]
+        10_provides_0["AbilityApiService"]
+        10_provides_1["AppSettingsApiService"]
+        10_provides_3["ConfigurationApiService"]
+        10_provides_5["DungeonApiService"]
+        10_provides_6["DungeonRunApiService"]
+        10_provides_7["DungeonRunWebSocketBroadcaster"]
+        10_provides_8["EncounterApiService"]
+        10_provides_9["FellowshipLogsApiService"]
+        10_provides_10["FellowshipTracker"]
+        10_provides_15["LiveSplitApiService"]
+        10_provides_16["LiveSplitWebSocketBroadcaster"]
+        10_provides_20["TrackingWebSocketBroadcaster"]
+        10_provides_21["UnitApiService"]
+      end
+      style 10_provides stroke:none
+    end
+    style 10_wrap fill:transparent
+    style 10_wrap stroke:none
+  end
+  style 10 fill:transparent
+  10_requires_0 -.-> 9_requires_0
+  10_provides_0 -.-> 9_provides_0
+  10_provides_1 -.-> 9_provides_1
+  10_provides_3 -.-> 9_provides_2
+  10_provides_5 -.-> 9_provides_3
+  10_provides_6 -.-> 9_provides_4
+  10_provides_8 -.-> 9_provides_5
+  10_provides_9 -.-> 9_provides_6
+  10_provides_15 -.-> 9_provides_7
+  10_provides_21 -.-> 9_provides_8
+  10_requires_0 -.-> 8_requires_0
+  10_provides_10 -.-> 8_provides_0
+  10_provides_7 -.-> 6_provides_0
+  10_provides_16 -.-> 4_provides_0
+  10_provides_20 -.-> 2_provides_0

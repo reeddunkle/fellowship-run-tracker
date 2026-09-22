@@ -5,7 +5,7 @@
   "tsx": true,
   "tailwind": {
     "config": "",
-    "css": "src/electron/renderer/styles.css",
+    "css": "apps/electron/src/renderer/styles.css",
     "baseColor": "neutral",
     "cssVariables": true,
     "prefix": ""
@@ -13,11 +13,11 @@
   "iconLibrary": "lucide",
   "rtl": false,
   "aliases": {
-    "components": "@/electron/renderer/components",
-    "utils": "@/util/class-names",
-    "ui": "@/electron/renderer/components/ui",
+    "components": "@/renderer/components",
+    "utils": "@frt/ui/class-names.ts",
+    "ui": "@frt/ui",
     "lib": "@/lib",
-    "hooks": "@/electron/renderer/hooks"
+    "hooks": "@/renderer/hooks"
   },
   "menuColor": "default",
   "menuAccent": "subtle",

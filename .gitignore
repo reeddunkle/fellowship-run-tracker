@@ -1,6 +1,7 @@
 # Root generated only
 /generated/
-/fixtures/
+
+apps/api/fixtures/
 
 .env
 
@@ -9,6 +10,7 @@ dist/
 external/
 logs/
 node_modules/
+out/
 test-combat-logs/
 test-logs/
 
@@ -17,3 +19,5 @@ test-logs/
 .effect-tsgo-lsp-*/
 
 .pnpm-store/
+
+*.tsbuildinfo
