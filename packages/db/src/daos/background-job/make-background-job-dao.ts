@@ -21,6 +21,10 @@ const BackgroundJobFailureFromJsonString = Schema.fromJsonString(
 
 const JsonFromString = Schema.fromJsonString(Schema.Json);
 
+const NextAvailableAtRowSchema = Schema.Struct({
+  availableAt: Schema.NullOr(Schema.DateTimeUtcFromMillis),
+});
+
 function mapBackgroundJobDAOError(cause: unknown): BackgroundJobDAOError {
   if (cause instanceof BackgroundJobDAOError) {
     return cause;
@@ -60,6 +64,7 @@ export const makeBackgroundJobDAO = E.gen(function* () {
     payload,
     status,
     idempotency_key,
+    available_at,
     attempts,
     error,
     result,
@@ -104,7 +109,7 @@ export const makeBackgroundJobDAO = E.gen(function* () {
         WHERE
           queue = ${queue}
           AND idempotency_key = ${idempotencyKey}
-          AND status IN ('QUEUED', 'RUNNING')
+          AND status IN ('QUEUED', 'WAITING', 'RUNNING')
         LIMIT
           1
       `;
@@ -124,6 +129,7 @@ export const makeBackgroundJobDAO = E.gen(function* () {
     return E.gen(function* () {
       const job = BackgroundJobModel.insert.make({
         attempts: 0,
+        availableAt: null,
         error: null,
         finishedAt: null,
         idempotencyKey,
@@ -150,6 +156,7 @@ export const makeBackgroundJobDAO = E.gen(function* () {
             payload,
             status,
             idempotency_key,
+            available_at,
             attempts,
             error,
             result,
@@ -166,6 +173,7 @@ export const makeBackgroundJobDAO = E.gen(function* () {
             ${encoded.payload},
             ${encoded.status},
             ${encoded.idempotencyKey},
+            ${encoded.availableAt},
             ${encoded.attempts},
             ${encoded.error},
             ${encoded.result},
@@ -200,15 +208,21 @@ export const makeBackgroundJobDAO = E.gen(function* () {
     }).pipe(E.mapError(mapBackgroundJobDAOError));
   };
 
-  const claimNext: BackgroundJobDAOShape["claimNext"] = ({ queue }) => {
+  const claimNext: BackgroundJobDAOShape["claimNext"] = ({
+    holdWhileWaiting,
+    queue,
+  }) => {
     return E.gen(function* () {
       const now = yield* encodeNow;
 
+      // Waiting jobs that are due go first, since they were already underway.
       const rows = yield* sql`
         UPDATE background_job
         SET
           status = 'RUNNING',
           attempts = attempts + 1,
+          available_at = NULL,
+          error = NULL,
           started_at = ${now},
           updated_at = ${now}
         WHERE
@@ -219,12 +233,32 @@ export const makeBackgroundJobDAO = E.gen(function* () {
               background_job
             WHERE
               queue = ${queue}
-              AND status = 'QUEUED'
+              AND (
+                status = 'QUEUED'
+                OR (
+                  status = 'WAITING'
+                  AND available_at <= ${now}
+                )
+              )
             ORDER BY
+              status = 'WAITING' DESC,
               created_at,
               rowid
             LIMIT
               1
+          )
+          AND (
+            ${holdWhileWaiting ? 1 : 0} = 0
+            OR NOT EXISTS (
+              SELECT
+                1
+              FROM
+                background_job AS waiting
+              WHERE
+                waiting.queue = ${queue}
+                AND waiting.status = 'WAITING'
+                AND waiting.available_at > ${now}
+            )
           )
         RETURNING
           ${columns}
@@ -233,6 +267,77 @@ export const makeBackgroundJobDAO = E.gen(function* () {
       const jobs = yield* decodeBackgroundJobRows(rows);
 
       return Option.fromUndefinedOr(jobs[0]);
+    }).pipe(E.mapError(mapBackgroundJobDAOError));
+  };
+
+  const markWaiting: BackgroundJobDAOShape["markWaiting"] = ({
+    availableAt,
+    id,
+    reason,
+  }) => {
+    return E.gen(function* () {
+      const now = yield* encodeNow;
+      const encodedAvailableAt = yield* Schema.encodeEffect(
+        Schema.DateTimeUtcFromMillis,
+      )(availableAt);
+      const encodedReason = yield* Schema.encodeEffect(
+        BackgroundJobFailureFromJsonString,
+      )(reason);
+
+      // The attempt is handed back: waiting isn't a failure, so it mustn't
+      // count toward the queue's attempt limit.
+      const rows = yield* sql`
+        UPDATE background_job
+        SET
+          status = 'WAITING',
+          available_at = ${encodedAvailableAt},
+          attempts = MAX(attempts - 1, 0),
+          error = ${encodedReason},
+          started_at = NULL,
+          updated_at = ${now}
+        WHERE
+          id = ${id}
+          AND status = 'RUNNING'
+        RETURNING
+          id
+      `;
+
+      if (rows[0] === undefined) {
+        return yield* makeJobNotFoundError(id);
+      }
+    }).pipe(E.mapError(mapBackgroundJobDAOError));
+  };
+
+  const getNextAvailableAt: BackgroundJobDAOShape["getNextAvailableAt"] = ({
+    holdWhileWaiting,
+    queue,
+  }) => {
+    return E.gen(function* () {
+      const rows = holdWhileWaiting
+        ? yield* sql`
+            SELECT
+              MAX(available_at) AS available_at
+            FROM
+              background_job
+            WHERE
+              queue = ${queue}
+              AND status = 'WAITING'
+          `
+        : yield* sql`
+            SELECT
+              MIN(available_at) AS available_at
+            FROM
+              background_job
+            WHERE
+              queue = ${queue}
+              AND status = 'WAITING'
+          `;
+
+      const [row] = yield* Schema.decodeUnknownEffect(
+        Schema.Array(NextAvailableAtRowSchema),
+      )(rows);
+
+      return Option.fromNullishOr(row?.availableAt);
     }).pipe(E.mapError(mapBackgroundJobDAOError));
   };
 
@@ -317,7 +422,7 @@ export const makeBackgroundJobDAO = E.gen(function* () {
             WHERE
               active.queue = background_job.queue
               AND active.idempotency_key = background_job.idempotency_key
-              AND active.status IN ('QUEUED', 'RUNNING')
+              AND active.status IN ('QUEUED', 'WAITING', 'RUNNING')
           )
         RETURNING
           ${columns}
@@ -448,10 +553,12 @@ export const makeBackgroundJobDAO = E.gen(function* () {
     delete: delete_,
     deleteFinishedBefore,
     getById,
+    getNextAvailableAt,
     insert,
     list,
     markFailed,
     markSucceeded,
+    markWaiting,
     recoverRunning,
     retry,
   } satisfies BackgroundJobDAOShape;

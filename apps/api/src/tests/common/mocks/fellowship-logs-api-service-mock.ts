@@ -36,7 +36,8 @@ export function makeFellowshipLogsApiServiceMock({
   },
   getRateLimitData = () => {
     return E.succeed({
-      limitPerHour: 0,
+      limitPerHour: 1,
+      observedAtMilliseconds: 0,
       pointsResetIn: 0,
       pointsSpentThisHour: 0,
     });
@@ -45,6 +46,7 @@ export function makeFellowshipLogsApiServiceMock({
     return E.succeed({
       job: {
         attempts: 0,
+        availableAtMilliseconds: null,
         createdAtMilliseconds: 0,
         error: null,
         finishedAtMilliseconds: null,

@@ -35,7 +35,12 @@ const BackgroundJobProgressSchema = Schema.Finite.check(
 
 const BackgroundJobApiItemFields = {
   attempts: NonNegativeIntegerSchema,
+  /** When a waiting job will run again; `null` unless it's waiting. */
+  availableAtMilliseconds: Schema.NullOr(NonNegativeIntegerSchema),
   createdAtMilliseconds: NonNegativeIntegerSchema,
+  /**
+   * Why a job failed, or, while it's waiting, why it has to wait.
+   */
   error: Schema.NullOr(BackgroundJobFailureSchema),
   finishedAtMilliseconds: Schema.NullOr(NonNegativeIntegerSchema),
   id: BackgroundJobIdSchema,

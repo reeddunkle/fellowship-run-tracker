@@ -14,7 +14,6 @@ import { makeFellowshipLogsHttpQuery } from "@frt/api/services/fellowship-logs/f
 import {
   deriveDungeonRunMetadata,
   findFightOrFail,
-  getGraphQLResponseData,
   getReportOrFail,
   getReportPageProgress,
   makeFellowshipLogsRateLimitDataTracker,
@@ -54,7 +53,7 @@ type GetReportPageOptions = {
   readonly startTime: number;
 };
 
-function makeFellowshipLogsServiceFromQuery(query: Query) {
+export function makeFellowshipLogsServiceFromQuery(query: Query) {
   return E.gen(function* () {
     const rateLimitTracker = yield* makeFellowshipLogsRateLimitDataTracker();
     const trackedQuery = makeTrackedQuery(query, rateLimitTracker);
@@ -103,16 +102,14 @@ function makeFellowshipLogsServiceFromQuery(query: Query) {
         return rateLimitTracker.getLastKnown();
       }
 
+      // Not checked against the limit, so points can always be looked up.
       return trackedQuery(
         {
           query: RATE_LIMIT_DATA_QUERY,
         },
         FellowshipLogsRateLimitResponseDataSchema,
-      ).pipe(
-        E.map((responseData) => {
-          return responseData.rateLimitData;
-        }),
-      );
+        { skipCapacityCheck: true },
+      ).pipe(E.andThen(rateLimitTracker.getLastKnown()));
     };
 
     const getFight = E.fn("FellowshipLogs.getFight")(function* ({
@@ -122,7 +119,7 @@ function makeFellowshipLogsServiceFromQuery(query: Query) {
       readonly fightId: FellowshipLogsFightId;
       readonly reportCode: FellowshipLogsReportCode;
     }) {
-      const response = yield* query(
+      const responseData = yield* trackedQuery(
         {
           query: GET_FIGHT_QUERY,
           variables: {
@@ -132,8 +129,6 @@ function makeFellowshipLogsServiceFromQuery(query: Query) {
         },
         FellowshipLogsFightResponseDataSchema,
       );
-
-      const responseData = yield* getGraphQLResponseData(response);
 
       const report = yield* getReportOrFail({
         report: responseData.reportData.report,
@@ -188,6 +183,7 @@ function makeFellowshipLogsServiceFromQuery(query: Query) {
       fightId,
       onProgress,
       reportCode,
+      startTime: resumeStartTime,
     }) => {
       return Stream.unwrap(
         E.gen(function* () {
@@ -196,31 +192,35 @@ function makeFellowshipLogsServiceFromQuery(query: Query) {
             reportCode,
           });
 
-          return Stream.paginate(fight.startTime, (startTime) => {
-            return getReportPage({
-              endTime: fight.endTime,
-              reportCode,
-              startTime,
-            }).pipe(
-              E.tap((reportPage) => {
-                return onProgress === undefined
-                  ? E.void
-                  : onProgress(
-                      getReportPageProgress({
-                        endTime: fight.endTime,
-                        nextPageTimestamp: reportPage.events.nextPageTimestamp,
-                        startTime: fight.startTime,
-                      }),
-                    );
-              }),
-              E.map((reportPage) => {
-                return [
-                  [reportPage],
-                  Option.fromNullishOr(reportPage.events.nextPageTimestamp),
-                ] as const;
-              }),
-            );
-          });
+          return Stream.paginate(
+            resumeStartTime ?? fight.startTime,
+            (startTime) => {
+              return getReportPage({
+                endTime: fight.endTime,
+                reportCode,
+                startTime,
+              }).pipe(
+                E.tap((reportPage) => {
+                  return onProgress === undefined
+                    ? E.void
+                    : onProgress(
+                        getReportPageProgress({
+                          endTime: fight.endTime,
+                          nextPageTimestamp:
+                            reportPage.events.nextPageTimestamp,
+                          startTime: fight.startTime,
+                        }),
+                      );
+                }),
+                E.map((reportPage) => {
+                  return [
+                    [reportPage],
+                    Option.fromNullishOr(reportPage.events.nextPageTimestamp),
+                  ] as const;
+                }),
+              );
+            },
+          );
         }),
       );
     };

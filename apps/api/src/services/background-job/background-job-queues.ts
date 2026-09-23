@@ -3,6 +3,12 @@ import * as R from "effect/Record";
 import { type BackgroundJobKind } from "@frt/api/services/background-job/background-job-schema.ts";
 
 type BackgroundJobQueueOptions = {
+  /**
+   * Whether one waiting job holds up the whole queue until it can run again.
+   * Fellowship Logs imports all spend the same points, so when one is waiting
+   * for them to reset, the rest would only be turned away too.
+   */
+  readonly holdWhileWaiting: boolean;
   /** Whether the queue's jobs are shown to the user. */
   readonly isVisible: boolean;
   /**
@@ -19,10 +25,12 @@ type BackgroundJobQueueOptions = {
  */
 export const BACKGROUND_JOB_QUEUES = {
   "fellowship-logs-import": {
+    holdWhileWaiting: true,
     isVisible: true,
     maxAttempts: 3,
   },
   maintenance: {
+    holdWhileWaiting: false,
     isVisible: false,
     maxAttempts: 3,
   },

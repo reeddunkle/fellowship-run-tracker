@@ -26,7 +26,7 @@ const FellowshipLogsReportEventsSchema = Schema.Struct({
   nextPageTimestamp: Schema.Finite.pipe(Schema.NullOr),
 });
 
-const FellowshipLogsReportSchema = Schema.Struct({
+export const FellowshipLogsReportSchema = Schema.Struct({
   code: NonEmptyStringSchema,
   endTime: NonNegativeIntegerSchema,
   events: FellowshipLogsReportEventsSchema,

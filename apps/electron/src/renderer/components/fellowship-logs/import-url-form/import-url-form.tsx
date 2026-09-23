@@ -4,7 +4,6 @@ import * as Schema from "effect/Schema";
 import { SearchIcon } from "lucide-react";
 
 import { type FellowshipLogsApiDungeonRunReference } from "@frt/shared/fellowship-logs/fellowship-logs-api-schema.ts";
-import { getErrorTag } from "@frt/shared/util/get-error-tag.ts";
 import { Button } from "@frt/ui/button.tsx";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@frt/ui/field.tsx";
 import { Input } from "@frt/ui/input.tsx";
@@ -16,35 +15,25 @@ import {
 
 const IMPORT_URL_FORM_DOM_ID = "import-dungeon-run-url-form";
 
-function getMetadataErrorMessage(error: unknown): string {
-  const tag = getErrorTag(error);
-
-  if (tag === "FellowshipLogsApiRunNotFoundError") {
-    return "We couldn't find that report and fight. Double-check the URL.";
-  }
-
-  if (tag === "FellowshipLogsApiDungeonLevelNotFoundError") {
-    return "This run doesn't have a dungeon level in Fellowship Logs, so it can't be imported.";
-  }
-
-  if (tag === "FellowshipLogsApiRunNotFinishedError") {
-    return "This run hasn't finished yet. Try again once it's complete in Fellowship Logs.";
-  }
-
-  return "Something went wrong contacting Fellowship Logs.";
-}
-
 type ImportUrlFormProps = {
-  readonly error: unknown;
+  /**
+   * Why looking up a run isn't possible right now (e.g. out of points).
+   * Disables the lookup.
+   */
+  readonly blockedMessage: string | undefined;
+  readonly errorMessage: string | undefined;
   readonly isSubmitting: boolean;
   readonly onSubmit: (reference: FellowshipLogsApiDungeonRunReference) => void;
 };
 
 export function ImportUrlForm({
-  error,
+  blockedMessage,
+  errorMessage,
   isSubmitting,
   onSubmit,
 }: ImportUrlFormProps) {
+  const message = blockedMessage ?? errorMessage;
+
   const form = useForm({
     defaultValues: {
       reportUrl: "",
@@ -104,15 +93,16 @@ export function ImportUrlForm({
           }}
         </form.Field>
         <div className="flex items-center gap-3">
-          <Button disabled={isSubmitting} type="submit">
+          <Button
+            disabled={isSubmitting || blockedMessage !== undefined}
+            type="submit"
+          >
             <SearchIcon />
             {isSubmitting ? "Looking up run..." : "Look up run"}
           </Button>
-          {error !== undefined ? (
-            <p className="text-sm text-destructive">
-              {getMetadataErrorMessage(error)}
-            </p>
-          ) : null}
+          {message === undefined ? null : (
+            <p className="text-sm text-destructive">{message}</p>
+          )}
         </div>
       </FieldGroup>
     </form>

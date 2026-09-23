@@ -19,6 +19,7 @@ import { Separator } from "@frt/ui/separator.tsx";
 
 import { useRefreshFellowshipLogsRateLimitData } from "@/renderer/api/fellowship-logs/fellowship-logs-mutations.ts";
 import { FellowshipLogsRateLimitData } from "@/renderer/components/fellowship-logs/fellowship-logs-rate-limit-data.tsx";
+import { FellowshipLogsRateLimitRefreshErrorMessage } from "@/renderer/components/fellowship-logs/fellowship-logs-rate-limit-refresh-error-message.tsx";
 import {
   useAppSettings,
   useSettingsActions,
@@ -390,7 +391,9 @@ export function SettingsEditor() {
                     Error
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Failed to connect to Fellowship Logs.
+                    <FellowshipLogsRateLimitRefreshErrorMessage
+                      error={refreshRateLimitDataMutation.error}
+                    />
                   </p>
                 </div>
               ) : rateLimitData !== null ? (

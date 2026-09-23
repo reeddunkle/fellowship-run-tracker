@@ -81,7 +81,10 @@ describe("BackgroundJobDAO", () => {
 
       const first = yield* insertJob({ idempotencyKey: "a" });
 
-      yield* backgroundJobDAO.claimNext({ queue: QUEUE });
+      yield* backgroundJobDAO.claimNext({
+        holdWhileWaiting: false,
+        queue: QUEUE,
+      });
       yield* backgroundJobDAO.markSucceeded({ id: first.job.id, result: null });
 
       const second = yield* insertJob({ idempotencyKey: "a" });
@@ -101,12 +104,21 @@ describe("BackgroundJobDAO", () => {
       const second = yield* insertJob();
 
       const claimedFirst = getSome(
-        yield* backgroundJobDAO.claimNext({ queue: QUEUE }),
+        yield* backgroundJobDAO.claimNext({
+          holdWhileWaiting: false,
+          queue: QUEUE,
+        }),
       );
       const claimedSecond = getSome(
-        yield* backgroundJobDAO.claimNext({ queue: QUEUE }),
+        yield* backgroundJobDAO.claimNext({
+          holdWhileWaiting: false,
+          queue: QUEUE,
+        }),
       );
-      const claimedNone = yield* backgroundJobDAO.claimNext({ queue: QUEUE });
+      const claimedNone = yield* backgroundJobDAO.claimNext({
+        holdWhileWaiting: false,
+        queue: QUEUE,
+      });
 
       expect(claimedFirst.id).toBe(first.job.id);
       expect(claimedFirst.status).toBe("RUNNING");
@@ -126,8 +138,14 @@ describe("BackgroundJobDAO", () => {
       const succeeded = yield* insertJob();
       const failed = yield* insertJob();
 
-      yield* backgroundJobDAO.claimNext({ queue: QUEUE });
-      yield* backgroundJobDAO.claimNext({ queue: QUEUE });
+      yield* backgroundJobDAO.claimNext({
+        holdWhileWaiting: false,
+        queue: QUEUE,
+      });
+      yield* backgroundJobDAO.claimNext({
+        holdWhileWaiting: false,
+        queue: QUEUE,
+      });
 
       yield* backgroundJobDAO.markSucceeded({
         id: succeeded.job.id,
@@ -159,7 +177,10 @@ describe("BackgroundJobDAO", () => {
 
       const { job } = yield* insertJob({ idempotencyKey: "a" });
 
-      yield* backgroundJobDAO.claimNext({ queue: QUEUE });
+      yield* backgroundJobDAO.claimNext({
+        holdWhileWaiting: false,
+        queue: QUEUE,
+      });
       yield* backgroundJobDAO.markFailed({
         error: { message: "Boom.", tag: "Boom" },
         id: job.id,
@@ -194,7 +215,10 @@ describe("BackgroundJobDAO", () => {
 
       const { job } = yield* insertJob();
 
-      yield* backgroundJobDAO.claimNext({ queue: QUEUE });
+      yield* backgroundJobDAO.claimNext({
+        holdWhileWaiting: false,
+        queue: QUEUE,
+      });
 
       const error = yield* backgroundJobDAO
         .delete({ id: job.id, statuses: ["QUEUED"] })
@@ -220,14 +244,23 @@ describe("BackgroundJobDAO", () => {
       const recoverable = yield* insertJob();
 
       // Two claims of the first job use up its attempts.
-      yield* backgroundJobDAO.claimNext({ queue: QUEUE });
+      yield* backgroundJobDAO.claimNext({
+        holdWhileWaiting: false,
+        queue: QUEUE,
+      });
       yield* backgroundJobDAO.recoverRunning({
         exhaustedError: EXHAUSTED_ERROR,
         maxAttempts: 2,
         queue: QUEUE,
       });
-      yield* backgroundJobDAO.claimNext({ queue: QUEUE });
-      yield* backgroundJobDAO.claimNext({ queue: QUEUE });
+      yield* backgroundJobDAO.claimNext({
+        holdWhileWaiting: false,
+        queue: QUEUE,
+      });
+      yield* backgroundJobDAO.claimNext({
+        holdWhileWaiting: false,
+        queue: QUEUE,
+      });
 
       yield* backgroundJobDAO.recoverRunning({
         exhaustedError: EXHAUSTED_ERROR,
@@ -258,8 +291,14 @@ describe("BackgroundJobDAO", () => {
       const hidden = yield* insertJob({ queue: "hidden-queue" });
       const visible = yield* insertJob({ queue: "visible-queue" });
 
-      yield* backgroundJobDAO.claimNext({ queue: "hidden-queue" });
-      yield* backgroundJobDAO.claimNext({ queue: "visible-queue" });
+      yield* backgroundJobDAO.claimNext({
+        holdWhileWaiting: false,
+        queue: "hidden-queue",
+      });
+      yield* backgroundJobDAO.claimNext({
+        holdWhileWaiting: false,
+        queue: "visible-queue",
+      });
       yield* backgroundJobDAO.markFailed({
         error: { message: "Boom.", tag: "Boom" },
         id: hidden.job.id,
@@ -295,7 +334,10 @@ describe("BackgroundJobDAO", () => {
       const succeeded = yield* insertJob();
       const queued = yield* insertJob();
 
-      yield* backgroundJobDAO.claimNext({ queue: QUEUE });
+      yield* backgroundJobDAO.claimNext({
+        holdWhileWaiting: false,
+        queue: QUEUE,
+      });
       yield* backgroundJobDAO.markSucceeded({
         id: succeeded.job.id,
         result: null,

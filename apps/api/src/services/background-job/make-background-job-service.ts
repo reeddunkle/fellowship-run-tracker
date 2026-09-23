@@ -1,6 +1,8 @@
 import * as A from "effect/Array";
 import * as Cause from "effect/Cause";
+import * as Clock from "effect/Clock";
 import * as DateTime from "effect/DateTime";
+import * as Duration from "effect/Duration";
 import * as E from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Fiber from "effect/Fiber";
@@ -16,6 +18,7 @@ import * as SubscriptionRef from "effect/SubscriptionRef";
 
 import {
   BackgroundJobAttemptsExhaustedError,
+  BackgroundJobDeferredError,
   BackgroundJobError,
   BackgroundJobInvalidPayloadError,
   BackgroundJobNotFoundError,
@@ -36,10 +39,17 @@ import { type BackgroundJobDAOError } from "@frt/db/errors/background-job-dao-er
 import { type BackgroundJobModel } from "@frt/db/models/background-job-model.ts";
 import { type BackgroundJobFailure } from "@frt/shared/validation/background-job/background-job-failure-schema.ts";
 import { type BackgroundJobId } from "@frt/shared/validation/background-job/background-job-id-schema.ts";
+import { type BackgroundJobStatus } from "@frt/shared/validation/background-job/background-job-status-schema.ts";
 
 type BackgroundJobOperation = BackgroundJobError["operation"];
 
 const QUEUE_NAMES = R.keys(BACKGROUND_JOB_QUEUES);
+
+const CANCELLABLE_STATUSES: ReadonlyArray<BackgroundJobStatus> = [
+  "QUEUED",
+  "RUNNING",
+  "WAITING",
+];
 
 const VISIBLE_QUEUE_NAMES = QUEUE_NAMES.filter((queue) => {
   return BACKGROUND_JOB_QUEUES[queue].isVisible;
@@ -47,6 +57,10 @@ const VISIBLE_QUEUE_NAMES = QUEUE_NAMES.filter((queue) => {
 
 // Keeps a worker from spinning if the database keeps failing.
 const WORKER_ERROR_DELAY = "1 second";
+
+// Keeps a worker from spinning if a waiting job is due but can't be claimed
+// yet (e.g. the clock moved backwards).
+const MIN_WAITING_JOB_DELAY_MILLISECONDS = 100;
 
 // Recording a job's outcome is retried briefly, so a transient database error
 // doesn't leave the job stuck as RUNNING for the rest of the session.
@@ -179,6 +193,27 @@ export const makeBackgroundJobService = E.gen(function* () {
       return;
     }
 
+    const deferred = Cause.findErrorOption(exit.cause).pipe(
+      Option.filter((failure): failure is BackgroundJobDeferredError => {
+        return failure instanceof BackgroundJobDeferredError;
+      }),
+    );
+
+    if (Option.isSome(deferred)) {
+      const { availableAt, reason } = deferred.value;
+
+      yield* E.logInfo("Background job is waiting before it can continue.", {
+        availableAt: DateTime.formatIso(availableAt),
+        reason: reason._tag,
+      });
+
+      return yield* backgroundJobDAO.markWaiting({
+        availableAt,
+        id: job.id,
+        reason: toBackgroundJobFailure(reason),
+      });
+    }
+
     const error = getFailureFromCause(exit.cause);
 
     yield* E.logWarning("Background job failed.", { error });
@@ -231,6 +266,7 @@ export const makeBackgroundJobService = E.gen(function* () {
         }
 
         const forked = yield* runBackgroundJob(decoded.success, {
+          jobId: claimed.id,
           reportProgress,
         }).pipe(E.forkChild);
 
@@ -256,18 +292,49 @@ export const makeBackgroundJobService = E.gen(function* () {
     );
   });
 
+  // Waits for something to claim: a new or retried job (the latch), or the
+  // next waiting job's time coming round.
+  const awaitWork = E.fn("BackgroundJobService.awaitWork")(function* (
+    queue: BackgroundJobQueueName,
+  ) {
+    const { holdWhileWaiting } = BACKGROUND_JOB_QUEUES[queue];
+    const nextAvailableAt = yield* backgroundJobDAO.getNextAvailableAt({
+      holdWhileWaiting,
+      queue,
+    });
+
+    if (Option.isNone(nextAvailableAt)) {
+      return yield* latches[queue].await;
+    }
+
+    const nowMilliseconds = yield* Clock.currentTimeMillis;
+    const delayMilliseconds = Math.max(
+      DateTime.toEpochMillis(nextAvailableAt.value) - nowMilliseconds,
+      MIN_WAITING_JOB_DELAY_MILLISECONDS,
+    );
+
+    yield* E.raceFirst(
+      latches[queue].await,
+      E.sleep(Duration.millis(delayMilliseconds)),
+    );
+  });
+
   const runWorker = (queue: BackgroundJobQueueName) => {
     const latch = latches[queue];
+    const { holdWhileWaiting } = BACKGROUND_JOB_QUEUES[queue];
 
     return E.gen(function* () {
       // Close before claiming, so an offer that lands after an empty claim
       // reopens the latch rather than being missed.
       yield* latch.close;
 
-      const claimed = yield* backgroundJobDAO.claimNext({ queue });
+      const claimed = yield* backgroundJobDAO.claimNext({
+        holdWhileWaiting,
+        queue,
+      });
 
       if (Option.isNone(claimed)) {
-        return yield* latch.await;
+        return yield* awaitWork(queue);
       }
 
       yield* bumpRevision;
@@ -364,7 +431,7 @@ export const makeBackgroundJobService = E.gen(function* () {
 
           if (
             Option.isNone(job) ||
-            (job.value.status !== "QUEUED" && job.value.status !== "RUNNING")
+            !CANCELLABLE_STATUSES.includes(job.value.status)
           ) {
             return yield* new BackgroundJobNotFoundError({
               id,
@@ -372,9 +439,9 @@ export const makeBackgroundJobService = E.gen(function* () {
             });
           }
 
-          if (job.value.status === "QUEUED") {
+          if (job.value.status !== "RUNNING") {
             const wasDeleted = yield* backgroundJobDAO
-              .delete({ id, statuses: ["QUEUED"] })
+              .delete({ id, statuses: ["QUEUED", "WAITING"] })
               .pipe(
                 E.as(true),
                 E.catchReason(

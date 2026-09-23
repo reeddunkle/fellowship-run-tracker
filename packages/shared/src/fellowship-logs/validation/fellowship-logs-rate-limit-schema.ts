@@ -9,7 +9,7 @@ const NonNegativeFiniteSchema = Schema.Finite.pipe(
   Schema.check(Schema.isGreaterThanOrEqualTo(0)),
 );
 
-export const FellowshipLogsRateLimitDataSchema = Schema.Struct({
+const FellowshipLogsRateLimitDataSchema = Schema.Struct({
   limitPerHour: PositiveIntegerSchema,
   pointsResetIn: NonNegativeIntegerSchema,
   pointsSpentThisHour: NonNegativeFiniteSchema,
@@ -17,6 +17,18 @@ export const FellowshipLogsRateLimitDataSchema = Schema.Struct({
 
 export type FellowshipLogsRateLimitData =
   typeof FellowshipLogsRateLimitDataSchema.Type;
+
+/**
+ * Rate-limit data plus when it was observed. `pointsResetIn` is relative to
+ * `observedAtMilliseconds`, so the data can't be interpreted later without it.
+ */
+export const FellowshipLogsRateLimitSnapshotSchema = Schema.Struct({
+  ...FellowshipLogsRateLimitDataSchema.fields,
+  observedAtMilliseconds: NonNegativeIntegerSchema,
+});
+
+export type FellowshipLogsRateLimitSnapshot =
+  typeof FellowshipLogsRateLimitSnapshotSchema.Type;
 
 export const FellowshipLogsRateLimitResponseDataSchema = Schema.Struct({
   rateLimitData: FellowshipLogsRateLimitDataSchema,

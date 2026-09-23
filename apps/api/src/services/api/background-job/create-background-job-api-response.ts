@@ -32,6 +32,7 @@ function createBackgroundJobApiItemFields({
 }: VisibleBackgroundJob) {
   return {
     attempts: job.attempts,
+    availableAtMilliseconds: toMillisecondsOrNull(job.availableAt),
     createdAtMilliseconds: DateTime.toEpochMillis(job.createdAt),
     error: job.error,
     finishedAtMilliseconds: toMillisecondsOrNull(job.finishedAt),

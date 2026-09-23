@@ -64,17 +64,22 @@ export function groupBackgroundJobsByCategory(
   });
 }
 
-type BackgroundJobSummaryState = "failed" | "idle" | "running";
+type BackgroundJobSummaryState = "failed" | "idle" | "running" | "waiting";
 
 export type BackgroundJobSummary = {
-  /** Queued plus running jobs. */
+  /** Queued, running and waiting jobs. */
   readonly activeCount: number;
   /** Failed jobs the user hasn't dismissed or retried. */
   readonly failedCount: number;
   readonly queuedCount: number;
   readonly runningJob: BackgroundJobApiItem | undefined;
-  /** `failed` takes precedence over `running`. */
+  /**
+   * `failed` takes precedence over `running`, which takes precedence over
+   * `waiting` (nothing running, but a job is waiting to continue).
+   */
   readonly state: BackgroundJobSummaryState;
+  /** Jobs waiting before they can continue, e.g. for points to reset. */
+  readonly waitingCount: number;
 };
 
 function countWithStatus(
@@ -94,10 +99,25 @@ export function getBackgroundJobSummary(
   const runningJob = jobs.find((job) => {
     return job.status === "RUNNING";
   });
-  const activeCount = queuedCount + countWithStatus(jobs, "RUNNING");
+  const waitingCount = countWithStatus(jobs, "WAITING");
+  const activeCount =
+    queuedCount + waitingCount + countWithStatus(jobs, "RUNNING");
 
   const state: BackgroundJobSummaryState =
-    failedCount > 0 ? "failed" : activeCount > 0 ? "running" : "idle";
+    failedCount > 0
+      ? "failed"
+      : runningJob === undefined && waitingCount > 0
+        ? "waiting"
+        : activeCount > 0
+          ? "running"
+          : "idle";
 
-  return { activeCount, failedCount, queuedCount, runningJob, state };
+  return {
+    activeCount,
+    failedCount,
+    queuedCount,
+    runningJob,
+    state,
+    waitingCount,
+  };
 }

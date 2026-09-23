@@ -1,5 +1,6 @@
 import * as Schema from "effect/Schema";
 
+import { withRateLimitData } from "@frt/shared/fellowship-logs/validation/fellowship-logs-rate-limit-schema.ts";
 import { NonNegativeIntegerSchema } from "@frt/shared/validation/common-schemas.ts";
 
 const FellowshipLogsFightSchema = Schema.Struct({
@@ -8,7 +9,7 @@ const FellowshipLogsFightSchema = Schema.Struct({
   startTime: NonNegativeIntegerSchema,
 });
 
-export const FellowshipLogsFightResponseDataSchema = Schema.Struct({
+export const FellowshipLogsFightResponseDataSchema = withRateLimitData({
   reportData: Schema.Struct({
     report: Schema.Struct({
       fights: Schema.Array(FellowshipLogsFightSchema),

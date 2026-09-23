@@ -8,13 +8,17 @@ import {
   HttpClientResponse,
 } from "effect/unstable/http";
 
-import { FellowshipLogsRequestError } from "@frt/api/errors/fellowship-logs-error.ts";
+import {
+  FellowshipLogsRateLimitRejectedError,
+  FellowshipLogsRequestError,
+} from "@frt/api/errors/fellowship-logs-error.ts";
 import {
   type CachedAccessToken,
   type FellowshipLogsCredentials,
   type GetCredentials,
   type Query,
 } from "@frt/api/services/fellowship-logs/fellowship-logs-service.ts";
+import { makeRequestPacer } from "@frt/api/services/fellowship-logs/make-request-pacer.ts";
 import {
   FellowshipLogsGraphQLRequestSchema,
   makeFellowshipLogsGraphQLResponseSchema,
@@ -31,13 +35,19 @@ const FELLOWSHIP_LOGS_TOKEN_URL = "https://www.fellowshiplogs.com/oauth/token";
 
 const ACCESS_TOKEN_EXPIRATION_BUFFER_MILLISECONDS = 30_000;
 
+// Keeps bursts (e.g. paging through a report) gentle on Fellowship Logs. The
+// points limit is the real cap; this only spaces requests out.
+const MIN_QUERY_INTERVAL = "500 millis";
+
+const TOO_MANY_REQUESTS_STATUS = 429;
+
 export function makeFellowshipLogsHttpQuery(
   getCredentials: GetCredentials,
 ): E.Effect<Query, never, HttpClient.HttpClient> {
   return E.gen(function* () {
-    const httpClient = (yield* HttpClient.HttpClient).pipe(
-      HttpClient.filterStatusOk,
-    );
+    const baseHttpClient = yield* HttpClient.HttpClient;
+    const httpClient = baseHttpClient.pipe(HttpClient.filterStatusOk);
+    const pace = yield* makeRequestPacer(MIN_QUERY_INTERVAL);
 
     const accessTokenRef = yield* SynchronizedRef.make<
       Option.Option<CachedAccessToken>
@@ -129,14 +139,23 @@ export function makeFellowshipLogsHttpQuery(
           ),
         );
 
-        const response = yield* httpClient.execute(httpRequest);
+        const response = yield* pace(baseHttpClient.execute(httpRequest));
+
+        if (response.status === TOO_MANY_REQUESTS_STATUS) {
+          return yield* new FellowshipLogsRateLimitRejectedError();
+        }
+
+        const okResponse = yield* HttpClientResponse.filterStatusOk(response);
 
         return yield* HttpClientResponse.schemaBodyJson(
           makeFellowshipLogsGraphQLResponseSchema(responseSchema),
-        )(response);
+        )(okResponse);
       }).pipe(
         E.mapError((error) => {
-          if (error instanceof FellowshipLogsRequestError) {
+          if (
+            error instanceof FellowshipLogsRequestError ||
+            error instanceof FellowshipLogsRateLimitRejectedError
+          ) {
             return error;
           }
 

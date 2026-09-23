@@ -90,6 +90,13 @@ function refreshFellowshipLogsRateLimitDataMutationOptions(
       return browserRuntime.runPromise(getRateLimitData());
     },
     mutationKey: ["fellowship-logs", "rate-limit-data", "refresh"],
+    // A rejected lookup can still carry fresh rate-limit data, which the API
+    // keeps as the last known.
+    onError: () => {
+      return browserRuntime.runPromise(
+        invalidateFellowshipLogsRateLimitData(queryClient),
+      );
+    },
     onSuccess: (rateLimitData) => {
       queryClient.setQueryData(
         getFellowshipLogsLastKnownRateLimitDataQueryOptions().queryKey,

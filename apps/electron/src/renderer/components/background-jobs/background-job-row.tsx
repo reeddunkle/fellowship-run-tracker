@@ -3,6 +3,7 @@ import {
   CircleAlertIcon,
   CircleCheckIcon,
   ClockIcon,
+  HourglassIcon,
   RotateCcwIcon,
   SquareIcon,
   XIcon,
@@ -30,6 +31,11 @@ import {
   useDismissBackgroundJob,
   useRetryBackgroundJob,
 } from "@/renderer/api/background-job/background-job-mutations.ts";
+import {
+  getWaitingImportMessage,
+  WAITING_FOR_POINTS_MESSAGE,
+} from "@/renderer/api/fellowship-logs/fellowship-logs-rate-limit-messages.ts";
+import { useNowMilliseconds } from "@/renderer/api/fellowship-logs/use-fellowship-logs-rate-limit-status.ts";
 import { useFellowshipDataStore } from "@/renderer/stores/fellowship-data/fellowship-data-store.tsx";
 import { formatRelativeDateTimeFromMilliseconds } from "@/util/format-date-time.ts";
 
@@ -50,6 +56,10 @@ function BackgroundJobStatusIcon({
 
   if (job.status === "SUCCEEDED") {
     return <CircleCheckIcon className="text-primary" />;
+  }
+
+  if (job.status === "WAITING") {
+    return <HourglassIcon className="text-muted-foreground" />;
   }
 
   return <ClockIcon className="text-muted-foreground" />;
@@ -92,14 +102,50 @@ function getFailureMessage(job: BackgroundJobApiItem): string {
   );
 }
 
-function getQueuedDescription(queuePosition: number): string {
+function getWaitingMessage(
+  job: BackgroundJobApiItem,
+  nowMilliseconds: number,
+): string {
+  return Match.value(job).pipe(
+    Match.discriminatorsExhaustive("kind")({
+      ImportFellowshipLogsDungeonRun: (importJob) => {
+        return getWaitingImportMessage(
+          importJob.availableAtMilliseconds,
+          nowMilliseconds,
+        );
+      },
+    }),
+  );
+}
+
+function WaitingStatusLine({ job }: { readonly job: BackgroundJobApiItem }) {
+  const nowMilliseconds = useNowMilliseconds();
+
+  return (
+    <ItemDescription>{getWaitingMessage(job, nowMilliseconds)}</ItemDescription>
+  );
+}
+
+function getQueuedDescription({
+  isQueueWaiting,
+  queuePosition,
+}: {
+  readonly isQueueWaiting: boolean;
+  readonly queuePosition: number;
+}): string {
+  if (isQueueWaiting) {
+    return WAITING_FOR_POINTS_MESSAGE;
+  }
+
   return queuePosition === 1 ? "Up next" : `#${queuePosition} in line`;
 }
 
 function BackgroundJobStatusLine({
+  isQueueWaiting,
   job,
   queuePosition,
 }: {
+  readonly isQueueWaiting: boolean;
   readonly job: BackgroundJobApiItem;
   readonly queuePosition: number;
 }) {
@@ -124,6 +170,10 @@ function BackgroundJobStatusLine({
     return <ItemDescription>{getFailureMessage(job)}</ItemDescription>;
   }
 
+  if (job.status === "WAITING") {
+    return <WaitingStatusLine job={job} />;
+  }
+
   if (job.status === "SUCCEEDED") {
     return (
       <ItemDescription>
@@ -135,7 +185,9 @@ function BackgroundJobStatusLine({
   }
 
   return (
-    <ItemDescription>{getQueuedDescription(queuePosition)}</ItemDescription>
+    <ItemDescription>
+      {getQueuedDescription({ isQueueWaiting, queuePosition })}
+    </ItemDescription>
   );
 }
 
@@ -144,7 +196,11 @@ function BackgroundJobActions({ job }: { readonly job: BackgroundJobApiItem }) {
   const dismissMutation = useDismissBackgroundJob();
   const retryMutation = useRetryBackgroundJob();
 
-  if (job.status === "QUEUED" || job.status === "RUNNING") {
+  if (
+    job.status === "QUEUED" ||
+    job.status === "RUNNING" ||
+    job.status === "WAITING"
+  ) {
     return (
       <Tooltip>
         <TooltipTrigger
@@ -201,12 +257,18 @@ function BackgroundJobActions({ job }: { readonly job: BackgroundJobApiItem }) {
 }
 
 type BackgroundJobRowProps = {
+  /**
+   * Whether a job ahead in the same queue is waiting, which holds queued jobs
+   * until it can continue.
+   */
+  readonly isQueueWaiting: boolean;
   readonly job: BackgroundJobApiItem;
   /** 1-based position among queued jobs; unused for other statuses. */
   readonly queuePosition: number;
 };
 
 export function BackgroundJobRow({
+  isQueueWaiting,
   job,
   queuePosition,
 }: BackgroundJobRowProps) {
@@ -217,7 +279,11 @@ export function BackgroundJobRow({
       </ItemMedia>
       <ItemContent>
         <BackgroundJobTitle job={job} />
-        <BackgroundJobStatusLine job={job} queuePosition={queuePosition} />
+        <BackgroundJobStatusLine
+          isQueueWaiting={isQueueWaiting}
+          job={job}
+          queuePosition={queuePosition}
+        />
       </ItemContent>
       <ItemActions>
         <BackgroundJobActions job={job} />

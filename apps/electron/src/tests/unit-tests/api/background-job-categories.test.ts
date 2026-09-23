@@ -17,6 +17,7 @@ function makeImportJob(
 ): ImportFellowshipLogsDungeonRunBackgroundJobApiItem {
   return {
     attempts: 0,
+    availableAtMilliseconds: status === "WAITING" ? 60_000 : null,
     createdAtMilliseconds: 0,
     error: null,
     finishedAtMilliseconds: null,
@@ -73,6 +74,7 @@ describe("getBackgroundJobSummary", () => {
       queuedCount: 0,
       runningJob: undefined,
       state: "idle",
+      waitingCount: 0,
     });
   });
 
@@ -92,6 +94,7 @@ describe("getBackgroundJobSummary", () => {
       queuedCount: 2,
       runningJob,
       state: "running",
+      waitingCount: 0,
     });
   });
 
@@ -120,5 +123,30 @@ describe("getBackgroundJobSummary", () => {
     expect(
       getBackgroundJobSummary([makeImportJob("job-1", "SUCCEEDED")]).state,
     ).toBe("idle");
+  });
+
+  test("is waiting when a job waits and nothing runs", () => {
+    const summary = getBackgroundJobSummary([
+      makeImportJob("job-1", "WAITING"),
+      makeImportJob("job-2", "QUEUED"),
+    ]);
+
+    expect(summary).toEqual({
+      activeCount: 2,
+      failedCount: 0,
+      queuedCount: 1,
+      runningJob: undefined,
+      state: "waiting",
+      waitingCount: 1,
+    });
+  });
+
+  test("reports a running job ahead of a waiting one", () => {
+    const summary = getBackgroundJobSummary([
+      makeImportJob("job-1", "WAITING"),
+      makeImportJob("job-2", "RUNNING"),
+    ]);
+
+    expect(summary.state).toBe("running");
   });
 });

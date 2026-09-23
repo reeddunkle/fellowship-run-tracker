@@ -5,7 +5,7 @@ import {
   ImportFellowshipLogsDungeonRunJobPayloadSchema,
 } from "@frt/shared/background-job/background-job-api-schema.ts";
 import { DungeonIdSchema } from "@frt/shared/fellowship/validation/fellowship-common.ts";
-import { FellowshipLogsRateLimitDataSchema } from "@frt/shared/fellowship-logs/validation/fellowship-logs-rate-limit-schema.ts";
+import { FellowshipLogsRateLimitSnapshotSchema } from "@frt/shared/fellowship-logs/validation/fellowship-logs-rate-limit-schema.ts";
 import {
   NonNegativeIntegerSchema,
   PositiveIntegerSchema,
@@ -48,7 +48,8 @@ export const FellowshipLogsApiDungeonRunMetadataSchema = Schema.Struct({
 export type FellowshipLogsApiDungeonRunMetadata =
   typeof FellowshipLogsApiDungeonRunMetadataSchema.Type;
 
-const FellowshipLogsApiRateLimitDataSchema = FellowshipLogsRateLimitDataSchema;
+const FellowshipLogsApiRateLimitDataSchema =
+  FellowshipLogsRateLimitSnapshotSchema;
 
 export type FellowshipLogsApiRateLimitData =
   typeof FellowshipLogsApiRateLimitDataSchema.Type;

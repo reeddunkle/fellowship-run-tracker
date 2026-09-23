@@ -30,7 +30,21 @@ type BackgroundJobIdOptions = {
 };
 
 type ClaimNextBackgroundJobOptions = {
+  /**
+   * Claim nothing while any job in the queue is `WAITING` for a time still
+   * in the future, so the whole queue waits along with it.
+   */
+  readonly holdWhileWaiting: boolean;
   readonly queue: string;
+};
+
+type GetNextAvailableAtOptions = ClaimNextBackgroundJobOptions;
+
+type MarkBackgroundJobWaitingOptions = {
+  readonly availableAt: DateTime.Utc;
+  readonly id: BackgroundJobId;
+  /** Why the job is waiting; stored in its `error` column. */
+  readonly reason: BackgroundJobFailure;
 };
 
 type DeleteBackgroundJobOptions = {
@@ -67,8 +81,9 @@ type RecoverRunningBackgroundJobsOptions = {
 
 export type BackgroundJobDAOShape = {
   /**
-   * Atomically moves the oldest queued job in `queue` to `RUNNING` and
-   * increments its attempts.
+   * Atomically moves the next job in `queue` to `RUNNING` and increments its
+   * attempts. Waiting jobs whose time has come are claimed before queued
+   * ones; otherwise the oldest queued job is claimed.
    */
   readonly claimNext: (
     options: ClaimNextBackgroundJobOptions,
@@ -91,8 +106,17 @@ export type BackgroundJobDAOShape = {
   ) => E.Effect<Option.Option<BackgroundJobModel>, BackgroundJobDAOError>;
 
   /**
-   * Inserts a queued job. When an active (queued or running) job with the same
-   * queue and idempotency key already exists, returns it instead.
+   * When `queue` can next make progress on its `WAITING` jobs: the earliest
+   * one's time, or the latest one's when the queue holds while any wait.
+   */
+  readonly getNextAvailableAt: (
+    options: GetNextAvailableAtOptions,
+  ) => E.Effect<Option.Option<DateTime.Utc>, BackgroundJobDAOError>;
+
+  /**
+   * Inserts a queued job. When an active (queued, waiting or running) job
+   * with the same queue and idempotency key already exists, returns it
+   * instead.
    */
   readonly insert: (
     options: InsertBackgroundJobOptions,
@@ -108,6 +132,14 @@ export type BackgroundJobDAOShape = {
 
   readonly markSucceeded: (
     options: MarkBackgroundJobSucceededOptions,
+  ) => E.Effect<void, BackgroundJobDAOError>;
+
+  /**
+   * Parks a running job as `WAITING` until `availableAt`, giving back the
+   * attempt it used.
+   */
+  readonly markWaiting: (
+    options: MarkBackgroundJobWaitingOptions,
   ) => E.Effect<void, BackgroundJobDAOError>;
 
   /**

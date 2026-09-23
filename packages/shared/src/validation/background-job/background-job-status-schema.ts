@@ -5,6 +5,7 @@ export const BackgroundJobStatusSchema = Schema.Literals([
   "QUEUED",
   "RUNNING",
   "SUCCEEDED",
+  "WAITING",
 ]);
 
 export type BackgroundJobStatus = typeof BackgroundJobStatusSchema.Type;

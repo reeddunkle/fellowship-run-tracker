@@ -23,6 +23,7 @@ import { makeBackgroundJobEventStore } from "@/renderer/stores/background-job/ba
 
 const QUEUED_JOB: ImportFellowshipLogsDungeonRunBackgroundJobApiItem = {
   attempts: 0,
+  availableAtMilliseconds: null,
   createdAtMilliseconds: 0,
   error: null,
   finishedAtMilliseconds: null,

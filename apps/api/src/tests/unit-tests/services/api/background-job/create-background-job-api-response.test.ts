@@ -15,6 +15,7 @@ function makeJob(
 ) {
   return new BackgroundJobModel({
     attempts: 1,
+    availableAt: null,
     createdAt: CREATED_AT,
     error: null,
     finishedAt: null,
@@ -56,6 +57,34 @@ describe("createBackgroundJobApiItem", () => {
       progress: 0.25,
       startedAtMilliseconds: DateTime.toEpochMillis(STARTED_AT),
       status: "RUNNING",
+    });
+  });
+
+  test("maps a waiting import job with when it resumes and why", () => {
+    const availableAt = DateTime.makeUnsafe("2026-09-23T09:00:00.000Z");
+    const reason = {
+      message: "Out of points.",
+      tag: "FellowshipLogsRateLimitExceededError",
+    };
+
+    const item = Option.getOrThrow(
+      createBackgroundJobApiItem({
+        job: makeJob({
+          attempts: 0,
+          availableAt,
+          error: reason,
+          startedAt: null,
+          status: "WAITING",
+        }),
+        progress: null,
+      }),
+    );
+
+    expect(item).toMatchObject({
+      availableAtMilliseconds: DateTime.toEpochMillis(availableAt),
+      error: reason,
+      startedAtMilliseconds: null,
+      status: "WAITING",
     });
   });
 

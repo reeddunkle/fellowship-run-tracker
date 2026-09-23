@@ -10,11 +10,17 @@ import {
   useDungeonRunMetadata,
   useQueueDungeonRunImport,
 } from "@/renderer/api/fellowship-logs/fellowship-logs-mutations.ts";
+import {
+  getOutOfPointsMessage,
+  getQueueWhileOutOfPointsMessage,
+} from "@/renderer/api/fellowship-logs/fellowship-logs-rate-limit-messages.ts";
+import { useFellowshipLogsRateLimitStatus } from "@/renderer/api/fellowship-logs/use-fellowship-logs-rate-limit-status.ts";
 import { BackgroundJobCategoryList } from "@/renderer/components/background-jobs/background-job-list.tsx";
 import { useFellowshipDataStore } from "@/renderer/stores/fellowship-data/fellowship-data-store.tsx";
 
 import { ImportConfirmationCard } from "./import-confirmation/import-confirmation-card.tsx";
 import { type DecodedImportConfirmationFormValue } from "./import-confirmation/import-confirmation-form-schema.ts";
+import { getMetadataErrorMessage } from "./import-url-form/get-metadata-error-message.ts";
 import { ImportUrlForm } from "./import-url-form/import-url-form.tsx";
 
 function ImportQueuedMessage({
@@ -42,6 +48,7 @@ export function ImportDungeonRunSection() {
 
   const metadataMutation = useDungeonRunMetadata();
   const queueMutation = useQueueDungeonRunImport();
+  const { nowMilliseconds, status } = useFellowshipLogsRateLimitStatus();
 
   const reference: FellowshipLogsApiDungeonRunReference | undefined =
     metadataMutation.variables;
@@ -79,10 +86,28 @@ export function ImportDungeonRunSection() {
     );
   }
 
+  const outOfPointsMessage =
+    status?.isExhausted === true
+      ? getOutOfPointsMessage(status, nowMilliseconds)
+      : undefined;
+
+  const queueNotice =
+    status?.isExhausted === true
+      ? getQueueWhileOutOfPointsMessage(
+          status.resetsAtMilliseconds,
+          nowMilliseconds,
+        )
+      : undefined;
+
   return (
     <div className="grid gap-4">
       <ImportUrlForm
-        error={metadataMutation.error ?? undefined}
+        blockedMessage={outOfPointsMessage}
+        errorMessage={
+          metadataMutation.error === null
+            ? undefined
+            : getMetadataErrorMessage(metadataMutation.error, nowMilliseconds)
+        }
         isSubmitting={metadataMutation.isPending}
         key={formKey}
         onSubmit={handleLookup}
@@ -97,6 +122,7 @@ export function ImportDungeonRunSection() {
           isQueueing={queueMutation.isPending}
           key={`${reference.reportCode}:${reference.fightId}`}
           metadata={metadataMutation.data}
+          notice={queueNotice}
           onCancel={handleCancel}
           onConfirm={handleConfirm}
           reference={reference}

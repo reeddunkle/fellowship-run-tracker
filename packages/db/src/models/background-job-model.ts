@@ -13,6 +13,7 @@ export class BackgroundJobModel extends Model.Class<BackgroundJobModel>(
   "BackgroundJobModel",
 )({
   attempts: NonNegativeIntegerSchema,
+  availableAt: Schema.NullOr(Schema.DateTimeUtcFromMillis),
   createdAt: Model.DateTimeInsertFromNumber,
   error: BackgroundJobFailureSchema.pipe(Schema.fromJsonString, Schema.NullOr),
   finishedAt: Schema.NullOr(Schema.DateTimeUtcFromMillis),

@@ -4,6 +4,7 @@ import * as FileSystem from "effect/FileSystem";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Path from "effect/Path";
+import * as Schema from "effect/Schema";
 import { describe, expect, test } from "vitest";
 
 import { FellowshipLogsDungeonRunImporter } from "@frt/api/application/fellowship-logs-dungeon-run-importer/fellowship-logs-dungeon-run-importer-service.ts";
@@ -20,7 +21,10 @@ import {
   MOCK_DUNGEON_ID,
   MOCK_DUNGEON_LEVEL,
 } from "@frt/db/tests/common/fixtures/configuration-fixtures.ts";
+import { BackgroundJobIdSchema } from "@frt/shared/validation/background-job/background-job-id-schema.ts";
 import { type DungeonRunId } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
+
+const UNUSED_JOB_ID = Schema.decodeSync(BackgroundJobIdSchema)("unused-job");
 
 const UnusedFellowshipLogsDungeonRunImporter = Layer.succeed(
   FellowshipLogsDungeonRunImporter,
@@ -134,7 +138,7 @@ function runJobAfterRestart({
             _tag: "InterruptUnfinishedDungeonRuns",
             createdBefore,
           },
-          { reportProgress: () => E.void },
+          { jobId: UNUSED_JOB_ID, reportProgress: () => E.void },
         ).pipe(
           E.provide(
             Layer.merge(

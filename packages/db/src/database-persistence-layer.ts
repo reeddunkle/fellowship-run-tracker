@@ -12,6 +12,7 @@ import { DungeonRunDAO } from "@frt/db/daos/dungeon-run/dungeon-run-dao.ts";
 import { DungeonRunObservationDAO } from "@frt/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
 import { EncounterDAO } from "@frt/db/daos/encounter/encounter-dao.ts";
 import { FellowshipLogsDungeonRunDAO } from "@frt/db/daos/fellowship-logs-dungeon-run/fellowship-logs-dungeon-run-dao.ts";
+import { FellowshipLogsImportPageDAO } from "@frt/db/daos/fellowship-logs-import-page/fellowship-logs-import-page-dao.ts";
 import { LocalLogDungeonRunDAO } from "@frt/db/daos/local-log-dungeon-run/local-log-dungeon-run-dao.ts";
 import { UnitDAO } from "@frt/db/daos/unit/unit-dao.ts";
 import { makeDatabaseLayer } from "@frt/db/database-layer.ts";
@@ -28,6 +29,7 @@ const DAOsLayer = Layer.mergeAll(
   DungeonRunObservationDAO.layer,
   EncounterDAO.layer,
   FellowshipLogsDungeonRunDAO.layer,
+  FellowshipLogsImportPageDAO.layer,
   LocalLogDungeonRunDAO.layer,
   UnitDAO.layer,
 );

@@ -9,6 +9,8 @@ import { appConfig } from "@frt/api/app-config.ts";
 import {
   type FellowshipLogsEventDecodeError,
   type FellowshipLogsGraphQLResponseError,
+  type FellowshipLogsRateLimitExceededError,
+  type FellowshipLogsRateLimitRejectedError,
   type FellowshipLogsRequestError,
 } from "@frt/api/errors/fellowship-logs-error.ts";
 import {
@@ -18,7 +20,7 @@ import {
 import { AppSettings } from "@frt/api/services/app-settings/app-settings-service.ts";
 import { type DungeonId } from "@frt/shared/fellowship/validation/fellowship-common.ts";
 import { type FellowshipEvent } from "@frt/shared/fellowship/validation/fellowship-event-schema.ts";
-import { type FellowshipLogsRateLimitData } from "@frt/shared/fellowship-logs/validation/fellowship-logs-rate-limit-schema.ts";
+import { type FellowshipLogsRateLimitSnapshot } from "@frt/shared/fellowship-logs/validation/fellowship-logs-rate-limit-schema.ts";
 import { type FellowshipLogsFightId } from "@frt/shared/validation/fellowship-logs/fellowship-logs-fight-id-schema.ts";
 import { type FellowshipLogsReportCode } from "@frt/shared/validation/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
@@ -52,7 +54,7 @@ export type Query = <ResponseData>(
   responseSchema: Schema.Decoder<ResponseData, never>,
 ) => E.Effect<
   FellowshipLogsGraphQLResponse<ResponseData>,
-  FellowshipLogsRequestError
+  FellowshipLogsRateLimitRejectedError | FellowshipLogsRequestError
 >;
 
 export type GetFellowshipLogsReportOptions = {
@@ -66,6 +68,11 @@ type StreamFellowshipLogsReportOptions = GetFellowshipLogsReportOptions & {
    * fetched so far, from 0 to 1.
    */
   readonly onProgress?: (fraction: number) => E.Effect<void>;
+  /**
+   * Where to start fetching, as the `nextPageTimestamp` of a page already
+   * fetched. Defaults to the start of the fight.
+   */
+  readonly startTime?: number;
 };
 
 export type FellowshipLogsDungeonRunMetadata = {
@@ -77,6 +84,7 @@ export type FellowshipLogsDungeonRunMetadata = {
 
 export type FellowshipLogsRequestOperationError =
   | FellowshipLogsGraphQLResponseError
+  | FellowshipLogsRateLimitExceededError
   | FellowshipLogsRequestError;
 
 type FellowshipLogsError =
@@ -98,7 +106,7 @@ export type FellowshipLogsService = {
   readonly getRateLimitData: (
     options?: GetRateLimitDataOptions,
   ) => E.Effect<
-    FellowshipLogsRateLimitData | null,
+    FellowshipLogsRateLimitSnapshot | null,
     FellowshipLogsRequestOperationError
   >;
 

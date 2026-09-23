@@ -100,17 +100,27 @@ export function makeFellowshipLogsFixture({
       });
     }
 
-    const readReportPage = E.fn("FellowshipLogsFixture.readReportPage")(
-      function* (filePath: string, reportCode: FellowshipLogsReportCode) {
-        const responseData = yield* E.gen(function* () {
-          const contents = yield* fileSystem.readFileString(filePath);
+    const readReportPageResponse = (filePath: string) => {
+      return E.gen(function* () {
+        const contents = yield* fileSystem.readFileString(filePath);
 
-          return yield* Schema.decodeEffect(
-            FellowshipLogsReportPageResponseJsonSchema,
-          )(contents);
-        }).pipe(
-          E.mapError(mapFixtureError),
-          readAndTrackGraphQLResponse(rateLimitTracker),
+        return yield* Schema.decodeEffect(
+          FellowshipLogsReportPageResponseJsonSchema,
+        )(contents);
+      }).pipe(E.mapError(mapFixtureError));
+    };
+
+    // Reading the recording is free; "fetching" the page is what goes through
+    // the rate-limit tracker.
+    const fetchReportPage = E.fn("FellowshipLogsFixture.fetchReportPage")(
+      function* (
+        response: typeof FellowshipLogsReportPageResponseJsonSchema.Type,
+        reportCode: FellowshipLogsReportCode,
+      ) {
+        const responseData = yield* E.succeed(response).pipe(
+          readAndTrackGraphQLResponse(rateLimitTracker, {
+            costKey: "ReportPage",
+          }),
         );
 
         return yield* getReportOrFail({
@@ -170,7 +180,9 @@ export function makeFellowshipLogsFixture({
           )(contents);
         }).pipe(
           E.mapError(mapFixtureError),
-          readAndTrackGraphQLResponse(rateLimitTracker),
+          readAndTrackGraphQLResponse(rateLimitTracker, {
+            costKey: "DungeonRunMetadata",
+          }),
         );
 
         const metadata = yield* deriveDungeonRunMetadata({
@@ -195,9 +207,35 @@ export function makeFellowshipLogsFixture({
           E.map((pagePaths) => {
             // Recordings have a known page count, so progress is simply the
             // share of pages read.
-            return Stream.fromIterable(pagePaths.entries()).pipe(
+            const responses = Stream.fromIterable(pagePaths.entries()).pipe(
               Stream.mapEffect(([index, { filePath }]) => {
-                return readReportPage(filePath, options.reportCode).pipe(
+                return readReportPageResponse(filePath).pipe(
+                  E.map((response) => {
+                    return { index, response };
+                  }),
+                );
+              }),
+            );
+
+            const { startTime } = options;
+
+            // Starting part-way skips the recorded pages up to and including
+            // the one that ends at `startTime`.
+            const remaining =
+              startTime === undefined
+                ? responses
+                : responses.pipe(
+                    Stream.dropUntil(({ response }) => {
+                      return (
+                        response.data?.reportData.report?.events
+                          .nextPageTimestamp === startTime
+                      );
+                    }),
+                  );
+
+            return remaining.pipe(
+              Stream.mapEffect(({ index, response }) => {
+                return fetchReportPage(response, options.reportCode).pipe(
                   E.tap(() => {
                     return options.onProgress === undefined
                       ? E.void
@@ -266,10 +304,11 @@ export function makeFellowshipLogsFixture({
         )(contents);
       }).pipe(
         E.mapError(mapFixtureError),
-        readAndTrackGraphQLResponse(rateLimitTracker),
-        E.map((responseData) => {
-          return responseData.rateLimitData;
+        readAndTrackGraphQLResponse(rateLimitTracker, {
+          costKey: "RateLimitData",
+          skipCapacityCheck: true,
         }),
+        E.andThen(rateLimitTracker.getLastKnown()),
       );
     };
 

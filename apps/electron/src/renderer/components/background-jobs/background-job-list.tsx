@@ -12,7 +12,7 @@ import { BackgroundJobRow } from "./background-job-row.tsx";
 
 /**
  * Rows for jobs already in queue order. Queued jobs are numbered by their
- * place in line.
+ * place in line, unless a waiting job is holding the queue.
  */
 export function BackgroundJobItems({
   jobs,
@@ -26,11 +26,15 @@ export function BackgroundJobItems({
     .map((job) => {
       return job.id;
     });
+  const isQueueWaiting = jobs.some((job) => {
+    return job.status === "WAITING";
+  });
 
   return (
     <ItemGroup>
       {jobs.map((job) => (
         <BackgroundJobRow
+          isQueueWaiting={isQueueWaiting}
           job={job}
           key={job.id}
           queuePosition={queuedJobIds.indexOf(job.id) + 1}

@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import * as DateTime from "effect/DateTime";
 import { expect, test, vi } from "vitest";
 import { render } from "vitest-browser-react";
 
@@ -75,16 +76,19 @@ test("loads each Fellowship Logs section independently with skeletons", async ()
       getFellowshipLogsLastKnownRateLimitDataQueryOptions().queryKey,
       () => ({
         limitPerHour: 5000,
+        observedAtMilliseconds: DateTime.toEpochMillis(DateTime.nowUnsafe()),
         pointsResetIn: 3600,
         pointsSpentThisHour: 25,
       }),
     );
     await expect
-      .element(screen.getByText("5000", { exact: true }))
+      .element(screen.getByText("4,975", { exact: true }))
       .toBeVisible();
-    await expect.element(screen.getByText("25", { exact: true })).toBeVisible();
     await expect
-      .element(screen.getByText("3600", { exact: true }))
+      .element(screen.getByText("5,000", { exact: true }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByText("60 minutes", { exact: true }))
       .toBeVisible();
     await screen.unmount();
   } finally {

@@ -1,3 +1,4 @@
+import * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
 import type * as Layer from "effect/Layer";
 import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
@@ -12,6 +13,7 @@ import { type FellowshipLogsRequestOperationError } from "@frt/api/services/fell
 import {
   FellowshipLogsApiAlreadyImportedError,
   FellowshipLogsApiDungeonLevelNotFoundError,
+  FellowshipLogsApiRateLimitExceededError,
 } from "@frt/api-contract/errors/fellowship-logs-api-error.ts";
 import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
 import { type DungeonRunDAOError } from "@frt/db/errors/dungeon-run-dao-error.ts";
@@ -26,6 +28,7 @@ function mapFellowshipLogsMetadataApiError({
   ): E.Effect<
     never,
     | FellowshipLogsApiDungeonLevelNotFoundError
+    | FellowshipLogsApiRateLimitExceededError
     | HttpApiError.InternalServerError
   > => {
     const run = { fightId, reportCode };
@@ -37,7 +40,7 @@ function mapFellowshipLogsMetadataApiError({
       return E.fail(new FellowshipLogsApiDungeonLevelNotFoundError(run));
     }
 
-    return logInternalServerError(error);
+    return mapFellowshipLogsRateLimitApiError(error);
   };
 }
 
@@ -74,14 +77,19 @@ function logInternalServerError(
 
 function mapFellowshipLogsRateLimitApiError(
   error: FellowshipLogsRequestOperationError,
-): E.Effect<never, HttpApiError.InternalServerError> {
-  return E.gen(function* () {
-    yield* E.logError("Fellowship Logs API operation failed.", {
-      error,
-    });
+): E.Effect<
+  never,
+  FellowshipLogsApiRateLimitExceededError | HttpApiError.InternalServerError
+> {
+  if (error._tag === "FellowshipLogsRateLimitExceededError") {
+    return E.fail(
+      new FellowshipLogsApiRateLimitExceededError({
+        resetsAtMilliseconds: DateTime.toEpochMillis(error.resetsAt),
+      }),
+    );
+  }
 
-    return yield* new HttpApiError.InternalServerError();
-  });
+  return logInternalServerError(error);
 }
 
 function mapGetFellowshipLogsDungeonRunsError(
@@ -132,7 +140,7 @@ const FellowshipLogsApiHandlersInferred = HttpApiBuilder.group(
       .handle("getFellowshipLogsLastKnownRateLimitData", () => {
         return fellowshipLogsApiService
           .getLastKnownRateLimitData()
-          .pipe(E.catch(mapFellowshipLogsRateLimitApiError));
+          .pipe(E.catch(logInternalServerError));
       })
       .handle("queueFellowshipLogsDungeonRunImport", ({ payload }) => {
         return fellowshipLogsApiService

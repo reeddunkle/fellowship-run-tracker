@@ -1,4 +1,4 @@
-import { ListPlusIcon, XIcon } from "lucide-react";
+import { ClockIcon, ListPlusIcon, XIcon } from "lucide-react";
 
 import {
   type FellowshipLogsApiDungeonRunMetadata,
@@ -41,6 +41,8 @@ type ImportConfirmationCardProps = {
   readonly error: unknown;
   readonly isQueueing: boolean;
   readonly metadata: FellowshipLogsApiDungeonRunMetadata;
+  /** Something to know before queueing, e.g. that the import will wait. */
+  readonly notice: string | undefined;
   readonly onCancel: () => void;
   readonly onConfirm: (value: DecodedImportConfirmationFormValue) => void;
   readonly reference: FellowshipLogsApiDungeonRunReference;
@@ -50,6 +52,7 @@ export function ImportConfirmationCard({
   error,
   isQueueing,
   metadata,
+  notice,
   onCancel,
   onConfirm,
   reference,
@@ -94,6 +97,12 @@ export function ImportConfirmationCard({
             </dd>
           </div>
         </dl>
+        {notice === undefined ? null : (
+          <p className="flex items-center gap-2 text-sm text-muted-foreground">
+            <ClockIcon aria-hidden="true" className="size-4" />
+            {notice}
+          </p>
+        )}
         <form
           id={IMPORT_CONFIRMATION_FORM_DOM_ID}
           onSubmit={(event) => {

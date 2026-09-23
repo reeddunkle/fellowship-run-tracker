@@ -7,7 +7,7 @@ import {
   type FellowshipLogsApiImportedDungeonRun,
   type FellowshipLogsApiLastKnownRateLimitData,
 } from "@frt/shared/fellowship-logs/fellowship-logs-api-schema.ts";
-import { type FellowshipLogsRateLimitData } from "@frt/shared/fellowship-logs/validation/fellowship-logs-rate-limit-schema.ts";
+import { type FellowshipLogsRateLimitSnapshot } from "@frt/shared/fellowship-logs/validation/fellowship-logs-rate-limit-schema.ts";
 
 export function createFellowshipLogsDungeonRunMetadataApiResponse(
   metadata: FellowshipLogsDungeonRunMetadata,
@@ -21,7 +21,7 @@ export function createFellowshipLogsDungeonRunMetadataApiResponse(
 }
 
 export function createFellowshipLogsRateLimitDataApiResponse(
-  rateLimitData: FellowshipLogsRateLimitData | null,
+  rateLimitData: FellowshipLogsRateLimitSnapshot | null,
 ): FellowshipLogsApiLastKnownRateLimitData {
   return rateLimitData;
 }

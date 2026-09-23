@@ -5,6 +5,7 @@ import * as Schedule from "effect/Schedule";
 import type * as Schema from "effect/Schema";
 
 import { FellowshipLogsDungeonRunImporter } from "@frt/api/application/fellowship-logs-dungeon-run-importer/fellowship-logs-dungeon-run-importer-service.ts";
+import { BackgroundJobDeferredError } from "@frt/api/errors/background-job-error.ts";
 import { appPaths } from "@frt/api/helpers/app-paths.ts";
 import { SESSION_LOG_FILE_PATH } from "@frt/api/logging/log-file-path.ts";
 import { pruneLogFiles } from "@frt/api/logging/prune-log-files.ts";
@@ -12,9 +13,12 @@ import { HIDDEN_BACKGROUND_JOB_QUEUE_NAMES } from "@frt/api/services/background-
 import { type BackgroundJob } from "@frt/api/services/background-job/background-job-schema.ts";
 import { DungeonRunRepository } from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
 import { BackgroundJobDAO } from "@frt/db/daos/background-job/background-job-dao.ts";
+import { type BackgroundJobId } from "@frt/shared/validation/background-job/background-job-id-schema.ts";
 
 // Request errors are usually transient (network, token refresh), so they get a
-// couple of quick retries. Everything else fails the job straight away.
+// couple of quick retries, as does a report that changed mid-import (its saved
+// pages are cleared, so the retry starts over). Everything else fails the job
+// straight away.
 const IMPORT_RETRY_SCHEDULE = Schedule.exponential("1 second");
 
 const IMPORT_RETRY_TIMES = 2;
@@ -23,12 +27,16 @@ const IMPORT_RETRY_TIMES = 2;
  * Runs one job and returns its JSON result, which is stored on the job row.
  */
 type RunBackgroundJobOptions = {
+  readonly jobId: BackgroundJobId;
   /** Reports the running job's progress, from 0 to 1. */
   readonly reportProgress: (fraction: number) => E.Effect<void>;
 };
 
 export const runBackgroundJob = E.fn("BackgroundJobService.runBackgroundJob")(
-  function* (job: BackgroundJob, { reportProgress }: RunBackgroundJobOptions) {
+  function* (
+    job: BackgroundJob,
+    { jobId, reportProgress }: RunBackgroundJobOptions,
+  ) {
     const backgroundJobDAO = yield* BackgroundJobDAO;
     const dungeonRunRepository = yield* DungeonRunRepository;
     const fellowshipLogsDungeonRunImporter =
@@ -40,6 +48,7 @@ export const runBackgroundJob = E.fn("BackgroundJobService.runBackgroundJob")(
         ({ fightId, isOwnRun, reportCode }) => {
           return fellowshipLogsDungeonRunImporter
             .importReport({
+              backgroundJobId: jobId,
               fightId,
               isOwnRun,
               onProgress: reportProgress,
@@ -50,8 +59,21 @@ export const runBackgroundJob = E.fn("BackgroundJobService.runBackgroundJob")(
                 schedule: IMPORT_RETRY_SCHEDULE,
                 times: IMPORT_RETRY_TIMES,
                 while: (error) => {
-                  return error._tag === "FellowshipLogsRequestError";
+                  return (
+                    error._tag === "FellowshipLogsRequestError" ||
+                    error._tag ===
+                      "FellowshipLogsDungeonRunImportReportChangedError"
+                  );
                 },
+              }),
+              // Out of points: wait for them to reset instead of failing.
+              E.catchTag("FellowshipLogsRateLimitExceededError", (error) => {
+                return E.fail(
+                  new BackgroundJobDeferredError({
+                    availableAt: error.resetsAt,
+                    reason: error,
+                  }),
+                );
               }),
               // Already imported means the job's goal is met. This happens
               // when the app stopped after the import committed but before

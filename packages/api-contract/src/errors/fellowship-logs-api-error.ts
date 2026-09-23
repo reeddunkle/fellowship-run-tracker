@@ -1,5 +1,6 @@
 import * as Schema from "effect/Schema";
 
+import { NonNegativeIntegerSchema } from "@frt/shared/validation/common-schemas.ts";
 import { DungeonRunIdSchema } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
 import { FellowshipLogsFightIdSchema } from "@frt/shared/validation/fellowship-logs/fellowship-logs-fight-id-schema.ts";
 import { FellowshipLogsReportCodeSchema } from "@frt/shared/validation/fellowship-logs/fellowship-logs-report-code-schema.ts";
@@ -49,5 +50,17 @@ export class FellowshipLogsApiAlreadyImportedError extends Schema.TaggedError<Fe
 ) {
   override get message() {
     return "This run has already been imported.";
+  }
+}
+
+export class FellowshipLogsApiRateLimitExceededError extends Schema.TaggedError<FellowshipLogsApiRateLimitExceededError>()(
+  "FellowshipLogsApiRateLimitExceededError",
+  {
+    resetsAtMilliseconds: NonNegativeIntegerSchema,
+  },
+  { httpApiStatus: 429 },
+) {
+  override get message() {
+    return "You've used all your Fellowship Logs points for this hour.";
   }
 }

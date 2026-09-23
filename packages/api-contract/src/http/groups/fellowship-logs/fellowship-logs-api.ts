@@ -7,6 +7,7 @@ import * as HttpApiSchema from "effect/unstable/httpapi/HttpApiSchema";
 import {
   FellowshipLogsApiAlreadyImportedError,
   FellowshipLogsApiDungeonLevelNotFoundError,
+  FellowshipLogsApiRateLimitExceededError,
   FellowshipLogsApiRunNotFinishedError,
   FellowshipLogsApiRunNotFoundError,
 } from "@frt/api-contract/errors/fellowship-logs-api-error.ts";
@@ -32,6 +33,7 @@ const GetFellowshipLogsDungeonRunMetadataEndpoint = HttpApiEndpoint.post(
   {
     error: [
       FellowshipLogsApiDungeonLevelNotFoundError,
+      FellowshipLogsApiRateLimitExceededError,
       FellowshipLogsApiRunNotFoundError,
       FellowshipLogsApiRunNotFinishedError,
       HttpApiError.InternalServerErrorNoContent,
@@ -45,7 +47,10 @@ const GetFellowshipLogsRateLimitDataEndpoint = HttpApiEndpoint.get(
   "getFellowshipLogsRateLimitData",
   `${FELLOWSHIP_LOGS_ROUTE}/rate-limit-data`,
   {
-    error: HttpApiError.InternalServerErrorNoContent,
+    error: [
+      FellowshipLogsApiRateLimitExceededError,
+      HttpApiError.InternalServerErrorNoContent,
+    ],
     success: FellowshipLogsApiLastKnownRateLimitDataSchema,
   },
 );

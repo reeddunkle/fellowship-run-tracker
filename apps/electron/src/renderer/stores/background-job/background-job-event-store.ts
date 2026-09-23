@@ -29,7 +29,10 @@ import {
 import { queryClient as defaultQueryClient } from "@/renderer/query/query-client.ts";
 import { browserRuntime } from "@/renderer/runtimes/browser-runtime.ts";
 
-import { getNewlyFinishedBackgroundJobs } from "./get-newly-finished-background-jobs.ts";
+import {
+  getNewlyFinishedBackgroundJobs,
+  getNewlyWaitingBackgroundJobs,
+} from "./get-newly-finished-background-jobs.ts";
 
 type BackgroundJobEventStoreSnapshot = {
   readonly eventConnectionState: ApiEventConnectionState;
@@ -100,12 +103,14 @@ export function makeBackgroundJobEventStore({
     readonly previous: BackgroundJobApiSnapshot | undefined;
   }) {
     const finishedJobs = getNewlyFinishedBackgroundJobs(previous, next);
+    const waitingJobs = getNewlyWaitingBackgroundJobs(previous, next);
 
-    if (finishedJobs.length === 0) {
+    if (finishedJobs.length === 0 && waitingJobs.length === 0) {
       return;
     }
 
-    // Imports spend Fellowship Logs points whether or not they succeed.
+    // Imports spend Fellowship Logs points whether they succeed, fail, or run
+    // out of points and wait.
     yield* invalidateFellowshipLogsRateLimitData(queryClient);
 
     const hasSucceededImport = finishedJobs.some((job) => {

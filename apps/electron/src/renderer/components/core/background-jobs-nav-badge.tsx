@@ -28,9 +28,13 @@ function getSummaryLines({
   failedCount,
   queuedCount,
   runningJob,
+  waitingCount,
 }: BackgroundJobSummary): ReadonlyArray<string> {
   return [
     runningJob === undefined ? undefined : describeRunningJob(runningJob),
+    waitingCount === 0
+      ? undefined
+      : `${waitingCount} waiting for Fellowship Logs points`,
     queuedCount === 0
       ? undefined
       : `${queuedCount} ${runningJob === undefined ? "" : "more "}queued`,
@@ -42,8 +46,8 @@ function getSummaryLines({
 
 /**
  * The number of active jobs (or failed ones, once nothing is active) in a
- * ring that spins while jobs run and turns red after any failure. Hidden when
- * the queue is idle.
+ * ring that spins while jobs run, stays still while they only wait, and turns
+ * red after any failure. Hidden when the queue is idle.
  */
 export function BackgroundJobsNavBadge() {
   const summary = useBackgroundJobSummary();
@@ -54,6 +58,10 @@ export function BackgroundJobsNavBadge() {
 
   const isFailed = summary.state === "failed";
   const isActive = summary.activeCount > 0;
+  // Queued jobs behind a waiting one aren't going anywhere yet.
+  const isSpinning =
+    summary.runningJob !== undefined ||
+    (summary.queuedCount > 0 && summary.waitingCount === 0);
   const count = isActive ? summary.activeCount : summary.failedCount;
   const lines = getSummaryLines(summary);
 
@@ -74,7 +82,7 @@ export function BackgroundJobsNavBadge() {
           className={cn(
             "absolute inset-0 rounded-full border-2",
             isFailed ? "border-destructive" : "border-primary",
-            isActive && "animate-spin border-t-transparent",
+            isSpinning && "animate-spin border-t-transparent",
           )}
         />
         <span aria-hidden="true">{count}</span>

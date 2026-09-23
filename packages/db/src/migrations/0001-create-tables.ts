@@ -280,9 +280,16 @@ export const createTables = E.gen(function* () {
       kind TEXT NOT NULL,
       payload TEXT NOT NULL CHECK (json_valid(payload)),
       status TEXT NOT NULL CHECK (
-        status IN ('QUEUED', 'RUNNING', 'SUCCEEDED', 'FAILED')
+        status IN (
+          'QUEUED',
+          'WAITING',
+          'RUNNING',
+          'SUCCEEDED',
+          'FAILED'
+        )
       ),
       idempotency_key TEXT,
+      available_at INTEGER CHECK ((status = 'WAITING') = (available_at IS NOT NULL)),
       attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0),
       error TEXT CHECK (
         error IS NULL
@@ -303,10 +310,25 @@ export const createTables = E.gen(function* () {
     CREATE UNIQUE INDEX background_job_queue_idempotency_key_active_index ON background_job (queue, idempotency_key)
     WHERE
       idempotency_key IS NOT NULL
-      AND status IN ('QUEUED', 'RUNNING')
+      AND status IN ('QUEUED', 'WAITING', 'RUNNING')
   `;
 
   yield* sql`
     CREATE INDEX background_job_queue_status_created_at_index ON background_job (queue, status, created_at)
+  `;
+
+  // Report pages an import job has already fetched, so a resumed import
+  // doesn't fetch them again. They go when the job does.
+  yield* sql`
+    CREATE TABLE fellowship_logs_import_page (
+      background_job_id TEXT NOT NULL REFERENCES background_job (id) ON DELETE CASCADE,
+      page_index INTEGER NOT NULL CHECK (page_index >= 0),
+      next_page_timestamp REAL,
+      progress REAL NOT NULL CHECK (progress BETWEEN 0 AND 1),
+      report_revision INTEGER NOT NULL,
+      page TEXT NOT NULL CHECK (json_valid(page)),
+      created_at INTEGER NOT NULL,
+      PRIMARY KEY (background_job_id, page_index)
+    ) STRICT
   `;
 });

@@ -1,4 +1,4 @@
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceStrict, formatDistanceToNow } from "date-fns";
 import * as DateTime from "effect/DateTime";
 
 const LocalDateTimeFormatter = new Intl.DateTimeFormat(undefined, {
@@ -27,5 +27,20 @@ export function formatRelativeDateTime(dateTime: DateTime.Utc): string {
   return dateTime.pipe(
     DateTime.toEpochMillis,
     formatRelativeDateTimeFromMilliseconds,
+  );
+}
+
+/**
+ * Minutes from `nowMilliseconds` until `targetMilliseconds`, rounded up, e.g.
+ * "12 minutes". Suited to waits of up to an hour or so.
+ */
+export function formatMinutesUntil(
+  targetMilliseconds: number,
+  nowMilliseconds: number,
+): string {
+  return formatDistanceStrict(
+    Math.max(targetMilliseconds, nowMilliseconds),
+    nowMilliseconds,
+    { roundingMethod: "ceil", unit: "minute" },
   );
 }
