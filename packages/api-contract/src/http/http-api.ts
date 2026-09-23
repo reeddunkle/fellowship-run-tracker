@@ -2,6 +2,7 @@ import * as HttpApi from "effect/unstable/httpapi/HttpApi";
 
 import { AbilitiesApi } from "@frt/api-contract/http/groups/abilities/abilities-api.ts";
 import { AppSettingsApi } from "@frt/api-contract/http/groups/app-settings/app-settings-api.ts";
+import { BackgroundJobApi } from "@frt/api-contract/http/groups/background-job/background-job-api.ts";
 import { ConfigurationsApi } from "@frt/api-contract/http/groups/configurations/configurations-api.ts";
 import { DungeonRunApi } from "@frt/api-contract/http/groups/dungeon-run/dungeon-run-api.ts";
 import { DungeonsApi } from "@frt/api-contract/http/groups/dungeons/dungeons-api.ts";
@@ -14,6 +15,7 @@ import { UnitsApi } from "@frt/api-contract/http/groups/units/units-api.ts";
 export const AppHttpApi = HttpApi.make("app").add(
   AbilitiesApi,
   AppSettingsApi,
+  BackgroundJobApi,
   ConfigurationsApi,
   DungeonRunApi,
   DungeonsApi,

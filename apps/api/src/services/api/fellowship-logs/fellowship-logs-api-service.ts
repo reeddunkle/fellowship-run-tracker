@@ -1,17 +1,17 @@
 import * as Context from "effect/Context";
 import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
-import {
-  FellowshipLogsDungeonRunImporter,
-  type ImportFellowshipLogsDungeonRunError,
-} from "@frt/api/application/fellowship-logs-dungeon-run-importer/fellowship-logs-dungeon-run-importer-service.ts";
+import { BackgroundJobError } from "@frt/api/errors/background-job-error.ts";
+import { FellowshipLogsDungeonRunImportAlreadyImportedError } from "@frt/api/errors/fellowship-logs-dungeon-run-import-error.ts";
+import { createImportFellowshipLogsDungeonRunBackgroundJobApiItem } from "@frt/api/services/api/background-job/create-background-job-api-response.ts";
 import {
   createFellowshipLogsDungeonRunMetadataApiResponse,
-  createFellowshipLogsImportDungeonRunApiResponse,
   createFellowshipLogsImportedDungeonRunApiResponse,
   createFellowshipLogsRateLimitDataApiResponse,
 } from "@frt/api/services/api/fellowship-logs/create-fellowship-logs-api-response.ts";
+import { BackgroundJobService } from "@frt/api/services/background-job/background-job-service.ts";
 import {
   DungeonRunRepository,
   type DungeonRunRepositoryError,
@@ -21,15 +21,21 @@ import {
   type FellowshipLogsRequestOperationError,
 } from "@frt/api/services/fellowship-logs/fellowship-logs-service.ts";
 import { type DungeonRunDAOError } from "@frt/db/errors/dungeon-run-dao-error.ts";
+import { type FellowshipLogsDungeonRunDAOError } from "@frt/db/errors/fellowship-logs-dungeon-run-dao-error.ts";
 import {
   type FellowshipLogsApiDungeonRunMetadata,
   type FellowshipLogsApiDungeonRunReference,
-  type FellowshipLogsApiImportDungeonRunOptions,
-  type FellowshipLogsApiImportDungeonRunResult,
   type FellowshipLogsApiImportedDungeonRunList,
   type FellowshipLogsApiLastKnownRateLimitData,
+  type FellowshipLogsApiQueueDungeonRunImportOptions,
+  type FellowshipLogsApiQueueDungeonRunImportResult,
 } from "@frt/shared/fellowship-logs/fellowship-logs-api-schema.ts";
 import { type DungeonRunId } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
+
+export type QueueFellowshipLogsDungeonRunImportError =
+  | BackgroundJobError
+  | FellowshipLogsDungeonRunDAOError
+  | FellowshipLogsDungeonRunImportAlreadyImportedError;
 
 type DeleteImportedDungeonRunOptions = {
   readonly dungeonRunId: DungeonRunId;
@@ -62,19 +68,22 @@ export type FellowshipLogsApiServiceShape = {
     FellowshipLogsRequestOperationError
   >;
 
-  readonly importDungeonRun: (
-    options: FellowshipLogsApiImportDungeonRunOptions,
+  /**
+   * Durably queues an import and returns as soon as it's committed. The import
+   * itself runs later on the background job worker.
+   */
+  readonly queueDungeonRunImport: (
+    options: FellowshipLogsApiQueueDungeonRunImportOptions,
   ) => E.Effect<
-    FellowshipLogsApiImportDungeonRunResult,
-    ImportFellowshipLogsDungeonRunError
+    FellowshipLogsApiQueueDungeonRunImportResult,
+    QueueFellowshipLogsDungeonRunImportError
   >;
 };
 
 const makeFellowshipLogsApiService = E.gen(function* () {
+  const backgroundJobService = yield* BackgroundJobService;
   const dungeonRunRepository = yield* DungeonRunRepository;
   const fellowshipLogs = yield* FellowshipLogs;
-  const fellowshipLogsDungeonRunImporter =
-    yield* FellowshipLogsDungeonRunImporter;
 
   const deleteImportedDungeonRun: FellowshipLogsApiServiceShape["deleteImportedDungeonRun"] =
     (options) => {
@@ -111,13 +120,45 @@ const makeFellowshipLogsApiService = E.gen(function* () {
         .pipe(E.map(createFellowshipLogsRateLimitDataApiResponse));
     };
 
-  const importDungeonRun: FellowshipLogsApiServiceShape["importDungeonRun"] = (
-    options,
-  ) => {
-    return fellowshipLogsDungeonRunImporter
-      .importReport(options)
-      .pipe(E.map(createFellowshipLogsImportDungeonRunApiResponse));
-  };
+  const queueDungeonRunImport: FellowshipLogsApiServiceShape["queueDungeonRunImport"] =
+    (options) => {
+      return E.gen(function* () {
+        // Checked up front so the user hears about it now, not when the job
+        // runs. The importer checks again in case it's imported meanwhile.
+        const existing =
+          yield* dungeonRunRepository.getFellowshipLogsDungeonRun({
+            fightId: options.fightId,
+            reportCode: options.reportCode,
+          });
+
+        if (Option.isSome(existing)) {
+          return yield* new FellowshipLogsDungeonRunImportAlreadyImportedError({
+            dungeonRunId: existing.value.dungeonRunId,
+            fightId: options.fightId,
+            reportCode: options.reportCode,
+          });
+        }
+
+        const { job, wasAlreadyQueued } = yield* backgroundJobService.offer({
+          _tag: "ImportFellowshipLogsDungeonRun",
+          ...options,
+        });
+
+        const item = createImportFellowshipLogsDungeonRunBackgroundJobApiItem({
+          job,
+          progress: null,
+        });
+
+        if (Option.isNone(item)) {
+          return yield* new BackgroundJobError({
+            cause: job,
+            operation: "Offer",
+          });
+        }
+
+        return { job: item.value, wasAlreadyQueued };
+      });
+    };
 
   return {
     deleteImportedDungeonRun,
@@ -125,7 +166,7 @@ const makeFellowshipLogsApiService = E.gen(function* () {
     getImportedDungeonRuns,
     getLastKnownRateLimitData,
     getRateLimitData,
-    importDungeonRun,
+    queueDungeonRunImport,
   } satisfies FellowshipLogsApiServiceShape;
 });
 
@@ -140,13 +181,12 @@ export class FellowshipLogsApiService extends Context.Service<
     makeFellowshipLogsApiService,
   );
 
-  static readonly layerWith = (options: {
-    readonly encryptionKeyDirectory: string;
-  }) => {
-    return this.layerNoDeps.pipe(
-      Layer.provide(DungeonRunRepository.layer),
-      Layer.provide(FellowshipLogs.layerWith(options)),
-      Layer.provide(FellowshipLogsDungeonRunImporter.layerWith(options)),
-    );
-  };
+  /**
+   * Leaves `BackgroundJobService` for the application root to provide, since
+   * it's the single instance that runs the queue workers.
+   */
+  static readonly layer = this.layerNoDeps.pipe(
+    Layer.provide(DungeonRunRepository.layer),
+    Layer.provide(FellowshipLogs.layer),
+  );
 }

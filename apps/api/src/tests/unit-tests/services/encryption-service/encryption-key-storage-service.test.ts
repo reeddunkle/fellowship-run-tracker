@@ -6,6 +6,7 @@ import { describe, expect, test } from "vitest";
 
 import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
 import { EncryptionKeyStorage } from "@frt/api/services/encryption/encryption-key-storage-service.ts";
+import { makeEncryptionKeyStorageTestLayer } from "@frt/api/tests/common/layers/encryption-key-storage-test-layer.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 
 const ENCRYPTION_KEY_FILENAME = "encryption.key";
@@ -21,11 +22,7 @@ describe("EncryptionKeyStorage", () => {
           yield* fileSystem.makeTempDirectoryScoped();
 
         const encryptionKeyStorage = yield* EncryptionKeyStorage.pipe(
-          E.provide(
-            EncryptionKeyStorage.layerWith({
-              encryptionKeyDirectory,
-            }),
-          ),
+          E.provide(makeEncryptionKeyStorageTestLayer(encryptionKeyDirectory)),
         );
 
         const key = yield* encryptionKeyStorage.getOrCreateKey();
@@ -48,11 +45,7 @@ describe("EncryptionKeyStorage", () => {
           yield* fileSystem.makeTempDirectoryScoped();
 
         const encryptionKeyStorage = yield* EncryptionKeyStorage.pipe(
-          E.provide(
-            EncryptionKeyStorage.layerWith({
-              encryptionKeyDirectory,
-            }),
-          ),
+          E.provide(makeEncryptionKeyStorageTestLayer(encryptionKeyDirectory)),
         );
 
         const firstKey = yield* encryptionKeyStorage.getOrCreateKey();
@@ -75,11 +68,7 @@ describe("EncryptionKeyStorage", () => {
           yield* fileSystem.makeTempDirectoryScoped();
 
         const encryptionKeyStorage = yield* EncryptionKeyStorage.pipe(
-          E.provide(
-            EncryptionKeyStorage.layerWith({
-              encryptionKeyDirectory,
-            }),
-          ),
+          E.provide(makeEncryptionKeyStorageTestLayer(encryptionKeyDirectory)),
         );
 
         const key = yield* encryptionKeyStorage.getOrCreateKey();
@@ -119,11 +108,7 @@ describe("EncryptionKeyStorage", () => {
         yield* fileSystem.writeFile(keyPath, existingKey);
 
         const encryptionKeyStorage = yield* EncryptionKeyStorage.pipe(
-          E.provide(
-            EncryptionKeyStorage.layerWith({
-              encryptionKeyDirectory,
-            }),
-          ),
+          E.provide(makeEncryptionKeyStorageTestLayer(encryptionKeyDirectory)),
         );
 
         const key = yield* encryptionKeyStorage.getOrCreateKey();
@@ -155,11 +140,7 @@ describe("EncryptionKeyStorage", () => {
         );
 
         const encryptionKeyStorage = yield* EncryptionKeyStorage.pipe(
-          E.provide(
-            EncryptionKeyStorage.layerWith({
-              encryptionKeyDirectory,
-            }),
-          ),
+          E.provide(makeEncryptionKeyStorageTestLayer(encryptionKeyDirectory)),
         );
 
         const error = yield* encryptionKeyStorage.getOrCreateKey().pipe(E.flip);

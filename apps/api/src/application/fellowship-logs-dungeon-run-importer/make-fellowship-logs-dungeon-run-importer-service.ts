@@ -1,5 +1,7 @@
 import * as E from "effect/Effect";
+import * as Option from "effect/Option";
 
+import { FellowshipLogsDungeonRunImportAlreadyImportedError } from "@frt/api/errors/fellowship-logs-dungeon-run-import-error.ts";
 import { DungeonRunRepository } from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
 import { FellowshipLogs } from "@frt/api/services/fellowship-logs/fellowship-logs-service.ts";
 
@@ -14,12 +16,27 @@ export const makeFellowshipLogsDungeonRunImporter = E.gen(function* () {
     E.fn("FellowshipLogsDungeonRunImporter.importReport")(function* ({
       fightId,
       isOwnRun,
+      onProgress,
       reportCode,
     }) {
+      const existing = yield* dungeonRunRepository.getFellowshipLogsDungeonRun({
+        fightId,
+        reportCode,
+      });
+
+      if (Option.isSome(existing)) {
+        return yield* new FellowshipLogsDungeonRunImportAlreadyImportedError({
+          dungeonRunId: existing.value.dungeonRunId,
+          fightId,
+          reportCode,
+        });
+      }
+
       const processedRun = yield* processFellowshipLogsDungeonRun({
         events: fellowshipLogs.streamEvents({
           fightId,
           reportCode,
+          ...(onProgress === undefined ? {} : { onProgress }),
         }),
         fightId,
         reportCode,

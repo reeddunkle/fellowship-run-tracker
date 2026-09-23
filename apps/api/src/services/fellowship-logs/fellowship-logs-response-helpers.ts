@@ -46,6 +46,28 @@ type FellowshipLogsRateLimitDataTracker = {
   ) => E.Effect<void>;
 };
 
+/**
+ * How much of a fight has been fetched once a report page ends at
+ * `nextPageTimestamp` (`null` means it was the last page), from 0 to 1.
+ */
+export function getReportPageProgress({
+  endTime,
+  nextPageTimestamp,
+  startTime,
+}: {
+  readonly endTime: number;
+  readonly nextPageTimestamp: number | null;
+  readonly startTime: number;
+}): number {
+  const duration = endTime - startTime;
+
+  if (nextPageTimestamp === null || duration <= 0) {
+    return 1;
+  }
+
+  return Math.min(Math.max((nextPageTimestamp - startTime) / duration, 0), 1);
+}
+
 export function makeFellowshipLogsRateLimitDataTracker() {
   return E.gen(function* () {
     const rateLimitDataRef =

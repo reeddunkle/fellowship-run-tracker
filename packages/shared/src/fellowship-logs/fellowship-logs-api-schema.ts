@@ -1,5 +1,9 @@
 import * as Schema from "effect/Schema";
 
+import {
+  ImportFellowshipLogsDungeonRunBackgroundJobApiItemSchema,
+  ImportFellowshipLogsDungeonRunJobPayloadSchema,
+} from "@frt/shared/background-job/background-job-api-schema.ts";
 import { DungeonIdSchema } from "@frt/shared/fellowship/validation/fellowship-common.ts";
 import { FellowshipLogsRateLimitDataSchema } from "@frt/shared/fellowship-logs/validation/fellowship-logs-rate-limit-schema.ts";
 import {
@@ -18,14 +22,21 @@ export const FellowshipLogsApiDungeonRunReferenceSchema = Schema.Struct({
 export type FellowshipLogsApiDungeonRunReference =
   typeof FellowshipLogsApiDungeonRunReferenceSchema.Type;
 
-export const FellowshipLogsApiImportDungeonRunOptionsSchema = Schema.Struct({
-  fightId: FellowshipLogsFightIdSchema,
-  isOwnRun: Schema.Boolean,
-  reportCode: FellowshipLogsReportCodeSchema,
-});
+export const FellowshipLogsApiQueueDungeonRunImportOptionsSchema =
+  ImportFellowshipLogsDungeonRunJobPayloadSchema;
 
-export type FellowshipLogsApiImportDungeonRunOptions =
-  typeof FellowshipLogsApiImportDungeonRunOptionsSchema.Type;
+export type FellowshipLogsApiQueueDungeonRunImportOptions =
+  typeof FellowshipLogsApiQueueDungeonRunImportOptionsSchema.Type;
+
+export const FellowshipLogsApiQueueDungeonRunImportResultSchema = Schema.Struct(
+  {
+    job: ImportFellowshipLogsDungeonRunBackgroundJobApiItemSchema,
+    wasAlreadyQueued: Schema.Boolean,
+  },
+);
+
+export type FellowshipLogsApiQueueDungeonRunImportResult =
+  typeof FellowshipLogsApiQueueDungeonRunImportResultSchema.Type;
 
 export const FellowshipLogsApiDungeonRunMetadataSchema = Schema.Struct({
   dungeonId: DungeonIdSchema,
@@ -36,13 +47,6 @@ export const FellowshipLogsApiDungeonRunMetadataSchema = Schema.Struct({
 
 export type FellowshipLogsApiDungeonRunMetadata =
   typeof FellowshipLogsApiDungeonRunMetadataSchema.Type;
-
-export const FellowshipLogsApiImportDungeonRunResultSchema = Schema.Struct({
-  dungeonRunId: DungeonRunIdSchema,
-});
-
-export type FellowshipLogsApiImportDungeonRunResult =
-  typeof FellowshipLogsApiImportDungeonRunResultSchema.Type;
 
 const FellowshipLogsApiRateLimitDataSchema = FellowshipLogsRateLimitDataSchema;
 

@@ -1,5 +1,6 @@
 import * as Data from "effect/Data";
 
+import { type DungeonRunId } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
 import { type FellowshipLogsFightId } from "@frt/shared/validation/fellowship-logs/fellowship-logs-fight-id-schema.ts";
 import { type FellowshipLogsReportCode } from "@frt/shared/validation/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
@@ -33,5 +34,17 @@ export class FellowshipLogsDungeonRunImportDungeonLevelNotFoundError extends Dat
 }> {
   override get message() {
     return `The dungeon run in report ${this.reportCode}, fight ${this.fightId}, has no dungeon level.`;
+  }
+}
+
+export class FellowshipLogsDungeonRunImportAlreadyImportedError extends Data.TaggedError(
+  "FellowshipLogsDungeonRunImportAlreadyImportedError",
+)<{
+  readonly dungeonRunId: DungeonRunId;
+  readonly fightId: FellowshipLogsFightId;
+  readonly reportCode: FellowshipLogsReportCode;
+}> {
+  override get message() {
+    return `The dungeon run in report ${this.reportCode}, fight ${this.fightId}, has already been imported.`;
   }
 }

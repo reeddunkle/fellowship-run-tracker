@@ -119,6 +119,15 @@ const makeWebSocketBroadcaster = E.gen(function* () {
   } satisfies WebSocketBroadcasterService;
 });
 
+export class BackgroundJobWebSocketBroadcaster extends Context.Service<
+  BackgroundJobWebSocketBroadcaster,
+  WebSocketBroadcasterService
+>()(
+  "@frt/api/services/api/websocket-broadcaster-service/BackgroundJobWebSocketBroadcaster",
+) {
+  static readonly layer = Layer.effect(this, makeWebSocketBroadcaster);
+}
+
 export class DungeonRunWebSocketBroadcaster extends Context.Service<
   DungeonRunWebSocketBroadcaster,
   WebSocketBroadcasterService

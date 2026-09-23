@@ -128,12 +128,8 @@ export class Fellowship extends Context.Service<
 >()("@frt/api/services/fellowship/fellowship-service/Fellowship") {
   static readonly layerNoDeps = Layer.effect(this, makeFellowship);
 
-  static readonly layerWith = (options: {
-    readonly encryptionKeyDirectory: string;
-  }) => {
-    return this.layerNoDeps.pipe(
-      Layer.provide(Layer.mergeAll(FileMonitor.layer, FileMonitorSource.layer)),
-      Layer.provide(AppSettings.layerWith(options)),
-    );
-  };
+  static readonly layer = this.layerNoDeps.pipe(
+    Layer.provide(Layer.mergeAll(FileMonitor.layer, FileMonitorSource.layer)),
+    Layer.provide(AppSettings.layer),
+  );
 }

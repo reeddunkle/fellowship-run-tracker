@@ -3,32 +3,36 @@ import * as Layer from "effect/Layer";
 import { ApiServer } from "@frt/api/api/api-server.ts";
 import { FellowshipTracker } from "@frt/api/application/fellowship-tracker/fellowship-tracker-service.ts";
 import { ApiLifecycleLayer } from "@frt/api/layers/api-lifecycle-layer.ts";
-import { makeApiServicesLayer } from "@frt/api/layers/api-services-layer.ts";
+import { ApiServicesLayer } from "@frt/api/layers/api-services-layer.ts";
 import { NodeApiHttpServerLayer } from "@frt/api/services/api/node-api-http-server.ts";
 import {
+  BackgroundJobWebSocketBroadcaster,
   DungeonRunWebSocketBroadcaster,
   LiveSplitWebSocketBroadcaster,
   TrackingWebSocketBroadcaster,
 } from "@frt/api/services/api/websocket-broadcaster-service.ts";
-import { BackgroundJobs } from "@frt/api/services/background-jobs/background-jobs-service.ts";
+import { BackgroundJobService } from "@frt/api/services/background-job/background-job-service.ts";
 
-export type MakeApiLayerOptions = {
-  readonly backgroundJobsDirectory: string;
-  readonly encryptionKeyDirectory: string;
-};
+// The API services queue and manage jobs through this one instance, which also
+// runs the queue workers.
+const ApiServicesWithBackgroundJobsLayer = ApiServicesLayer.pipe(
+  Layer.provideMerge(BackgroundJobService.layer),
+);
 
-export function makeApiLayer(options: MakeApiLayerOptions) {
-  const ApiRuntimeLayer = Layer.mergeAll(
-    makeApiServicesLayer(options),
-    BackgroundJobs.layerWith(options),
-    FellowshipTracker.layerWith(options),
-    DungeonRunWebSocketBroadcaster.layer,
-    LiveSplitWebSocketBroadcaster.layer,
-    TrackingWebSocketBroadcaster.layer,
-    NodeApiHttpServerLayer,
-  );
+const ApiRuntimeLayer = Layer.mergeAll(
+  ApiServicesWithBackgroundJobsLayer,
+  BackgroundJobWebSocketBroadcaster.layer,
+  FellowshipTracker.layer,
+  DungeonRunWebSocketBroadcaster.layer,
+  LiveSplitWebSocketBroadcaster.layer,
+  TrackingWebSocketBroadcaster.layer,
+  NodeApiHttpServerLayer,
+);
 
-  return Layer.mergeAll(ApiServer, ApiLifecycleLayer).pipe(
-    Layer.provide(ApiRuntimeLayer),
-  );
-}
+/*
+ * The HTTP/WebSocket API with its services. Requires persistence, which the
+ * entrypoint provides.
+ */
+export const ApiLayer = Layer.mergeAll(ApiServer, ApiLifecycleLayer).pipe(
+  Layer.provide(ApiRuntimeLayer),
+);

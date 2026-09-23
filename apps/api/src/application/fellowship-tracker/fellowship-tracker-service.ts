@@ -126,16 +126,12 @@ export class FellowshipTracker extends Context.Service<
 ) {
   static readonly layerNoDeps = Layer.effect(this, makeFellowshipTracker);
 
-  static readonly layerWith = (options: {
-    readonly encryptionKeyDirectory: string;
-  }) => {
-    return this.layerNoDeps.pipe(
-      Layer.provide(ConfigurationDAO.layer),
-      Layer.provide(DungeonRunObservationDAO.layer),
-      Layer.provide(DungeonRunRepository.layer),
-      Layer.provide(DungeonRunWebSocketBroadcaster.layer),
-      Layer.provide(Fellowship.layerWith(options)),
-      Layer.provide(LiveSplit.layerWith(options)),
-    );
-  };
+  static readonly layer = this.layerNoDeps.pipe(
+    Layer.provide(ConfigurationDAO.layer),
+    Layer.provide(DungeonRunObservationDAO.layer),
+    Layer.provide(DungeonRunRepository.layer),
+    Layer.provide(DungeonRunWebSocketBroadcaster.layer),
+    Layer.provide(Fellowship.layer),
+    Layer.provide(LiveSplit.layer),
+  );
 }

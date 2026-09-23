@@ -4,6 +4,7 @@ import * as Layer from "effect/Layer";
 import { syncCatalogs } from "@frt/db/catalog-sync/sync-catalogs.ts";
 import { AbilityDAO } from "@frt/db/daos/ability/ability-dao.ts";
 import { AppSettingsDAO } from "@frt/db/daos/app-settings/app-settings-dao.ts";
+import { BackgroundJobDAO } from "@frt/db/daos/background-job/background-job-dao.ts";
 import { CatalogSyncDAO } from "@frt/db/daos/catalog-sync/catalog-sync-dao.ts";
 import { ConfigurationDAO } from "@frt/db/daos/configuration/configuration-dao.ts";
 import { DungeonDAO } from "@frt/db/daos/dungeon/dungeon-dao.ts";
@@ -19,6 +20,7 @@ import { type DatabaseOptions } from "@frt/db/types/database-options.ts";
 const DAOsLayer = Layer.mergeAll(
   AbilityDAO.layer,
   AppSettingsDAO.layer,
+  BackgroundJobDAO.layer,
   CatalogSyncDAO.layer,
   ConfigurationDAO.layer,
   DungeonDAO.layer,

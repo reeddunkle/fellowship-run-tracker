@@ -7,12 +7,12 @@ import {
   FellowshipLogsApiService,
   type FellowshipLogsApiServiceShape,
 } from "@frt/api/services/api/fellowship-logs/fellowship-logs-api-service.ts";
-import { DungeonRunIdSchema } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
+import { BackgroundJobIdSchema } from "@frt/shared/validation/background-job/background-job-id-schema.ts";
 
 export type MakeFellowshipLogsApiServiceMockOptions =
   Partial<FellowshipLogsApiServiceShape>;
 
-const MOCK_DUNGEON_RUN_ID = Schema.decodeSync(DungeonRunIdSchema)(
+const MOCK_BACKGROUND_JOB_ID = Schema.decodeSync(BackgroundJobIdSchema)(
   "00000000-0000-0000-0000-000000000000",
 );
 
@@ -41,9 +41,22 @@ export function makeFellowshipLogsApiServiceMock({
       pointsSpentThisHour: 0,
     });
   },
-  importDungeonRun = () => {
+  queueDungeonRunImport = (options) => {
     return E.succeed({
-      dungeonRunId: MOCK_DUNGEON_RUN_ID,
+      job: {
+        attempts: 0,
+        createdAtMilliseconds: 0,
+        error: null,
+        finishedAtMilliseconds: null,
+        id: MOCK_BACKGROUND_JOB_ID,
+        kind: "ImportFellowshipLogsDungeonRun",
+        payload: options,
+        progress: null,
+        result: null,
+        startedAtMilliseconds: null,
+        status: "QUEUED",
+      },
+      wasAlreadyQueued: false,
     });
   },
 }: MakeFellowshipLogsApiServiceMockOptions = {}) {
@@ -53,7 +66,7 @@ export function makeFellowshipLogsApiServiceMock({
     getImportedDungeonRuns,
     getLastKnownRateLimitData,
     getRateLimitData,
-    importDungeonRun,
+    queueDungeonRunImport,
   } satisfies FellowshipLogsApiServiceShape);
 }
 

@@ -1,11 +1,21 @@
 import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
+import * as Stream from "effect/Stream";
 import { describe, expect, test } from "vitest";
 
+import { FellowshipLogsDungeonRunImporter } from "@frt/api/application/fellowship-logs-dungeon-run-importer/fellowship-logs-dungeon-run-importer-service.ts";
 import { FellowshipLogsApiService } from "@frt/api/services/api/fellowship-logs/fellowship-logs-api-service.ts";
+import { BackgroundJobSchema } from "@frt/api/services/background-job/background-job-schema.ts";
+import {
+  BackgroundJobService,
+  type BackgroundJobServiceShape,
+} from "@frt/api/services/background-job/background-job-service.ts";
+import { getBackgroundJobIdempotencyKey } from "@frt/api/services/background-job/get-background-job-idempotency-key.ts";
 import { makeFellowshipLogsDungeonRunImporterIntegrationTestHarness } from "@frt/api/tests/common/harnesses/fellowship-logs-dungeon-run-importer-integration-test-harness.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
+import { BackgroundJobDAO } from "@frt/db/daos/background-job/background-job-dao.ts";
+import { MOCK_DUNGEON_ID } from "@frt/db/tests/common/fixtures/configuration-fixtures.ts";
 import { FellowshipLogsFightIdSchema } from "@frt/shared/validation/fellowship-logs/fellowship-logs-fight-id-schema.ts";
 import { FellowshipLogsReportCodeSchema } from "@frt/shared/validation/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
@@ -15,27 +25,83 @@ const REPORT_CODE = Schema.decodeSync(FellowshipLogsReportCodeSchema)(
 
 const FIGHT_ID = Schema.decodeSync(FellowshipLogsFightIdSchema)(15);
 
-describe("FellowshipLogsApiService imported dungeon runs", () => {
-  test("lists and deletes an imported run", async () => {
-    const harness =
-      makeFellowshipLogsDungeonRunImporterIntegrationTestHarness();
+const QUEUE_OPTIONS = {
+  dungeonId: MOCK_DUNGEON_ID,
+  dungeonLevel: 10,
+  fightId: FIGHT_ID,
+  isOwnRun: false,
+  reportCode: REPORT_CODE,
+};
 
-    const FellowshipLogsApiServiceTestLive =
-      FellowshipLogsApiService.layerNoDeps.pipe(Layer.provide(harness.layer));
+function unexpectedCall(name: string) {
+  return () => {
+    return E.die(`unexpected call: ${name}`);
+  };
+}
 
-    const TestLive = Layer.merge(
-      harness.layer,
-      FellowshipLogsApiServiceTestLive,
+/*
+ * Offers straight into the job table without starting any workers, so tests
+ * can inspect what was queued.
+ */
+const BackgroundJobServiceTestLive = Layer.effect(
+  BackgroundJobService,
+  E.gen(function* () {
+    const backgroundJobDAO = yield* BackgroundJobDAO;
+
+    return {
+      cancel: unexpectedCall("cancel"),
+      changes: Stream.empty,
+      dismiss: unexpectedCall("dismiss"),
+      listVisible: unexpectedCall("listVisible"),
+      offer: (job) => {
+        return E.gen(function* () {
+          const { job: row, wasInserted } = yield* backgroundJobDAO.insert({
+            idempotencyKey: getBackgroundJobIdempotencyKey(job),
+            kind: job._tag,
+            payload: yield* Schema.encodeEffect(BackgroundJobSchema)(job),
+            queue: "test",
+          });
+
+          return { job: row, wasAlreadyQueued: !wasInserted };
+        }).pipe(E.orDie);
+      },
+      retry: unexpectedCall("retry"),
+      revision: E.succeed(0),
+      sessionId: "test",
+    } satisfies BackgroundJobServiceShape;
+  }),
+);
+
+function makeTestLayer() {
+  const harness = makeFellowshipLogsDungeonRunImporterIntegrationTestHarness();
+
+  const FellowshipLogsApiServiceTestLive =
+    FellowshipLogsApiService.layerNoDeps.pipe(
+      Layer.provide(
+        Layer.merge(
+          harness.layer,
+          BackgroundJobServiceTestLive.pipe(Layer.provide(harness.layer)),
+        ),
+      ),
     );
 
+  return Layer.merge(harness.layer, FellowshipLogsApiServiceTestLive);
+}
+
+const importRun = FellowshipLogsDungeonRunImporter.use((importer) => {
+  return importer.importReport({
+    fightId: FIGHT_ID,
+    isOwnRun: false,
+    reportCode: REPORT_CODE,
+  });
+});
+
+describe("FellowshipLogsApiService imported dungeon runs", () => {
+  test("lists and deletes an imported run", async () => {
     const program = E.gen(function* () {
       const fellowshipLogsApiService = yield* FellowshipLogsApiService;
 
-      const importResult = yield* fellowshipLogsApiService.importDungeonRun({
-        fightId: FIGHT_ID,
-        isOwnRun: false,
-        reportCode: REPORT_CODE,
-      });
+      const importResult = yield* importRun;
 
       const importedRuns =
         yield* fellowshipLogsApiService.getImportedDungeonRuns();
@@ -53,31 +119,16 @@ describe("FellowshipLogsApiService imported dungeon runs", () => {
         yield* fellowshipLogsApiService.getImportedDungeonRuns();
 
       expect(importedRunsAfterDelete).toHaveLength(0);
-    }).pipe(E.provide(TestLive));
+    }).pipe(E.provide(makeTestLayer()));
 
     await runTest(program);
   });
 
   test("fails with RunNotFound when deleting a run that does not exist", async () => {
-    const harness =
-      makeFellowshipLogsDungeonRunImporterIntegrationTestHarness();
-
-    const FellowshipLogsApiServiceTestLive =
-      FellowshipLogsApiService.layerNoDeps.pipe(Layer.provide(harness.layer));
-
-    const TestLive = Layer.merge(
-      harness.layer,
-      FellowshipLogsApiServiceTestLive,
-    );
-
     const program = E.gen(function* () {
       const fellowshipLogsApiService = yield* FellowshipLogsApiService;
 
-      const importResult = yield* fellowshipLogsApiService.importDungeonRun({
-        fightId: FIGHT_ID,
-        isOwnRun: false,
-        reportCode: REPORT_CODE,
-      });
+      const importResult = yield* importRun;
 
       yield* fellowshipLogsApiService.deleteImportedDungeonRun({
         dungeonRunId: importResult.dungeonRunId,
@@ -90,7 +141,50 @@ describe("FellowshipLogsApiService imported dungeon runs", () => {
         .pipe(E.flip);
 
       expect(result.reason._tag).toBe("DungeonRunNotFoundError");
-    }).pipe(E.provide(TestLive));
+    }).pipe(E.provide(makeTestLayer()));
+
+    await runTest(program);
+  });
+});
+
+describe("FellowshipLogsApiService.queueDungeonRunImport", () => {
+  test("queues an import and reports a repeat as already queued", async () => {
+    const program = E.gen(function* () {
+      const fellowshipLogsApiService = yield* FellowshipLogsApiService;
+
+      const first =
+        yield* fellowshipLogsApiService.queueDungeonRunImport(QUEUE_OPTIONS);
+      const second =
+        yield* fellowshipLogsApiService.queueDungeonRunImport(QUEUE_OPTIONS);
+
+      expect(first.wasAlreadyQueued).toBe(false);
+      expect(first.job.status).toBe("QUEUED");
+      expect(first.job.kind).toBe("ImportFellowshipLogsDungeonRun");
+      expect(first.job.payload).toEqual(QUEUE_OPTIONS);
+      expect(second.wasAlreadyQueued).toBe(true);
+      expect(second.job.id).toBe(first.job.id);
+    }).pipe(E.provide(makeTestLayer()));
+
+    await runTest(program);
+  });
+
+  test("fails with AlreadyImported when the run was already imported", async () => {
+    const program = E.gen(function* () {
+      const fellowshipLogsApiService = yield* FellowshipLogsApiService;
+
+      const importResult = yield* importRun;
+
+      const error = yield* fellowshipLogsApiService
+        .queueDungeonRunImport(QUEUE_OPTIONS)
+        .pipe(E.flip);
+
+      expect(error._tag).toBe(
+        "FellowshipLogsDungeonRunImportAlreadyImportedError",
+      );
+      expect(error).toMatchObject({
+        dungeonRunId: importResult.dungeonRunId,
+      });
+    }).pipe(E.provide(makeTestLayer()));
 
     await runTest(program);
   });

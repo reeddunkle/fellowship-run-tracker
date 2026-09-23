@@ -8,6 +8,7 @@ import * as Semaphore from "effect/Semaphore";
 
 import { EncryptionKeyStorageError } from "@frt/api/errors/encryption-error.ts";
 import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
+import { EncryptionKeyDirectory } from "@frt/api/services/encryption/encryption-key-directory.ts";
 
 const ENCRYPTION_KEY_FILENAME = "encryption.key";
 const ENCRYPTION_KEY_LENGTH_BYTES = 32;
@@ -27,18 +28,14 @@ export class EncryptionKeyStorage extends Context.Service<
 >()(
   "@frt/api/services/encryption/encryption-key-storage-service/EncryptionKeyStorage",
 ) {
-  static readonly layerWith = (options: {
-    readonly encryptionKeyDirectory: string;
-  }) => {
-    return Layer.effect(
-      this,
-      makeEncryptionKeyStorage(options.encryptionKeyDirectory),
-    ).pipe(Layer.provide(NodePlatformLayer));
-  };
+  static readonly layer = Layer.effect(this, makeEncryptionKeyStorage()).pipe(
+    Layer.provide(NodePlatformLayer),
+  );
 }
 
-function makeEncryptionKeyStorage(encryptionKeyDirectory: string) {
+function makeEncryptionKeyStorage() {
   return E.gen(function* () {
+    const encryptionKeyDirectory = yield* EncryptionKeyDirectory;
     const fileSystem = yield* FileSystem.FileSystem;
     const path = yield* Path.Path;
     const semaphore = yield* Semaphore.make(1);

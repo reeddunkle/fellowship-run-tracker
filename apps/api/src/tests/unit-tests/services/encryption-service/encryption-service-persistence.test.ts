@@ -5,8 +5,8 @@ import * as Layer from "effect/Layer";
 import * as Redacted from "effect/Redacted";
 import { describe, expect, test } from "vitest";
 
-import { EncryptionKeyStorage } from "@frt/api/services/encryption/encryption-key-storage-service.ts";
 import { Encryption } from "@frt/api/services/encryption/encryption-service.ts";
+import { makeEncryptionKeyStorageTestLayer } from "@frt/api/tests/common/layers/encryption-key-storage-test-layer.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 
 describe("Encryption persistence", () => {
@@ -18,9 +18,9 @@ describe("Encryption persistence", () => {
         const encryptionKeyDirectory =
           yield* fileSystem.makeTempDirectoryScoped();
 
-        const firstEncryptionKeyStorageLive = EncryptionKeyStorage.layerWith({
+        const firstEncryptionKeyStorageLive = makeEncryptionKeyStorageTestLayer(
           encryptionKeyDirectory,
-        });
+        );
 
         const FirstEncryptionLive = Encryption.layerNoDeps.pipe(
           Layer.provide(firstEncryptionKeyStorageLive),
@@ -34,9 +34,8 @@ describe("Encryption persistence", () => {
           Redacted.make("secret-value"),
         );
 
-        const secondEncryptionKeyStorageLive = EncryptionKeyStorage.layerWith({
-          encryptionKeyDirectory,
-        });
+        const secondEncryptionKeyStorageLive =
+          makeEncryptionKeyStorageTestLayer(encryptionKeyDirectory);
 
         const SecondEncryptionLive = Encryption.layerNoDeps.pipe(
           Layer.provide(secondEncryptionKeyStorageLive),

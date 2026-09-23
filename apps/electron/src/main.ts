@@ -54,14 +54,10 @@ function runElectronMain() {
 
     const databaseFilename = yield* getDatabaseFilename();
     const appStateStorageDirectory = appPaths.appState;
-    const backgroundJobsDirectory = appPaths.backgroundJobs;
-    const encryptionKeyDirectory = appPaths.encryptionKey;
 
     const runtime = makeElectronRuntime({
       appStateStorageDirectory,
-      backgroundJobsDirectory,
       databaseFilename,
-      encryptionKeyDirectory,
     });
 
     electronRuntime = runtime;

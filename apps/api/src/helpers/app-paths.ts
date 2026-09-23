@@ -7,7 +7,6 @@ const appDataDirectory = getAppDataDirectory();
 
 export const appPaths = {
   appState: path.join(appDataDirectory, "app-state"),
-  backgroundJobs: path.join(appDataDirectory, "background-jobs"),
   databaseFile: path.join(
     appDataDirectory,
     "database",

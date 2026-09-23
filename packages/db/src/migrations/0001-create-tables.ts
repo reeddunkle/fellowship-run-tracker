@@ -272,4 +272,41 @@ export const createTables = E.gen(function* () {
   yield* sql`
     CREATE INDEX dungeon_run_observation_dungeon_run_id_type_target_id_observed_at_index ON dungeon_run_observation (dungeon_run_id, type, target_id, observed_at)
   `;
+
+  yield* sql`
+    CREATE TABLE background_job (
+      id TEXT PRIMARY KEY NOT NULL,
+      queue TEXT NOT NULL,
+      kind TEXT NOT NULL,
+      payload TEXT NOT NULL CHECK (json_valid(payload)),
+      status TEXT NOT NULL CHECK (
+        status IN ('QUEUED', 'RUNNING', 'SUCCEEDED', 'FAILED')
+      ),
+      idempotency_key TEXT,
+      attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0),
+      error TEXT CHECK (
+        error IS NULL
+        OR json_valid(error)
+      ),
+      result TEXT CHECK (
+        result IS NULL
+        OR json_valid(result)
+      ),
+      started_at INTEGER,
+      finished_at INTEGER,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    ) STRICT
+  `;
+
+  yield* sql`
+    CREATE UNIQUE INDEX background_job_queue_idempotency_key_active_index ON background_job (queue, idempotency_key)
+    WHERE
+      idempotency_key IS NOT NULL
+      AND status IN ('QUEUED', 'RUNNING')
+  `;
+
+  yield* sql`
+    CREATE INDEX background_job_queue_status_created_at_index ON background_job (queue, status, created_at)
+  `;
 });

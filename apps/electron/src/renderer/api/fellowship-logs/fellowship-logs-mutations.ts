@@ -8,16 +8,16 @@ import * as E from "effect/Effect";
 
 import {
   type FellowshipLogsApiDungeonRunReference,
-  type FellowshipLogsApiImportDungeonRunOptions,
   type FellowshipLogsApiImportedDungeonRunList,
+  type FellowshipLogsApiQueueDungeonRunImportOptions,
 } from "@frt/shared/fellowship-logs/fellowship-logs-api-schema.ts";
 
 import { QueryClientOperationError } from "@/errors/query-client-operation-error.ts";
-import { DUNGEON_RUN_HISTORY_QUERY_KEY_PREFIX } from "@/renderer/api/dungeon-run/dungeon-run-queries.ts";
+import { updateCachedBackgroundJobs } from "@/renderer/api/background-job/background-job-queries.ts";
 import {
   getDungeonRunMetadata,
   getRateLimitData,
-  importDungeonRun,
+  queueDungeonRunImport,
 } from "@/renderer/api/fellowship-logs/fellowship-logs-client.ts";
 import { browserRuntime } from "@/renderer/runtimes/browser-runtime.ts";
 
@@ -25,6 +25,11 @@ import {
   type DeleteImportedDungeonRunArgs,
   deleteImportedDungeonRun,
 } from "./fellowship-logs-client.ts";
+import {
+  invalidateDungeonRunHistory,
+  invalidateFellowshipLogsRateLimitData,
+  invalidateImportedDungeonRuns,
+} from "./fellowship-logs-invalidation.ts";
 import {
   getFellowshipLogsDungeonRunsQueryOptions,
   getFellowshipLogsLastKnownRateLimitDataQueryOptions,
@@ -38,61 +43,6 @@ type ImportedDungeonRunsMutationContext = {
 
 function getImportedDungeonRunsQueryKey() {
   return getFellowshipLogsDungeonRunsQueryOptions().queryKey;
-}
-
-function invalidateImportedDungeonRuns(
-  queryClient: QueryClient,
-): E.Effect<void, unknown> {
-  return E.tryPromise({
-    catch: (cause) => {
-      return new QueryClientOperationError({
-        cause,
-        operation: "InvalidateQueries",
-      });
-    },
-    try: () => {
-      return queryClient.invalidateQueries({
-        queryKey: getImportedDungeonRunsQueryKey(),
-      });
-    },
-  });
-}
-
-function invalidateDungeonRunHistory(
-  queryClient: QueryClient,
-): E.Effect<void, unknown> {
-  return E.tryPromise({
-    catch: (cause) => {
-      return new QueryClientOperationError({
-        cause,
-        operation: "InvalidateQueries",
-      });
-    },
-    try: () => {
-      return queryClient.invalidateQueries({
-        queryKey: DUNGEON_RUN_HISTORY_QUERY_KEY_PREFIX,
-      });
-    },
-  });
-}
-
-function invalidateFellowshipLogsRateLimitData(
-  queryClient: QueryClient,
-): E.Effect<void, unknown> {
-  return E.tryPromise({
-    catch: (cause) => {
-      return new QueryClientOperationError({
-        cause,
-        operation: "InvalidateQueries",
-      });
-    },
-    try: () => {
-      return queryClient.invalidateQueries({
-        queryKey:
-          getFellowshipLogsLastKnownRateLimitDataQueryOptions().queryKey,
-      });
-    },
-  });
 }
 
 function getDungeonRunMetadataMutationOptions(queryClient: QueryClient) {
@@ -109,20 +59,25 @@ function getDungeonRunMetadataMutationOptions(queryClient: QueryClient) {
   });
 }
 
-function importDungeonRunMutationOptions(queryClient: QueryClient) {
+/*
+ * Resolves once the import is durably queued. The job is added to the cached
+ * queue straight away so it shows before the WebSocket's next snapshot; the
+ * event store refreshes imported runs once the job finishes.
+ */
+function queueDungeonRunImportMutationOptions(queryClient: QueryClient) {
   return mutationOptions({
-    mutationFn: (options: FellowshipLogsApiImportDungeonRunOptions) => {
-      return browserRuntime.runPromise(importDungeonRun(options));
+    mutationFn: (options: FellowshipLogsApiQueueDungeonRunImportOptions) => {
+      return browserRuntime.runPromise(queueDungeonRunImport(options));
     },
-    mutationKey: ["fellowship-logs", "dungeon-runs", "import"],
-    onSettled: () => {
-      return browserRuntime.runPromise(
-        E.gen(function* () {
-          yield* invalidateImportedDungeonRuns(queryClient);
-          yield* invalidateDungeonRunHistory(queryClient);
-          yield* invalidateFellowshipLogsRateLimitData(queryClient);
-        }),
-      );
+    mutationKey: ["fellowship-logs", "import-jobs", "queue"],
+    onSuccess: ({ job }) => {
+      updateCachedBackgroundJobs(queryClient, (jobs) => {
+        return jobs.some((cachedJob) => {
+          return cachedJob.id === job.id;
+        })
+          ? jobs
+          : [...jobs, job];
+      });
     },
   });
 }
@@ -232,12 +187,12 @@ export function useDungeonRunMetadata() {
   return { data, error, isPending, lookup: mutate, reset, variables };
 }
 
-export function useImportDungeonRun() {
+export function useQueueDungeonRunImport() {
   const queryClient = useQueryClient();
-  const { mutate, error, isPending, reset } = useMutation(
-    importDungeonRunMutationOptions(queryClient),
+  const { mutate, data, error, isPending, reset } = useMutation(
+    queueDungeonRunImportMutationOptions(queryClient),
   );
-  return { error, importRun: mutate, isPending, reset };
+  return { data, error, isPending, queueImport: mutate, reset };
 }
 
 export function useDeleteImportedDungeonRun() {

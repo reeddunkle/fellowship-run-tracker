@@ -183,11 +183,7 @@ export class Encryption extends Context.Service<Encryption, EncryptionShape>()(
 ) {
   static readonly layerNoDeps = Layer.effect(this, makeEncryption);
 
-  static readonly layerWith = (options: {
-    readonly encryptionKeyDirectory: string;
-  }) => {
-    return this.layerNoDeps.pipe(
-      Layer.provide(EncryptionKeyStorage.layerWith(options)),
-    );
-  };
+  static readonly layer = this.layerNoDeps.pipe(
+    Layer.provide(EncryptionKeyStorage.layer),
+  );
 }

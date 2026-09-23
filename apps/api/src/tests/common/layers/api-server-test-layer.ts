@@ -5,6 +5,7 @@ import { ApiServer } from "@frt/api/api/api-server.ts";
 import { type FellowshipTracker } from "@frt/api/application/fellowship-tracker/fellowship-tracker-service.ts";
 import { type AbilityApiService } from "@frt/api/services/api/ability/ability-api-service.ts";
 import { type AppSettingsApiService } from "@frt/api/services/api/app-settings/app-settings-api-service.ts";
+import { type BackgroundJobApiService } from "@frt/api/services/api/background-job/background-job-api-service.ts";
 import { type ConfigurationApiService } from "@frt/api/services/api/configuration/configuration-api-service.ts";
 import { type DungeonApiService } from "@frt/api/services/api/dungeon/dungeon-api-service.ts";
 import { type DungeonRunApiService } from "@frt/api/services/api/dungeon-run/dungeon-run-api-service.ts";
@@ -13,12 +14,14 @@ import { type FellowshipLogsApiService } from "@frt/api/services/api/fellowship-
 import { type LiveSplitApiService } from "@frt/api/services/api/live-split/live-split-api-service.ts";
 import { type UnitApiService } from "@frt/api/services/api/unit/unit-api-service.ts";
 import {
+  BackgroundJobWebSocketBroadcaster,
   DungeonRunWebSocketBroadcaster,
   LiveSplitWebSocketBroadcaster,
   TrackingWebSocketBroadcaster,
 } from "@frt/api/services/api/websocket-broadcaster-service.ts";
 import { AbilityApiServiceMock } from "@frt/api/tests/common/mocks/ability-api-service-mock.ts";
 import { AppSettingsApiServiceMock } from "@frt/api/tests/common/mocks/app-settings-api-service-mock.ts";
+import { BackgroundJobApiServiceMock } from "@frt/api/tests/common/mocks/background-job-api-service-mock.ts";
 import { ConfigurationApiServiceMock } from "@frt/api/tests/common/mocks/configuration-api-service-mock.ts";
 import { DungeonApiServiceMock } from "@frt/api/tests/common/mocks/dungeon-api-service-mock.ts";
 import { DungeonRunApiServiceMock } from "@frt/api/tests/common/mocks/dungeon-run-api-service-mock.ts";
@@ -31,6 +34,7 @@ import { UnitApiServiceMock } from "@frt/api/tests/common/mocks/unit-api-service
 export type ApiServices =
   | AbilityApiService
   | AppSettingsApiService
+  | BackgroundJobApiService
   | ConfigurationApiService
   | DungeonApiService
   | DungeonRunApiService
@@ -43,6 +47,7 @@ export type ApiServices =
 type ApiServiceTestLayer =
   | Layer.Layer<AbilityApiService>
   | Layer.Layer<AppSettingsApiService>
+  | Layer.Layer<BackgroundJobApiService>
   | Layer.Layer<ConfigurationApiService>
   | Layer.Layer<DungeonApiService>
   | Layer.Layer<DungeonRunApiService>
@@ -55,6 +60,7 @@ type ApiServiceTestLayer =
 export const ApiServicesTest: Layer.Layer<ApiServices> = Layer.mergeAll(
   AbilityApiServiceMock,
   AppSettingsApiServiceMock,
+  BackgroundJobApiServiceMock,
   ConfigurationApiServiceMock,
   DungeonApiServiceMock,
   DungeonRunApiServiceMock,
@@ -76,6 +82,7 @@ export function makeApiServerTestLayer(
 ) {
   const ApiServerDependenciesTest = Layer.mergeAll(
     apiServicesLayer,
+    BackgroundJobWebSocketBroadcaster.layer,
     DungeonRunWebSocketBroadcaster.layer,
     LiveSplitWebSocketBroadcaster.layer,
     TrackingWebSocketBroadcaster.layer,

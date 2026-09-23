@@ -1,9 +1,10 @@
-import { CheckIcon, XIcon } from "lucide-react";
+import { ListPlusIcon, XIcon } from "lucide-react";
 
 import {
   type FellowshipLogsApiDungeonRunMetadata,
   type FellowshipLogsApiDungeonRunReference,
 } from "@frt/shared/fellowship-logs/fellowship-logs-api-schema.ts";
+import { getErrorTag } from "@frt/shared/util/get-error-tag.ts";
 import { Button } from "@frt/ui/button.tsx";
 import { Card, CardContent, CardHeader, CardTitle } from "@frt/ui/card.tsx";
 import { Checkbox } from "@frt/ui/checkbox.tsx";
@@ -16,6 +17,12 @@ import { useImportConfirmationForm } from "./import-confirmation-form.ts";
 import { type DecodedImportConfirmationFormValue } from "./import-confirmation-form-schema.ts";
 
 const IMPORT_CONFIRMATION_FORM_DOM_ID = "import-dungeon-run-confirmation-form";
+
+function getQueueErrorMessage(error: unknown): string {
+  return getErrorTag(error) === "FellowshipLogsApiAlreadyImportedError"
+    ? "This run has already been imported."
+    : "Couldn't add this run to the import queue.";
+}
 
 function formatDuration(
   startedAtMilliseconds: number,
@@ -32,7 +39,7 @@ function formatDuration(
 
 type ImportConfirmationCardProps = {
   readonly error: unknown;
-  readonly isImporting: boolean;
+  readonly isQueueing: boolean;
   readonly metadata: FellowshipLogsApiDungeonRunMetadata;
   readonly onCancel: () => void;
   readonly onConfirm: (value: DecodedImportConfirmationFormValue) => void;
@@ -41,7 +48,7 @@ type ImportConfirmationCardProps = {
 
 export function ImportConfirmationCard({
   error,
-  isImporting,
+  isQueueing,
   metadata,
   onCancel,
   onConfirm,
@@ -102,7 +109,7 @@ export function ImportConfirmationCard({
                 <Field orientation="horizontal">
                   <Checkbox
                     checked={field.state.value}
-                    disabled={isImporting}
+                    disabled={isQueueing}
                     id={field.name}
                     onCheckedChange={(checked) => {
                       field.handleChange(checked === true);
@@ -116,15 +123,15 @@ export function ImportConfirmationCard({
         </form>
         <div className="flex items-center gap-3">
           <Button
-            disabled={isImporting}
+            disabled={isQueueing}
             form={IMPORT_CONFIRMATION_FORM_DOM_ID}
             type="submit"
           >
-            {isImporting ? <Spinner /> : <CheckIcon />}
-            {isImporting ? "Importing..." : "Import"}
+            {isQueueing ? <Spinner /> : <ListPlusIcon />}
+            {isQueueing ? "Adding to queue..." : "Add to import queue"}
           </Button>
           <Button
-            disabled={isImporting}
+            disabled={isQueueing}
             onClick={onCancel}
             type="button"
             variant="outline"
@@ -134,7 +141,7 @@ export function ImportConfirmationCard({
           </Button>
           {error !== undefined ? (
             <p className="text-sm text-destructive">
-              Failed to import this run.
+              {getQueueErrorMessage(error)}
             </p>
           ) : null}
         </div>

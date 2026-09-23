@@ -70,9 +70,7 @@ export class AppSettingsApiService extends Context.Service<
 ) {
   static readonly layerNoDeps = Layer.effect(this, makeAppSettingsApiService);
 
-  static readonly layerWith = (options: {
-    readonly encryptionKeyDirectory: string;
-  }) => {
-    return this.layerNoDeps.pipe(Layer.provide(AppSettings.layerWith(options)));
-  };
+  static readonly layer = this.layerNoDeps.pipe(
+    Layer.provide(AppSettings.layer),
+  );
 }

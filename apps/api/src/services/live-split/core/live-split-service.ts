@@ -113,11 +113,7 @@ export class LiveSplit extends Context.Service<LiveSplit, LiveSplitService>()(
 ) {
   static readonly layerNoDeps = Layer.effect(this, makeLiveSplit);
 
-  static readonly layerWith = (options: {
-    readonly encryptionKeyDirectory: string;
-  }) => {
-    return this.layerNoDeps.pipe(
-      Layer.provide(LiveSplitConnectionManager.layerWith(options)),
-    );
-  };
+  static readonly layer = this.layerNoDeps.pipe(
+    Layer.provide(LiveSplitConnectionManager.layer),
+  );
 }

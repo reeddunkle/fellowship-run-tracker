@@ -193,9 +193,17 @@ export function makeFellowshipLogsFixture({
       return Stream.unwrap(
         getReportPagePaths(options).pipe(
           E.map((pagePaths) => {
-            return Stream.fromIterable(pagePaths).pipe(
-              Stream.mapEffect(({ filePath }) => {
-                return readReportPage(filePath, options.reportCode);
+            // Recordings have a known page count, so progress is simply the
+            // share of pages read.
+            return Stream.fromIterable(pagePaths.entries()).pipe(
+              Stream.mapEffect(([index, { filePath }]) => {
+                return readReportPage(filePath, options.reportCode).pipe(
+                  E.tap(() => {
+                    return options.onProgress === undefined
+                      ? E.void
+                      : options.onProgress((index + 1) / pagePaths.length);
+                  }),
+                );
               }),
             );
           }),

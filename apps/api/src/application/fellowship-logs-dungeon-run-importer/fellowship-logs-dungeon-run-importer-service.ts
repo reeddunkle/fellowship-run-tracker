@@ -3,6 +3,7 @@ import type * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import {
+  type FellowshipLogsDungeonRunImportAlreadyImportedError,
   type FellowshipLogsDungeonRunImportDungeonLevelNotFoundError,
   type FellowshipLogsDungeonRunImportRunNotFinishedError,
   type FellowshipLogsDungeonRunImportRunNotFoundError,
@@ -31,14 +32,17 @@ type FellowshipLogsDungeonRunReference = {
 type ImportFellowshipLogsDungeonRunOptions =
   FellowshipLogsDungeonRunReference & {
     readonly isOwnRun: boolean;
+    /** Called as report pages are fetched, from 0 to 1. */
+    readonly onProgress?: (fraction: number) => E.Effect<void>;
   };
 
-export type ImportFellowshipLogsDungeonRunResult = {
+type ImportFellowshipLogsDungeonRunResult = {
   readonly dungeonRunId: DungeonRunId;
 };
 
-export type ImportFellowshipLogsDungeonRunError =
+type ImportFellowshipLogsDungeonRunError =
   | DungeonRunRepositoryError
+  | FellowshipLogsDungeonRunImportAlreadyImportedError
   | FellowshipLogsDungeonRunImportDungeonLevelNotFoundError
   | FellowshipLogsDungeonRunImportRunNotFinishedError
   | FellowshipLogsDungeonRunImportRunNotFoundError
@@ -66,12 +70,8 @@ export class FellowshipLogsDungeonRunImporter extends Context.Service<
     makeFellowshipLogsDungeonRunImporter,
   );
 
-  static readonly layerWith = (options: {
-    readonly encryptionKeyDirectory: string;
-  }) => {
-    return this.layerNoDeps.pipe(
-      Layer.provide(DungeonRunRepository.layer),
-      Layer.provide(FellowshipLogs.layerWith(options)),
-    );
-  };
+  static readonly layer = this.layerNoDeps.pipe(
+    Layer.provide(DungeonRunRepository.layer),
+    Layer.provide(FellowshipLogs.layer),
+  );
 }

@@ -60,6 +60,14 @@ export type GetFellowshipLogsReportOptions = {
   readonly reportCode: FellowshipLogsReportCode;
 };
 
+type StreamFellowshipLogsReportOptions = GetFellowshipLogsReportOptions & {
+  /**
+   * Called after each report page with how much of the fight has been
+   * fetched so far, from 0 to 1.
+   */
+  readonly onProgress?: (fraction: number) => E.Effect<void>;
+};
+
 export type FellowshipLogsDungeonRunMetadata = {
   readonly dungeonId: DungeonId;
   readonly dungeonLevel: number;
@@ -99,11 +107,11 @@ export type FellowshipLogsService = {
   ) => E.Effect<FellowshipLogsReport, FellowshipLogsRequestOperationError>;
 
   readonly streamReportPages: (
-    options: GetFellowshipLogsReportOptions,
+    options: StreamFellowshipLogsReportOptions,
   ) => Stream.Stream<FellowshipLogsReport, FellowshipLogsRequestOperationError>;
 
   readonly streamEvents: (
-    options: GetFellowshipLogsReportOptions,
+    options: StreamFellowshipLogsReportOptions,
   ) => Stream.Stream<FellowshipEvent, FellowshipLogsError>;
 };
 
@@ -115,36 +123,27 @@ export class FellowshipLogs extends Context.Service<
 ) {
   static readonly layerNoDeps = Layer.effect(this, makeFellowshipLogs);
 
-  static readonly liveLayerWith = (options: {
-    readonly encryptionKeyDirectory: string;
-  }) => {
-    return this.layerNoDeps.pipe(
-      Layer.provide(AppSettings.layerWith(options)),
-      Layer.provide(NodeHttpClientLayer),
-    );
-  };
+  static readonly liveLayer = this.layerNoDeps.pipe(
+    Layer.provide(AppSettings.layer),
+    Layer.provide(NodeHttpClientLayer),
+  );
 
-  static readonly fixtureLayerWith = (options: {
-    readonly fixtureDirectory: string;
-  }) => {
-    return Layer.effect(this, makeFellowshipLogsFixture(options)).pipe(
-      Layer.provide(NodePlatformLayer),
-    );
-  };
+  // A single static leaf, so every consumer shares one instance (and one
+  // rate-limit tracker). Layers are memoized by reference.
+  static readonly fixtureLayer = Layer.effect(
+    this,
+    makeFellowshipLogsFixture({
+      fixtureDirectory: FELLOWSHIP_LOGS_FIXTURE_DIRECTORY,
+    }),
+  ).pipe(Layer.provide(NodePlatformLayer));
 
-  static readonly layerWith = (options: {
-    readonly encryptionKeyDirectory: string;
-  }) => {
-    return Layer.unwrap(
-      E.gen(function* () {
-        const useFixtures = yield* appConfig.fellowshipLogsUseFixtures;
+  static readonly layer = Layer.unwrap(
+    E.gen(function* () {
+      const useFixtures = yield* appConfig.fellowshipLogsUseFixtures;
 
-        return useFixtures
-          ? FellowshipLogs.fixtureLayerWith({
-              fixtureDirectory: FELLOWSHIP_LOGS_FIXTURE_DIRECTORY,
-            })
-          : FellowshipLogs.liveLayerWith(options);
-      }),
-    );
-  };
+      return useFixtures
+        ? FellowshipLogs.fixtureLayer
+        : FellowshipLogs.liveLayer;
+    }),
+  );
 }

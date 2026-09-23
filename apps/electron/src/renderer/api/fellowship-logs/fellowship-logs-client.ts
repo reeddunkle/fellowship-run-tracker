@@ -2,7 +2,7 @@ import * as E from "effect/Effect";
 
 import {
   type FellowshipLogsApiDungeonRunReference,
-  type FellowshipLogsApiImportDungeonRunOptions,
+  type FellowshipLogsApiQueueDungeonRunImportOptions,
 } from "@frt/shared/fellowship-logs/fellowship-logs-api-schema.ts";
 import { type DungeonRunId } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
 
@@ -36,13 +36,13 @@ export function getDungeonRunMetadata(
   });
 }
 
-export function importDungeonRun(
-  options: FellowshipLogsApiImportDungeonRunOptions,
+export function queueDungeonRunImport(
+  options: FellowshipLogsApiQueueDungeonRunImportOptions,
 ) {
   return E.gen(function* () {
     const client = yield* AppApiClient;
 
-    return yield* client.fellowshipLogs.importFellowshipLogsDungeonRun({
+    return yield* client.fellowshipLogs.queueFellowshipLogsDungeonRunImport({
       payload: options,
     });
   });

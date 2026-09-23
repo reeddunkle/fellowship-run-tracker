@@ -5,11 +5,11 @@ import type * as PlatformError from "effect/PlatformError";
 import type * as Scope from "effect/Scope";
 
 import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
-import { EncryptionKeyStorage } from "@frt/api/services/encryption/encryption-key-storage-service.ts";
 import {
   Encryption,
   type EncryptionShape,
 } from "@frt/api/services/encryption/encryption-service.ts";
+import { makeEncryptionKeyStorageTestLayer } from "@frt/api/tests/common/layers/encryption-key-storage-test-layer.ts";
 
 export type EncryptionHarness = {
   readonly encryption: EncryptionShape;
@@ -26,9 +26,9 @@ export function makeEncryptionHarness(): E.Effect<
 
     const encryptionKeyDirectory = yield* fileSystem.makeTempDirectoryScoped();
 
-    const encryptionKeyStorageLive = EncryptionKeyStorage.layerWith({
+    const encryptionKeyStorageLive = makeEncryptionKeyStorageTestLayer(
       encryptionKeyDirectory,
-    });
+    );
 
     const EncryptionTestLive = Encryption.layerNoDeps.pipe(
       Layer.provide(encryptionKeyStorageLive),

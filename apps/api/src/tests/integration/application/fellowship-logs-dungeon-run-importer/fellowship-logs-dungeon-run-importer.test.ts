@@ -16,6 +16,39 @@ const REPORT_CODE = Schema.decodeSync(FellowshipLogsReportCodeSchema)(
 const FIGHT_ID = Schema.decodeSync(FellowshipLogsFightIdSchema)(15);
 
 describe("FellowshipLogsDungeonRunImporter", () => {
+  test("reports progress as report pages are fetched", async () => {
+    const reported: Array<number> = [];
+
+    await E.gen(function* () {
+      const fellowshipLogsDungeonRunImporter =
+        yield* FellowshipLogsDungeonRunImporter;
+
+      yield* fellowshipLogsDungeonRunImporter.importReport({
+        fightId: FIGHT_ID,
+        isOwnRun: true,
+        onProgress: (fraction) => {
+          return E.sync(() => {
+            reported.push(fraction);
+          });
+        },
+        reportCode: REPORT_CODE,
+      });
+    }).pipe(
+      E.provide(
+        makeFellowshipLogsDungeonRunImporterIntegrationTestHarness().layer,
+      ),
+      runTest,
+    );
+
+    const isNonDecreasing = reported.every((fraction, index) => {
+      return index === 0 || fraction >= (reported[index - 1] ?? 0);
+    });
+
+    expect(reported.length).toBeGreaterThan(1);
+    expect(isNonDecreasing).toBe(true);
+    expect(reported.at(-1)).toBe(1);
+  });
+
   test("imports a Fellowship Logs dungeon run and its observations", async () => {
     await E.gen(function* () {
       const harness =

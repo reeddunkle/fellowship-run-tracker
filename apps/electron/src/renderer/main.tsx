@@ -8,6 +8,7 @@ import { RendererInvariantError } from "@/errors/renderer-invariant-error.ts";
 import { primeAppStateQueries } from "@/renderer/api/app-state/app-state-queries.ts";
 import { router } from "@/renderer/router/router";
 import { browserRuntime } from "@/renderer/runtimes/browser-runtime.ts";
+import { backgroundJobEventStore } from "@/renderer/stores/background-job/background-job-event-store.ts";
 import { dungeonRunEventStore } from "@/renderer/stores/dungeon-run/dungeon-run-event-store.ts";
 import { trackingEventStore } from "@/renderer/stores/tracking/tracking-event-store.ts";
 
@@ -34,6 +35,7 @@ browserRuntime.runPromise(
       },
     });
 
+    backgroundJobEventStore.start();
     dungeonRunEventStore.start();
     trackingEventStore.start();
 

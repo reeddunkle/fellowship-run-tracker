@@ -2,6 +2,7 @@ import * as Context from "effect/Context";
 import type * as DateTime from "effect/DateTime";
 import type * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
+import type * as Option from "effect/Option";
 import type * as SqlError from "effect/unstable/sql/SqlError";
 
 import { DungeonRunDAO } from "@frt/db/daos/dungeon-run/dungeon-run-dao.ts";
@@ -14,6 +15,7 @@ import { type DungeonRunObservationDAOError } from "@frt/db/errors/dungeon-run-o
 import { type FellowshipLogsDungeonRunDAOError } from "@frt/db/errors/fellowship-logs-dungeon-run-dao-error.ts";
 import { type LocalLogDungeonRunDAOError } from "@frt/db/errors/local-log-dungeon-run-dao-error.ts";
 import { type DungeonRunModel } from "@frt/db/models/dungeon-run-model.ts";
+import { type FellowshipLogsDungeonRunModel } from "@frt/db/models/fellowship-logs-dungeon-run-model.ts";
 import { type RequirementTargetId } from "@frt/shared/fellowship/requirements/requirement-lookup.ts";
 import { type RequirementEventType } from "@frt/shared/fellowship/validation/requirement-event-type-schema.ts";
 import { type DungeonRunId } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
@@ -54,6 +56,11 @@ type ImportFellowshipLogsDungeonRunObservation = {
   readonly observedAt: DateTime.Utc;
   readonly targetId: RequirementTargetId;
   readonly type: RequirementEventType;
+};
+
+type FellowshipLogsDungeonRunReference = {
+  readonly fightId: FellowshipLogsFightId;
+  readonly reportCode: FellowshipLogsReportCode;
 };
 
 type ImportFellowshipLogsDungeonRunOptions = DungeonRunHistoryOptions & {
@@ -97,6 +104,13 @@ export type DungeonRunRepositoryShape = {
   readonly interruptUnfinishedLocal: (options: {
     readonly createdBefore: DateTime.Utc;
   }) => E.Effect<ReadonlyArray<DungeonRunId>, DungeonRunRepositoryError>;
+
+  readonly getFellowshipLogsDungeonRun: (
+    options: FellowshipLogsDungeonRunReference,
+  ) => E.Effect<
+    Option.Option<FellowshipLogsDungeonRunModel>,
+    FellowshipLogsDungeonRunDAOError
+  >;
 
   readonly listFellowshipLogsDungeonRuns: () => E.Effect<
     ReadonlyArray<FellowshipLogsImportedDungeonRunRow>,

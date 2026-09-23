@@ -176,12 +176,8 @@ export class AppSettings extends Context.Service<
 >()("@frt/api/services/app-settings/app-settings-service/AppSettings") {
   static readonly layerNoDeps = Layer.effect(this, makeAppSettings);
 
-  static readonly layerWith = (options: {
-    readonly encryptionKeyDirectory: string;
-  }) => {
-    return this.layerNoDeps.pipe(
-      Layer.provide(AppSettingsDAO.layer),
-      Layer.provide(Encryption.layerWith(options)),
-    );
-  };
+  static readonly layer = this.layerNoDeps.pipe(
+    Layer.provide(AppSettingsDAO.layer),
+    Layer.provide(Encryption.layer),
+  );
 }

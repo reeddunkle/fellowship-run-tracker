@@ -8,7 +8,7 @@ import * as HttpServer from "effect/unstable/http/HttpServer";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { describe, expect, test } from "vitest";
 
-import { FellowshipLogsDungeonRunImportDungeonLevelNotFoundError } from "@frt/api/errors/fellowship-logs-dungeon-run-import-error.ts";
+import { FellowshipLogsDungeonRunImportAlreadyImportedError } from "@frt/api/errors/fellowship-logs-dungeon-run-import-error.ts";
 import { FellowshipLogsGraphQLResponseError } from "@frt/api/errors/fellowship-logs-error.ts";
 import { makeApiServerTestLayerWith } from "@frt/api/tests/common/layers/api-server-test-layer.ts";
 import {
@@ -16,14 +16,30 @@ import {
   makeFellowshipLogsApiServiceMock,
 } from "@frt/api/tests/common/mocks/fellowship-logs-api-service-mock.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
-import { FellowshipLogsApiDungeonLevelNotFoundError } from "@frt/api-contract/errors/fellowship-logs-api-error.ts";
+import {
+  FellowshipLogsApiAlreadyImportedError,
+  FellowshipLogsApiDungeonLevelNotFoundError,
+} from "@frt/api-contract/errors/fellowship-logs-api-error.ts";
 import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
+import { MOCK_DUNGEON_ID } from "@frt/db/tests/common/fixtures/configuration-fixtures.ts";
 import { FellowshipLogsApiDungeonRunReferenceSchema } from "@frt/shared/fellowship-logs/fellowship-logs-api-schema.ts";
+import { DungeonRunIdSchema } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
 
 const MOCK_RUN = Schema.decodeSync(FellowshipLogsApiDungeonRunReferenceSchema)({
   fightId: 7,
   reportCode: "aBcD1234",
 });
+
+const QUEUE_PAYLOAD = {
+  ...MOCK_RUN,
+  dungeonId: MOCK_DUNGEON_ID,
+  dungeonLevel: 10,
+  isOwnRun: true,
+};
+
+const MOCK_DUNGEON_RUN_ID = Schema.decodeSync(DungeonRunIdSchema)(
+  "00000000-0000-7000-8000-000000000000",
+);
 
 function getBaseUrl(address: HttpServer.Address) {
   if (address._tag === "UnixAddress") {
@@ -109,30 +125,57 @@ describe("fellowship logs routes", () => {
     expect(decodedError).toMatchObject(MOCK_RUN);
   });
 
-  test("POST /fellowship-logs/dungeon-runs responds 422 when the run has no dungeon level", async () => {
-    const payload = { ...MOCK_RUN, isOwnRun: true };
+  test("POST /fellowship-logs/import-jobs responds 202 with the queued job", async () => {
+    const { body, status } = await runWithFellowshipLogsApiService(
+      {},
+      (baseUrl) => {
+        return E.gen(function* () {
+          const response = yield* postJson(
+            `${baseUrl}/fellowship-logs/import-jobs`,
+            QUEUE_PAYLOAD,
+          );
 
+          const client = yield* HttpApiClient.make(AppHttpApi, { baseUrl });
+
+          const decoded =
+            yield* client.fellowshipLogs.queueFellowshipLogsDungeonRunImport({
+              payload: QUEUE_PAYLOAD,
+            });
+
+          return { body: decoded, status: response.status };
+        });
+      },
+    );
+
+    expect(status).toBe(202);
+    expect(body.wasAlreadyQueued).toBe(false);
+    expect(body.job.status).toBe("QUEUED");
+    expect(body.job.payload).toEqual(QUEUE_PAYLOAD);
+  });
+
+  test("POST /fellowship-logs/import-jobs responds 409 when the run was already imported", async () => {
     const { decodedError, status } = await runWithFellowshipLogsApiService(
       {
-        importDungeonRun: () => {
+        queueDungeonRunImport: () => {
           return E.fail(
-            new FellowshipLogsDungeonRunImportDungeonLevelNotFoundError(
-              MOCK_RUN,
-            ),
+            new FellowshipLogsDungeonRunImportAlreadyImportedError({
+              ...MOCK_RUN,
+              dungeonRunId: MOCK_DUNGEON_RUN_ID,
+            }),
           );
         },
       },
       (baseUrl) => {
         return E.gen(function* () {
           const response = yield* postJson(
-            `${baseUrl}/fellowship-logs/dungeon-runs`,
-            payload,
+            `${baseUrl}/fellowship-logs/import-jobs`,
+            QUEUE_PAYLOAD,
           );
 
           const client = yield* HttpApiClient.make(AppHttpApi, { baseUrl });
 
           const error = yield* client.fellowshipLogs
-            .importFellowshipLogsDungeonRun({ payload })
+            .queueFellowshipLogsDungeonRunImport({ payload: QUEUE_PAYLOAD })
             .pipe(E.flip);
 
           return { decodedError: error, status: response.status };
@@ -140,12 +183,11 @@ describe("fellowship logs routes", () => {
       },
     );
 
-    expect(status).toBe(422);
-    expect(decodedError).toBeInstanceOf(
-      FellowshipLogsApiDungeonLevelNotFoundError,
-    );
-    expect(decodedError.message).toBe(
-      "This run doesn't have a dungeon level, so it can't be imported.",
-    );
+    expect(status).toBe(409);
+    expect(decodedError).toBeInstanceOf(FellowshipLogsApiAlreadyImportedError);
+    expect(decodedError).toMatchObject({
+      ...MOCK_RUN,
+      dungeonRunId: MOCK_DUNGEON_RUN_ID,
+    });
   });
 });

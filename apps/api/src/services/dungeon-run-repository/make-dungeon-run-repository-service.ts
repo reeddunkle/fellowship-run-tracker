@@ -242,6 +242,11 @@ export const makeDungeonRunRepository = E.gen(function* () {
     });
   };
 
+  const getFellowshipLogsDungeonRun: DungeonRunRepositoryShape["getFellowshipLogsDungeonRun"] =
+    (options) => {
+      return fellowshipLogsDungeonRunDAO.getByReportFight(options);
+    };
+
   const listFellowshipLogsDungeonRuns: DungeonRunRepositoryShape["listFellowshipLogsDungeonRuns"] =
     () => {
       return fellowshipLogsDungeonRunDAO.listImported();
@@ -254,6 +259,7 @@ export const makeDungeonRunRepository = E.gen(function* () {
     delete: delete_,
     deleteHistory,
     exitLocal,
+    getFellowshipLogsDungeonRun,
     interruptLocal,
     interruptUnfinishedLocal,
     listFellowshipLogsDungeonRuns,

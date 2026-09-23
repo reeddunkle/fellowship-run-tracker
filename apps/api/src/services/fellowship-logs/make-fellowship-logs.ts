@@ -16,6 +16,7 @@ import {
   findFightOrFail,
   getGraphQLResponseData,
   getReportOrFail,
+  getReportPageProgress,
   makeFellowshipLogsRateLimitDataTracker,
   makeTrackedQuery,
 } from "@frt/api/services/fellowship-logs/fellowship-logs-response-helpers.ts";
@@ -185,6 +186,7 @@ function makeFellowshipLogsServiceFromQuery(query: Query) {
 
     const streamReportPages: FellowshipLogsService["streamReportPages"] = ({
       fightId,
+      onProgress,
       reportCode,
     }) => {
       return Stream.unwrap(
@@ -200,6 +202,17 @@ function makeFellowshipLogsServiceFromQuery(query: Query) {
               reportCode,
               startTime,
             }).pipe(
+              E.tap((reportPage) => {
+                return onProgress === undefined
+                  ? E.void
+                  : onProgress(
+                      getReportPageProgress({
+                        endTime: fight.endTime,
+                        nextPageTimestamp: reportPage.events.nextPageTimestamp,
+                        startTime: fight.startTime,
+                      }),
+                    );
+              }),
               E.map((reportPage) => {
                 return [
                   [reportPage],

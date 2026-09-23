@@ -5,6 +5,7 @@ import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 
 import { AbilitiesApiLayer } from "@frt/api/api/http/groups/abilities/abilities-api-layer.ts";
 import { AppSettingsApiLayer } from "@frt/api/api/http/groups/app-settings/app-settings-layer.ts";
+import { BackgroundJobApiLayer } from "@frt/api/api/http/groups/background-job/background-job-api-layer.ts";
 import { ConfigurationsApiLayer } from "@frt/api/api/http/groups/configurations/configurations-api-layer.ts";
 import { DungeonRunApiLayer } from "@frt/api/api/http/groups/dungeon-run/dungeon-run-api-layer.ts";
 import { DungeonsApiLayer } from "@frt/api/api/http/groups/dungeons/dungeons-api-layer.ts";
@@ -13,6 +14,7 @@ import { FellowshipLogsApiLayer } from "@frt/api/api/http/groups/fellowship-logs
 import { LiveSplitApiLayer } from "@frt/api/api/http/groups/live-split/live-split-api-layer.ts";
 import { TrackingApiLayer } from "@frt/api/api/http/groups/tracking/tracking-api-layer.ts";
 import { UnitsApiLayer } from "@frt/api/api/http/groups/units/units-api-layer.ts";
+import { BackgroundJobRoutes } from "@frt/api/api/websocket/background-job/background-job-events-route.ts";
 import { DungeonRunEventsRoutes } from "@frt/api/api/websocket/dungeon-run/dungeon-run-events-route.ts";
 import { LiveSplitRoutes } from "@frt/api/api/websocket/live-split/live-split-route.ts";
 import { TrackingRoutes } from "@frt/api/api/websocket/tracking/tracking-route.ts";
@@ -35,6 +37,7 @@ const CorsLayer = Layer.unwrap(
 const HttpApiRoutes = HttpApiBuilder.layer(AppHttpApi).pipe(
   Layer.provide(AbilitiesApiLayer),
   Layer.provide(AppSettingsApiLayer),
+  Layer.provide(BackgroundJobApiLayer),
   Layer.provide(ConfigurationsApiLayer),
   Layer.provide(DungeonRunApiLayer),
   Layer.provide(DungeonsApiLayer),
@@ -46,6 +49,7 @@ const HttpApiRoutes = HttpApiBuilder.layer(AppHttpApi).pipe(
 );
 
 const WebsocketRoutes = Layer.mergeAll(
+  BackgroundJobRoutes,
   DungeonRunEventsRoutes,
   LiveSplitRoutes,
   TrackingRoutes,

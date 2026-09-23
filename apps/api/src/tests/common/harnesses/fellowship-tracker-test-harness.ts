@@ -183,6 +183,9 @@ export function makeFellowshipTrackerTestHarness(
       exitLocal: () => {
         return E.void;
       },
+      getFellowshipLogsDungeonRun: () => {
+        return E.succeedNone;
+      },
       interruptLocal: () => {
         return E.void;
       },

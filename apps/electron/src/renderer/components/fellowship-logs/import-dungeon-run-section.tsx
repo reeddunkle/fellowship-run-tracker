@@ -1,43 +1,71 @@
+import { CircleCheckIcon } from "lucide-react";
 import { useState } from "react";
 
-import { type FellowshipLogsApiDungeonRunReference } from "@frt/shared/fellowship-logs/fellowship-logs-api-schema.ts";
+import {
+  type FellowshipLogsApiDungeonRunReference,
+  type FellowshipLogsApiQueueDungeonRunImportResult,
+} from "@frt/shared/fellowship-logs/fellowship-logs-api-schema.ts";
 
 import {
   useDungeonRunMetadata,
-  useImportDungeonRun,
+  useQueueDungeonRunImport,
 } from "@/renderer/api/fellowship-logs/fellowship-logs-mutations.ts";
+import { BackgroundJobCategoryList } from "@/renderer/components/background-jobs/background-job-list.tsx";
+import { useFellowshipDataStore } from "@/renderer/stores/fellowship-data/fellowship-data-store.tsx";
 
 import { ImportConfirmationCard } from "./import-confirmation/import-confirmation-card.tsx";
 import { type DecodedImportConfirmationFormValue } from "./import-confirmation/import-confirmation-form-schema.ts";
 import { ImportUrlForm } from "./import-url-form/import-url-form.tsx";
 
+function ImportQueuedMessage({
+  result,
+}: {
+  readonly result: FellowshipLogsApiQueueDungeonRunImportResult;
+}) {
+  const dungeonsById = useFellowshipDataStore((state) => state.dungeonsById);
+
+  const { dungeonId, dungeonLevel } = result.job.payload;
+  const runName = `${dungeonsById[dungeonId]?.name ?? dungeonId} +${dungeonLevel}`;
+
+  return (
+    <output className="flex items-center gap-2 text-sm">
+      <CircleCheckIcon aria-hidden="true" className="size-4 text-primary" />
+      {result.wasAlreadyQueued
+        ? `${runName} is already in the import queue.`
+        : `Added ${runName} to the import queue. You can import another run.`}
+    </output>
+  );
+}
+
 export function ImportDungeonRunSection() {
   const [formKey, setFormKey] = useState(0);
 
   const metadataMutation = useDungeonRunMetadata();
-  const importMutation = useImportDungeonRun();
+  const queueMutation = useQueueDungeonRunImport();
 
   const reference: FellowshipLogsApiDungeonRunReference | undefined =
     metadataMutation.variables;
 
   function handleLookup(nextReference: FellowshipLogsApiDungeonRunReference) {
-    importMutation.reset();
+    queueMutation.reset();
     metadataMutation.lookup(nextReference);
   }
 
   function handleCancel() {
     metadataMutation.reset();
-    importMutation.reset();
+    queueMutation.reset();
   }
 
   function handleConfirm({ isOwnRun }: DecodedImportConfirmationFormValue) {
-    if (reference === undefined) {
+    if (reference === undefined || metadataMutation.data === undefined) {
       return;
     }
 
-    importMutation.importRun(
+    queueMutation.queueImport(
       {
         ...reference,
+        dungeonId: metadataMutation.data.dungeonId,
+        dungeonLevel: metadataMutation.data.dungeonLevel,
         isOwnRun,
       },
       {
@@ -59,10 +87,14 @@ export function ImportDungeonRunSection() {
         key={formKey}
         onSubmit={handleLookup}
       />
+      {queueMutation.data !== undefined ? (
+        <ImportQueuedMessage result={queueMutation.data} />
+      ) : null}
+      <BackgroundJobCategoryList categoryId="fellowship-logs-import" />
       {metadataMutation.data !== undefined && reference !== undefined ? (
         <ImportConfirmationCard
-          error={importMutation.error ?? undefined}
-          isImporting={importMutation.isPending}
+          error={queueMutation.error ?? undefined}
+          isQueueing={queueMutation.isPending}
           key={`${reference.reportCode}:${reference.fightId}`}
           metadata={metadataMutation.data}
           onCancel={handleCancel}

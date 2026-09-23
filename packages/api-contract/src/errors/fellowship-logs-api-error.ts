@@ -1,5 +1,6 @@
 import * as Schema from "effect/Schema";
 
+import { DungeonRunIdSchema } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
 import { FellowshipLogsFightIdSchema } from "@frt/shared/validation/fellowship-logs/fellowship-logs-fight-id-schema.ts";
 import { FellowshipLogsReportCodeSchema } from "@frt/shared/validation/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
@@ -35,5 +36,18 @@ export class FellowshipLogsApiDungeonLevelNotFoundError extends Schema.TaggedErr
 ) {
   override get message() {
     return "This run doesn't have a dungeon level, so it can't be imported.";
+  }
+}
+
+export class FellowshipLogsApiAlreadyImportedError extends Schema.TaggedError<FellowshipLogsApiAlreadyImportedError>()(
+  "FellowshipLogsApiAlreadyImportedError",
+  {
+    ...FellowshipLogsApiRunFields,
+    dungeonRunId: DungeonRunIdSchema,
+  },
+  { httpApiStatus: 409 },
+) {
+  override get message() {
+    return "This run has already been imported.";
   }
 }

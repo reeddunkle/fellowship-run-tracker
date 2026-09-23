@@ -2,8 +2,10 @@ import * as Schema from "effect/Schema";
 import * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
 import * as HttpApiError from "effect/unstable/httpapi/HttpApiError";
 import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
+import * as HttpApiSchema from "effect/unstable/httpapi/HttpApiSchema";
 
 import {
+  FellowshipLogsApiAlreadyImportedError,
   FellowshipLogsApiDungeonLevelNotFoundError,
   FellowshipLogsApiRunNotFinishedError,
   FellowshipLogsApiRunNotFoundError,
@@ -11,10 +13,10 @@ import {
 import {
   FellowshipLogsApiDungeonRunMetadataSchema,
   FellowshipLogsApiDungeonRunReferenceSchema,
-  FellowshipLogsApiImportDungeonRunOptionsSchema,
-  FellowshipLogsApiImportDungeonRunResultSchema,
   FellowshipLogsApiImportedDungeonRunListSchema,
   FellowshipLogsApiLastKnownRateLimitDataSchema,
+  FellowshipLogsApiQueueDungeonRunImportOptionsSchema,
+  FellowshipLogsApiQueueDungeonRunImportResultSchema,
 } from "@frt/shared/fellowship-logs/fellowship-logs-api-schema.ts";
 import { DungeonRunIdSchema } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
 
@@ -57,18 +59,19 @@ const GetFellowshipLogsLastKnownRateLimitDataEndpoint = HttpApiEndpoint.get(
   },
 );
 
-const ImportFellowshipLogsDungeonRunEndpoint = HttpApiEndpoint.post(
-  "importFellowshipLogsDungeonRun",
-  `${FELLOWSHIP_LOGS_ROUTE}/dungeon-runs`,
+// Responds once the import is durably queued, before it runs.
+const QueueFellowshipLogsDungeonRunImportEndpoint = HttpApiEndpoint.post(
+  "queueFellowshipLogsDungeonRunImport",
+  `${FELLOWSHIP_LOGS_ROUTE}/import-jobs`,
   {
     error: [
-      FellowshipLogsApiDungeonLevelNotFoundError,
-      FellowshipLogsApiRunNotFoundError,
-      FellowshipLogsApiRunNotFinishedError,
+      FellowshipLogsApiAlreadyImportedError,
       HttpApiError.InternalServerErrorNoContent,
     ],
-    payload: FellowshipLogsApiImportDungeonRunOptionsSchema,
-    success: FellowshipLogsApiImportDungeonRunResultSchema,
+    payload: FellowshipLogsApiQueueDungeonRunImportOptionsSchema,
+    success: FellowshipLogsApiQueueDungeonRunImportResultSchema.pipe(
+      HttpApiSchema.status(202),
+    ),
   },
 );
 
@@ -98,6 +101,6 @@ export const FellowshipLogsApi = HttpApiGroup.make("fellowshipLogs")
   .add(GetFellowshipLogsDungeonRunMetadataEndpoint)
   .add(GetFellowshipLogsRateLimitDataEndpoint)
   .add(GetFellowshipLogsLastKnownRateLimitDataEndpoint)
-  .add(ImportFellowshipLogsDungeonRunEndpoint)
+  .add(QueueFellowshipLogsDungeonRunImportEndpoint)
   .add(GetFellowshipLogsDungeonRunsEndpoint)
   .add(DeleteFellowshipLogsDungeonRunEndpoint);
