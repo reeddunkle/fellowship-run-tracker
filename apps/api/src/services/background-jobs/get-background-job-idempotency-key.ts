@@ -10,6 +10,11 @@ export function getBackgroundJobIdempotencyKey(
     Match.tag("InterruptUnfinishedDungeonRuns", ({ createdBefore }) => {
       return `interrupt-unfinished-dungeon-runs/${DateTime.toEpochMillis(createdBefore)}`;
     }),
+    // Pruning only depends on the log directory at run time, so one pending
+    // job covers every request.
+    Match.tag("PruneLogFiles", () => {
+      return "prune-log-files";
+    }),
     Match.exhaustive,
   );
 }

@@ -7,8 +7,11 @@ const InterruptUnfinishedDungeonRunsJobSchema = Schema.TaggedStruct(
   },
 );
 
+const PruneLogFilesJobSchema = Schema.TaggedStruct("PruneLogFiles", {});
+
 export const BackgroundJobSchema = Schema.Union([
   InterruptUnfinishedDungeonRunsJobSchema,
+  PruneLogFilesJobSchema,
 ]);
 
 export type BackgroundJob = typeof BackgroundJobSchema.Type;

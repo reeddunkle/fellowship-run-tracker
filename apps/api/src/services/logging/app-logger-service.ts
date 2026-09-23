@@ -6,13 +6,9 @@ import * as References from "effect/References";
 
 import { appPaths } from "@frt/api/helpers/app-paths.ts";
 import { isPackagedElectronApp } from "@frt/api/helpers/is-packaged-electron-app.ts";
-import {
-  NodeFileSystemLayer,
-  NodePlatformLayer,
-} from "@frt/api/layers/node-platform-layer.ts";
+import { NodeFileSystemLayer } from "@frt/api/layers/node-platform-layer.ts";
 import { SESSION_LOG_FILE_PATH } from "@frt/api/logging/log-file-path.ts";
 import { resolveProcessLogLevel } from "@frt/api/logging/log-level.ts";
-import { pruneLogFiles } from "@frt/api/logging/prune-log-files.ts";
 
 const FileLogger = E.gen(function* () {
   const fileSystem = yield* FileSystem.FileSystem;
@@ -33,20 +29,7 @@ const MinimumLogLevelLayer = Layer.succeed(
   resolveProcessLogLevel(),
 );
 
-const LogFileRetentionLayer = Layer.effectDiscard(
-  pruneLogFiles({
-    currentLogFilePath: SESSION_LOG_FILE_PATH,
-    directory: appPaths.logs,
-  }).pipe(
-    E.catch((cause) => {
-      return E.logWarning("Failed to clean up old log files.", {
-        cause,
-      });
-    }),
-    E.forkScoped,
-  ),
-).pipe(Layer.provide(NodePlatformLayer));
-
-export const AppLoggerLayer = LogFileRetentionLayer.pipe(
-  Layer.provideMerge(Layer.mergeAll(LoggersLayer, MinimumLogLevelLayer)),
+export const AppLoggerLayer = Layer.mergeAll(
+  LoggersLayer,
+  MinimumLogLevelLayer,
 );

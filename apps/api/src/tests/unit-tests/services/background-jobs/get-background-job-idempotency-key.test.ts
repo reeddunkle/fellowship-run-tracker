@@ -29,4 +29,10 @@ describe("getBackgroundJobIdempotencyKey", () => {
     expect(sameSessionKey).toBe(key);
     expect(nextSessionKey).not.toBe(key);
   });
+
+  test("gives every PruneLogFiles job the same key", () => {
+    expect(getBackgroundJobIdempotencyKey({ _tag: "PruneLogFiles" })).toBe(
+      getBackgroundJobIdempotencyKey({ _tag: "PruneLogFiles" }),
+    );
+  });
 });

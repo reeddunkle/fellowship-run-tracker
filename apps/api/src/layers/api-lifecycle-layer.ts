@@ -14,6 +14,8 @@ const queueStartupJobs = E.gen(function* () {
     _tag: "InterruptUnfinishedDungeonRuns",
     createdBefore: SESSION_STARTED_AT,
   });
+
+  yield* backgroundJobs.offer({ _tag: "PruneLogFiles" });
 }).pipe(
   E.catch((error) => {
     return E.logWarning("Failed to queue startup background jobs.", {

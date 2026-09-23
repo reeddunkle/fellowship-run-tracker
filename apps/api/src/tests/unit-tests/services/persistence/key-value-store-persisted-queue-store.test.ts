@@ -130,7 +130,7 @@ describe("KeyValueStorePersistedQueueStore", () => {
     expect(retried).toEqual(Option.some({ attempts: 1, item: { value: "a" } }));
   });
 
-  test("stops taking an item once it reaches maxAttempts", async () => {
+  test("drops an item once it reaches maxAttempts", async () => {
     const { next, stored } = await runWithKeyValueStore((keyValueStore) => {
       return withQueue(keyValueStore, (queue) => {
         return E.gen(function* () {
@@ -147,7 +147,23 @@ describe("KeyValueStorePersistedQueueStore", () => {
     });
 
     expect(next).toEqual(Option.none());
-    expect(stored).toMatchObject([{ attempts: 2, failed: true }]);
+    expect(stored).toEqual([]);
+  });
+
+  test("takes an id again when it's offered after being dropped", async () => {
+    const retried = await runWithKeyValueStore((keyValueStore) => {
+      return withQueue(keyValueStore, (queue) => {
+        return E.gen(function* () {
+          yield* queue.offer({ value: "a" }, { id: "job-1" });
+          yield* takeAndFail(queue, { maxAttempts: 1 });
+          yield* queue.offer({ value: "a" }, { id: "job-1" });
+
+          return yield* takeOption(queue, { maxAttempts: 1 });
+        });
+      });
+    });
+
+    expect(retried).toEqual(Option.some({ attempts: 0, item: { value: "a" } }));
   });
 
   test("releases an interrupted item without counting an attempt", async () => {

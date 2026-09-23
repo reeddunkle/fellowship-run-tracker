@@ -15,7 +15,6 @@ import {
 const QueueItemSchema = Schema.Struct({
   attempts: Schema.Int,
   element: Schema.Json,
-  failed: Schema.Boolean,
   id: Schema.String,
 });
 
@@ -37,7 +36,7 @@ function getQueueKey(name: string) {
 
 function isAvailable(state: QueueState) {
   return (item: QueueItem) => {
-    return !item.failed && !state.takenIds.has(item.id);
+    return !state.takenIds.has(item.id);
   };
 }
 
@@ -123,7 +122,7 @@ const makeKeyValueStorePersistedQueueStore = E.gen(function* () {
 
         state.items = [
           ...state.items,
-          { attempts: 0, element: encodedElement, failed: false, id },
+          { attempts: 0, element: encodedElement, id },
         ];
 
         yield* persist(name, state);
@@ -151,21 +150,29 @@ const makeKeyValueStorePersistedQueueStore = E.gen(function* () {
     const isInterruptOnly = !Exit.isSuccess(exit) && Exit.hasInterrupts(exit);
 
     if (!isInterruptOnly) {
-      state.items = Exit.isSuccess(exit)
-        ? state.items.filter((candidate) => {
-            return candidate.id !== item.id;
-          })
-        : state.items.map((candidate) => {
-            if (candidate.id !== item.id) {
-              return candidate;
-            }
+      const attempts = item.attempts + 1;
+      const isExhausted = !Exit.isSuccess(exit) && attempts >= maxAttempts;
 
-            const attempts = candidate.attempts + 1;
-
-            return { ...candidate, attempts, failed: attempts >= maxAttempts };
-          });
+      state.items =
+        Exit.isSuccess(exit) || isExhausted
+          ? state.items.filter((candidate) => {
+              return candidate.id !== item.id;
+            })
+          : state.items.map((candidate) => {
+              return candidate.id === item.id
+                ? { ...candidate, attempts }
+                : candidate;
+            });
 
       yield* persist(name, state);
+
+      if (isExhausted) {
+        yield* E.logError("Gave up on a persisted queue item.", {
+          attempts,
+          id: item.id,
+          name,
+        });
+      }
     }
 
     if (state.items.some(isAvailable(state))) {

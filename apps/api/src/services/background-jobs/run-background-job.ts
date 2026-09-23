@@ -2,6 +2,9 @@ import * as A from "effect/Array";
 import * as E from "effect/Effect";
 import * as Match from "effect/Match";
 
+import { appPaths } from "@frt/api/helpers/app-paths.ts";
+import { SESSION_LOG_FILE_PATH } from "@frt/api/logging/log-file-path.ts";
+import { pruneLogFiles } from "@frt/api/logging/prune-log-files.ts";
 import { type BackgroundJob } from "@frt/api/services/background-jobs/background-job-schema.ts";
 import { DungeonRunRepository } from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
 
@@ -23,6 +26,12 @@ export const runBackgroundJob = E.fn("BackgroundJobs.runBackgroundJob")(
                 : E.void;
             }),
           );
+      }),
+      Match.tag("PruneLogFiles", () => {
+        return pruneLogFiles({
+          currentLogFilePath: SESSION_LOG_FILE_PATH,
+          directory: appPaths.logs,
+        });
       }),
       Match.exhaustive,
     );

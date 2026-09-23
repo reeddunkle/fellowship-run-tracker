@@ -119,7 +119,7 @@ function runJobAfterRestart({
         yield* runBackgroundJob({
           _tag: "InterruptUnfinishedDungeonRuns",
           createdBefore,
-        });
+        }).pipe(E.provide(NodePlatformLayer));
 
         return yield* E.forEach([...seededIds, ...nextSessionIds], getLocalRun);
       }),
