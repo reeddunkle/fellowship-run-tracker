@@ -6,10 +6,6 @@ export function openExternalUrl(url: string) {
   });
 }
 
-/**
- * Opens web links in the user's default browser rather than in an app window,
- * which would otherwise load them with the app's preload API.
- */
 export function handleExternalWindowOpen({
   url,
 }: {

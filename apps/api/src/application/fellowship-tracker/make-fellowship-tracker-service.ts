@@ -1,4 +1,3 @@
-import * as A from "effect/Array";
 import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Deferred from "effect/Deferred";
@@ -40,23 +39,6 @@ export const makeFellowshipTracker = E.gen(function* () {
   const dungeonRunWebSocketBroadcaster = yield* DungeonRunWebSocketBroadcaster;
   const fellowship = yield* Fellowship;
   const scope = yield* E.scope;
-
-  yield* dungeonRunRepository.interruptUnfinishedLocal().pipe(
-    E.flatMap((dungeonRunIds) => {
-      return A.isReadonlyArrayNonEmpty(dungeonRunIds)
-        ? E.logInfo(
-            "Interrupted dungeon runs left unfinished by a previous session.",
-            { dungeonRunIds },
-          )
-        : E.void;
-    }),
-    E.catch((error) => {
-      return E.logWarning(
-        "Failed to interrupt dungeon runs left unfinished by a previous session.",
-        { error },
-      );
-    }),
-  );
 
   const eventProcessor = yield* makeFellowshipTrackerEventProcessor;
   const trackerState = yield* makeFellowshipTrackerState();

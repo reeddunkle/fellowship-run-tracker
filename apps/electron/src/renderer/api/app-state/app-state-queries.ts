@@ -24,7 +24,6 @@ function makeAppStateFieldQueryOptions<Value>(
       return browserRuntime.runPromise(AppStateApiService.use(select));
     },
     queryKey: ["app-state", field] as const,
-    // If an independent renderer is added, add explicit refetch-on-focus or visibility invalidation
     staleTime: Infinity,
   });
 }

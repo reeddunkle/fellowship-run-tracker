@@ -99,10 +99,6 @@ const captureFellowshipLogsReport = E.fn("cli.capture-fellowship-logs-report")(
       recursive: true,
     });
 
-    // This response is the exact JSON body Fellowship Logs returns for the
-    // dungeon run metadata query; it is written to disk verbatim so the
-    // fixture service can decode and process it the same way the live
-    // service does.
     const metadataResponse = yield* query(
       {
         query: makeQuery({

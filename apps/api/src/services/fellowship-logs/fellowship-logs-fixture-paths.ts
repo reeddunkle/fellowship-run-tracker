@@ -9,13 +9,6 @@ import { type GetFellowshipLogsReportOptions } from "@frt/api/services/fellowshi
 // @effect-diagnostics-next-line processEnv:off
 const fixtureDirectoryOverride = process.env.FELLOWSHIP_LOGS_FIXTURE_DIRECTORY;
 
-/**
- * `FELLOWSHIP_LOGS_FIXTURE_DIRECTORY` when set (relative paths resolve against
- * the directory the process started in), otherwise this package's
- * `fixtures/fellowship-logs`. The default only holds when this file runs from
- * source (tsx, vitest): bundled into the Electron main process, this module
- * no longer sits in the api package, so the dev `.env` sets it.
- */
 export const FELLOWSHIP_LOGS_FIXTURE_DIRECTORY =
   fixtureDirectoryOverride === undefined || fixtureDirectoryOverride === ""
     ? nodePath.join(import.meta.dirname, "../../../fixtures/fellowship-logs")

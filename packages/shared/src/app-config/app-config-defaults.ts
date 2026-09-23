@@ -1,10 +1,3 @@
-/**
- * Fallbacks for settings read from the workspace `.env`, used when a variable
- * isn't set — notably in a packaged build, which has no `.env` at all.
- *
- * Kept as plain values (no Effect/Schema) so both the main process config and
- * the renderer's Vite build config can use them.
- */
 export const APP_CONFIG_DEFAULTS = {
   ELECTRON_RENDERER_HOST: "127.0.0.1",
   ELECTRON_RENDERER_PORT: 5173,

@@ -114,9 +114,6 @@ function makeFellowshipLogsServiceFromQuery(query: Query) {
       );
     };
 
-    // `getFight` is an internal detail used only to find pagination bounds
-    // for `streamReportPages`; it isn't a public-facing method, so unlike
-    // the others it doesn't piggyback a rate limit reading onto its query.
     const getFight = E.fn("FellowshipLogs.getFight")(function* ({
       fightId,
       reportCode,

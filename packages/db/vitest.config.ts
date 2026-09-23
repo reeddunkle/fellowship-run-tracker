@@ -6,6 +6,7 @@ const projectRoot = path.resolve(import.meta.dirname);
 
 export default defineConfig({
   test: {
+    fsModuleCache: true,
     root: projectRoot,
   },
 });

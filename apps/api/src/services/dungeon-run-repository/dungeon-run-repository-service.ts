@@ -94,14 +94,9 @@ export type DungeonRunRepositoryShape = {
     options: FinishLocalDungeonRunOptions,
   ) => E.Effect<void, DungeonRunRepositoryError>;
 
-  /**
-   * Interrupts local runs a previous session left unfinished (a crash, a
-   * force quit, or a failed write when stopping), returning their ids.
-   */
-  readonly interruptUnfinishedLocal: () => E.Effect<
-    ReadonlyArray<DungeonRunId>,
-    DungeonRunRepositoryError
-  >;
+  readonly interruptUnfinishedLocal: (options: {
+    readonly createdBefore: DateTime.Utc;
+  }) => E.Effect<ReadonlyArray<DungeonRunId>, DungeonRunRepositoryError>;
 
   readonly listFellowshipLogsDungeonRuns: () => E.Effect<
     ReadonlyArray<FellowshipLogsImportedDungeonRunRow>,

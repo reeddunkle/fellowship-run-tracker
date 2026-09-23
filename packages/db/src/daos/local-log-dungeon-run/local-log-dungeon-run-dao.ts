@@ -1,4 +1,5 @@
 import * as Context from "effect/Context";
+import type * as DateTime from "effect/DateTime";
 import type * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import type * as Option from "effect/Option";
@@ -18,6 +19,10 @@ type GetLocalLogDungeonRunByDungeonRunIdOptions = {
 
 type FinishLocalLogDungeonRunOptions = {
   readonly dungeonRunId: DungeonRunId;
+};
+
+type ListActiveLocalLogDungeonRunsOptions = {
+  readonly createdBefore: DateTime.Utc;
 };
 
 export type LocalLogDungeonRunDAOShape = {
@@ -44,8 +49,9 @@ export type LocalLogDungeonRunDAOShape = {
     options: FinishLocalLogDungeonRunOptions,
   ) => E.Effect<void, LocalLogDungeonRunDAOError>;
 
-  /** Runs still `ACTIVE`, i.e. started but not yet finished. */
-  readonly listActive: () => E.Effect<
+  readonly listActive: (
+    options: ListActiveLocalLogDungeonRunsOptions,
+  ) => E.Effect<
     ReadonlyArray<LocalLogDungeonRunModel>,
     LocalLogDungeonRunDAOError
   >;

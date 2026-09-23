@@ -12,11 +12,13 @@ import { makeAppStateApiServiceLayer } from "@/services/app-state/app-state-api-
 
 export type MakeElectronRuntimeOptions = DatabaseOptions & {
   readonly appStateStorageDirectory: string;
+  readonly backgroundJobsDirectory: string;
   readonly encryptionKeyDirectory: string;
 };
 
 export function makeElectronRuntime({
   appStateStorageDirectory,
+  backgroundJobsDirectory,
   databaseFilename,
   encryptionKeyDirectory,
 }: MakeElectronRuntimeOptions) {
@@ -25,6 +27,7 @@ export function makeElectronRuntime({
   });
 
   const ApiLayer = makeApiLayer({
+    backgroundJobsDirectory,
     encryptionKeyDirectory,
   }).pipe(Layer.provide(PersistenceLayer));
 

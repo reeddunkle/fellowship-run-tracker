@@ -47,10 +47,6 @@ function postJson(url: string, body: unknown) {
   });
 }
 
-/**
- * Runs `program` against a test API server whose Fellowship Logs API service
- * is mocked with `serviceOptions`.
- */
 function runWithFellowshipLogsApiService<A, Error>(
   serviceOptions: MakeFellowshipLogsApiServiceMockOptions,
   program: (baseUrl: string) => E.Effect<A, Error, HttpClient.HttpClient>,

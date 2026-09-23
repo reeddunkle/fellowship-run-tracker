@@ -10,7 +10,6 @@ export class MermaidSubgraphError extends Data.TaggedError(
   }
 }
 
-/** Unexpected failure while parsing or transforming Mermaid graph source. */
 export class MermaidGraphParseError extends Data.TaggedError(
   "MermaidGraphParseError",
 )<{

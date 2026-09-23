@@ -10,14 +10,17 @@ import {
   LiveSplitWebSocketBroadcaster,
   TrackingWebSocketBroadcaster,
 } from "@frt/api/services/api/websocket-broadcaster-service.ts";
+import { BackgroundJobs } from "@frt/api/services/background-jobs/background-jobs-service.ts";
 
 export type MakeApiLayerOptions = {
+  readonly backgroundJobsDirectory: string;
   readonly encryptionKeyDirectory: string;
 };
 
 export function makeApiLayer(options: MakeApiLayerOptions) {
   const ApiRuntimeLayer = Layer.mergeAll(
     makeApiServicesLayer(options),
+    BackgroundJobs.layerWith(options),
     FellowshipTracker.layerWith(options),
     DungeonRunWebSocketBroadcaster.layer,
     LiveSplitWebSocketBroadcaster.layer,

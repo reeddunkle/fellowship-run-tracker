@@ -63,8 +63,6 @@ function getLiveSplitConnectionState({
     : API_EVENT_CONNECTION_STATE.DISCONNECTED;
 }
 
-// Includes `LiveSplitApiConnectionError`, which the API client decodes into an
-// instance with its own message.
 function getErrorMessage(error: unknown): string {
   return error instanceof Error
     ? error.message

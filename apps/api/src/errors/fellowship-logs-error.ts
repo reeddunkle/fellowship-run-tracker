@@ -27,11 +27,6 @@ export type FellowshipLogsGraphQLResponseErrorReason =
   | "MissingReportPages"
   | "ReportNotFound";
 
-/**
- * A GraphQL response that can't be used: GraphQL `errors`, or data missing
- * what was queried. `reportCode`/`fightId` identify what was queried, when the
- * reason concerns a specific report or fight.
- */
 export class FellowshipLogsGraphQLResponseError extends Data.TaggedError(
   "FellowshipLogsGraphQLResponseError",
 )<{

@@ -33,10 +33,6 @@ function getBaseUrl(address: HttpServer.Address) {
   return `http://${hostname}:${address.port}`;
 }
 
-/**
- * Starts tracking against a tracker that fails with `startError`, resolving
- * to the raw response status and the error decoded by the typed API client.
- */
 function startTrackingWith(startError: FellowshipTrackerStartError) {
   const fellowshipTrackerTest = makeFellowshipTrackerMock({
     start: () => {

@@ -1,10 +1,5 @@
 const EXTERNAL_URL_PROTOCOLS = new Set(["http:", "https:"]);
 
-/**
- * Whether `url` belongs to the app's own renderer: under the renderer
- * directory for a packaged/built app (`file:`), or on the renderer dev server
- * during development.
- */
 export function isAppUrl({
   appBaseUrl,
   url,

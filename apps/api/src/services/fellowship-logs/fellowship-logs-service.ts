@@ -132,11 +132,6 @@ export class FellowshipLogs extends Context.Service<
     );
   };
 
-  /**
-   * Picks the live (real GraphQL API) or fixture-backed implementation based
-   * on the `FELLOWSHIP_LOGS_USE_FIXTURES` config value, read fresh each time
-   * this layer is built.
-   */
   static readonly layerWith = (options: {
     readonly encryptionKeyDirectory: string;
   }) => {

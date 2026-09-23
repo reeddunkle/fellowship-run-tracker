@@ -6,13 +6,10 @@ import * as Path from "effect/Path";
 
 import { isLogFileName } from "@frt/api/logging/log-file-path.ts";
 
-// Sessions that logged nothing at WARN or above.
 const CLEAN_SESSION_RETENTION_DAYS = 30;
 
-// Sessions that logged a warning or error are kept longer for troubleshooting.
 const PROBLEM_SESSION_RETENTION_DAYS = 90;
 
-// Bounds disk use regardless of age (including the current session's file).
 const MAX_LOG_FILES = 200;
 
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -36,17 +33,6 @@ export type PruneLogFilesOptions = {
   readonly directory: string;
 };
 
-/**
- * Deletes old session log files:
- * - older than {@link PROBLEM_SESSION_RETENTION_DAYS} days,
- * - older than {@link CLEAN_SESSION_RETENTION_DAYS} days without any
- *   WARN/ERROR/FATAL entry,
- * - the oldest beyond {@link MAX_LOG_FILES}.
- *
- * Never touches the current session's file or files that don't look like log
- * files. Failing to delete an individual file (e.g. one another running
- * process still has open) is logged and skipped.
- */
 export const pruneLogFiles = E.fn("pruneLogFiles")(function* ({
   currentLogFilePath,
   directory,

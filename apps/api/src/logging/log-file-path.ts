@@ -3,11 +3,6 @@ import path from "node:path";
 
 import { appPaths } from "@frt/api/helpers/app-paths.ts";
 
-/*
- * Kept free of Effect imports so the Electron bootstrap entry can write to the
- * same log file even when the application's dependencies fail to load.
- */
-
 const LOG_FILE_NAME_PREFIX = "fellowship-run-tracker-";
 const LOG_FILE_EXTENSION = ".log";
 
@@ -23,7 +18,6 @@ function padTwoDigits(value: number) {
   return String(value).padStart(2, "0");
 }
 
-/** Local time, sortable, and safe for file names (no `:`). */
 function formatSessionTimestamp(date: Date) {
   const datePart = [
     date.getFullYear(),
@@ -44,12 +38,6 @@ export function isLogFileName(fileName: string) {
   return LOG_FILE_NAME_PATTERN.test(fileName);
 }
 
-/**
- * One log file per launch, named by the process start time. Using the start
- * time (rather than the time this module loads) means every module instance in
- * the process — e.g. the Electron bootstrap and main chunks — resolves the
- * same file.
- */
 export const SESSION_LOG_FILE_PATH = path.join(
   appPaths.logs,
   `${LOG_FILE_NAME_PREFIX}${formatSessionTimestamp(

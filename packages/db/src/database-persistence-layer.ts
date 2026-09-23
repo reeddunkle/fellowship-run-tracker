@@ -30,10 +30,6 @@ const DAOsLayer = Layer.mergeAll(
   UnitDAO.layer,
 );
 
-/**
- * The database (created and migrated on build), every DAO, and the bundled
- * catalogs synced into it.
- */
 export function makeDatabasePersistenceLayer({
   databaseFilename,
 }: DatabaseOptions) {

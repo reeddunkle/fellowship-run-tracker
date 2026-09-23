@@ -36,10 +36,6 @@ const PROCESS_OPERATION_DESCRIPTIONS = {
   WaitForExit: "Failed while waiting for the Effect TS-Go LSP process.",
 } as const;
 
-/**
- * `exitCode` is set when the LSP process exited; `description` adds detail
- * (e.g. the expected native dependency when launching fails).
- */
 export class EffectTsGoLspProcessError extends Data.TaggedError(
   "EffectTsGoLspProcessError",
 )<{

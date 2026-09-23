@@ -100,7 +100,6 @@ export function TrackingControls() {
   const isTracking = trackingStatus?.status === "Tracking";
   const isWaitingForFile = trackingStatus?.status === "WaitingForLogFile";
 
-  // Covers the detached tracker window too, which shares these actions.
   const actionErrorMessage = isPending
     ? undefined
     : getTrackingActionErrorMessage({

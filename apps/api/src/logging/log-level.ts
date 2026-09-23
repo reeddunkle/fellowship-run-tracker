@@ -4,7 +4,6 @@ import { isPackagedElectronApp } from "@frt/api/helpers/is-packaged-electron-app
 
 const LOG_LEVEL_ARGUMENT_PREFIX = "--log-level=";
 
-// Also accept the more common spelling of `Warn`.
 const LOG_LEVEL_ALIASES: Readonly<Record<string, LogLevel.LogLevel>> = {
   warning: "Warn",
 };
@@ -37,14 +36,6 @@ export type ResolveLogLevelOptions = {
   readonly isPackaged: boolean;
 };
 
-/**
- * Minimum level written to the logs, in order of precedence:
- * 1. `--log-level=<level>` launch argument (works for the packaged app),
- * 2. `LOG_LEVEL` environment variable (e.g. from the dev `.env`),
- * 3. `Info` for the packaged app, `Debug` otherwise.
- *
- * Invalid values fall back to the next source rather than failing startup.
- */
 export function resolveLogLevel({
   argv,
   env,

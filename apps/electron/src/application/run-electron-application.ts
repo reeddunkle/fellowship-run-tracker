@@ -15,10 +15,6 @@ function applyNativeTheme(theme: Theme) {
   });
 }
 
-/**
- * A second launch exits immediately (see the single instance lock in
- * `main.ts`), so bring the existing window forward instead.
- */
 function focusWindowOnSecondInstance(window: BrowserWindow) {
   function focusWindow() {
     if (window.isDestroyed()) {

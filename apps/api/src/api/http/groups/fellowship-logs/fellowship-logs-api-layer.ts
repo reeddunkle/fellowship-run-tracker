@@ -25,10 +25,6 @@ type FellowshipLogsApiError =
   | FellowshipLogsGraphQLResponseError
   | ImportFellowshipLogsDungeonRunError;
 
-/**
- * Maps failures for the requested run to the wire errors the client can act
- * on; anything else is logged and becomes a 500.
- */
 function mapFellowshipLogsApiError({
   fightId,
   reportCode,
@@ -52,8 +48,6 @@ function mapFellowshipLogsApiError({
       return E.fail(new FellowshipLogsApiRunNotFinishedError(run));
     }
 
-    // The same missing data, found while importing or while looking up the
-    // run's metadata beforehand.
     if (
       error._tag ===
         "FellowshipLogsDungeonRunImportDungeonLevelNotFoundError" ||

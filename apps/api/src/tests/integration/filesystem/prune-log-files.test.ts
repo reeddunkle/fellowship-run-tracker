@@ -26,10 +26,6 @@ function sessionFileName(index: number) {
   return `fellowship-run-tracker-2026-01-01T00-${minutes}-${seconds}.log`;
 }
 
-/**
- * Writes `files` into a temp directory with their modified times backdated by
- * `ageDays`, prunes it, and returns the file names left.
- */
 function pruneFiles({
   currentFileName,
   files,

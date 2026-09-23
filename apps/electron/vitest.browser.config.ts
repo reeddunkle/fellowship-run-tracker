@@ -45,6 +45,7 @@ export default defineConfig({
     },
     // Run under Node by `vitest.config.ts`.
     exclude: ["src/tests/browser/integration/**"],
+    fsModuleCache: true,
     include: ["src/tests/browser/**/*.test.{ts,tsx}"],
     root: projectRoot,
     setupFiles: ["./src/tests/browser/setup.ts"],

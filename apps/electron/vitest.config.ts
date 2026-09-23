@@ -11,6 +11,7 @@ export default defineConfig({
     },
   },
   test: {
+    fsModuleCache: true,
     include: [
       "src/tests/unit-tests/**/*.test.ts",
       // Renderer API clients against a real test API server, which needs Node.

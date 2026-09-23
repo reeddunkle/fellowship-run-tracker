@@ -197,8 +197,12 @@ export const makeDungeonRunRepository = E.gen(function* () {
   });
 
   const interruptUnfinishedLocal: DungeonRunRepositoryShape["interruptUnfinishedLocal"] =
-    E.fn("DungeonRunRepository.interruptUnfinishedLocal")(function* () {
-      const unfinishedRuns = yield* localLogDungeonRunDAO.listActive();
+    E.fn("DungeonRunRepository.interruptUnfinishedLocal")(function* ({
+      createdBefore,
+    }) {
+      const unfinishedRuns = yield* localLogDungeonRunDAO.listActive({
+        createdBefore,
+      });
 
       const interruptions = yield* E.forEach(
         unfinishedRuns,

@@ -6,7 +6,6 @@ import * as SqlClient from "effect/unstable/sql/SqlClient";
 import { getDatabaseFilename } from "@frt/api/helpers/get-database-filename.ts";
 import { makeDatabaseLayer } from "@frt/db/database-layer.ts";
 
-// Building the database layer creates the file and runs migrations.
 const DatabaseLayer = Layer.unwrap(
   E.map(getDatabaseFilename(), makeDatabaseLayer),
 );

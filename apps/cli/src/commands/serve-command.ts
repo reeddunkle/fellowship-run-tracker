@@ -12,6 +12,7 @@ import { AppLoggerLayer } from "@frt/api/services/logging/app-logger-service.ts"
 const ServeLayer = Layer.unwrap(
   E.map(getDatabaseFilename(), (databaseFilename) => {
     return makeApiLayer({
+      backgroundJobsDirectory: appPaths.backgroundJobs,
       encryptionKeyDirectory: appPaths.encryptionKey,
     }).pipe(
       Layer.provide(
@@ -31,8 +32,6 @@ function runServeCommand() {
   );
 }
 
-// The logger wraps the whole handler, so it also covers building the API
-// layers; failures (e.g. the port being in use) are written to the log file.
 export const serveCommand = Command.make("serve", {}, runServeCommand).pipe(
   Command.withDescription(
     "Run the HTTP/WebSocket API on its own, without the Electron app.",

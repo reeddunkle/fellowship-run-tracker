@@ -26,21 +26,12 @@ import { shutdownElectronApplication } from "./application/shutdown-electron-app
 
 const currentDirectoryPath = path.dirname(fileURLToPath(import.meta.url));
 
-// Must be set before requesting the single instance lock, which is scoped to
-// the `userData` directory.
 app.setPath("userData", appPaths.electronUserData);
 
-// A second launch exits before doing any work (opening the database, binding
-// the API server's port, ...); the running instance focuses its window.
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
 
-// Set once startup creates it, so a fatal exit can dispose it too.
 let electronRuntime: ReturnType<typeof makeElectronRuntime> | undefined;
 
-/**
- * The file logger batches writes and only flushes when its layer is released,
- * which happens once every runtime sharing it has been disposed.
- */
 function flushLogs() {
   return Promise.allSettled([
     electronRuntime?.dispose(),
@@ -63,16 +54,19 @@ function runElectronMain() {
 
     const databaseFilename = yield* getDatabaseFilename();
     const appStateStorageDirectory = appPaths.appState;
+    const backgroundJobsDirectory = appPaths.backgroundJobs;
     const encryptionKeyDirectory = appPaths.encryptionKey;
 
     const runtime = makeElectronRuntime({
       appStateStorageDirectory,
+      backgroundJobsDirectory,
       databaseFilename,
       encryptionKeyDirectory,
     });
 
     electronRuntime = runtime;
 
+    // [TODO] Research patterns
     // Build the runtime's layers up front so a failure (database, API server,
     // etc.) fails startup and is logged, rather than failing the first
     // `runProgram` call before its `logCause` can run.
@@ -120,7 +114,6 @@ function runElectronMain() {
         shutdownElectronApplication({
           runtime,
         }).pipe(
-          // Disposing the startup runtime flushes any batched log writes.
           E.ensuring(E.promise(() => startupRuntime.dispose())),
           E.ensuring(
             E.sync(() => {

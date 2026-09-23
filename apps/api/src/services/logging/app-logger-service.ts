@@ -24,7 +24,6 @@ const FileLogger = E.gen(function* () {
   return yield* Logger.toFile(Logger.formatJson, SESSION_LOG_FILE_PATH);
 });
 
-// A packaged Windows app has no console to write to.
 const LoggersLayer = Logger.layer(
   isPackagedElectronApp() ? [FileLogger] : [Logger.consolePretty(), FileLogger],
 ).pipe(Layer.provide(NodeFileSystemLayer));
@@ -34,7 +33,6 @@ const MinimumLogLevelLayer = Layer.succeed(
   resolveProcessLogLevel(),
 );
 
-// Runs in the background so cleanup never delays or fails startup.
 const LogFileRetentionLayer = Layer.effectDiscard(
   pruneLogFiles({
     currentLogFilePath: SESSION_LOG_FILE_PATH,
@@ -49,10 +47,6 @@ const LogFileRetentionLayer = Layer.effectDiscard(
   ),
 ).pipe(Layer.provide(NodePlatformLayer));
 
-/**
- * One JSON-lines file per session in `appPaths.logs`, filtered to the level
- * from `resolveProcessLogLevel` (Info for the packaged app, Debug otherwise).
- */
 export const AppLoggerLayer = LogFileRetentionLayer.pipe(
   Layer.provideMerge(Layer.mergeAll(LoggersLayer, MinimumLogLevelLayer)),
 );

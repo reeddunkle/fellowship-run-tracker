@@ -5,10 +5,10 @@ import * as Option from "effect/Option";
 import * as Path from "effect/Path";
 import { describe, expect, test } from "vitest";
 
-import { FellowshipTracker } from "@frt/api/application/fellowship-tracker/fellowship-tracker-service.ts";
 import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
+import { runBackgroundJob } from "@frt/api/services/background-jobs/run-background-job.ts";
 import { DungeonRunRepository } from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
-import { makeFellowshipTrackerIntegrationTestHarness } from "@frt/api/tests/common/harnesses/fellowship-tracker-integration-test-harness.ts";
+import { makePersistenceTestLayer } from "@frt/api/tests/common/layers/persistence-test-layer.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { DungeonRunDAO } from "@frt/db/daos/dungeon-run/dungeon-run-dao.ts";
 import { DungeonRunObservationDAO } from "@frt/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
@@ -24,33 +24,19 @@ const EARLIER_OBSERVED_AT = DateTime.makeUnsafe("2026-09-05T16:05:00.000Z");
 const LATEST_OBSERVED_AT = DateTime.makeUnsafe("2026-09-05T16:12:00.000Z");
 const COMPLETED_AT = DateTime.makeUnsafe("2026-09-05T16:30:00.000Z");
 
-/**
- * Runs `program` in one app session: the tracker and persistence built on
- * `databaseFilename`, torn down when the session ends. Constructing the
- * tracker is part of the app starting up.
- */
-function runSession<A, Error, Requirements>(
+type Persistence =
+  | DungeonRunDAO
+  | DungeonRunObservationDAO
+  | DungeonRunRepository
+  | LocalLogDungeonRunDAO;
+
+function runSession<A, Error>(
   databaseFilename: string,
-  program: E.Effect<A, Error, Requirements>,
+  program: E.Effect<A, Error, Persistence>,
 ) {
-  return E.gen(function* () {
-    const { layer } = yield* makeFellowshipTrackerIntegrationTestHarness({
-      databaseFilename,
-    });
-
-    return yield* E.gen(function* () {
-      yield* FellowshipTracker;
-
-      return yield* program;
-    }).pipe(E.provide(layer));
-  }).pipe(E.scoped);
+  return program.pipe(E.provide(makePersistenceTestLayer(databaseFilename)));
 }
 
-/**
- * Starts a local run, with an observation at each of `observedAts`, and
- * leaves it unfinished: what a session leaves behind when it ends mid-run (a
- * crash, a force quit, or a failed write when stopping).
- */
 function startLocalRun(observedAts: ReadonlyArray<DateTime.Utc>) {
   return E.gen(function* () {
     const dungeonRunRepository = yield* DungeonRunRepository;
@@ -100,17 +86,17 @@ function getLocalRun(dungeonRunId: DungeonRunId) {
   });
 }
 
-/**
- * Seeds runs with `seed` in one session, then reads each back after the app
- * starts again on the same database.
- */
-function restartAfter(
-  seed: E.Effect<
+function runJobAfterRestart({
+  duringNextSession = E.succeed([]),
+  seed,
+}: {
+  readonly duringNextSession?: E.Effect<
     ReadonlyArray<DungeonRunId>,
     unknown,
-    DungeonRunObservationDAO | DungeonRunRepository
-  >,
-) {
+    Persistence
+  >;
+  readonly seed: E.Effect<ReadonlyArray<DungeonRunId>, unknown, Persistence>;
+}) {
   return E.gen(function* () {
     const fileSystem = yield* FileSystem.FileSystem;
     const path = yield* Path.Path;
@@ -118,53 +104,69 @@ function restartAfter(
     const directory = yield* fileSystem.makeTempDirectoryScoped();
     const databaseFilename = path.join(directory, "database.db");
 
-    const dungeonRunIds = yield* runSession(databaseFilename, seed);
+    const seededIds = yield* runSession(databaseFilename, seed);
+
+    // TODO: Find better way
+    // The next session needs to wait for seeded runs to finish.
+    yield* E.sleep("5 millis");
 
     return yield* runSession(
       databaseFilename,
-      E.forEach(dungeonRunIds, getLocalRun),
+      E.gen(function* () {
+        const createdBefore = yield* DateTime.now;
+        const nextSessionIds = yield* duringNextSession;
+
+        yield* runBackgroundJob({
+          _tag: "InterruptUnfinishedDungeonRuns",
+          createdBefore,
+        });
+
+        return yield* E.forEach([...seededIds, ...nextSessionIds], getLocalRun);
+      }),
     );
   }).pipe(E.scoped, E.provide(NodePlatformLayer), runTest);
 }
 
-function toEpochMillis(dateTime: DateTime.Utc | null) {
-  return dateTime === null ? null : DateTime.toEpochMillis(dateTime);
+function toEpochMillis(dateTime: DateTime.Utc | null | undefined) {
+  return dateTime === null || dateTime === undefined
+    ? null
+    : DateTime.toEpochMillis(dateTime);
 }
 
-describe("FellowshipTracker startup recovery", () => {
+function single(dungeonRunId: E.Effect<DungeonRunId, unknown, Persistence>) {
+  return dungeonRunId.pipe(
+    E.map((id) => {
+      return [id];
+    }),
+  );
+}
+
+describe("InterruptUnfinishedDungeonRuns job", () => {
   test("interrupts an unfinished run at its latest observation", async () => {
-    const [run] = await restartAfter(
-      startLocalRun([LATEST_OBSERVED_AT, EARLIER_OBSERVED_AT]).pipe(
-        E.map((dungeonRunId) => {
-          return [dungeonRunId];
-        }),
-      ),
-    );
+    const [run] = await runJobAfterRestart({
+      seed: single(startLocalRun([LATEST_OBSERVED_AT, EARLIER_OBSERVED_AT])),
+    });
 
     expect(run?.status).toBe("INTERRUPTED");
-    expect(toEpochMillis(run?.endedAt ?? null)).toBe(
+    expect(toEpochMillis(run?.endedAt)).toBe(
       DateTime.toEpochMillis(LATEST_OBSERVED_AT),
     );
   });
 
   test("interrupts an unfinished run without observations when it started", async () => {
-    const [run] = await restartAfter(
-      startLocalRun([]).pipe(
-        E.map((dungeonRunId) => {
-          return [dungeonRunId];
-        }),
-      ),
-    );
+    const [run] = await runJobAfterRestart({
+      seed: single(startLocalRun([])),
+    });
 
     expect(run?.status).toBe("INTERRUPTED");
-    expect(toEpochMillis(run?.endedAt ?? null)).toBe(
+    expect(toEpochMillis(run?.endedAt)).toBe(
       DateTime.toEpochMillis(STARTED_AT),
     );
   });
 
   test("leaves finished runs unchanged", async () => {
-    const [run] = await restartAfter(
-      E.gen(function* () {
+    const [run] = await runJobAfterRestart({
+      seed: E.gen(function* () {
         const dungeonRunRepository = yield* DungeonRunRepository;
         const dungeonRunId = yield* startLocalRun([EARLIER_OBSERVED_AT]);
 
@@ -175,11 +177,22 @@ describe("FellowshipTracker startup recovery", () => {
 
         return [dungeonRunId];
       }),
-    );
+    });
 
     expect(run?.status).toBe("COMPLETED");
-    expect(toEpochMillis(run?.endedAt ?? null)).toBe(
+    expect(toEpochMillis(run?.endedAt)).toBe(
       DateTime.toEpochMillis(COMPLETED_AT),
     );
+  });
+
+  test("leaves a run started in the current session active", async () => {
+    const [previousRun, currentRun] = await runJobAfterRestart({
+      duringNextSession: single(startLocalRun([])),
+      seed: single(startLocalRun([])),
+    });
+
+    expect(previousRun?.status).toBe("INTERRUPTED");
+    expect(currentRun?.status).toBe("ACTIVE");
+    expect(currentRun?.endedAt).toBeNull();
   });
 });

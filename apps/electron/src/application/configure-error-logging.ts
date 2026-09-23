@@ -10,11 +10,6 @@ function formatError(error: Error) {
   return error.stack ?? error.message;
 }
 
-/**
- * Logs failures that happen outside of any Effect program — renderer and child
- * process crashes, preload script errors, failed page loads, and renderer
- * console errors — through the runtime's logger.
- */
 export function configureErrorLogging<R, ER>(
   runtime: ManagedRuntime.ManagedRuntime<R, ER>,
 ) {

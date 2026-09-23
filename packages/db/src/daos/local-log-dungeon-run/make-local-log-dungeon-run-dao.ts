@@ -169,8 +169,14 @@ export const makeLocalLogDungeonRunDAO = E.gen(function* () {
     });
   };
 
-  const listActive: LocalLogDungeonRunDAOShape["listActive"] = () => {
+  const listActive: LocalLogDungeonRunDAOShape["listActive"] = ({
+    createdBefore,
+  }) => {
     return E.gen(function* () {
+      const encodedCreatedBefore = yield* Schema.encodeEffect(
+        Schema.DateTimeUtcFromMillis,
+      )(createdBefore);
+
       const rows = yield* sql`
         SELECT
           dungeon_run_id,
@@ -181,6 +187,7 @@ export const makeLocalLogDungeonRunDAO = E.gen(function* () {
           local_log_dungeon_run
         WHERE
           status = 'ACTIVE'
+          AND created_at < ${encodedCreatedBefore}
       `;
 
       return yield* decodeLocalLogDungeonRunRows(rows);
