@@ -2,8 +2,8 @@ import * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
 
+import { MainDatabase } from "@frt/db/databases/main-database.ts";
 import { CatalogSyncModel } from "@frt/db/models/catalog-sync-model.ts";
 
 import { type CatalogSyncDAOShape } from "./catalog-sync-dao.ts";
@@ -15,7 +15,7 @@ function decodeCatalogSyncRows(
 }
 
 export const makeCatalogSyncDAO = E.gen(function* () {
-  const sql = yield* SqlClient.SqlClient;
+  const sql = yield* MainDatabase;
 
   const getByCatalog: CatalogSyncDAOShape["getByCatalog"] = ({ catalog }) => {
     return E.gen(function* () {

@@ -2,13 +2,13 @@ import * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
 
 import { type FellowshipLogsCredentialDAOShape } from "@frt/db/daos/fellowship-logs-credential/fellowship-logs-credential-dao.ts";
+import { MainDatabase } from "@frt/db/databases/main-database.ts";
 import { FellowshipLogsCredentialModel } from "@frt/db/models/fellowship-logs-credential-model.ts";
 
 export const makeFellowshipLogsCredentialDAO = E.gen(function* () {
-  const sql = yield* SqlClient.SqlClient;
+  const sql = yield* MainDatabase;
 
   const get: FellowshipLogsCredentialDAOShape["get"] = () => {
     return E.gen(function* () {

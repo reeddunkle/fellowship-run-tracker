@@ -1,11 +1,11 @@
 import * as E from "effect/Effect";
 import * as Schema from "effect/Schema";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
 import { describe, expect, test } from "vitest";
 
 import { FellowshipLogsDungeonRunImporter } from "@frt/api/application/fellowship-logs-dungeon-run-importer/fellowship-logs-dungeon-run-importer-service.ts";
 import { makeFellowshipLogsDungeonRunImporterIntegrationTestHarness } from "@frt/api/tests/common/harnesses/fellowship-logs-dungeon-run-importer-integration-test-harness.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
+import { MainDatabase } from "@frt/db/databases/main-database.ts";
 import { FellowshipLogsFightIdSchema } from "@frt/shared/validation/fellowship-logs/fellowship-logs-fight-id-schema.ts";
 import { FellowshipLogsReportCodeSchema } from "@frt/shared/validation/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
@@ -57,7 +57,7 @@ describe("FellowshipLogsDungeonRunImporter", () => {
       yield* E.gen(function* () {
         const fellowshipLogsDungeonRunImporter =
           yield* FellowshipLogsDungeonRunImporter;
-        const sql = yield* SqlClient.SqlClient;
+        const sql = yield* MainDatabase;
 
         const result = yield* fellowshipLogsDungeonRunImporter.importReport({
           fightId: FIGHT_ID,

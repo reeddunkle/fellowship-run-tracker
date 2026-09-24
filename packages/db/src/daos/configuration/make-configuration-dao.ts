@@ -2,7 +2,6 @@ import * as E from "effect/Effect";
 import * as Option from "effect/Option";
 import * as R from "effect/Record";
 import * as Schema from "effect/Schema";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
 
 import {
   type ConfigurationDAOShape,
@@ -13,6 +12,7 @@ import {
   createPersistedConfiguration,
   getMilestoneRequirementsIdentityKey,
 } from "@frt/db/daos/configuration/configuration-persistence.ts";
+import { MainDatabase } from "@frt/db/databases/main-database.ts";
 import {
   ConfigurationDAOError,
   ConfigurationDefinitionNotFoundError,
@@ -93,7 +93,7 @@ function decodeRequirementRows(
 }
 
 export const makeConfigurationDAO = E.gen(function* () {
-  const sql = yield* SqlClient.SqlClient;
+  const sql = yield* MainDatabase;
 
   const getConfigurationDefinitionById = (
     id: ConfigurationDefinitionId,

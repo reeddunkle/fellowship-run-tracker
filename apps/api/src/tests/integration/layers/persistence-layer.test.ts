@@ -1,15 +1,15 @@
 import * as E from "effect/Effect";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
 import { describe, expect, test } from "vitest";
 
 import { makePersistenceLayer } from "@frt/api/layers/persistence-layer.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
+import { MainDatabase } from "@frt/db/databases/main-database.ts";
 import { makeTestDatabaseOptions } from "@frt/db/tests/common/make-test-database-options.ts";
 
 describe("PersistenceLayer", () => {
   test("syncs catalog tables", async () => {
     const program = E.gen(function* () {
-      const sql = yield* SqlClient.SqlClient;
+      const sql = yield* MainDatabase;
 
       const dungeons = yield* sql<{
         readonly createdAt: number;

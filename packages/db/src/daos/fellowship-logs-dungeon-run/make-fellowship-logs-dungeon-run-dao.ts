@@ -1,10 +1,10 @@
 import * as E from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
 
 import { type FellowshipLogsDungeonRunDAOShape } from "@frt/db/daos/fellowship-logs-dungeon-run/fellowship-logs-dungeon-run-dao.ts";
 import { FellowshipLogsImportedDungeonRunRowSchema } from "@frt/db/daos/fellowship-logs-dungeon-run/fellowship-logs-imported-dungeon-run-row-schema.ts";
+import { MainDatabase } from "@frt/db/databases/main-database.ts";
 import { DungeonRunNotReturnedAfterInsertError } from "@frt/db/errors/dungeon-run-error.ts";
 import { FellowshipLogsDungeonRunDAOError } from "@frt/db/errors/fellowship-logs-dungeon-run-dao-error.ts";
 import { UnexpectedDatabaseError } from "@frt/db/errors/unexpected-database-error.ts";
@@ -34,7 +34,7 @@ function decodeFellowshipLogsDungeonRunRows(
 }
 
 export const makeFellowshipLogsDungeonRunDAO = E.gen(function* () {
-  const sql = yield* SqlClient.SqlClient;
+  const sql = yield* MainDatabase;
 
   const getByDungeonRunId: FellowshipLogsDungeonRunDAOShape["getByDungeonRunId"] =
     ({ dungeonRunId }) => {

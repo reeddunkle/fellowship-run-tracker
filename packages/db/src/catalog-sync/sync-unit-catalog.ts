@@ -1,17 +1,17 @@
 import * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
 import * as Option from "effect/Option";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
 
 import { CATALOG_CHECKSUMS } from "@frt/db/catalogs/generated/catalog-checksums.ts";
 import { loadFellowshipUnitCatalog } from "@frt/db/catalogs/unit/load-fellowship-unit-catalog.ts";
 import { CatalogSyncDAO } from "@frt/db/daos/catalog-sync/catalog-sync-dao.ts";
+import { MainDatabase } from "@frt/db/databases/main-database.ts";
 
 const CATALOG = "UNIT" as const;
 
 export const syncUnitCatalog = E.fn("sync-unit-catalog")(function* () {
   const catalogSyncDAO = yield* CatalogSyncDAO;
-  const sql = yield* SqlClient.SqlClient;
+  const sql = yield* MainDatabase;
 
   const catalogSync = yield* catalogSyncDAO.getByCatalog({
     catalog: CATALOG,

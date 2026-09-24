@@ -41,7 +41,8 @@ export class BackgroundJobDeferredError extends Data.TaggedError(
   readonly availableAt: DateTime.Utc;
   readonly reason: BackgroundJobDeferredErrorReason;
 }> {
-  // [TODO] Review this pattern
+  // [KEEP] Sets the standard `Error.cause`, which `Cause.pretty` renders as a
+  // nested `[cause]:` chain, so logs show the reason and anything beneath it.
   override readonly cause = this.reason;
 
   override get message() {

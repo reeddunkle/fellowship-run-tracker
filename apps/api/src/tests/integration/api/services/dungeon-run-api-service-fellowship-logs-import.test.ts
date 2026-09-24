@@ -1,13 +1,13 @@
 import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
 import { describe, expect, test } from "vitest";
 
 import { FellowshipLogsDungeonRunImporter } from "@frt/api/application/fellowship-logs-dungeon-run-importer/fellowship-logs-dungeon-run-importer-service.ts";
 import { DungeonRunApiService } from "@frt/api/services/api/dungeon-run/dungeon-run-api-service.ts";
 import { makeFellowshipLogsDungeonRunImporterIntegrationTestHarness } from "@frt/api/tests/common/harnesses/fellowship-logs-dungeon-run-importer-integration-test-harness.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
+import { MainDatabase } from "@frt/db/databases/main-database.ts";
 import { DungeonIdSchema } from "@frt/shared/fellowship/validation/fellowship-common.ts";
 import { FellowshipLogsFightIdSchema } from "@frt/shared/validation/fellowship-logs/fellowship-logs-fight-id-schema.ts";
 import { FellowshipLogsReportCodeSchema } from "@frt/shared/validation/fellowship-logs/fellowship-logs-report-code-schema.ts";
@@ -33,7 +33,7 @@ describe("DungeonRunApiService with Fellowship Logs import", () => {
       const fellowshipLogsDungeonRunImporter =
         yield* FellowshipLogsDungeonRunImporter;
       const dungeonRunApiService = yield* DungeonRunApiService;
-      const sql = yield* SqlClient.SqlClient;
+      const sql = yield* MainDatabase;
 
       const importResult = yield* fellowshipLogsDungeonRunImporter.importReport(
         {

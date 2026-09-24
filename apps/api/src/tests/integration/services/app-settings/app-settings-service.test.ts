@@ -2,7 +2,6 @@ import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
 import { describe, expect, test } from "vitest";
 
 import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
@@ -14,6 +13,7 @@ import { Encryption } from "@frt/api/services/encryption/encryption-service.ts";
 import { makeEncryptionHarness } from "@frt/api/tests/common/harnesses/encryption-harness.ts";
 import { makePersistenceTestLayer } from "@frt/api/tests/common/layers/persistence-test-layer.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
+import { MainDatabase } from "@frt/db/databases/main-database.ts";
 import {
   FellowshipLogDirectorySchema,
   FellowshipLogsClientIdSchema,
@@ -49,7 +49,7 @@ function reveal(settings: AppSettingsValue) {
 }
 
 function withAppSettings<A, Error>(
-  program: E.Effect<A, Error, AppSettings | SqlClient.SqlClient>,
+  program: E.Effect<A, Error, AppSettings | MainDatabase>,
 ) {
   return E.scoped(
     E.gen(function* () {
@@ -74,7 +74,7 @@ function withAppSettings<A, Error>(
 }
 
 const countSettingRows = E.gen(function* () {
-  const sql = yield* SqlClient.SqlClient;
+  const sql = yield* MainDatabase;
 
   const [row] = yield* sql<{
     readonly appSetting: number;
@@ -126,7 +126,7 @@ describe("AppSettings", () => {
     const { current, storedSecret } = await withAppSettings(
       E.gen(function* () {
         const appSettings = yield* AppSettings;
-        const sql = yield* SqlClient.SqlClient;
+        const sql = yield* MainDatabase;
 
         yield* appSettings.set(UPDATED_SETTINGS);
 
@@ -153,7 +153,7 @@ describe("AppSettings", () => {
     const { current, directory, error } = await withAppSettings(
       E.gen(function* () {
         const appSettings = yield* AppSettings;
-        const sql = yield* SqlClient.SqlClient;
+        const sql = yield* MainDatabase;
 
         const before = yield* appSettings.get();
 

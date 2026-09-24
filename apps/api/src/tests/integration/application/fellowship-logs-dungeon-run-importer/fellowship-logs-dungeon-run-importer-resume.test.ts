@@ -1,7 +1,6 @@
 import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Stream from "effect/Stream";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
 import { describe, expect, test } from "vitest";
 
 import { FellowshipLogsDungeonRunImporter } from "@frt/api/application/fellowship-logs-dungeon-run-importer/fellowship-logs-dungeon-run-importer-service.ts";
@@ -16,6 +15,7 @@ import {
 import { makePersistenceTestLayer } from "@frt/api/tests/common/layers/persistence-test-layer.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { FellowshipLogsCacheDatabase } from "@frt/db/databases/fellowship-logs-cache-database.ts";
+import { MainDatabase } from "@frt/db/databases/main-database.ts";
 import { type DungeonRunId } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
 
 function makeTestLayer(control: FellowshipLogsFetchControl) {
@@ -39,7 +39,7 @@ const importReport = FellowshipLogsDungeonRunImporter.use((importer) => {
 /** Deletes an imported run, so the fight can be imported again. */
 function deleteRun(dungeonRunId: DungeonRunId) {
   return E.gen(function* () {
-    const sql = yield* SqlClient.SqlClient;
+    const sql = yield* MainDatabase;
 
     yield* sql`
       DELETE FROM dungeon_run
@@ -77,7 +77,7 @@ const countCachedResponses = E.gen(function* () {
 /** What an import produced, minus generated ids and timestamps. */
 function getImportedRun(dungeonRunId: DungeonRunId) {
   return E.gen(function* () {
-    const sql = yield* SqlClient.SqlClient;
+    const sql = yield* MainDatabase;
 
     const runs = yield* sql`
       SELECT

@@ -2,7 +2,7 @@ import * as NodeServices from "@effect/platform-node/NodeServices";
 import * as E from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
 import * as Path from "effect/Path";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
+import type * as SqlClient from "effect/unstable/sql/SqlClient";
 import { describe, expect, test } from "vitest";
 
 import {
@@ -10,7 +10,10 @@ import {
   makeFellowshipLogsCacheDatabaseLayer,
 } from "@frt/db/databases/fellowship-logs-cache-database.ts";
 import { FELLOWSHIP_LOGS_CACHE_SCHEMA_VERSION } from "@frt/db/databases/fellowship-logs-cache-schema.ts";
-import { makeMainDatabaseLayer } from "@frt/db/databases/main-database.ts";
+import {
+  MainDatabase,
+  makeMainDatabaseLayer,
+} from "@frt/db/databases/main-database.ts";
 import {
   makeStateDatabaseLayer,
   StateDatabase,
@@ -61,7 +64,7 @@ const withTempDirectory = <A, Error, Requirements>(
 describe("Databases", () => {
   test("the main database holds settings, the catalog, configurations and runs", async () => {
     const program = E.gen(function* () {
-      const sql = yield* SqlClient.SqlClient;
+      const sql = yield* MainDatabase;
 
       expect(yield* listTables(sql)).toEqual([
         { name: "ability" },
@@ -121,7 +124,7 @@ describe("Databases", () => {
         const path = yield* Path.Path;
 
         const main = yield* E.gen(function* () {
-          const sql = yield* SqlClient.SqlClient;
+          const sql = yield* MainDatabase;
 
           return [
             yield* getPragma(sql, "auto_vacuum"),
@@ -236,7 +239,7 @@ describe("Databases", () => {
         );
 
         yield* E.gen(function* () {
-          const sql = yield* SqlClient.SqlClient;
+          const sql = yield* MainDatabase;
 
           expect((yield* listTables(sql)).length).toBeGreaterThan(0);
         }).pipe(E.provide(makeMainDatabaseLayer(databaseFilename)));

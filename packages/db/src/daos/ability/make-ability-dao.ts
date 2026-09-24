@@ -1,8 +1,8 @@
 import * as E from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
 
+import { MainDatabase } from "@frt/db/databases/main-database.ts";
 import { AbilityModel } from "@frt/db/models/ability-model.ts";
 
 import { type AbilityDAOShape } from "./ability-dao.ts";
@@ -14,7 +14,7 @@ function decodeAbilityRows(
 }
 
 export const makeAbilityDAO = E.gen(function* () {
-  const sql = yield* SqlClient.SqlClient;
+  const sql = yield* MainDatabase;
 
   const getAll: AbilityDAOShape["getAll"] = () => {
     return E.gen(function* () {

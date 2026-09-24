@@ -1,17 +1,17 @@
 import * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
 import * as Option from "effect/Option";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
 
 import { FELLOWSHIP_ABILITY } from "@frt/db/catalogs/ability/fellowship-ability-catalog.ts";
 import { CATALOG_CHECKSUMS } from "@frt/db/catalogs/generated/catalog-checksums.ts";
 import { CatalogSyncDAO } from "@frt/db/daos/catalog-sync/catalog-sync-dao.ts";
+import { MainDatabase } from "@frt/db/databases/main-database.ts";
 
 const CATALOG = "ABILITY" as const;
 
 export const syncAbilityCatalog = E.fn("sync-ability-catalog")(function* () {
   const catalogSyncDAO = yield* CatalogSyncDAO;
-  const sql = yield* SqlClient.SqlClient;
+  const sql = yield* MainDatabase;
 
   const catalogSync = yield* catalogSyncDAO.getByCatalog({
     catalog: CATALOG,

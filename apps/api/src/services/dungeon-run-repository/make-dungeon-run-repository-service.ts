@@ -2,7 +2,6 @@ import * as A from "effect/Array";
 import * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
 import * as Option from "effect/Option";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
 
 import { type DungeonRunRepositoryShape } from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
 import { type DungeonRunStatusSchema } from "@frt/api-contract/validation/dungeon-run/dungeon-run-status-schema.ts";
@@ -10,6 +9,7 @@ import { DungeonRunDAO } from "@frt/db/daos/dungeon-run/dungeon-run-dao.ts";
 import { DungeonRunObservationDAO } from "@frt/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
 import { FellowshipLogsDungeonRunDAO } from "@frt/db/daos/fellowship-logs-dungeon-run/fellowship-logs-dungeon-run-dao.ts";
 import { LocalLogDungeonRunDAO } from "@frt/db/daos/local-log-dungeon-run/local-log-dungeon-run-dao.ts";
+import { MainDatabase } from "@frt/db/databases/main-database.ts";
 import { type DungeonRunId } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
 
 type FinishedDungeonRunStatus = Exclude<
@@ -22,7 +22,7 @@ export const makeDungeonRunRepository = E.gen(function* () {
   const dungeonRunObservationDAO = yield* DungeonRunObservationDAO;
   const fellowshipLogsDungeonRunDAO = yield* FellowshipLogsDungeonRunDAO;
   const localLogDungeonRunDAO = yield* LocalLogDungeonRunDAO;
-  const sql = yield* SqlClient.SqlClient;
+  const sql = yield* MainDatabase;
 
   const createLocal: DungeonRunRepositoryShape["createLocal"] = ({
     dungeonId,

@@ -8,7 +8,6 @@ import * as Schema from "effect/Schema";
 import * as Semaphore from "effect/Semaphore";
 import type * as Stream from "effect/Stream";
 import * as SubscriptionRef from "effect/SubscriptionRef";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
 import type * as SqlError from "effect/unstable/sql/SqlError";
 
 import { appConfig } from "@frt/api/app-config.ts";
@@ -26,6 +25,7 @@ import {
   LiveSplitSettingDAO,
   type LiveSplitSettingDAOError,
 } from "@frt/db/daos/live-split-setting/live-split-setting-dao.ts";
+import { MainDatabase } from "@frt/db/databases/main-database.ts";
 import {
   type FellowshipLogDirectory,
   type FellowshipLogsClientId,
@@ -62,7 +62,7 @@ export type AppSettingsShape = {
 };
 
 const makeAppSettings = E.gen(function* () {
-  const sql = yield* SqlClient.SqlClient;
+  const sql = yield* MainDatabase;
   const appSettingDAO = yield* AppSettingDAO;
   const encryption = yield* Encryption;
   const fellowshipLogsCredentialDAO = yield* FellowshipLogsCredentialDAO;

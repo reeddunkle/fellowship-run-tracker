@@ -1,11 +1,11 @@
 import * as E from "effect/Effect";
 import * as Schema from "effect/Schema";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
 
 import {
   type DungeonRunObservationDAOShape,
   type DungeonRunObservationHistory,
 } from "@frt/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
+import { MainDatabase } from "@frt/db/databases/main-database.ts";
 import { DungeonRunNotFoundError } from "@frt/db/errors/dungeon-run-error.ts";
 import { DungeonRunObservationDAOError } from "@frt/db/errors/dungeon-run-observation-dao-error.ts";
 import { UnexpectedDatabaseError } from "@frt/db/errors/unexpected-database-error.ts";
@@ -62,7 +62,7 @@ function decodeDungeonRunObservationHistoryRows(
 }
 
 export const makeDungeonRunObservationDAO = E.gen(function* () {
-  const sql = yield* SqlClient.SqlClient;
+  const sql = yield* MainDatabase;
 
   const getByDungeonRunId: DungeonRunObservationDAOShape["getByDungeonRunId"] =
     ({ dungeonRunId }) => {

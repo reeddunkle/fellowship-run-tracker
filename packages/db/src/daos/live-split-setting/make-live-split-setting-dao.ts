@@ -2,13 +2,13 @@ import * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
 
 import { type LiveSplitSettingDAOShape } from "@frt/db/daos/live-split-setting/live-split-setting-dao.ts";
+import { MainDatabase } from "@frt/db/databases/main-database.ts";
 import { LiveSplitSettingModel } from "@frt/db/models/live-split-setting-model.ts";
 
 export const makeLiveSplitSettingDAO = E.gen(function* () {
-  const sql = yield* SqlClient.SqlClient;
+  const sql = yield* MainDatabase;
 
   const get: LiveSplitSettingDAOShape["get"] = () => {
     return E.gen(function* () {

@@ -1,8 +1,8 @@
 import * as E from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
 
+import { MainDatabase } from "@frt/db/databases/main-database.ts";
 import { DungeonModel } from "@frt/db/models/dungeon-model.ts";
 
 import { type DungeonDAOShape } from "./dungeon-dao.ts";
@@ -14,7 +14,7 @@ function decodeDungeonRows(
 }
 
 export const makeDungeonDAO = E.gen(function* () {
-  const sql = yield* SqlClient.SqlClient;
+  const sql = yield* MainDatabase;
 
   const getAll: DungeonDAOShape["getAll"] = () => {
     return E.gen(function* () {

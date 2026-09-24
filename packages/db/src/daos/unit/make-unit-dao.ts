@@ -1,8 +1,8 @@
 import * as E from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
 
+import { MainDatabase } from "@frt/db/databases/main-database.ts";
 import { UnitModel } from "@frt/db/models/unit-model.ts";
 import { UnitStatusSchema } from "@frt/shared/unit/unit-status-schema.ts";
 import { NonEmptyStringSchema } from "@frt/shared/validation/common-schemas.ts";
@@ -77,7 +77,7 @@ function createUnitModels(
 }
 
 export const makeUnitDAO = E.gen(function* () {
-  const sql = yield* SqlClient.SqlClient;
+  const sql = yield* MainDatabase;
 
   const getAll: UnitDAOShape["getAll"] = () => {
     return E.gen(function* () {

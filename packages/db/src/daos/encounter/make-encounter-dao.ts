@@ -1,8 +1,8 @@
 import * as E from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
 
+import { MainDatabase } from "@frt/db/databases/main-database.ts";
 import { EncounterModel } from "@frt/db/models/encounter-model.ts";
 
 import { type EncounterDAOShape } from "./encounter-dao.ts";
@@ -14,7 +14,7 @@ function decodeEncounterRows(
 }
 
 export const makeEncounterDAO = E.gen(function* () {
-  const sql = yield* SqlClient.SqlClient;
+  const sql = yield* MainDatabase;
 
   const getAll: EncounterDAOShape["getAll"] = () => {
     return E.gen(function* () {

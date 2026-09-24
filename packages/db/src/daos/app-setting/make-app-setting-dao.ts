@@ -2,13 +2,13 @@ import * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
 
 import { type AppSettingDAOShape } from "@frt/db/daos/app-setting/app-setting-dao.ts";
+import { MainDatabase } from "@frt/db/databases/main-database.ts";
 import { AppSettingModel } from "@frt/db/models/app-setting-model.ts";
 
 export const makeAppSettingDAO = E.gen(function* () {
-  const sql = yield* SqlClient.SqlClient;
+  const sql = yield* MainDatabase;
 
   const get: AppSettingDAOShape["get"] = () => {
     return E.gen(function* () {

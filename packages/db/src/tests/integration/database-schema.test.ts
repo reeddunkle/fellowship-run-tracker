@@ -1,14 +1,16 @@
 import * as E from "effect/Effect";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
 import { describe, expect, test } from "vitest";
 
-import { makeMainDatabaseLayer } from "@frt/db/databases/main-database.ts";
+import {
+  MainDatabase,
+  makeMainDatabaseLayer,
+} from "@frt/db/databases/main-database.ts";
 import { runTest } from "@frt/db/tests/common/run-test.ts";
 
 describe("Database schema", () => {
   test("cascades configuration deletion to milestones and milestone requirements", async () => {
     const program = E.gen(function* () {
-      const sql = yield* SqlClient.SqlClient;
+      const sql = yield* MainDatabase;
 
       yield* sql`
         INSERT INTO

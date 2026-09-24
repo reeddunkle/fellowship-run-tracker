@@ -2,9 +2,9 @@ import * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
 
 import { type DungeonRunDAOShape } from "@frt/db/daos/dungeon-run/dungeon-run-dao.ts";
+import { MainDatabase } from "@frt/db/databases/main-database.ts";
 import { DungeonRunDAOError } from "@frt/db/errors/dungeon-run-dao-error.ts";
 import {
   DungeonRunNotFoundError,
@@ -39,7 +39,7 @@ function makeRunNotFoundError(dungeonRunId: DungeonRunId): DungeonRunDAOError {
 }
 
 export const makeDungeonRunDAO = E.gen(function* () {
-  const sql = yield* SqlClient.SqlClient;
+  const sql = yield* MainDatabase;
 
   const getById: DungeonRunDAOShape["getById"] = ({ id }) => {
     return E.gen(function* () {
