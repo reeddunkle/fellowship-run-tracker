@@ -55,6 +55,11 @@ export const openSqliteDatabase = E.fn("openSqliteDatabase")(function* (
   yield* client`PRAGMA journal_mode = WAL`;
   yield* client`PRAGMA synchronous = ${client.literal(synchronous)}`;
   yield* client`PRAGMA foreign_keys = ON`;
+  yield* client`PRAGMA optimize = 0x10002`;
+
+  yield* E.addFinalizer(() => {
+    return client`PRAGMA optimize`.pipe(E.ignore);
+  });
 
   return client;
 });
