@@ -18,7 +18,7 @@ export class EffectTsGoLspWorkspaceError extends Data.TaggedError(
   }
 }
 
-/** `description` explains which native `@effect/tsgo` dependency is expected. */
+/** [KEEP] `description` explains which native `@effect/tsgo` dependency is expected. */
 export class EffectTsGoLspExecutableError extends Data.TaggedError(
   "EffectTsGoLspExecutableError",
 )<{
@@ -62,7 +62,7 @@ const PROTOCOL_OPERATION_DESCRIPTIONS = {
   WriteMessage: "Failed to write a message to the Effect TS-Go LSP.",
 } as const;
 
-/** `header` is the raw message header when it couldn't be read. */
+/** [KEEP] `header` is the raw message header when it couldn't be read. */
 export class EffectTsGoLspProtocolError extends Data.TaggedError(
   "EffectTsGoLspProtocolError",
 )<{

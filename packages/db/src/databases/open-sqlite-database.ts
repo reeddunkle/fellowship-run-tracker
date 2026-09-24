@@ -25,7 +25,8 @@ const prepareDatabaseDirectory = E.fn("prepareDatabaseDirectory")(function* (
   });
 });
 
-/**
+// [TODO] Review
+/** [KEEP]
  * Opens a SQLite database configured the same way as every other database
  * file in the app. The client is closed when the scope closes.
  */
@@ -34,7 +35,7 @@ export const openSqliteDatabase = E.fn("openSqliteDatabase")(function* (
 ) {
   yield* prepareDatabaseDirectory(filename);
 
-  // WAL is turned on below instead: switching to it writes the new file's
+  // [KEEP] WAL is turned on below instead: switching to it writes the new file's
   // header, which would fix `auto_vacuum` at its default first.
   const client = yield* SqliteClient.make({
     disableWAL: true,
@@ -43,7 +44,7 @@ export const openSqliteDatabase = E.fn("openSqliteDatabase")(function* (
     transformResultNames: EString.snakeToCamel,
   });
 
-  // Only takes effect on a new database, before anything is written to it.
+  // [KEEP] Only takes effect on a new database, before anything is written to it.
   // Deleted rows then free pages that `PRAGMA incremental_vacuum` can give
   // back to the file system.
   yield* client`PRAGMA auto_vacuum = INCREMENTAL`;

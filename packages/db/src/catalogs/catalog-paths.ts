@@ -1,7 +1,7 @@
 // @effect-diagnostics-next-line nodeBuiltinImport:off
 import path from "node:path";
 
-/*
+/* [KEEP]
  * Source file locations for the catalog generators (dev tooling in
  * `tools/dev-scripts` and `apps/cli`). Only meaningful when running from the
  * workspace, so runtime code shouldn't import this module.

@@ -6,7 +6,7 @@ import { appPaths } from "@frt/api/helpers/app-paths.ts";
 const LOG_FILE_NAME_PREFIX = "fellowship-run-tracker-";
 const LOG_FILE_EXTENSION = ".log";
 
-/**
+/** [KEEP]
  * Session files (`fellowship-run-tracker-2026-09-22T17-08-21.log`), plus the
  * earlier one-file-per-day naming (`2026-09-22-fellowship-run-tracker.log`) so
  * those age out too.

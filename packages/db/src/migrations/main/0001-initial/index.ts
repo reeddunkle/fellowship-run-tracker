@@ -5,7 +5,7 @@ import { createConfigurationTables } from "@frt/db/migrations/main/0001-initial/
 import { createDungeonRunTables } from "@frt/db/migrations/main/0001-initial/dungeon-run.ts";
 import { createSettingsTables } from "@frt/db/migrations/main/0001-initial/settings.ts";
 
-/*
+/* [KEEP]
  * Version 1 of the main database. The sections are split up only to make
  * them easier to read; together they are one migration.
  *

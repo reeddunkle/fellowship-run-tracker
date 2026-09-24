@@ -6,13 +6,6 @@ import { type DatabaseOptions } from "@frt/db/types/database-options.ts";
 
 export type MakePersistenceLayerOptions = DatabaseOptions;
 
-/*
- * The db package's persistence (database, DAOs, catalog sync) plus the
- * `DungeonRunRepository` built on top of it. `DungeonRunRepository.layer`
- * erases its DAOs internally, so the DAOs are also merged in directly for
- * consumers (e.g. FellowshipTracker) that use them without the repository.
- * The shared DAO `.layer` references are memoized, so each is built once.
- */
 export function makePersistenceLayer(options: MakePersistenceLayerOptions) {
   return DungeonRunRepository.layer.pipe(
     Layer.provideMerge(makeDatabasePersistenceLayer(options)),

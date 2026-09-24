@@ -21,10 +21,6 @@ export class BackgroundJobError extends Data.TaggedError("BackgroundJobError")<{
   }
 }
 
-/*
- * The job doesn't exist, or isn't in a state the operation applies to (e.g.
- * cancelling a job that already finished).
- */
 export class BackgroundJobNotFoundError extends Data.TaggedError(
   "BackgroundJobNotFoundError",
 )<{
@@ -39,27 +35,19 @@ export class BackgroundJobNotFoundError extends Data.TaggedError(
 export type BackgroundJobDeferredErrorReason =
   FellowshipLogsRateLimitExceededError;
 
-/*
- * A job can't make progress until `availableAt`, so it should wait rather
- * than fail. The reason is stored on the waiting job for the UI.
- */
 export class BackgroundJobDeferredError extends Data.TaggedError(
   "BackgroundJobDeferredError",
 )<{
   readonly availableAt: DateTime.Utc;
   readonly reason: BackgroundJobDeferredErrorReason;
 }> {
+  // [TODO] Review this pattern
   override readonly cause = this.reason;
 
   override get message() {
     return this.reason.message;
   }
 }
-
-/*
- * Failure summaries stored on a job row when the job itself did not produce
- * the failure.
- */
 
 export class BackgroundJobAttemptsExhaustedError extends Data.TaggedError(
   "BackgroundJobAttemptsExhaustedError",

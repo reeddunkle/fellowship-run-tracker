@@ -21,10 +21,6 @@ import {
 } from "./background-job-categories.ts";
 import { getBackgroundJobs } from "./background-job-client.ts";
 
-/**
- * Whether `next` should replace `current`. A snapshot from a restarted API
- * (new `sessionId`) always wins; otherwise the higher revision does.
- */
 export function isNewerBackgroundJobSnapshot(
   current: BackgroundJobApiSnapshot | undefined,
   next: BackgroundJobApiSnapshot,
@@ -36,11 +32,6 @@ export function isNewerBackgroundJobSnapshot(
   );
 }
 
-/*
- * The WebSocket keeps this query fresh (see `background-job-event-store.ts`),
- * so it never goes stale on its own. The HTTP fetch only fills it before the
- * first socket message, and never overwrites a newer snapshot from the socket.
- */
 export function getBackgroundJobsQueryOptions() {
   return queryOptions({
     queryFn: ({ client, queryKey }) => {
@@ -77,10 +68,6 @@ export function setBackgroundJobSnapshot(
   );
 }
 
-/**
- * Applies an optimistic change to the cached jobs. The next snapshot from the
- * socket replaces it with the server's view.
- */
 export function updateCachedBackgroundJobs(
   queryClient: QueryClient,
   update: (

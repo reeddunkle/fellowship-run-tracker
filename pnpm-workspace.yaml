@@ -96,8 +96,11 @@ catalogs:
 
     "vitest-browser-react": "^2.2.0"
   tooling:
+    "@oxlint/plugins": ^1.83.0
+    "jsonc-parser": ^3.3.1
     "knip": ^6.35.0
     "npm-run-all2": ^9.0.3
+    "oxlint": ^1.83.0
     "wait-on": "^9.1.0"
   typescript:
     "tsx": ^4.23.13

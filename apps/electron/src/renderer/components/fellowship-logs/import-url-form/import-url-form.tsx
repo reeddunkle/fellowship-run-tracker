@@ -16,10 +16,6 @@ import {
 const IMPORT_URL_FORM_DOM_ID = "import-dungeon-run-url-form";
 
 type ImportUrlFormProps = {
-  /**
-   * Why looking up a run isn't possible right now (e.g. out of points).
-   * Disables the lookup.
-   */
   readonly blockedMessage: string | undefined;
   readonly errorMessage: string | undefined;
   readonly isSubmitting: boolean;

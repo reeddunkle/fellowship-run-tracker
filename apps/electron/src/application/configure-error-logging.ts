@@ -2,7 +2,7 @@ import * as E from "effect/Effect";
 import type * as ManagedRuntime from "effect/ManagedRuntime";
 import { app } from "electron";
 
-// Navigations that replace an in-progress load report `did-fail-load` with
+// [KEEP] Navigations that replace an in-progress load report `did-fail-load` with
 // ERR_ABORTED, which isn't a real failure.
 const ERR_ABORTED = -3;
 

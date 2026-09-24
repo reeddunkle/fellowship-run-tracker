@@ -10,10 +10,6 @@ import { useBackgroundJobCategorySuspense } from "@/renderer/api/background-job/
 
 import { BackgroundJobRow } from "./background-job-row.tsx";
 
-/**
- * Rows for jobs already in queue order. Queued jobs are numbered by their
- * place in line, unless a waiting job is holding the queue.
- */
 export function BackgroundJobItems({
   jobs,
 }: {
@@ -71,7 +67,7 @@ function BackgroundJobCategoryListContent({
   return jobs.length === 0 ? null : <BackgroundJobItems jobs={jobs} />;
 }
 
-/**
+/** [KEEP]
  * One category's jobs, kept live by the background job WebSocket. Renders
  * nothing when the category is empty.
  */

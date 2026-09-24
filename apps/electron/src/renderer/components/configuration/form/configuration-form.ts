@@ -81,11 +81,6 @@ export function useConfigurationForm({
 
     onSubmit: ({ meta, value }) => {
       return E.gen(function* () {
-        /*
-         * Standard Schema validation does not replace TanStack Form's editable
-         * values with Effect Schema's transformed output. Decode once more at
-         * the submit boundary so numeric strings become actual numbers.
-         */
         const decoded = yield* Schema.decodeUnknownEffect(
           ConfigurationEditorSchema,
         )(value);

@@ -8,10 +8,6 @@ import type * as SqlClient from "effect/unstable/sql/SqlClient";
 import { prepareFellowshipLogsCacheSchema } from "@frt/db/databases/fellowship-logs-cache-schema.ts";
 import { openSqliteDatabase } from "@frt/db/databases/open-sqlite-database.ts";
 
-/**
- * The Fellowship Logs cache: responses from the Fellowship Logs API, kept so
- * the same data isn't paid for twice. It's safe to delete at any time.
- */
 export class FellowshipLogsCacheDatabase extends Context.Service<
   FellowshipLogsCacheDatabase,
   SqlClient.SqlClient

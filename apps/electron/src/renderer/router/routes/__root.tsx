@@ -12,7 +12,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
   loader: ({ context }) => {
     return context.browserRuntime.runPromise(
       E.gen(function* () {
-        /*
+        /* [KEEP]
          * Primed here (rather than left to whichever component first reads
          * it) so DungeonRunProvider - mounted above any routed page, outside
          * any route-level Suspense boundary - can read it without an extra

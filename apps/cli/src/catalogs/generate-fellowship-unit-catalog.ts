@@ -138,7 +138,7 @@ export const generateFellowshipUnitCatalog = E.fn(
     FellowshipUnitCatalogSchema,
   )(catalog);
 
-  // Pretty-printing is intentional for this generated human-readable artifact.
+  // [KEEP] Pretty-printing is intentional for this generated human-readable artifact.
   // @effect-diagnostics-next-line preferSchemaOverJson:off
   const outputContents = `${JSON.stringify(validatedCatalog, null, 2)}\n`;
 

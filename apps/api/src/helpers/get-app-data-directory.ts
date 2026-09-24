@@ -20,7 +20,7 @@ export function getAppDataDirectory() {
     return getUserDataDirectory(APP_NAME);
   }
 
-  // Read while modules load, before any Effect runtime (and `Config`) exists.
+  // [KEEP] Read while modules load, before any Effect runtime (and `Config`) exists.
   // @effect-diagnostics-next-line processEnv:off
   const appDataDirectory = process.env.APP_DATA_DIRECTORY;
 

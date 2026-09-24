@@ -67,10 +67,6 @@ const makeBackgroundJobApiService = E.gen(function* () {
   } satisfies BackgroundJobApiServiceShape;
 });
 
-/*
- * `BackgroundJobService` runs the queue workers, so it has to be one shared
- * instance provided at the application root rather than erased here.
- */
 export class BackgroundJobApiService extends Context.Service<
   BackgroundJobApiService,
   BackgroundJobApiServiceShape

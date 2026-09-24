@@ -38,10 +38,6 @@ const MainDatabaseDAOsLayer = Layer.mergeAll(
   UnitDAO.layer,
 );
 
-/*
- * Each DAO layer is provided with the database file its tables live in. The
- * databases are merged in too, for code that queries them directly.
- */
 export function makeDatabasePersistenceLayer({
   databaseFilename,
   fellowshipLogsCacheDatabaseFilename,

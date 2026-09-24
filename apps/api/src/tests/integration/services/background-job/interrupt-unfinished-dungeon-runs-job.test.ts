@@ -121,7 +121,7 @@ function runJobAfterRestart({
 
     const seededIds = yield* runSession(databaseFilename, seed);
 
-    // TODO: Find better way
+    // [TODO] Find better way
     // The next session needs to wait for seeded runs to finish.
     yield* E.sleep("5 millis");
 

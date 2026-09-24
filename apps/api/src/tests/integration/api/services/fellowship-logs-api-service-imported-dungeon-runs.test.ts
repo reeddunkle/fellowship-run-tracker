@@ -39,10 +39,6 @@ function unexpectedCall(name: string) {
   };
 }
 
-/*
- * Offers straight into the job table without starting any workers, so tests
- * can inspect what was queued.
- */
 const BackgroundJobServiceTestLive = Layer.effect(
   BackgroundJobService,
   E.gen(function* () {

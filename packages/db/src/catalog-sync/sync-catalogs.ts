@@ -5,7 +5,7 @@ import { syncDungeonCatalog } from "@frt/db/catalog-sync/sync-dungeon-catalog.ts
 import { syncEncounterCatalog } from "@frt/db/catalog-sync/sync-encounter-catalog.ts";
 import { syncUnitCatalog } from "@frt/db/catalog-sync/sync-unit-catalog.ts";
 
-// Catalog groups run sequentially; catalogs within a group can sync concurrently.
+// [KEEP] Catalog groups run sequentially; catalogs within a group can sync concurrently.
 const syncGroups = [
   [syncDungeonCatalog()],
   [syncEncounterCatalog(), syncUnitCatalog()],

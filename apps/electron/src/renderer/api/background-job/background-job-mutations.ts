@@ -66,10 +66,6 @@ function withJobRequeued(
   });
 }
 
-/*
- * Commands update the cache optimistically and roll back on failure. No
- * invalidation afterwards: the WebSocket pushes the server's new snapshot.
- */
 function backgroundJobCommandMutationOptions(
   queryClient: QueryClient,
   {

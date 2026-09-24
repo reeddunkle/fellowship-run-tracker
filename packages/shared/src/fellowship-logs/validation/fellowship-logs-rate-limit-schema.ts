@@ -18,7 +18,7 @@ const FellowshipLogsRateLimitDataSchema = Schema.Struct({
 export type FellowshipLogsRateLimitData =
   typeof FellowshipLogsRateLimitDataSchema.Type;
 
-/**
+/** [KEEP]
  * Rate-limit data plus when it was observed. `pointsResetIn` is relative to
  * `observedAtMilliseconds`, so the data can't be interpreted later without it.
  */

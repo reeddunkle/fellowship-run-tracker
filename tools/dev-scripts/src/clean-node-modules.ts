@@ -1,10 +1,7 @@
 import { readdir, rm, stat } from "node:fs/promises";
 import path from "node:path";
 
-// This script deletes every node_modules directory, so it must not load or run
-// anything from them: it runs on plain `node` (not `tsx`), and it resolves the
-// workspace root relatively instead of importing `@frt/shared` through a
-// node_modules link.
+// [KEEP] This script deletes every node_modules directory, so don't load or run any deps here
 const projectRoot = path.resolve(import.meta.dirname, "../../..");
 
 const SKIP_DIRECTORY_NAMES = new Set([".git", ".pnpm-store", "node_modules"]);
@@ -43,7 +40,7 @@ async function pathExists(targetPath: string): Promise<boolean> {
   }
 }
 
-// A recursive delete of a large node_modules tree occasionally trips over a
+// [KEEP] A recursive delete of a large node_modules tree occasionally trips over a
 // file that a virus scanner or file indexer has momentarily locked, most
 // often on Windows. `maxRetries`/`retryDelay` absorb that transient
 // contention; if the directory is confirmed gone despite an error surviving

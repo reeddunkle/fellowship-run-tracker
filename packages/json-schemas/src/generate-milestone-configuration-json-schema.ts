@@ -12,7 +12,7 @@ const program = E.gen(function* () {
   const fileSystem = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
 
-  // Written into this package, which exports it (see package.json `exports`).
+  // [KEEP] Written into this package, which exports it (see package.json `exports`).
   const defaultOutputFilePath = path.join(
     import.meta.dirname,
     "../generated",
@@ -35,7 +35,7 @@ const program = E.gen(function* () {
     recursive: true,
   });
 
-  // Pretty-printing is intentional for this generated human-readable artifact.
+  // [KEEP] Pretty-printing is intentional for this
   // @effect-diagnostics-next-line preferSchemaOverJson:off
   const contents = JSON.stringify(jsonSchema, null, 2);
 

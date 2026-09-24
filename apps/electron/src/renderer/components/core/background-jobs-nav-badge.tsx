@@ -42,11 +42,6 @@ function getSummaryLines({
   });
 }
 
-/**
- * The number of active jobs (or failed ones, once nothing is active) in a
- * ring that spins while jobs run, stays still while they only wait, and turns
- * red after any failure. Hidden when the queue is idle.
- */
 export function BackgroundJobsNavBadge() {
   const summary = useBackgroundJobSummary();
 
@@ -56,7 +51,6 @@ export function BackgroundJobsNavBadge() {
 
   const isFailed = summary.state === "failed";
   const isActive = summary.activeCount > 0;
-  // Queued jobs behind a waiting one aren't going anywhere yet.
   const isSpinning =
     summary.runningJob !== undefined ||
     (summary.queuedCount > 0 && summary.waitingCount === 0);

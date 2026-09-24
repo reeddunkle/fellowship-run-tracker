@@ -2,7 +2,7 @@ import { type WindowOpenHandlerResponse } from "electron";
 
 const DETACHED_WINDOW_FEATURE = "detachedWindow=true";
 
-// The renderer opens the detached window empty and renders into it directly.
+// [KEEP] The renderer opens the detached window empty and renders into it directly.
 const BLANK_WINDOW_URLS = new Set(["", "about:blank"]);
 
 export function isBlankWindowUrl(url: string): boolean {

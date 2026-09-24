@@ -43,10 +43,6 @@ function createBackgroundJobApiItemFields({
   };
 }
 
-/**
- * Returns `None` when the row isn't an import job, or its stored JSON no
- * longer matches the current schema.
- */
 export function createImportFellowshipLogsDungeonRunBackgroundJobApiItem(
   visibleJob: VisibleBackgroundJob,
 ): Option.Option<ImportFellowshipLogsDungeonRunBackgroundJobApiItem> {
@@ -71,11 +67,6 @@ export function createImportFellowshipLogsDungeonRunBackgroundJobApiItem(
   );
 }
 
-/**
- * Returns `None` for job kinds that aren't shown to the user, and for rows
- * whose stored payload no longer decodes. Matching is exhaustive, so a new job
- * kind won't compile until it's either mapped here or explicitly hidden.
- */
 export function createBackgroundJobApiItem(
   visibleJob: VisibleBackgroundJob,
 ): Option.Option<BackgroundJobApiItem> {

@@ -68,10 +68,6 @@ export type FellowshipLogsApiServiceShape = {
     FellowshipLogsRequestOperationError
   >;
 
-  /**
-   * Durably queues an import and returns as soon as it's committed. The import
-   * itself runs later on the background job worker.
-   */
   readonly queueDungeonRunImport: (
     options: FellowshipLogsApiQueueDungeonRunImportOptions,
   ) => E.Effect<
@@ -179,7 +175,7 @@ export class FellowshipLogsApiService extends Context.Service<
     makeFellowshipLogsApiService,
   );
 
-  /**
+  /** [KEEP]
    * Leaves `BackgroundJobService` for the application root to provide, since
    * it's the single instance that runs the queue workers.
    */

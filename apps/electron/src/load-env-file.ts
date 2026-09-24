@@ -5,7 +5,7 @@ import path from "node:path";
 
 import { app } from "electron";
 
-/*
+/* [KEEP]
  * Loads the `.env` named by an `--env-file=<path>` launch argument (resolved
  * against the directory the app started in), if it exists. The dev scripts
  * pass the workspace `.env`; the packaged app never reads one.

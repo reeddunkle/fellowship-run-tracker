@@ -5,7 +5,7 @@ import type * as Path from "effect/Path";
 
 import { type GetFellowshipLogsReportOptions } from "@frt/api/services/fellowship-logs/fellowship-logs-service.ts";
 
-// Read while modules load, before any Effect runtime (and `Config`) exists.
+// [KEEP] Read while modules load, before any Effect runtime (and `Config`) exists.
 // @effect-diagnostics-next-line processEnv:off
 const fixtureDirectoryOverride = process.env.FELLOWSHIP_LOGS_FIXTURE_DIRECTORY;
 

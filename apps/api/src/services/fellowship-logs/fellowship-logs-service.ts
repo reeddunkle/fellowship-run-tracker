@@ -65,10 +65,6 @@ export type GetFellowshipLogsReportOptions = {
 };
 
 type StreamFellowshipLogsReportOptions = GetFellowshipLogsReportOptions & {
-  /**
-   * Called after each report page with how much of the fight has been
-   * fetched so far, from 0 to 1.
-   */
   readonly onProgress?: (fraction: number) => E.Effect<void>;
 };
 
@@ -76,10 +72,6 @@ export type FellowshipLogsDungeonRunMetadata = {
   readonly dungeonId: DungeonId;
   readonly dungeonLevel: number;
   readonly endedAt: DateTime.Utc;
-  /**
-   * Whether a live log is still uploading the fight. Its data isn't cached,
-   * so importing it again costs points again.
-   */
   readonly isInProgress: boolean;
   readonly startedAt: DateTime.Utc;
 };

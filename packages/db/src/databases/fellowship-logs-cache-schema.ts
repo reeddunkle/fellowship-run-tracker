@@ -2,11 +2,6 @@ import * as E from "effect/Effect";
 import * as Schema from "effect/Schema";
 import type * as SqlClient from "effect/unstable/sql/SqlClient";
 
-/**
- * Bump this whenever the cache's tables change. The cache holds nothing that
- * can't be fetched again, so it has no migrations: a database on any other
- * version is emptied and rebuilt.
- */
 export const FELLOWSHIP_LOGS_CACHE_SCHEMA_VERSION = 1;
 
 const UserVersionRowsSchema = Schema.Array(
@@ -20,7 +15,7 @@ const TableNameRowsSchema = Schema.Array(
 const createTables = E.fn("FellowshipLogsCacheSchema.createTables")(function* (
   sql: SqlClient.SqlClient,
 ) {
-  // A response from the Fellowship Logs API, keyed by the request that
+  // [KEEP] A response from the Fellowship Logs API, keyed by the request that
   // produced it. `body` is the gzipped JSON of the response's `data`.
   yield* sql`
     CREATE TABLE fellowship_logs_response (
@@ -76,10 +71,6 @@ const dropTables = E.fn("FellowshipLogsCacheSchema.dropTables")(function* (
   );
 });
 
-/**
- * Makes sure the cache's tables match `FELLOWSHIP_LOGS_CACHE_SCHEMA_VERSION`,
- * rebuilding them if they don't.
- */
 export const prepareFellowshipLogsCacheSchema = E.fn(
   "FellowshipLogsCacheSchema.prepare",
 )(function* (sql: SqlClient.SqlClient) {
@@ -116,7 +107,7 @@ export const prepareFellowshipLogsCacheSchema = E.fn(
     }),
   );
 
-  // TODO: Remove?
+  // [TODO] Remove?
   if (userVersion !== 0) {
     yield* sql`VACUUM`;
   }

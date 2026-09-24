@@ -13,8 +13,6 @@ const ExternalMobDataEntrySchema = Schema.Struct({
   PlacedInZones: Schema.Array(NonEmptyStringSchema),
 });
 
-// type ExternalMobDataEntry = typeof ExternalMobDataEntrySchema.Type;
-
 export const ExternalMobDataSchema = Schema.Record(
   NonEmptyStringSchema,
   ExternalMobDataEntrySchema,

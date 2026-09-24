@@ -10,7 +10,7 @@ import { browserRuntime } from "@/renderer/runtimes/browser-runtime.ts";
 
 const SCROLLBAR_GUTTER_WIDTH = 30;
 
-/**
+/** [KEEP]
  * `dungeon-run-table.tsx`'s label column is intentionally left unconstrained
  * (`table-layout: fixed` with no explicit `<col>` width) so it can absorb
  * extra width when the user manually widens the detached window. That makes
@@ -74,7 +74,7 @@ function createDetachedWindowContainer(document: Document) {
 
   container.id = "root";
 
-  /*
+  /* [KEEP]
    * Left at the default block width (fills the detached window's content
    * area) so that a manual OS-level resize actually hands the layout extra
    * horizontal space to use, instead of the layout permanently shrink-
@@ -87,7 +87,7 @@ function createDetachedWindowContainer(document: Document) {
   return container;
 }
 
-/**
+/** [KEEP]
  * Measures the content's natural (shrink-to-fit) width by briefly forcing
  * the container to `max-content`, the dungeon-run table to `width: auto`
  * (its normal `w-full` otherwise always stretches it to fill the container,
@@ -169,7 +169,7 @@ function resizeDetachedWindowToContent({
   });
 }
 
-/**
+/** [KEEP]
  * Re-measures height only (e.g. after a milestone expands/collapses),
  * resending the window's current width untouched so it never grows or
  * shrinks in response to content changes alone. Reads `innerWidth` (the

@@ -8,10 +8,6 @@ import { getRelativePathBaseDirectory } from "@frt/api/helpers/get-app-data-dire
 import { DatabaseFilenameSchema } from "@frt/api/validation/env-schema.ts";
 import { type DatabaseOptions } from "@frt/db/types/database-options.ts";
 
-/**
- * A database file from `name` in the environment, resolved like any other
- * relative path, or `defaultFilename` when it isn't set.
- */
 const getDatabaseFilename = E.fn(function* (
   name: string,
   defaultFilename: string,

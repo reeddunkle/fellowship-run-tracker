@@ -53,10 +53,6 @@ export class FellowshipLogsGraphQLResponseError extends Data.TaggedError(
   }
 }
 
-/**
- * Fellowship Logs turned a request away because the hourly points were used
- * up. Raised where responses are read, before the reset time is known.
- */
 export class FellowshipLogsRateLimitRejectedError extends Data.TaggedError(
   "FellowshipLogsRateLimitRejectedError",
 ) {
@@ -88,11 +84,6 @@ export class FellowshipLogsRateLimitExceededError extends Data.TaggedError(
   }
 }
 
-/**
- * A report changed in Fellowship Logs partway through fetching a fight that
- * is still in progress, so its pages can't be combined. Fetching the fight
- * again from the start gets a consistent set.
- */
 export class FellowshipLogsReportChangedError extends Data.TaggedError(
   "FellowshipLogsReportChangedError",
 )<{

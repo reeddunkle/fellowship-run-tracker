@@ -33,8 +33,6 @@ export const makeFellowshipLogsDungeonRunImporter = E.gen(function* () {
         });
       }
 
-      // Pages fetched before are served from the Fellowship Logs cache, so an
-      // import that stopped partway carries on without paying for them again.
       const reportPages = fellowshipLogs.streamReportPages({
         fightId,
         reportCode,

@@ -90,19 +90,10 @@ export function makeLiveSplitClient({
 
     const requestQueue = yield* Queue.unbounded<PendingLiveSplitRequest>();
 
-    /*
-     * Once the response channel becomes unusable, retain the failure so
-     * future requests fail immediately rather than waiting for a timeout.
-     */
     const responseChannelFailure = yield* Ref.make<
       LiveSplitClientUnavailabilityCause | undefined
     >(undefined);
 
-    /*
-     * A LiveSplit client can only transition to unavailable once. The
-     * Deferred retains that first failure so consumers can subscribe before
-     * or after it occurs without missing the event.
-     */
     const unavailabilityDeferred =
       yield* Deferred.make<LiveSplitClientUnavailabilityCause>();
 
@@ -124,11 +115,6 @@ export function makeLiveSplitClient({
       });
     };
 
-    /*
-     * TCP gives us arbitrary chunks rather than guaranteed complete responses.
-     * This stream accumulates chunks until one or more newline-delimited
-     * LiveSplit responses can be emitted.
-     */
     const responseStream = transport.chunks.pipe(
       Stream.mapAccumEffect(
         () => "",
@@ -144,13 +130,6 @@ export function makeLiveSplitClient({
       ),
     );
 
-    /*
-     * Continuously process the incoming response stream.
-     *
-     * A transport failure is placed onto the response queue so a currently
-     * waiting request is notified immediately. The failure is also retained
-     * so future requests fail immediately.
-     */
     yield* E.gen(function* () {
       const exit = yield* E.exit(
         responseStream.pipe(
@@ -177,12 +156,6 @@ export function makeLiveSplitClient({
       yield* Queue.offer(responseQueue, Result.fail(failureCause));
     }).pipe(E.forkScoped);
 
-    /*
-     * Write any valid LiveSplit command to the transport.
-     *
-     * Only the command name is recorded in telemetry. Command arguments may
-     * contain user-controlled or filesystem data and are intentionally omitted.
-     */
     const writeCommand = E.fn("livesplit.send")(function* (
       input: LiveSplitCommandInput,
     ): E.fn.Return<void, Socket.SocketError> {
@@ -197,14 +170,6 @@ export function makeLiveSplitClient({
       return writeCommand(input).pipe(E.tapCause(markUnavailable));
     };
 
-    /*
-     * Process response-producing commands sequentially.
-     *
-     * LiveSplit responses do not contain request IDs, so only one request may
-     * be awaiting a response at a time. Each queued request carries its own
-     * Deferred, allowing the worker to deliver the response directly back to
-     * the caller that submitted it.
-     */
     yield* Stream.fromQueue(requestQueue).pipe(
       Stream.runForEach(({ command, responseDeferred }) => {
         return E.gen(function* () {

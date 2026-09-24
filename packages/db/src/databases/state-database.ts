@@ -8,10 +8,6 @@ import * as SqlClient from "effect/unstable/sql/SqlClient";
 import { openSqliteDatabase } from "@frt/db/databases/open-sqlite-database.ts";
 import { migrateStateDatabase } from "@frt/db/migrate-database.ts";
 
-/**
- * The state database: the background job queue. Deleting it loses queued
- * and finished jobs but none of the user's data.
- */
 export class StateDatabase extends Context.Service<
   StateDatabase,
   SqlClient.SqlClient

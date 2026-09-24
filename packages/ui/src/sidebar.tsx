@@ -630,7 +630,7 @@ function SidebarMenuSkeleton({
 }: React.ComponentProps<"div"> & {
   showIcon?: boolean;
 }) {
-  // Random width between 50 to 90%.
+  // [TODO] Do we need this?
   const [width] = React.useState(() => {
     // @effect-diagnostics-next-line globalRandom:off
     return `${Math.floor(Math.random() * 40) + 50}%`;

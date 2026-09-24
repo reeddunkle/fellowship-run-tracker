@@ -6,6 +6,7 @@
     { "path": "./packages/ui" },
     { "path": "./apps/api" },
     { "path": "./apps/electron" },
-    { "path": "./tools/dev-scripts" }
+    { "path": "./tools/dev-scripts" },
+    { "path": "./tsconfig.config.json" }
   ]
 }

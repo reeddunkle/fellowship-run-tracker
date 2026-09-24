@@ -5,10 +5,6 @@ const OPERATION_DESCRIPTIONS = {
   Decompress: "decompress a cached Fellowship Logs response",
 } as const;
 
-/**
- * A cached response couldn't be compressed or decompressed. The cache only
- * logs this: the response is fetched again instead.
- */
 export class FellowshipLogsResponseCacheCompressionError extends Data.TaggedError(
   "FellowshipLogsResponseCacheCompressionError",
 )<{

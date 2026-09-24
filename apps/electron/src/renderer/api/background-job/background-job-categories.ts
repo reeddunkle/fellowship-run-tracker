@@ -54,7 +54,7 @@ export function groupBackgroundJobsByCategory(
   });
 }
 
-// TODO: State machine
+// [TODO] State machine
 type BackgroundJobSummaryState = "failed" | "idle" | "running" | "waiting";
 
 export type BackgroundJobSummary = {

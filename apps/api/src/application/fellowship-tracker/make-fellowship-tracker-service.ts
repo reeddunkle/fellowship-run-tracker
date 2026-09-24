@@ -172,7 +172,7 @@ export const makeFellowshipTracker = E.gen(function* () {
           });
         }
 
-        /*
+        /* [KEEP]
          * Do not allow the tracking fiber to begin until its active tracker
          * and initial status have been installed. Otherwise an immediately
          * failing stream could publish Failed and then have that status
@@ -251,11 +251,6 @@ export const makeFellowshipTracker = E.gen(function* () {
           tracker.source._tag,
         );
 
-        /*
-         * Interruption does not pass through the typed error channel used to
-         * produce Failed. The tracking fiber's finalizer clears the active
-         * tracker, while stop explicitly owns the transition back to Idle.
-         */
         yield* Fiber.interrupt(tracker.fiber);
         yield* trackerState.setIdle;
 

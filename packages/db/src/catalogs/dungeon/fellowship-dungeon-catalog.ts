@@ -65,7 +65,7 @@ export const FELLOWSHIP_DUNGEON = {
     mapId: "29",
     name: "Urrak Markets",
   },
-  // WOODLAND_GLADE: {
+  // [KEEP] WOODLAND_GLADE: {
   //   dungeonId: "28",
   //   mapId: null,
   //   name: "Woodland Glade",

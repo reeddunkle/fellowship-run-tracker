@@ -388,7 +388,7 @@ export const makeBackgroundJobService = E.gen(function* () {
     );
   };
 
-  // TODO: Review lock handling
+  // [TODO] Review lock handling
   const cancel: BackgroundJobServiceShape["cancel"] = ({ id }) => {
     return E.gen(function* () {
       const fiberToInterrupt = yield* stateLock.withPermit(

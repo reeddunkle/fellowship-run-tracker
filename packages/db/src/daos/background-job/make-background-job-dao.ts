@@ -145,7 +145,7 @@ export const makeBackgroundJobDAO = E.gen(function* () {
         job,
       );
 
-      // The partial unique index on (queue, idempotency_key) makes this a
+      // [KEEP] The partial unique index on (queue, idempotency_key) makes this a
       // no-op when an equivalent job is already queued or running.
       const rows = yield* sql`
         INSERT INTO

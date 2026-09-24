@@ -62,12 +62,6 @@ const initialSnapshot: BackgroundJobEventStoreSnapshot = {
   eventConnectionState: API_EVENT_CONNECTION_STATE.DISCONNECTED,
 };
 
-/*
- * Keeps the `["background-jobs"]` query in sync with the API's job snapshots,
- * and refreshes queries that depend on a job's outcome when it finishes. The
- * store itself only tracks the connection state; components read jobs through
- * the query.
- */
 export function makeBackgroundJobEventStore({
   makeEventStream = makeBackgroundJobEventStream,
   queryClient = defaultQueryClient,
@@ -136,7 +130,6 @@ export function makeBackgroundJobEventStore({
 
       setBackgroundJobSnapshot(queryClient, next);
 
-      // A failed refresh shouldn't end the stream; the next change retries.
       yield* refreshFinishedJobQueries({ next, previous }).pipe(
         E.catch((error) => {
           return E.logWarning(

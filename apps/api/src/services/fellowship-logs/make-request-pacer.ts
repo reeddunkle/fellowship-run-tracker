@@ -4,10 +4,6 @@ import * as E from "effect/Effect";
 import * as Ref from "effect/Ref";
 import * as Semaphore from "effect/Semaphore";
 
-/**
- * Runs requests one at a time, leaving at least `minInterval` between one
- * request finishing and the next starting.
- */
 export function makeRequestPacer(minInterval: Duration.Input) {
   return E.gen(function* () {
     const minIntervalMilliseconds = Duration.toMillis(minInterval);

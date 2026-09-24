@@ -29,7 +29,7 @@ import {
 
 const PlatformLive = NodeServices.layer;
 
-/**
+/** [KEEP]
  * The Mermaid graph helpers are plain functions that throw on malformed
  * graphs; run them as typed failures instead of defects.
  */

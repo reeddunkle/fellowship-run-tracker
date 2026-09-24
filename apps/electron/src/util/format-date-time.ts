@@ -30,10 +30,6 @@ export function formatRelativeDateTime(dateTime: DateTime.Utc): string {
   );
 }
 
-/**
- * Minutes from `nowMilliseconds` until `targetMilliseconds`, rounded up, e.g.
- * "12 minutes". Suited to waits of up to an hour or so.
- */
 export function formatMinutesUntil(
   targetMilliseconds: number,
   nowMilliseconds: number,

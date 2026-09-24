@@ -1,7 +1,7 @@
 import * as E from "effect/Effect";
 import * as SqlClient from "effect/unstable/sql/SqlClient";
 
-/*
+/* [KEEP]
  * Version 1 of the state database. Until this version ships, edit it in
  * place. After that, this folder is frozen and schema changes go in a new
  * migration.

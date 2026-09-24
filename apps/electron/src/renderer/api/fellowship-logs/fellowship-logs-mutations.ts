@@ -59,11 +59,6 @@ function getDungeonRunMetadataMutationOptions(queryClient: QueryClient) {
   });
 }
 
-/*
- * Resolves once the import is durably queued. The job is added to the cached
- * queue straight away so it shows before the WebSocket's next snapshot; the
- * event store refreshes imported runs once the job finishes.
- */
 function queueDungeonRunImportMutationOptions(queryClient: QueryClient) {
   return mutationOptions({
     mutationFn: (options: FellowshipLogsApiQueueDungeonRunImportOptions) => {

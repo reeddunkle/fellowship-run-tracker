@@ -15,7 +15,7 @@ function getNowMilliseconds() {
   return DateTime.toEpochMillis(DateTime.nowUnsafe());
 }
 
-// TODO: Remove `useEffect`
+// [TODO] Remove `useEffect`
 export function useNowMilliseconds(): number {
   const [nowMilliseconds, setNowMilliseconds] = useState(getNowMilliseconds);
 
