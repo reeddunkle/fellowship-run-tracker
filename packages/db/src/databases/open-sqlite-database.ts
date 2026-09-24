@@ -4,6 +4,10 @@ import * as FileSystem from "effect/FileSystem";
 import * as Path from "effect/Path";
 import * as EString from "effect/String";
 
+type OpenSqliteDatabaseOptions = {
+  readonly synchronous: "FULL" | "NORMAL";
+};
+
 const prepareDatabaseDirectory = E.fn("prepareDatabaseDirectory")(function* (
   filename: string,
 ) {
@@ -25,13 +29,13 @@ const prepareDatabaseDirectory = E.fn("prepareDatabaseDirectory")(function* (
   });
 });
 
-// [TODO] Review
 /** [KEEP]
  * Opens a SQLite database configured the same way as every other database
  * file in the app. The client is closed when the scope closes.
  */
 export const openSqliteDatabase = E.fn("openSqliteDatabase")(function* (
   filename: string,
+  { synchronous }: OpenSqliteDatabaseOptions,
 ) {
   yield* prepareDatabaseDirectory(filename);
 
@@ -49,6 +53,7 @@ export const openSqliteDatabase = E.fn("openSqliteDatabase")(function* (
   // back to the file system.
   yield* client`PRAGMA auto_vacuum = INCREMENTAL`;
   yield* client`PRAGMA journal_mode = WAL`;
+  yield* client`PRAGMA synchronous = ${client.literal(synchronous)}`;
   yield* client`PRAGMA foreign_keys = ON`;
 
   return client;

@@ -19,7 +19,9 @@ export function makeFellowshipLogsCacheDatabaseLayer(filename: string) {
   return Layer.effect(
     FellowshipLogsCacheDatabase,
     E.gen(function* () {
-      const client = yield* openSqliteDatabase(filename);
+      const client = yield* openSqliteDatabase(filename, {
+        synchronous: "NORMAL",
+      });
 
       yield* prepareFellowshipLogsCacheSchema(client);
 

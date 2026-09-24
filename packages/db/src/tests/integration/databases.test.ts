@@ -118,7 +118,7 @@ describe("Databases", () => {
     await runTest(program);
   });
 
-  test("creates each database with incremental auto-vacuum and WAL", async () => {
+  test("opens each database with incremental auto-vacuum, WAL, its synchronous mode and foreign keys on", async () => {
     const program = withTempDirectory((directory) => {
       return E.gen(function* () {
         const path = yield* Path.Path;
@@ -129,6 +129,8 @@ describe("Databases", () => {
           return [
             yield* getPragma(sql, "auto_vacuum"),
             yield* getPragma(sql, "journal_mode"),
+            yield* getPragma(sql, "synchronous"),
+            yield* getPragma(sql, "foreign_keys"),
           ];
         }).pipe(
           E.provide(makeMainDatabaseLayer(path.join(directory, "main.db"))),
@@ -140,6 +142,8 @@ describe("Databases", () => {
           return [
             yield* getPragma(sql, "auto_vacuum"),
             yield* getPragma(sql, "journal_mode"),
+            yield* getPragma(sql, "synchronous"),
+            yield* getPragma(sql, "foreign_keys"),
           ];
         }).pipe(
           E.provide(makeStateDatabaseLayer(path.join(directory, "state.db"))),
@@ -151,6 +155,8 @@ describe("Databases", () => {
           return [
             yield* getPragma(sql, "auto_vacuum"),
             yield* getPragma(sql, "journal_mode"),
+            yield* getPragma(sql, "synchronous"),
+            yield* getPragma(sql, "foreign_keys"),
           ];
         }).pipe(
           E.provide(
@@ -162,9 +168,9 @@ describe("Databases", () => {
 
         // An `auto_vacuum` of 2 is INCREMENTAL.
         expect({ cache, main, state }).toEqual({
-          cache: [2, "wal"],
-          main: [2, "wal"],
-          state: [2, "wal"],
+          cache: [2, "wal", 1, 1],
+          main: [2, "wal", 2, 1],
+          state: [2, "wal", 1, 1],
         });
       });
     });

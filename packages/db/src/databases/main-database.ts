@@ -17,7 +17,9 @@ export function makeMainDatabaseLayer(filename: string) {
   return Layer.effect(
     MainDatabase,
     E.gen(function* () {
-      const client = yield* openSqliteDatabase(filename);
+      const client = yield* openSqliteDatabase(filename, {
+        synchronous: "FULL",
+      });
 
       yield* migrateMainDatabase.pipe(
         E.provideService(SqlClient.SqlClient, client),
