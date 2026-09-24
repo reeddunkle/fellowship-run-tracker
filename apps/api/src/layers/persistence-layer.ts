@@ -13,14 +13,8 @@ export type MakePersistenceLayerOptions = DatabaseOptions;
  * consumers (e.g. FellowshipTracker) that use them without the repository.
  * The shared DAO `.layer` references are memoized, so each is built once.
  */
-export function makePersistenceLayer({
-  databaseFilename,
-}: MakePersistenceLayerOptions) {
+export function makePersistenceLayer(options: MakePersistenceLayerOptions) {
   return DungeonRunRepository.layer.pipe(
-    Layer.provideMerge(
-      makeDatabasePersistenceLayer({
-        databaseFilename,
-      }),
-    ),
+    Layer.provideMerge(makeDatabasePersistenceLayer(options)),
   );
 }

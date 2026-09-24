@@ -4,10 +4,12 @@ import { RATE_LIMIT_DATA_SELECTION } from "./rate-limit-data-query.ts";
 const FIGHT_SELECTION = `
   reportData {
     report(code: $reportCode) {
+      endTime
       fights(fightIDs: [$fightId]) {
         id
         startTime
         endTime
+        inProgress
       }
     }
   }

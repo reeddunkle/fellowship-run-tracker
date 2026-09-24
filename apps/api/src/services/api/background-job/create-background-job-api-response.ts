@@ -91,6 +91,9 @@ export function createBackgroundJobApiItem(
           InterruptUnfinishedDungeonRuns: () => {
             return Option.none<BackgroundJobApiItem>();
           },
+          PruneFellowshipLogsCache: () => {
+            return Option.none<BackgroundJobApiItem>();
+          },
           PruneFinishedBackgroundJobs: () => {
             return Option.none<BackgroundJobApiItem>();
           },

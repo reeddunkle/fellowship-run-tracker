@@ -2,7 +2,7 @@ import * as E from "effect/Effect";
 import * as SqlClient from "effect/unstable/sql/SqlClient";
 import { describe, expect, test } from "vitest";
 
-import { makeDatabaseLayer } from "@frt/db/database-layer.ts";
+import { makeMainDatabaseLayer } from "@frt/db/databases/main-database.ts";
 import { runTest } from "@frt/db/tests/common/run-test.ts";
 
 describe("Database schema", () => {
@@ -171,7 +171,7 @@ describe("Database schema", () => {
           id: "requirement-1",
         },
       ]);
-    }).pipe(E.provide(makeDatabaseLayer(":memory:")));
+    }).pipe(E.provide(makeMainDatabaseLayer(":memory:")));
 
     await runTest(program);
   });

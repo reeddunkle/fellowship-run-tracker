@@ -123,8 +123,6 @@ const makeFellowshipLogsApiService = E.gen(function* () {
   const queueDungeonRunImport: FellowshipLogsApiServiceShape["queueDungeonRunImport"] =
     (options) => {
       return E.gen(function* () {
-        // Checked up front so the user hears about it now, not when the job
-        // runs. The importer checks again in case it's imported meanwhile.
         const existing =
           yield* dungeonRunRepository.getFellowshipLogsDungeonRun({
             fightId: options.fightId,

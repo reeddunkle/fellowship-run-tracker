@@ -64,6 +64,14 @@ describe("getBackgroundJobIdempotencyKey", () => {
     ).not.toBe(getBackgroundJobIdempotencyKey(job));
   });
 
+  test("gives every PruneFellowshipLogsCache job the same key", () => {
+    expect(
+      getBackgroundJobIdempotencyKey({ _tag: "PruneFellowshipLogsCache" }),
+    ).toBe(
+      getBackgroundJobIdempotencyKey({ _tag: "PruneFellowshipLogsCache" }),
+    );
+  });
+
   test("gives every PruneLogFiles job the same key", () => {
     expect(getBackgroundJobIdempotencyKey({ _tag: "PruneLogFiles" })).toBe(
       getBackgroundJobIdempotencyKey({ _tag: "PruneLogFiles" }),

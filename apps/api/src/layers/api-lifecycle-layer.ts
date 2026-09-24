@@ -18,7 +18,8 @@ const queueStartupJobs = E.gen(function* () {
 
   yield* backgroundJobService.offer({ _tag: "PruneLogFiles" });
 
-  // Succeeded jobs stay visible for the session they finished in.
+  yield* backgroundJobService.offer({ _tag: "PruneFellowshipLogsCache" });
+
   yield* backgroundJobService.offer({
     _tag: "PruneFinishedBackgroundJobs",
     finishedBefore: SESSION_STARTED_AT,

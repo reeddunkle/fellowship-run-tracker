@@ -6,11 +6,6 @@ import { BackgroundJobWebSocketBroadcaster } from "@frt/api/services/api/websock
 import { BackgroundJobService } from "@frt/api/services/background-job/background-job-service.ts";
 import { type BackgroundJobApiMessage } from "@frt/api-contract/websocket/background-job/background-job-api-message-schema.ts";
 
-/*
- * Publishes a full snapshot of the user-visible jobs whenever any job changes.
- * `changes` starts with the current revision, so the broadcaster always has a
- * snapshot to replay to newly connected clients.
- */
 export const publishBackgroundJobChanges = E.gen(function* () {
   const backgroundJobApiService = yield* BackgroundJobApiService;
   const backgroundJobService = yield* BackgroundJobService;
@@ -33,8 +28,6 @@ export const publishBackgroundJobChanges = E.gen(function* () {
     }),
   );
 
-  // Each snapshot is the full state, so while one is being published only the
-  // newest pending change needs to follow it.
   yield* backgroundJobService.changes.pipe(
     Stream.buffer({ capacity: 1, strategy: "sliding" }),
     Stream.runForEach(() => {

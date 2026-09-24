@@ -3,13 +3,12 @@ import type * as Layer from "effect/Layer";
 import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 import * as HttpApiError from "effect/unstable/httpapi/HttpApiError";
 
-import { type EncryptionError } from "@frt/api/errors/encryption-error.ts";
 import { AppSettingsApiService } from "@frt/api/services/api/app-settings/app-settings-api-service.ts";
+import { type AppSettingsSetError } from "@frt/api/services/app-settings/app-settings-service.ts";
 import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
-import { type AppSettingsDAOError } from "@frt/db/daos/app-settings/app-settings-dao.ts";
 
 function mapAppSettingsApiError(
-  error: AppSettingsDAOError | EncryptionError,
+  error: AppSettingsSetError,
 ): E.Effect<never, HttpApiError.InternalServerError> {
   return E.gen(function* () {
     yield* E.logError("App settings API operation failed.", {

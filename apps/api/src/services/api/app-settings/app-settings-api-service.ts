@@ -3,10 +3,11 @@ import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Redacted from "effect/Redacted";
 
-import { type EncryptionError } from "@frt/api/errors/encryption-error.ts";
 import { createAppSettingsApiResponse } from "@frt/api/services/api/app-settings/create-app-settings-api-response.ts";
-import { AppSettings } from "@frt/api/services/app-settings/app-settings-service.ts";
-import { type AppSettingsDAOError } from "@frt/db/daos/app-settings/app-settings-dao.ts";
+import {
+  AppSettings,
+  type AppSettingsSetError,
+} from "@frt/api/services/app-settings/app-settings-service.ts";
 import {
   type AppSettingsApiAppSettings,
   type AppSettingsApiUpdate,
@@ -17,10 +18,7 @@ export type AppSettingsApiServiceShape = {
 
   readonly set: (
     appSettings: AppSettingsApiUpdate,
-  ) => E.Effect<
-    AppSettingsApiAppSettings,
-    AppSettingsDAOError | EncryptionError
-  >;
+  ) => E.Effect<AppSettingsApiAppSettings, AppSettingsSetError>;
 };
 
 const makeAppSettingsApiService = E.gen(function* () {

@@ -75,6 +75,12 @@ pnpm start
 * **Packaged app:** `%LOCALAPPDATA%\fellowship-run-tracker\Data`. It never reads a `.env`.
 * **Unpackaged runs** (`pnpm dev`, `pnpm start`, the CLIs, tests): the gitignored `data/` directory at the workspace root. Delete it with `pnpm clean:data`.
 
+`database/` holds three SQLite files, split by how much each can be lost:
+
+* `fellowship-run-tracker.db`: settings, the game catalog, configurations and dungeon runs. This is the user's data.
+* `state.db`: the background job queue. Deleting it loses queued and finished jobs, but no runs.
+* `fellowship-logs-cache.db`: cached Fellowship Logs API responses, kept so the same data isn't paid for twice in rate-limit points. It's safe to delete at any time.
+
 Add a new kind of on-disk state to `app-paths.ts`, not as an inline path elsewhere. The workspace `.env` is development-only; its settings override built-in defaults, and relative paths in it (e.g. `DATABASE_FILENAME`) resolve against the workspace root.
 
 ### Logs

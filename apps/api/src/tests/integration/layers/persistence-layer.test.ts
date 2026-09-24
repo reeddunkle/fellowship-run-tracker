@@ -4,6 +4,7 @@ import { describe, expect, test } from "vitest";
 
 import { makePersistenceLayer } from "@frt/api/layers/persistence-layer.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
+import { makeTestDatabaseOptions } from "@frt/db/tests/common/make-test-database-options.ts";
 
 describe("PersistenceLayer", () => {
   test("syncs catalog tables", async () => {
@@ -213,13 +214,7 @@ describe("PersistenceLayer", () => {
           count: 4,
         },
       ]);
-    }).pipe(
-      E.provide(
-        makePersistenceLayer({
-          databaseFilename: ":memory:",
-        }),
-      ),
-    );
+    }).pipe(E.provide(makePersistenceLayer(makeTestDatabaseOptions())));
 
     await runTest(program);
   });

@@ -2,12 +2,12 @@ import * as Data from "effect/Data";
 
 import { type UnexpectedDatabaseError } from "@frt/db/errors/unexpected-database-error.ts";
 
-export type FellowshipLogsImportPageDAOErrorReason = UnexpectedDatabaseError;
+export type FellowshipLogsResponseDAOErrorReason = UnexpectedDatabaseError;
 
-export class FellowshipLogsImportPageDAOError extends Data.TaggedError(
-  "FellowshipLogsImportPageDAOError",
+export class FellowshipLogsResponseDAOError extends Data.TaggedError(
+  "FellowshipLogsResponseDAOError",
 )<{
-  readonly reason: FellowshipLogsImportPageDAOErrorReason;
+  readonly reason: FellowshipLogsResponseDAOErrorReason;
 }> {
   override readonly cause = this.reason;
 

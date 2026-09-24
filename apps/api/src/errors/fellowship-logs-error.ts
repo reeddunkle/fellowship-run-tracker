@@ -88,6 +88,22 @@ export class FellowshipLogsRateLimitExceededError extends Data.TaggedError(
   }
 }
 
+/**
+ * A report changed in Fellowship Logs partway through fetching a fight that
+ * is still in progress, so its pages can't be combined. Fetching the fight
+ * again from the start gets a consistent set.
+ */
+export class FellowshipLogsReportChangedError extends Data.TaggedError(
+  "FellowshipLogsReportChangedError",
+)<{
+  readonly fightId: number;
+  readonly reportCode: string;
+}> {
+  override get message() {
+    return `Fellowship Logs report "${this.reportCode}" changed partway through fetching fight ${this.fightId}.`;
+  }
+}
+
 export class FellowshipLogsEventDecodeError extends Data.TaggedError(
   "FellowshipLogsEventDecodeError",
 )<{

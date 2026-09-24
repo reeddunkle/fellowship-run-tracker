@@ -49,30 +49,18 @@ type ResponseDataWithRateLimit = {
   readonly rateLimitData?: FellowshipLogsRateLimitData;
 };
 
-// Used when Fellowship Logs rejects a request and there's no current snapshot
-// to say when the points reset.
 const UNKNOWN_RESET_DELAY = Duration.minutes(5);
 
 type TrackResponseOptions = {
-  /**
-   * Identifies the kind of request, so its point cost can be learned and
-   * checked before sending it again.
-   */
   readonly costKey: string;
-  /** Skip the pre-flight check. Defaults to `false`. */
   readonly skipCapacityCheck?: boolean;
 };
 
 type FellowshipLogsRateLimitDataTracker = {
-  /**
-   * Fails when the last snapshot shows too few points left for a request of
-   * this kind, so it isn't sent only to be rejected.
-   */
   readonly checkCapacity: (
     costKey: string,
   ) => E.Effect<void, FellowshipLogsRateLimitExceededError>;
   readonly getLastKnown: () => E.Effect<FellowshipLogsRateLimitSnapshot | null>;
-  /** When points are expected back after Fellowship Logs rejects a request. */
   readonly getRejectedResetsAt: () => E.Effect<DateTime.Utc>;
   readonly track: (
     rateLimitData: FellowshipLogsRateLimitData | undefined,
@@ -81,7 +69,6 @@ type FellowshipLogsRateLimitDataTracker = {
 };
 
 type RateLimitTrackerState = {
-  /** Largest cost seen for each kind of request this session. */
   readonly costByKey: Readonly<Record<string, number>>;
   readonly snapshot: FellowshipLogsRateLimitSnapshot | null;
 };
@@ -90,10 +77,6 @@ function isRateLimitGraphQLError(error: FellowshipLogsGraphQLError) {
   return /rate.?limit/i.test(error.message);
 }
 
-/**
- * How much of a fight has been fetched once a report page ends at
- * `nextPageTimestamp` (`null` means it was the last page), from 0 to 1.
- */
 export function getReportPageProgress({
   endTime,
   nextPageTimestamp,
@@ -112,10 +95,6 @@ export function getReportPageProgress({
   return Math.min(Math.max((nextPageTimestamp - startTime) / duration, 0), 1);
 }
 
-/**
- * How many points a request cost, from the snapshots before and after it.
- * Unknown (`null`) when the window reset in between.
- */
 function getRequestCost({
   nowMilliseconds,
   previous,
@@ -240,12 +219,6 @@ export function makeFellowshipLogsRateLimitDataTracker() {
   });
 }
 
-/**
- * Sends a request through the rate-limit tracker: checks there are points
- * for it first, records the rate-limit data it returns (even alongside
- * GraphQL errors), and turns a rejection into
- * `FellowshipLogsRateLimitExceededError` with the expected reset time.
- */
 export function readAndTrackGraphQLResponse(
   tracker: FellowshipLogsRateLimitDataTracker,
   { costKey, skipCapacityCheck = false }: TrackResponseOptions,
@@ -302,7 +275,6 @@ export function makeTrackedQuery(
   ) {
     return query(request, responseSchema).pipe(
       readAndTrackGraphQLResponse(tracker, {
-        // Each query document is one kind of request.
         costKey: request.query,
         ...options,
       }),
@@ -362,6 +334,7 @@ type DungeonRunMetadataFight = {
   readonly encounterID: number;
   readonly endTime: number;
   readonly id: number;
+  readonly inProgress: boolean;
   readonly startTime: number;
 };
 
@@ -410,6 +383,7 @@ export function deriveDungeonRunMetadata({
       dungeonId: String(fight.encounterID),
       dungeonLevel: fight.difficultyLevel,
       endedAtMilliseconds: report.startTime + fight.endTime,
+      isInProgress: fight.inProgress,
       startedAtMilliseconds: report.startTime + fight.startTime,
     };
   });

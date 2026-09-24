@@ -109,8 +109,6 @@ export function makeBackgroundJobEventStore({
       return;
     }
 
-    // Imports spend Fellowship Logs points whether they succeed, fail, or run
-    // out of points and wait.
     yield* invalidateFellowshipLogsRateLimitData(queryClient);
 
     const hasSucceededImport = finishedJobs.some((job) => {

@@ -8,6 +8,7 @@ const FellowshipLogsDungeonRunMetadataFightSchema = Schema.Struct({
   encounterID: Schema.Int,
   endTime: NonNegativeIntegerSchema,
   id: Schema.Int,
+  inProgress: Schema.Boolean,
   startTime: NonNegativeIntegerSchema,
 });
 
@@ -15,6 +16,7 @@ export const FellowshipLogsDungeonRunMetadataResponseDataSchema =
   withRateLimitData({
     reportData: Schema.Struct({
       report: Schema.Struct({
+        endTime: NonNegativeIntegerSchema,
         fights: Schema.Array(FellowshipLogsDungeonRunMetadataFightSchema),
         startTime: NonNegativeIntegerSchema,
       }).pipe(Schema.NullOr),

@@ -21,11 +21,17 @@ const PruneFinishedBackgroundJobsJobSchema = Schema.TaggedStruct(
   },
 );
 
+const PruneFellowshipLogsCacheJobSchema = Schema.TaggedStruct(
+  "PruneFellowshipLogsCache",
+  {},
+);
+
 const PruneLogFilesJobSchema = Schema.TaggedStruct("PruneLogFiles", {});
 
 export const BackgroundJobSchema = Schema.Union([
   ImportFellowshipLogsDungeonRunJobSchema,
   InterruptUnfinishedDungeonRunsJobSchema,
+  PruneFellowshipLogsCacheJobSchema,
   PruneFinishedBackgroundJobsJobSchema,
   PruneLogFilesJobSchema,
 ]);

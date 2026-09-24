@@ -11,11 +11,6 @@ function isWaiting(job: BackgroundJobApiItem): boolean {
   return job.status === "WAITING";
 }
 
-/**
- * Jobs matching `predicate` in `next` whose status changed since `previous`,
- * including jobs `previous` didn't have at all (e.g. the first snapshot after
- * a reconnect).
- */
 function getJobsNewlyMatching(
   previous: BackgroundJobApiSnapshot | undefined,
   next: BackgroundJobApiSnapshot,
@@ -32,7 +27,6 @@ function getJobsNewlyMatching(
   });
 }
 
-/** Jobs that are finished in `next` but weren't in `previous`. */
 export function getNewlyFinishedBackgroundJobs(
   previous: BackgroundJobApiSnapshot | undefined,
   next: BackgroundJobApiSnapshot,
@@ -40,7 +34,6 @@ export function getNewlyFinishedBackgroundJobs(
   return getJobsNewlyMatching(previous, next, isFinished);
 }
 
-/** Jobs that started waiting (e.g. for Fellowship Logs points) since `previous`. */
 export function getNewlyWaitingBackgroundJobs(
   previous: BackgroundJobApiSnapshot | undefined,
   next: BackgroundJobApiSnapshot,

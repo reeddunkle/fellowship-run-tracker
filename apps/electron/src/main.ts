@@ -9,7 +9,7 @@ import { app, BrowserWindow } from "electron";
 
 import { appConfig } from "@frt/api/app-config.ts";
 import { appPaths } from "@frt/api/helpers/app-paths.ts";
-import { getDatabaseFilename } from "@frt/api/helpers/get-database-filename.ts";
+import { getDatabaseOptions } from "@frt/api/helpers/get-database-options.ts";
 import { logCause } from "@frt/api/logging/log-cause.ts";
 
 import { configureErrorLogging } from "@/application/configure-error-logging.ts";
@@ -52,12 +52,12 @@ function runElectronMain() {
 
     yield* E.promise(() => app.whenReady());
 
-    const databaseFilename = yield* getDatabaseFilename();
+    const databaseOptions = yield* getDatabaseOptions();
     const appStateStorageDirectory = appPaths.appState;
 
     const runtime = makeElectronRuntime({
+      ...databaseOptions,
       appStateStorageDirectory,
-      databaseFilename,
     });
 
     electronRuntime = runtime;

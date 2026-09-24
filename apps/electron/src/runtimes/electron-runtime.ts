@@ -16,11 +16,9 @@ export type MakeElectronRuntimeOptions = DatabaseOptions & {
 
 export function makeElectronRuntime({
   appStateStorageDirectory,
-  databaseFilename,
+  ...databaseOptions
 }: MakeElectronRuntimeOptions) {
-  const PersistenceLayer = makePersistenceLayer({
-    databaseFilename,
-  });
+  const PersistenceLayer = makePersistenceLayer(databaseOptions);
 
   const ApiWithPersistenceLayer = ApiLayer.pipe(
     Layer.provide(PersistenceLayer),

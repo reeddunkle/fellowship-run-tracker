@@ -1,4 +1,9 @@
-import { ClockIcon, ListPlusIcon, XIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  ClockIcon,
+  ListPlusIcon,
+  XIcon,
+} from "lucide-react";
 
 import {
   type FellowshipLogsApiDungeonRunMetadata,
@@ -41,7 +46,6 @@ type ImportConfirmationCardProps = {
   readonly error: unknown;
   readonly isQueueing: boolean;
   readonly metadata: FellowshipLogsApiDungeonRunMetadata;
-  /** Something to know before queueing, e.g. that the import will wait. */
   readonly notice: string | undefined;
   readonly onCancel: () => void;
   readonly onConfirm: (value: DecodedImportConfirmationFormValue) => void;
@@ -97,6 +101,14 @@ export function ImportConfirmationCard({
             </dd>
           </div>
         </dl>
+        {metadata.isInProgress ? (
+          <p className="flex items-center gap-2 text-sm text-warning">
+            <AlertTriangleIcon aria-hidden="true" className="size-4 shrink-0" />
+            This fight is still in progress. It will be imported as it is now,
+            and its data won't be cached, so importing it again will use points
+            again.
+          </p>
+        ) : null}
         {notice === undefined ? null : (
           <p className="flex items-center gap-2 text-sm text-muted-foreground">
             <ClockIcon aria-hidden="true" className="size-4" />

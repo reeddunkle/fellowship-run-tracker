@@ -3,7 +3,7 @@ import * as Layer from "effect/Layer";
 import * as Command from "effect/unstable/cli/Command";
 import * as Flag from "effect/unstable/cli/Flag";
 
-import { getDatabaseFilename } from "@frt/api/helpers/get-database-filename.ts";
+import { getDatabaseOptions } from "@frt/api/helpers/get-database-options.ts";
 import { makePersistenceLayer } from "@frt/api/layers/persistence-layer.ts";
 import { loadMilestoneConfiguration } from "@frt/api/services/fellowship/configurations/load-milestone-configuration.ts";
 import { LiveSplitFile } from "@frt/api/services/live-split/files/live-split-file-service.ts";
@@ -13,11 +13,9 @@ import { DungeonDAO } from "@frt/db/daos/dungeon/dungeon-dao.ts";
 import { NonEmptyStringSchema } from "@frt/shared/validation/common-schemas.ts";
 
 const GenerateLSSLayer = Layer.unwrap(
-  E.map(getDatabaseFilename(), (databaseFilename) => {
+  E.map(getDatabaseOptions(), (databaseOptions) => {
     return Layer.mergeAll(
-      makePersistenceLayer({
-        databaseFilename,
-      }),
+      makePersistenceLayer(databaseOptions),
       LiveSplitFile.layer,
     );
   }),

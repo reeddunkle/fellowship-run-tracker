@@ -42,6 +42,7 @@ export const FellowshipLogsApiDungeonRunMetadataSchema = Schema.Struct({
   dungeonId: DungeonIdSchema,
   dungeonLevel: PositiveIntegerSchema,
   endedAtMilliseconds: NonNegativeIntegerSchema,
+  isInProgress: Schema.Boolean,
   startedAtMilliseconds: NonNegativeIntegerSchema,
 });
 

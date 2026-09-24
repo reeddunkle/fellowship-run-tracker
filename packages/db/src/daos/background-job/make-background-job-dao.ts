@@ -2,9 +2,9 @@ import * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
 
 import { type BackgroundJobDAOShape } from "@frt/db/daos/background-job/background-job-dao.ts";
+import { StateDatabase } from "@frt/db/databases/state-database.ts";
 import { BackgroundJobDAOError } from "@frt/db/errors/background-job-dao-error.ts";
 import {
   BackgroundJobNotFoundError,
@@ -55,7 +55,7 @@ const encodeNow = DateTime.now.pipe(
 );
 
 export const makeBackgroundJobDAO = E.gen(function* () {
-  const sql = yield* SqlClient.SqlClient;
+  const sql = yield* StateDatabase;
 
   const columns = sql.literal(`
     id,
@@ -215,7 +215,6 @@ export const makeBackgroundJobDAO = E.gen(function* () {
     return E.gen(function* () {
       const now = yield* encodeNow;
 
-      // Waiting jobs that are due go first, since they were already underway.
       const rows = yield* sql`
         UPDATE background_job
         SET
@@ -284,8 +283,6 @@ export const makeBackgroundJobDAO = E.gen(function* () {
         BackgroundJobFailureFromJsonString,
       )(reason);
 
-      // The attempt is handed back: waiting isn't a failure, so it mustn't
-      // count toward the queue's attempt limit.
       const rows = yield* sql`
         UPDATE background_job
         SET
@@ -489,6 +486,13 @@ export const makeBackgroundJobDAO = E.gen(function* () {
     }).pipe(E.mapError(mapBackgroundJobDAOError));
   };
 
+  const incrementalVacuum: BackgroundJobDAOShape["incrementalVacuum"] = () => {
+    return sql`PRAGMA incremental_vacuum`.pipe(
+      E.asVoid,
+      E.mapError(mapBackgroundJobDAOError),
+    );
+  };
+
   const list: BackgroundJobDAOShape["list"] = ({ queues }) => {
     return E.gen(function* () {
       const rows = yield* sql`
@@ -554,6 +558,7 @@ export const makeBackgroundJobDAO = E.gen(function* () {
     deleteFinishedBefore,
     getById,
     getNextAvailableAt,
+    incrementalVacuum,
     insert,
     list,
     markFailed,

@@ -24,7 +24,7 @@ type FellowshipLogsEventContext = {
   readonly reportStartTime: number;
 };
 
-export function isConvertibleEvent(event: unknown): boolean {
+function isConvertibleEvent(event: unknown): boolean {
   if (
     typeof event !== "object" ||
     event === null ||

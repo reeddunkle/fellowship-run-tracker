@@ -7,8 +7,9 @@ import {
   PortSchema,
 } from "@frt/shared/validation/common-schemas.ts";
 
-export const AppSettingsIdSchema = Schema.Literal(1).pipe(
-  Schema.brand("AppSettingsId"),
+// Each settings table holds a single row, with this id.
+export const SettingIdSchema = Schema.Literal(1).pipe(
+  Schema.brand("SettingId"),
 );
 
 export const LiveSplitHostSchema = HostSchema.pipe(

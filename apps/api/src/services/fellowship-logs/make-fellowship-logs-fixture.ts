@@ -110,8 +110,6 @@ export function makeFellowshipLogsFixture({
       }).pipe(E.mapError(mapFixtureError));
     };
 
-    // Reading the recording is free; "fetching" the page is what goes through
-    // the rate-limit tracker.
     const fetchReportPage = E.fn("FellowshipLogsFixture.fetchReportPage")(
       function* (
         response: typeof FellowshipLogsReportPageResponseJsonSchema.Type,
@@ -195,6 +193,7 @@ export function makeFellowshipLogsFixture({
           dungeonId: metadata.dungeonId,
           dungeonLevel: metadata.dungeonLevel,
           endedAt: DateTime.makeUnsafe(metadata.endedAtMilliseconds),
+          isInProgress: metadata.isInProgress,
           startedAt: DateTime.makeUnsafe(metadata.startedAtMilliseconds),
         } satisfies FellowshipLogsDungeonRunMetadata;
       });
@@ -205,8 +204,6 @@ export function makeFellowshipLogsFixture({
       return Stream.unwrap(
         getReportPagePaths(options).pipe(
           E.map((pagePaths) => {
-            // Recordings have a known page count, so progress is simply the
-            // share of pages read.
             const responses = Stream.fromIterable(pagePaths.entries()).pipe(
               Stream.mapEffect(([index, { filePath }]) => {
                 return readReportPageResponse(filePath).pipe(
@@ -217,23 +214,7 @@ export function makeFellowshipLogsFixture({
               }),
             );
 
-            const { startTime } = options;
-
-            // Starting part-way skips the recorded pages up to and including
-            // the one that ends at `startTime`.
-            const remaining =
-              startTime === undefined
-                ? responses
-                : responses.pipe(
-                    Stream.dropUntil(({ response }) => {
-                      return (
-                        response.data?.reportData.report?.events
-                          .nextPageTimestamp === startTime
-                      );
-                    }),
-                  );
-
-            return remaining.pipe(
+            return responses.pipe(
               Stream.mapEffect(({ index, response }) => {
                 return fetchReportPage(response, options.reportCode).pipe(
                   E.tap(() => {

@@ -25,6 +25,7 @@ export function makeFellowshipLogsApiServiceMock({
       dungeonId: "0",
       dungeonLevel: 0,
       endedAtMilliseconds: DateTime.toEpochMillis(DateTime.makeUnsafe(0)),
+      isInProgress: false,
       startedAtMilliseconds: DateTime.toEpochMillis(DateTime.makeUnsafe(0)),
     });
   },

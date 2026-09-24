@@ -35,8 +35,6 @@ const FELLOWSHIP_LOGS_TOKEN_URL = "https://www.fellowshiplogs.com/oauth/token";
 
 const ACCESS_TOKEN_EXPIRATION_BUFFER_MILLISECONDS = 30_000;
 
-// Keeps bursts (e.g. paging through a report) gentle on Fellowship Logs. The
-// points limit is the real cap; this only spaces requests out.
 const MIN_QUERY_INTERVAL = "500 millis";
 
 const TOO_MANY_REQUESTS_STATUS = 429;

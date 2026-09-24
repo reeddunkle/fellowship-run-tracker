@@ -14,6 +14,12 @@ export const appPaths = {
   ),
   electronUserData: path.join(appDataDirectory, "electron"),
   encryptionKey: path.join(appDataDirectory, "security"),
+  fellowshipLogsCacheDatabaseFile: path.join(
+    appDataDirectory,
+    "database",
+    "fellowship-logs-cache.db",
+  ),
   logs: path.join(appDataDirectory, "logs"),
   root: appDataDirectory,
+  stateDatabaseFile: path.join(appDataDirectory, "database", "state.db"),
 };

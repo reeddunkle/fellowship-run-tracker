@@ -11,6 +11,7 @@ import {
   type FellowshipLogsGraphQLResponseError,
   type FellowshipLogsRateLimitExceededError,
   type FellowshipLogsRateLimitRejectedError,
+  type FellowshipLogsReportChangedError,
   type FellowshipLogsRequestError,
 } from "@frt/api/errors/fellowship-logs-error.ts";
 import {
@@ -18,6 +19,7 @@ import {
   NodePlatformLayer,
 } from "@frt/api/layers/node-platform-layer.ts";
 import { AppSettings } from "@frt/api/services/app-settings/app-settings-service.ts";
+import { FellowshipLogsResponseCache } from "@frt/api/services/fellowship-logs/cache/fellowship-logs-response-cache-service.ts";
 import { type DungeonId } from "@frt/shared/fellowship/validation/fellowship-common.ts";
 import { type FellowshipEvent } from "@frt/shared/fellowship/validation/fellowship-event-schema.ts";
 import { type FellowshipLogsRateLimitSnapshot } from "@frt/shared/fellowship-logs/validation/fellowship-logs-rate-limit-schema.ts";
@@ -68,23 +70,24 @@ type StreamFellowshipLogsReportOptions = GetFellowshipLogsReportOptions & {
    * fetched so far, from 0 to 1.
    */
   readonly onProgress?: (fraction: number) => E.Effect<void>;
-  /**
-   * Where to start fetching, as the `nextPageTimestamp` of a page already
-   * fetched. Defaults to the start of the fight.
-   */
-  readonly startTime?: number;
 };
 
 export type FellowshipLogsDungeonRunMetadata = {
   readonly dungeonId: DungeonId;
   readonly dungeonLevel: number;
   readonly endedAt: DateTime.Utc;
+  /**
+   * Whether a live log is still uploading the fight. Its data isn't cached,
+   * so importing it again costs points again.
+   */
+  readonly isInProgress: boolean;
   readonly startedAt: DateTime.Utc;
 };
 
 export type FellowshipLogsRequestOperationError =
   | FellowshipLogsGraphQLResponseError
   | FellowshipLogsRateLimitExceededError
+  | FellowshipLogsReportChangedError
   | FellowshipLogsRequestError;
 
 type FellowshipLogsError =
@@ -133,11 +136,10 @@ export class FellowshipLogs extends Context.Service<
 
   static readonly liveLayer = this.layerNoDeps.pipe(
     Layer.provide(AppSettings.layer),
+    Layer.provide(FellowshipLogsResponseCache.layer),
     Layer.provide(NodeHttpClientLayer),
   );
 
-  // A single static leaf, so every consumer shares one instance (and one
-  // rate-limit tracker). Layers are memoized by reference.
   static readonly fixtureLayer = Layer.effect(
     this,
     makeFellowshipLogsFixture({

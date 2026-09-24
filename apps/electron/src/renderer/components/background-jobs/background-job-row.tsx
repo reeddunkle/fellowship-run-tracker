@@ -257,13 +257,8 @@ function BackgroundJobActions({ job }: { readonly job: BackgroundJobApiItem }) {
 }
 
 type BackgroundJobRowProps = {
-  /**
-   * Whether a job ahead in the same queue is waiting, which holds queued jobs
-   * until it can continue.
-   */
   readonly isQueueWaiting: boolean;
   readonly job: BackgroundJobApiItem;
-  /** 1-based position among queued jobs; unused for other statuses. */
   readonly queuePosition: number;
 };
 

@@ -84,13 +84,12 @@ function makeFixtureImportTestLayer({
 }) {
   const PersistenceTestLive = makePersistenceTestLayer(databaseFilename);
 
+  const FellowshipLogsTestLive = makeControlledFellowshipLogsFixtureLayer(
+    control,
+  ).pipe(Layer.provide(PersistenceTestLive));
+
   const ImporterTestLive = FellowshipLogsDungeonRunImporter.layerNoDeps.pipe(
-    Layer.provide(
-      Layer.merge(
-        PersistenceTestLive,
-        makeControlledFellowshipLogsFixtureLayer(control),
-      ),
-    ),
+    Layer.provide(Layer.merge(PersistenceTestLive, FellowshipLogsTestLive)),
   );
 
   return BackgroundJobService.layerNoDeps.pipe(
@@ -363,10 +362,9 @@ describe("BackgroundJobService waiting jobs", () => {
       );
     });
 
-    // 5 pages before running out, then only the 8 that were left.
+    // The pages fetched before running out came from the cache the second
+    // time, so each page was fetched once.
     expect(control.pagesFetched).toBe(13);
-    expect(control.startTimes).toHaveLength(2);
-    expect(control.startTimes[1]).toEqual(expect.any(Number));
     expect(finished.result).toMatchObject({
       dungeonRunId: expect.any(String),
     });

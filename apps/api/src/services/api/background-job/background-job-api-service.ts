@@ -44,8 +44,6 @@ const makeBackgroundJobApiService = E.gen(function* () {
 
   const getSnapshot: BackgroundJobApiServiceShape["getSnapshot"] = () => {
     return E.gen(function* () {
-      // Read the revision first: the list can only be newer than it, never
-      // older, so a client never skips a change it hasn't seen.
       const revision = yield* backgroundJobService.revision;
       const jobs = yield* backgroundJobService.listVisible();
 

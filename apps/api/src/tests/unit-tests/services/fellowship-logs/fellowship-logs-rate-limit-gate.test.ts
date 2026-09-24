@@ -8,9 +8,11 @@ import {
   FellowshipLogsRateLimitRejectedError,
   FellowshipLogsRequestError,
 } from "@frt/api/errors/fellowship-logs-error.ts";
+import { FellowshipLogsResponseCache } from "@frt/api/services/fellowship-logs/cache/fellowship-logs-response-cache-service.ts";
 import { type Query } from "@frt/api/services/fellowship-logs/fellowship-logs-service.ts";
 import { makeFellowshipLogsServiceFromQuery } from "@frt/api/services/fellowship-logs/make-fellowship-logs.ts";
 import { makeFellowshipLogsGraphQLResponseSchema } from "@frt/api/services/fellowship-logs/validation/fellowship-logs-graphql-schema.ts";
+import { passThroughFellowshipLogsResponseCache } from "@frt/api/tests/common/mocks/fellowship-logs-response-cache-mock.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { FellowshipLogsFightIdSchema } from "@frt/shared/validation/fellowship-logs/fellowship-logs-fight-id-schema.ts";
 import { FellowshipLogsReportCodeSchema } from "@frt/shared/validation/fellowship-logs/fellowship-logs-report-code-schema.ts";
@@ -46,12 +48,14 @@ function makeMetadataResponse(pointsSpentThisHour: number): StubResponse {
         rateLimitData: makeRateLimitData(pointsSpentThisHour),
         reportData: {
           report: {
+            endTime: 2000,
             fights: [
               {
                 difficultyLevel: 10,
                 encounterID: 100006,
                 endTime: 2000,
                 id: RUN.fightId,
+                inProgress: false,
                 startTime: 1000,
               },
             ],
@@ -108,8 +112,18 @@ function makeStubQuery(responses: ReadonlyArray<StubResponse>) {
   return { query, sent };
 }
 
-function runWithTestClock<A, Err>(effect: E.Effect<A, Err>) {
-  return runTest(effect.pipe(E.provide(TestClock.layer())));
+function runWithTestClock<A, Err>(
+  effect: E.Effect<A, Err, FellowshipLogsResponseCache>,
+) {
+  return runTest(
+    effect.pipe(
+      E.provideService(
+        FellowshipLogsResponseCache,
+        passThroughFellowshipLogsResponseCache,
+      ),
+      E.provide(TestClock.layer()),
+    ),
+  );
 }
 
 describe("Fellowship Logs rate-limit gate", () => {

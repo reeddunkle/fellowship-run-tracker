@@ -7,10 +7,6 @@ type BackgroundJobCategory = {
   readonly label: string;
 };
 
-/*
- * Categories in display order. Every job kind maps to exactly one category
- * (see `BACKGROUND_JOB_CATEGORY_BY_KIND`).
- */
 const BACKGROUND_JOB_CATEGORIES = {
   "fellowship-logs-import": {
     label: "Fellowship Logs imports",
@@ -19,7 +15,6 @@ const BACKGROUND_JOB_CATEGORIES = {
 
 export type BackgroundJobCategoryId = keyof typeof BACKGROUND_JOB_CATEGORIES;
 
-// Adding a job kind fails to compile until it's given a category.
 const BACKGROUND_JOB_CATEGORY_BY_KIND = {
   ImportFellowshipLogsDungeonRun: "fellowship-logs-import",
 } as const satisfies Record<
@@ -39,11 +34,6 @@ export function getBackgroundJobCategoryId(
   return BACKGROUND_JOB_CATEGORY_BY_KIND[job.kind];
 }
 
-/**
- * Buckets jobs by category, in category display order. Jobs keep their queue
- * order (the order the API lists them in) within each bucket. Empty
- * categories are left out.
- */
 export function groupBackgroundJobsByCategory(
   jobs: ReadonlyArray<BackgroundJobApiItem>,
 ): ReadonlyArray<BackgroundJobGroup> {
@@ -64,21 +54,15 @@ export function groupBackgroundJobsByCategory(
   });
 }
 
+// TODO: State machine
 type BackgroundJobSummaryState = "failed" | "idle" | "running" | "waiting";
 
 export type BackgroundJobSummary = {
-  /** Queued, running and waiting jobs. */
   readonly activeCount: number;
-  /** Failed jobs the user hasn't dismissed or retried. */
   readonly failedCount: number;
   readonly queuedCount: number;
   readonly runningJob: BackgroundJobApiItem | undefined;
-  /**
-   * `failed` takes precedence over `running`, which takes precedence over
-   * `waiting` (nothing running, but a job is waiting to continue).
-   */
   readonly state: BackgroundJobSummaryState;
-  /** Jobs waiting before they can continue, e.g. for points to reset. */
   readonly waitingCount: number;
 };
 

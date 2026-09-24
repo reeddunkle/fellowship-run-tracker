@@ -64,7 +64,6 @@ export const pruneLogFiles = E.fn("pruneLogFiles")(function* ({
       return fileSystem.stat(filePath).pipe(
         E.map((info): LogFile => {
           const modifiedAtEpochMilliseconds = Option.match(info.mtime, {
-            // Without a modified time, treat the file as new.
             onNone: () => nowEpochMilliseconds,
             onSome: (mtime) => mtime.getTime(),
           });
@@ -124,7 +123,6 @@ export const pruneLogFiles = E.fn("pruneLogFiles")(function* ({
     }),
   );
 
-  // One slot is taken by the current session's file.
   const filesOverCap = logFiles
     .filter((logFile) => {
       return !deletedByAge.has(logFile.path);

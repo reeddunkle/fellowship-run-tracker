@@ -11,8 +11,6 @@ function describeRunningJob(job: BackgroundJobApiItem): string {
   const progress =
     job.progress === null ? "" : ` — ${Math.round(job.progress * 100)}%`;
 
-  // The nav shows on pages without the Fellowship catalog, so jobs are named
-  // by what's in their payload rather than by dungeon name.
   const name = Match.value(job).pipe(
     Match.discriminatorsExhaustive("kind")({
       ImportFellowshipLogsDungeonRun: ({ payload }) => {

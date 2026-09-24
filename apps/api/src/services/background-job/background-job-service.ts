@@ -18,7 +18,6 @@ import { type BackgroundJobId } from "@frt/shared/validation/background-job/back
 
 export type VisibleBackgroundJob = {
   readonly job: BackgroundJobModel;
-  /** From 0 to 1 while running and reporting progress, otherwise `null`. */
   readonly progress: number | null;
 };
 
@@ -36,18 +35,12 @@ type BackgroundJobCommandError =
   | BackgroundJobNotFoundError;
 
 export type BackgroundJobServiceShape = {
-  /**
-   * Removes a queued job, or interrupts a running one. An interrupted import
-   * rolls back its transaction, so nothing partial is left behind.
-   */
   readonly cancel: (
     options: BackgroundJobIdOptions,
   ) => E.Effect<void, BackgroundJobCommandError>;
 
-  /** Emits the current revision, then each new one after any job changes. */
   readonly changes: Stream.Stream<number>;
 
-  /** Removes a failed or succeeded job. */
   readonly dismiss: (
     options: BackgroundJobIdOptions,
   ) => E.Effect<void, BackgroundJobCommandError>;
@@ -57,22 +50,16 @@ export type BackgroundJobServiceShape = {
     BackgroundJobError
   >;
 
-  /**
-   * Durably records a job and wakes its queue's worker. Resolves once the job
-   * is committed, before it runs.
-   */
   readonly offer: (
     job: BackgroundJob,
   ) => E.Effect<OfferBackgroundJobResult, BackgroundJobError>;
 
-  /** Queues a failed job again. */
   readonly retry: (
     options: BackgroundJobIdOptions,
   ) => E.Effect<BackgroundJobModel, BackgroundJobCommandError>;
 
   readonly revision: E.Effect<number>;
 
-  /** Unique per process, so clients can tell a restarted API apart. */
   readonly sessionId: string;
 };
 

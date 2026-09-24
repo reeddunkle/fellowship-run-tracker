@@ -13,8 +13,6 @@ import {
 } from "@frt/api/services/api/websocket-broadcaster-service.ts";
 import { BackgroundJobService } from "@frt/api/services/background-job/background-job-service.ts";
 
-// The API services queue and manage jobs through this one instance, which also
-// runs the queue workers.
 const ApiServicesWithBackgroundJobsLayer = ApiServicesLayer.pipe(
   Layer.provideMerge(BackgroundJobService.layer),
 );
@@ -29,10 +27,6 @@ const ApiRuntimeLayer = Layer.mergeAll(
   NodeApiHttpServerLayer,
 );
 
-/*
- * The HTTP/WebSocket API with its services. Requires persistence, which the
- * entrypoint provides.
- */
 export const ApiLayer = Layer.mergeAll(ApiServer, ApiLifecycleLayer).pipe(
   Layer.provide(ApiRuntimeLayer),
 );

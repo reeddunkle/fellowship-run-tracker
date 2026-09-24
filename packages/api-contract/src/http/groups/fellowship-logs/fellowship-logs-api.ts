@@ -64,7 +64,6 @@ const GetFellowshipLogsLastKnownRateLimitDataEndpoint = HttpApiEndpoint.get(
   },
 );
 
-// Responds once the import is durably queued, before it runs.
 const QueueFellowshipLogsDungeonRunImportEndpoint = HttpApiEndpoint.post(
   "queueFellowshipLogsDungeonRunImport",
   `${FELLOWSHIP_LOGS_ROUTE}/import-jobs`,

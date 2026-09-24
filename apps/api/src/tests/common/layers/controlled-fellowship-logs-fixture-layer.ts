@@ -1,59 +1,232 @@
 import * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
+import * as FileSystem from "effect/FileSystem";
 import * as Layer from "effect/Layer";
+import * as Path from "effect/Path";
+import * as Schema from "effect/Schema";
 import * as Stream from "effect/Stream";
 
-import { FellowshipLogsRateLimitExceededError } from "@frt/api/errors/fellowship-logs-error.ts";
+import {
+  FellowshipLogsRateLimitExceededError,
+  FellowshipLogsRequestError,
+} from "@frt/api/errors/fellowship-logs-error.ts";
 import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
-import { FELLOWSHIP_LOGS_FIXTURE_DIRECTORY } from "@frt/api/services/fellowship-logs/fellowship-logs-fixture-paths.ts";
+import { FellowshipLogsResponseCache } from "@frt/api/services/fellowship-logs/cache/fellowship-logs-response-cache-service.ts";
+import {
+  FELLOWSHIP_LOGS_FIXTURE_DIRECTORY,
+  getFellowshipLogsReportFixtureDirectory,
+} from "@frt/api/services/fellowship-logs/fellowship-logs-fixture-paths.ts";
 import {
   FellowshipLogs,
   type FellowshipLogsService,
+  type Query,
 } from "@frt/api/services/fellowship-logs/fellowship-logs-service.ts";
-import { makeFellowshipLogsFixture } from "@frt/api/services/fellowship-logs/make-fellowship-logs-fixture.ts";
+import { makeFellowshipLogsServiceFromQuery } from "@frt/api/services/fellowship-logs/make-fellowship-logs.ts";
+import { FellowshipLogsDungeonRunMetadataResponseDataSchema } from "@frt/api/services/fellowship-logs/validation/fellowship-logs-dungeon-run-metadata-schema.ts";
+import { makeFellowshipLogsGraphQLResponseSchema } from "@frt/api/services/fellowship-logs/validation/fellowship-logs-graphql-schema.ts";
+import { FellowshipLogsReportResponseDataSchema } from "@frt/api/services/fellowship-logs/validation/fellowship-logs-report-schema.ts";
+import { FellowshipLogsFightIdSchema } from "@frt/shared/validation/fellowship-logs/fellowship-logs-fight-id-schema.ts";
+import { FellowshipLogsReportCodeSchema } from "@frt/shared/validation/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
-/**
- * Controls and records what the controlled fixture fetches. Tests change it
- * between calls.
- */
+export const RECORDED_FIGHT = {
+  fightId: Schema.decodeSync(FellowshipLogsFightIdSchema)(15),
+  reportCode: Schema.decodeSync(FellowshipLogsReportCodeSchema)(
+    "XdfFZzgHBJNr6m3v",
+  ),
+};
+
+export const RECORDED_FIGHT_PAGE_COUNT = 13;
+
 export type FellowshipLogsFetchControl = {
-  /**
-   * Run out of points instead of fetching more than this many pages in one
-   * go. `undefined` fetches every page.
-   */
   failAfterPages: number | undefined;
-  /** How long after the failure the points reset. */
   failureResetDelayMilliseconds: number;
-  /** Reported in place of each page's real revision. */
+  isInProgress: boolean;
   overrideRevision: number | undefined;
   pagesFetched: number;
-  /** The `startTime` each page stream was asked to start from. */
-  startTimes: Array<number | undefined>;
+  requests: Array<string>;
 };
 
 export function makeFellowshipLogsFetchControl(): FellowshipLogsFetchControl {
   return {
     failAfterPages: undefined,
     failureResetDelayMilliseconds: 0,
+    isInProgress: false,
     overrideRevision: undefined,
     pagesFetched: 0,
-    startTimes: [],
+    requests: [],
   };
 }
 
-/**
- * The recorded-fixture Fellowship Logs service, with page fetching that a test
- * can count, cut short, or tamper with through `control`.
- */
+const MetadataResponseJsonSchema =
+  FellowshipLogsDungeonRunMetadataResponseDataSchema.pipe(
+    makeFellowshipLogsGraphQLResponseSchema,
+    Schema.fromJsonString,
+  );
+
+const ReportPageResponseJsonSchema =
+  FellowshipLogsReportResponseDataSchema.pipe(
+    makeFellowshipLogsGraphQLResponseSchema,
+    Schema.fromJsonString,
+  );
+
+const RequestVariablesSchema = Schema.Struct({
+  startTime: Schema.optional(Schema.Number),
+});
+
+function getQueryName(query: string) {
+  return /query\s+(\w+)/.exec(query)?.[1] ?? "RateLimitData";
+}
+
+const makeRecordedFightQuery = E.fn("test.makeRecordedFightQuery")(function* (
+  control: FellowshipLogsFetchControl,
+) {
+  const fileSystem = yield* FileSystem.FileSystem;
+  const path = yield* Path.Path;
+
+  const directory = getFellowshipLogsReportFixtureDirectory({
+    fixtureDirectory: FELLOWSHIP_LOGS_FIXTURE_DIRECTORY,
+    options: RECORDED_FIGHT,
+    path,
+  });
+
+  const readFixture = (filename: string) => {
+    return fileSystem
+      .readFileString(path.join(directory, filename))
+      .pipe(E.orDie);
+  };
+
+  const metadata = yield* readFixture("metadata.json").pipe(
+    E.flatMap(Schema.decodeEffect(MetadataResponseJsonSchema)),
+    E.orDie,
+  );
+
+  const pages = yield* E.forEach(
+    Array.from({ length: RECORDED_FIGHT_PAGE_COUNT }, (_, index) => index + 1),
+    (pageNumber) => {
+      return readFixture(`page-${pageNumber}.json`).pipe(
+        E.flatMap(Schema.decodeEffect(ReportPageResponseJsonSchema)),
+        E.orDie,
+      );
+    },
+  );
+
+  const report = metadata.data?.reportData.report;
+  const fight = report?.fights[0];
+
+  if (report === undefined || report === null || fight === undefined) {
+    return yield* E.die(new Error("The recorded fight has no metadata."));
+  }
+
+  const pagesByStartTime = new Map(
+    pages.map((page, index) => {
+      const previous = pages[index - 1];
+      const startTime =
+        previous === undefined
+          ? fight.startTime
+          : previous.data?.reportData.report?.events.nextPageTimestamp;
+
+      return [startTime, page] as const;
+    }),
+  );
+
+  const getBody = (queryName: string, variables: unknown) => {
+    const withFight = {
+      ...fight,
+      inProgress: control.isInProgress,
+    };
+
+    switch (queryName) {
+      case "GetDungeonRunMetadata": {
+        return E.succeed({
+          ...metadata,
+          data: {
+            ...metadata.data,
+            reportData: { report: { ...report, fights: [withFight] } },
+          },
+        });
+      }
+      case "GetFight": {
+        return E.succeed({
+          ...metadata,
+          data: {
+            ...metadata.data,
+            reportData: {
+              report: { endTime: report.endTime, fights: [withFight] },
+            },
+          },
+        });
+      }
+      case "GetDungeonRunReport": {
+        return Schema.decodeUnknownEffect(RequestVariablesSchema)(
+          variables,
+        ).pipe(
+          E.orDie,
+          E.flatMap(({ startTime }) => {
+            const page = pagesByStartTime.get(startTime);
+            const pageReport = page?.data?.reportData.report;
+
+            if (page === undefined || pageReport === undefined) {
+              return E.die(new Error(`No recorded page at ${startTime}.`));
+            }
+
+            control.pagesFetched += 1;
+
+            return E.succeed(
+              control.overrideRevision === undefined || pageReport === null
+                ? page
+                : {
+                    ...page,
+                    data: {
+                      ...page.data,
+                      reportData: {
+                        report: {
+                          ...pageReport,
+                          revision: control.overrideRevision,
+                        },
+                      },
+                    },
+                  },
+            );
+          }),
+        );
+      }
+      default: {
+        return E.succeed({
+          data: { rateLimitData: metadata.data?.rateLimitData },
+        });
+      }
+    }
+  };
+
+  const query: Query = (request, responseSchema) => {
+    return E.gen(function* () {
+      const queryName = getQueryName(request.query);
+
+      control.requests.push(queryName);
+
+      const body = yield* getBody(queryName, request.variables);
+
+      return yield* Schema.decodeUnknownEffect(
+        makeFellowshipLogsGraphQLResponseSchema(responseSchema),
+      )(body).pipe(
+        E.mapError((cause) => {
+          return new FellowshipLogsRequestError({ cause, operation: "Query" });
+        }),
+      );
+    });
+  };
+
+  return query;
+});
+
 export function makeControlledFellowshipLogsFixtureLayer(
   control: FellowshipLogsFetchControl,
 ) {
   return Layer.effect(
     FellowshipLogs,
     E.gen(function* () {
-      const fixture = yield* makeFellowshipLogsFixture({
-        fixtureDirectory: FELLOWSHIP_LOGS_FIXTURE_DIRECTORY,
-      });
+      const query = yield* makeRecordedFightQuery(control);
+      const fellowshipLogs = yield* makeFellowshipLogsServiceFromQuery(query);
 
       const runOutOfPoints = DateTime.now.pipe(
         E.flatMap((now) => {
@@ -71,30 +244,24 @@ export function makeControlledFellowshipLogsFixtureLayer(
       const streamReportPages: FellowshipLogsService["streamReportPages"] = (
         options,
       ) => {
-        control.startTimes.push(options.startTime);
-
-        return fixture.streamReportPages(options).pipe(
+        return fellowshipLogs.streamReportPages(options).pipe(
           Stream.zipWithIndex,
           Stream.mapEffect(([page, index]) => {
-            if (
-              control.failAfterPages !== undefined &&
+            return control.failAfterPages !== undefined &&
               index >= control.failAfterPages
-            ) {
-              return runOutOfPoints;
-            }
-
-            control.pagesFetched += 1;
-
-            return E.succeed(
-              control.overrideRevision === undefined
-                ? page
-                : { ...page, revision: control.overrideRevision },
-            );
+              ? runOutOfPoints
+              : E.succeed(page);
           }),
         );
       };
 
-      return { ...fixture, streamReportPages } satisfies FellowshipLogsService;
+      return {
+        ...fellowshipLogs,
+        streamReportPages,
+      } satisfies FellowshipLogsService;
     }),
-  ).pipe(Layer.provide(NodePlatformLayer));
+  ).pipe(
+    Layer.provide(FellowshipLogsResponseCache.layer),
+    Layer.provide(NodePlatformLayer),
+  );
 }

@@ -55,15 +55,10 @@ const VISIBLE_QUEUE_NAMES = QUEUE_NAMES.filter((queue) => {
   return BACKGROUND_JOB_QUEUES[queue].isVisible;
 });
 
-// Keeps a worker from spinning if the database keeps failing.
 const WORKER_ERROR_DELAY = "1 second";
 
-// Keeps a worker from spinning if a waiting job is due but can't be claimed
-// yet (e.g. the clock moved backwards).
 const MIN_WAITING_JOB_DELAY_MILLISECONDS = 100;
 
-// Recording a job's outcome is retried briefly, so a transient database error
-// doesn't leave the job stuck as RUNNING for the rest of the session.
 const SETTLE_RETRY_SCHEDULE = Schedule.exponential("100 millis");
 
 const SETTLE_RETRY_TIMES = 3;
@@ -133,8 +128,6 @@ export const makeBackgroundJobService = E.gen(function* () {
   const sessionId = String(DateTime.toEpochMillis(SESSION_STARTED_AT));
   const revisionRef = yield* SubscriptionRef.make(0);
 
-  // Each worker waits on its queue's latch while the queue is empty. Anything
-  // that queues a job opens the latch.
   const latches = R.map(BACKGROUND_JOB_QUEUES, () => {
     return Latch.makeUnsafe(true);
   });
@@ -145,13 +138,8 @@ export const makeBackgroundJobService = E.gen(function* () {
   >();
   const cancelRequests = new Set<BackgroundJobId>();
 
-  // Serializes changes to `runningFibers` and `cancelRequests` between the
-  // workers and `cancel`, so a cancel is never lost or left behind to act on
-  // a later retry of the same job.
   const stateLock = yield* Semaphore.make(1);
 
-  // Progress of running jobs, from 0 to 1. Kept in memory only: after a
-  // restart a resumed job starts again from the beginning anyway.
   const progressById = new Map<BackgroundJobId, number>();
 
   const bumpRevision = SubscriptionRef.update(revisionRef, (revision) => {
@@ -177,8 +165,6 @@ export const makeBackgroundJobService = E.gen(function* () {
     }
 
     if (Cause.hasInterruptsOnly(exit.cause)) {
-      // `cancel` records its request before interrupting, and the request is
-      // only cleared once the job is released after settling.
       if (cancelRequests.has(job.id)) {
         yield* E.logInfo("Cancelled a running background job.");
 
@@ -188,8 +174,6 @@ export const makeBackgroundJobService = E.gen(function* () {
         });
       }
 
-      // Only reachable during shutdown. The job stays RUNNING so the next
-      // session's recovery queues it again.
       return;
     }
 
@@ -221,9 +205,6 @@ export const makeBackgroundJobService = E.gen(function* () {
     return yield* backgroundJobDAO.markFailed({ error, id: job.id });
   });
 
-  // Forgets a job's in-memory state once its outcome is recorded. Until then
-  // it stays in `runningFibers`, so a racing `cancel` can't mistake a job
-  // that's finishing for one that hasn't started.
   const releaseJob = (id: BackgroundJobId) => {
     return stateLock.withPermit(
       E.sync(() => {
@@ -256,9 +237,6 @@ export const makeBackgroundJobService = E.gen(function* () {
       }).pipe(E.andThen(bumpRevision));
     };
 
-    // Forked as a child so shutting down the worker also stops the job, and so
-    // `cancel` can interrupt just this job. Checking for a cancel and
-    // registering the fiber happen together under the lock.
     const fiber = yield* stateLock.withPermit(
       E.gen(function* () {
         if (cancelRequests.delete(claimed.id)) {
@@ -266,7 +244,6 @@ export const makeBackgroundJobService = E.gen(function* () {
         }
 
         const forked = yield* runBackgroundJob(decoded.success, {
-          jobId: claimed.id,
           reportProgress,
         }).pipe(E.forkChild);
 
@@ -276,7 +253,6 @@ export const makeBackgroundJobService = E.gen(function* () {
       }),
     );
 
-    // Cancelled between being claimed and starting.
     if (fiber === undefined) {
       return yield* backgroundJobDAO.delete({
         id: claimed.id,
@@ -292,8 +268,6 @@ export const makeBackgroundJobService = E.gen(function* () {
     );
   });
 
-  // Waits for something to claim: a new or retried job (the latch), or the
-  // next waiting job's time coming round.
   const awaitWork = E.fn("BackgroundJobService.awaitWork")(function* (
     queue: BackgroundJobQueueName,
   ) {
@@ -324,8 +298,6 @@ export const makeBackgroundJobService = E.gen(function* () {
     const { holdWhileWaiting } = BACKGROUND_JOB_QUEUES[queue];
 
     return E.gen(function* () {
-      // Close before claiming, so an offer that lands after an empty claim
-      // reopens the latch rather than being missed.
       yield* latch.close;
 
       const claimed = yield* backgroundJobDAO.claimNext({
@@ -349,8 +321,6 @@ export const makeBackgroundJobService = E.gen(function* () {
 
       yield* bumpRevision;
     }).pipe(
-      // Catch defects too: one unexpected failure mustn't stop the queue for
-      // the rest of the session. Interruption (shutdown) still ends the loop.
       E.catchCause((cause) => {
         return Cause.hasInterruptsOnly(cause)
           ? E.failCause(cause)
@@ -363,8 +333,6 @@ export const makeBackgroundJobService = E.gen(function* () {
     );
   };
 
-  // Jobs still RUNNING were cut off when the app last closed. Queue them again
-  // before the workers start.
   yield* E.forEach(
     QUEUE_NAMES,
     (queue) => {
@@ -420,13 +388,11 @@ export const makeBackgroundJobService = E.gen(function* () {
     );
   };
 
+  // TODO: Review lock handling
   const cancel: BackgroundJobServiceShape["cancel"] = ({ id }) => {
     return E.gen(function* () {
       const fiberToInterrupt = yield* stateLock.withPermit(
         E.gen(function* () {
-          // Read under the lock: a finishing job keeps its fiber registered
-          // until its outcome is recorded, so a RUNNING row with no fiber is
-          // a job that hasn't started yet.
           const job = yield* backgroundJobDAO.getById({ id });
 
           if (
@@ -458,9 +424,6 @@ export const makeBackgroundJobService = E.gen(function* () {
 
               return undefined;
             }
-
-            // A worker claimed it in the meantime. It can't start while the
-            // lock is held, so it sees the request below before running.
           }
 
           cancelRequests.add(id);
@@ -469,8 +432,6 @@ export const makeBackgroundJobService = E.gen(function* () {
         }),
       );
 
-      // Interrupt outside the lock: the job's worker takes the lock to
-      // release the job once it has settled.
       if (fiberToInterrupt !== undefined) {
         yield* Fiber.interrupt(fiberToInterrupt);
       }

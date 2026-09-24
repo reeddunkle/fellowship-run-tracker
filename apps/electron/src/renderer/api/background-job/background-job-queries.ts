@@ -107,7 +107,6 @@ export function useBackgroundJobGroupsSuspense() {
   return data;
 }
 
-/** One category's jobs, in queue order. */
 export function useBackgroundJobCategorySuspense(
   categoryId: BackgroundJobCategoryId,
 ) {
@@ -122,7 +121,6 @@ export function useBackgroundJobCategorySuspense(
   return data;
 }
 
-/** Doesn't suspend, so it can live in the always-visible nav. */
 export function useBackgroundJobSummary() {
   const { data } = useQuery({
     ...getBackgroundJobsQueryOptions(),

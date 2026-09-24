@@ -9,14 +9,13 @@ import {
 
 import { getFellowshipLogsLastKnownRateLimitDataQueryOptions } from "./fellowship-logs-queries.ts";
 
-// Countdowns are shown in whole minutes, so a few seconds of lag is fine.
 const CLOCK_INTERVAL_MILLISECONDS = 5_000;
 
 function getNowMilliseconds() {
   return DateTime.toEpochMillis(DateTime.nowUnsafe());
 }
 
-/** The current time, updated every few seconds. */
+// TODO: Remove `useEffect`
 export function useNowMilliseconds(): number {
   const [nowMilliseconds, setNowMilliseconds] = useState(getNowMilliseconds);
 
@@ -35,14 +34,9 @@ export function useNowMilliseconds(): number {
 
 type FellowshipLogsRateLimitStatusResult = {
   readonly nowMilliseconds: number;
-  /** `null` until any rate-limit data has been seen this session. */
   readonly status: FellowshipLogsRateLimitStatus | null;
 };
 
-/**
- * The last known rate limit, re-read as time passes so an exhausted limit
- * clears itself once the points reset.
- */
 export function useFellowshipLogsRateLimitStatus(): FellowshipLogsRateLimitStatusResult {
   const nowMilliseconds = useNowMilliseconds();
   const { data } = useQuery(

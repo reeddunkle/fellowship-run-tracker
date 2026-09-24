@@ -2,13 +2,21 @@ import * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Redacted from "effect/Redacted";
+import * as Ref from "effect/Ref";
 import * as Stream from "effect/Stream";
 
 import {
   FellowshipLogsGraphQLResponseError,
+  FellowshipLogsReportChangedError,
   FellowshipLogsRequestError,
 } from "@frt/api/errors/fellowship-logs-error.ts";
 import { AppSettings } from "@frt/api/services/app-settings/app-settings-service.ts";
+import {
+  getFightResponseExpiresAt,
+  getReportPageResponseExpiresAt,
+  makeFellowshipLogsResponseKey,
+} from "@frt/api/services/fellowship-logs/cache/fellowship-logs-cache-policy.ts";
+import { FellowshipLogsResponseCache } from "@frt/api/services/fellowship-logs/cache/fellowship-logs-response-cache-service.ts";
 import { streamFellowshipLogsEvents } from "@frt/api/services/fellowship-logs/events/stream-fellowship-logs-events.ts";
 import { makeFellowshipLogsHttpQuery } from "@frt/api/services/fellowship-logs/fellowship-logs-http-query.ts";
 import {
@@ -49,12 +57,15 @@ import { FellowshipLogsReportResponseDataSchema } from "./validation/fellowship-
 
 type GetReportPageOptions = {
   readonly endTime: number;
+  readonly fightId: FellowshipLogsFightId;
+  readonly isCacheable: boolean;
   readonly reportCode: FellowshipLogsReportCode;
   readonly startTime: number;
 };
 
 export function makeFellowshipLogsServiceFromQuery(query: Query) {
   return E.gen(function* () {
+    const responseCache = yield* FellowshipLogsResponseCache;
     const rateLimitTracker = yield* makeFellowshipLogsRateLimitDataTracker();
     const trackedQuery = makeTrackedQuery(query, rateLimitTracker);
 
@@ -63,22 +74,37 @@ export function makeFellowshipLogsServiceFromQuery(query: Query) {
         fightId,
         reportCode,
       }) {
-        const responseData = yield* trackedQuery(
+        const responseData = yield* responseCache.cached(
           {
-            query: makeQuery({
-              name: "GetDungeonRunMetadata",
-              selections: [
-                DUNGEON_RUN_METADATA_SELECTION,
-                RATE_LIMIT_DATA_SELECTION,
-              ],
-              variables: DUNGEON_RUN_METADATA_VARIABLES,
-            }),
-            variables: {
-              fightId,
-              reportCode,
+            fightId,
+            getExpiresAt: (data, now) => {
+              return getFightResponseExpiresAt({ data, fightId, now });
             },
+            key: makeFellowshipLogsResponseKey("DUNGEON_RUN_METADATA", [
+              reportCode,
+              fightId,
+            ]),
+            operation: "DUNGEON_RUN_METADATA",
+            reportCode,
+            schema: FellowshipLogsDungeonRunMetadataResponseDataSchema,
           },
-          FellowshipLogsDungeonRunMetadataResponseDataSchema,
+          trackedQuery(
+            {
+              query: makeQuery({
+                name: "GetDungeonRunMetadata",
+                selections: [
+                  DUNGEON_RUN_METADATA_SELECTION,
+                  RATE_LIMIT_DATA_SELECTION,
+                ],
+                variables: DUNGEON_RUN_METADATA_VARIABLES,
+              }),
+              variables: {
+                fightId,
+                reportCode,
+              },
+            },
+            FellowshipLogsDungeonRunMetadataResponseDataSchema,
+          ),
         );
 
         const metadata = yield* deriveDungeonRunMetadata({
@@ -91,6 +117,7 @@ export function makeFellowshipLogsServiceFromQuery(query: Query) {
           dungeonId: metadata.dungeonId,
           dungeonLevel: metadata.dungeonLevel,
           endedAt: DateTime.makeUnsafe(metadata.endedAtMilliseconds),
+          isInProgress: metadata.isInProgress,
           startedAt: DateTime.makeUnsafe(metadata.startedAtMilliseconds),
         };
       });
@@ -102,7 +129,6 @@ export function makeFellowshipLogsServiceFromQuery(query: Query) {
         return rateLimitTracker.getLastKnown();
       }
 
-      // Not checked against the limit, so points can always be looked up.
       return trackedQuery(
         {
           query: RATE_LIMIT_DATA_QUERY,
@@ -119,15 +145,27 @@ export function makeFellowshipLogsServiceFromQuery(query: Query) {
       readonly fightId: FellowshipLogsFightId;
       readonly reportCode: FellowshipLogsReportCode;
     }) {
-      const responseData = yield* trackedQuery(
+      const responseData = yield* responseCache.cached(
         {
-          query: GET_FIGHT_QUERY,
-          variables: {
-            fightId,
-            reportCode,
+          fightId,
+          getExpiresAt: (data, now) => {
+            return getFightResponseExpiresAt({ data, fightId, now });
           },
+          key: makeFellowshipLogsResponseKey("FIGHT", [reportCode, fightId]),
+          operation: "FIGHT",
+          reportCode,
+          schema: FellowshipLogsFightResponseDataSchema,
         },
-        FellowshipLogsFightResponseDataSchema,
+        trackedQuery(
+          {
+            query: GET_FIGHT_QUERY,
+            variables: {
+              fightId,
+              reportCode,
+            },
+          },
+          FellowshipLogsFightResponseDataSchema,
+        ),
       );
 
       const report = yield* getReportOrFail({
@@ -144,10 +182,12 @@ export function makeFellowshipLogsServiceFromQuery(query: Query) {
 
     const getReportPage = E.fn("FellowshipLogs.getReportPage")(function* ({
       endTime,
+      fightId,
+      isCacheable,
       reportCode,
       startTime,
     }: GetReportPageOptions) {
-      const responseData = yield* trackedQuery(
+      const fetchReportPage = trackedQuery(
         {
           query: makeQuery({
             name: "GetDungeonRunReport",
@@ -162,6 +202,27 @@ export function makeFellowshipLogsServiceFromQuery(query: Query) {
         },
         FellowshipLogsReportResponseDataSchema,
       );
+
+      const responseData = isCacheable
+        ? yield* responseCache.cached(
+            {
+              fightId,
+              getExpiresAt: getReportPageResponseExpiresAt,
+              getReportRevision: (data) => {
+                return data.reportData.report?.revision ?? null;
+              },
+              key: makeFellowshipLogsResponseKey("REPORT_PAGE", [
+                reportCode,
+                startTime,
+                endTime,
+              ]),
+              operation: "REPORT_PAGE",
+              reportCode,
+              schema: FellowshipLogsReportResponseDataSchema,
+            },
+            fetchReportPage,
+          )
+        : yield* fetchReportPage;
 
       const report = yield* getReportOrFail({
         report: responseData.reportData.report,
@@ -183,7 +244,6 @@ export function makeFellowshipLogsServiceFromQuery(query: Query) {
       fightId,
       onProgress,
       reportCode,
-      startTime: resumeStartTime,
     }) => {
       return Stream.unwrap(
         E.gen(function* () {
@@ -192,35 +252,62 @@ export function makeFellowshipLogsServiceFromQuery(query: Query) {
             reportCode,
           });
 
-          return Stream.paginate(
-            resumeStartTime ?? fight.startTime,
-            (startTime) => {
-              return getReportPage({
-                endTime: fight.endTime,
-                reportCode,
-                startTime,
-              }).pipe(
-                E.tap((reportPage) => {
-                  return onProgress === undefined
-                    ? E.void
-                    : onProgress(
-                        getReportPageProgress({
-                          endTime: fight.endTime,
-                          nextPageTimestamp:
-                            reportPage.events.nextPageTimestamp,
-                          startTime: fight.startTime,
-                        }),
-                      );
-                }),
-                E.map((reportPage) => {
-                  return [
-                    [reportPage],
-                    Option.fromNullishOr(reportPage.events.nextPageTimestamp),
-                  ] as const;
-                }),
-              );
-            },
-          );
+          const firstRevisionRef = yield* Ref.make(Option.none<number>());
+
+          const checkRevision = (revision: number) => {
+            if (!fight.inProgress) {
+              return E.void;
+            }
+
+            return Ref.modify(firstRevisionRef, (firstRevision) => {
+              return Option.match(firstRevision, {
+                onNone: () => [true, Option.some(revision)] as const,
+                onSome: (first) => [first === revision, firstRevision] as const,
+              });
+            }).pipe(
+              E.flatMap((isUnchanged) => {
+                return isUnchanged
+                  ? E.void
+                  : E.fail(
+                      new FellowshipLogsReportChangedError({
+                        fightId,
+                        reportCode,
+                      }),
+                    );
+              }),
+            );
+          };
+
+          return Stream.paginate(fight.startTime, (startTime) => {
+            return getReportPage({
+              endTime: fight.endTime,
+              fightId,
+              isCacheable: !fight.inProgress,
+              reportCode,
+              startTime,
+            }).pipe(
+              E.tap((reportPage) => {
+                return checkRevision(reportPage.revision);
+              }),
+              E.tap((reportPage) => {
+                return onProgress === undefined
+                  ? E.void
+                  : onProgress(
+                      getReportPageProgress({
+                        endTime: fight.endTime,
+                        nextPageTimestamp: reportPage.events.nextPageTimestamp,
+                        startTime: fight.startTime,
+                      }),
+                    );
+              }),
+              E.map((reportPage) => {
+                return [
+                  [reportPage],
+                  Option.fromNullishOr(reportPage.events.nextPageTimestamp),
+                ] as const;
+              }),
+            );
+          });
         }),
       );
     };

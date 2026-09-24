@@ -1,7 +1,6 @@
 import { cn } from "@frt/ui/class-names.ts";
 
 type ProgressProps = Omit<React.ComponentProps<"div">, "children"> & {
-  /** From 0 to 1. */
   readonly value: number;
 };
 

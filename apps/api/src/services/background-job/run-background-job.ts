@@ -12,31 +12,18 @@ import { pruneLogFiles } from "@frt/api/logging/prune-log-files.ts";
 import { HIDDEN_BACKGROUND_JOB_QUEUE_NAMES } from "@frt/api/services/background-job/background-job-queues.ts";
 import { type BackgroundJob } from "@frt/api/services/background-job/background-job-schema.ts";
 import { DungeonRunRepository } from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
+import { pruneFellowshipLogsCache } from "@frt/api/services/fellowship-logs/cache/prune-fellowship-logs-cache.ts";
 import { BackgroundJobDAO } from "@frt/db/daos/background-job/background-job-dao.ts";
-import { type BackgroundJobId } from "@frt/shared/validation/background-job/background-job-id-schema.ts";
 
-// Request errors are usually transient (network, token refresh), so they get a
-// couple of quick retries, as does a report that changed mid-import (its saved
-// pages are cleared, so the retry starts over). Everything else fails the job
-// straight away.
 const IMPORT_RETRY_SCHEDULE = Schedule.exponential("1 second");
-
 const IMPORT_RETRY_TIMES = 2;
 
-/**
- * Runs one job and returns its JSON result, which is stored on the job row.
- */
 type RunBackgroundJobOptions = {
-  readonly jobId: BackgroundJobId;
-  /** Reports the running job's progress, from 0 to 1. */
   readonly reportProgress: (fraction: number) => E.Effect<void>;
 };
 
 export const runBackgroundJob = E.fn("BackgroundJobService.runBackgroundJob")(
-  function* (
-    job: BackgroundJob,
-    { jobId, reportProgress }: RunBackgroundJobOptions,
-  ) {
+  function* (job: BackgroundJob, { reportProgress }: RunBackgroundJobOptions) {
     const backgroundJobDAO = yield* BackgroundJobDAO;
     const dungeonRunRepository = yield* DungeonRunRepository;
     const fellowshipLogsDungeonRunImporter =
@@ -48,7 +35,6 @@ export const runBackgroundJob = E.fn("BackgroundJobService.runBackgroundJob")(
         ({ fightId, isOwnRun, reportCode }) => {
           return fellowshipLogsDungeonRunImporter
             .importReport({
-              backgroundJobId: jobId,
               fightId,
               isOwnRun,
               onProgress: reportProgress,
@@ -61,12 +47,10 @@ export const runBackgroundJob = E.fn("BackgroundJobService.runBackgroundJob")(
                 while: (error) => {
                   return (
                     error._tag === "FellowshipLogsRequestError" ||
-                    error._tag ===
-                      "FellowshipLogsDungeonRunImportReportChangedError"
+                    error._tag === "FellowshipLogsReportChangedError"
                   );
                 },
               }),
-              // Out of points: wait for them to reset instead of failing.
               E.catchTag("FellowshipLogsRateLimitExceededError", (error) => {
                 return E.fail(
                   new BackgroundJobDeferredError({
@@ -75,9 +59,6 @@ export const runBackgroundJob = E.fn("BackgroundJobService.runBackgroundJob")(
                   }),
                 );
               }),
-              // Already imported means the job's goal is met. This happens
-              // when the app stopped after the import committed but before
-              // the job was marked succeeded, so the resumed job re-runs it.
               E.catchTag(
                 "FellowshipLogsDungeonRunImportAlreadyImportedError",
                 ({ dungeonRunId }) => {
@@ -115,8 +96,6 @@ export const runBackgroundJob = E.fn("BackgroundJobService.runBackgroundJob")(
             statuses: ["SUCCEEDED"],
           });
 
-          // Failures in hidden queues can't be dismissed, so they're pruned
-          // too. Visible failures wait for the user.
           if (A.isReadonlyArrayNonEmpty(HIDDEN_BACKGROUND_JOB_QUEUE_NAMES)) {
             yield* backgroundJobDAO.deleteFinishedBefore({
               finishedBefore,
@@ -125,8 +104,13 @@ export const runBackgroundJob = E.fn("BackgroundJobService.runBackgroundJob")(
             });
           }
 
+          yield* backgroundJobDAO.incrementalVacuum();
+
           return null;
         });
+      }),
+      Match.tag("PruneFellowshipLogsCache", () => {
+        return pruneFellowshipLogsCache.pipe(E.as(null));
       }),
       Match.tag("PruneLogFiles", () => {
         return pruneLogFiles({

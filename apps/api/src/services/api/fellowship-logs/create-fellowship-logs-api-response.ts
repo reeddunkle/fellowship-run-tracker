@@ -16,6 +16,7 @@ export function createFellowshipLogsDungeonRunMetadataApiResponse(
     dungeonId: metadata.dungeonId,
     dungeonLevel: metadata.dungeonLevel,
     endedAtMilliseconds: DateTime.toEpochMillis(metadata.endedAt),
+    isInProgress: metadata.isInProgress,
     startedAtMilliseconds: DateTime.toEpochMillis(metadata.startedAt),
   };
 }

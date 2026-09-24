@@ -48,18 +48,3 @@ export class FellowshipLogsDungeonRunImportAlreadyImportedError extends Data.Tag
     return `The dungeon run in report ${this.reportCode}, fight ${this.fightId}, has already been imported.`;
   }
 }
-
-/*
- * The report changed in Fellowship Logs between fetching some of its pages and
- * the rest, so the saved pages can't be combined with new ones.
- */
-export class FellowshipLogsDungeonRunImportReportChangedError extends Data.TaggedError(
-  "FellowshipLogsDungeonRunImportReportChangedError",
-)<{
-  readonly fightId: FellowshipLogsFightId;
-  readonly reportCode: FellowshipLogsReportCode;
-}> {
-  override get message() {
-    return `Report ${this.reportCode} changed partway through importing fight ${this.fightId}.`;
-  }
-}

@@ -1,19 +1,26 @@
 import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Command from "effect/unstable/cli/Command";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
 
-import { getDatabaseFilename } from "@frt/api/helpers/get-database-filename.ts";
-import { makeDatabaseLayer } from "@frt/db/database-layer.ts";
+import { getDatabaseOptions } from "@frt/api/helpers/get-database-options.ts";
+import { makeFellowshipLogsCacheDatabaseLayer } from "@frt/db/databases/fellowship-logs-cache-database.ts";
+import { makeMainDatabaseLayer } from "@frt/db/databases/main-database.ts";
+import { makeStateDatabaseLayer } from "@frt/db/databases/state-database.ts";
 
-const DatabaseLayer = Layer.unwrap(
-  E.map(getDatabaseFilename(), makeDatabaseLayer),
+const DatabasesLayer = Layer.unwrap(
+  E.map(getDatabaseOptions(), (databaseOptions) => {
+    return Layer.mergeAll(
+      makeMainDatabaseLayer(databaseOptions.databaseFilename),
+      makeStateDatabaseLayer(databaseOptions.stateDatabaseFilename),
+      makeFellowshipLogsCacheDatabaseLayer(
+        databaseOptions.fellowshipLogsCacheDatabaseFilename,
+      ),
+    );
+  }),
 );
 
 const runSetupDatabaseCommand = E.fn("cli.setup-database")(function* () {
-  yield* SqlClient.SqlClient;
-
-  yield* E.logInfo("Database is ready.");
+  yield* E.logInfo("Databases are ready.");
 });
 
 export const setupDatabaseCommand = Command.make(
@@ -21,6 +28,8 @@ export const setupDatabaseCommand = Command.make(
   {},
   runSetupDatabaseCommand,
 ).pipe(
-  Command.withDescription("Create the database if needed and run migrations."),
-  Command.provide(DatabaseLayer),
+  Command.withDescription(
+    "Create the databases if needed and bring their schemas up to date.",
+  ),
+  Command.provide(DatabasesLayer),
 );
