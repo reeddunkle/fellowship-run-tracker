@@ -2,11 +2,11 @@ import * as E from "effect/Effect";
 import * as Schema from "effect/Schema";
 import * as Stream from "effect/Stream";
 
-import { LiveSplitApiService } from "@frt/api/services/api/live-split/live-split-api-service.ts";
 import {
   LiveSplitWebSocketBroadcaster,
   type WebSocketBroadcasterService,
-} from "@frt/api/services/api/websocket-broadcaster-service.ts";
+} from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
+import { LiveSplitApiService } from "@frt/api/services/api/live-split/live-split-api-service.ts";
 import {
   type LiveSplitApiMessage,
   LiveSplitApiMessageSchema,

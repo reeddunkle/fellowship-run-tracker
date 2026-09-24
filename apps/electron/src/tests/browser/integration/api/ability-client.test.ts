@@ -4,7 +4,7 @@ import * as Layer from "effect/Layer";
 import { describe, expect, test } from "vitest";
 
 import { makeApiServerTestLayerWith } from "@frt/api/tests/common/layers/api-server-test-layer.ts";
-import { makeAbilityApiServiceMock } from "@frt/api/tests/common/mocks/ability-api-service-mock.ts";
+import { makeAbilityCatalogMock } from "@frt/api/tests/common/mocks/ability-catalog-mock.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { type AbilityApiAbility } from "@frt/shared/ability/ability-api-schema.ts";
 
@@ -31,13 +31,13 @@ const ability = {
 
 describe("ability client", () => {
   test("gets all abilities", async () => {
-    const abilityApiServiceMock = makeAbilityApiServiceMock({
+    const abilityCatalogMock = makeAbilityCatalogMock({
       getAll: () => {
         return E.succeed([ability]);
       },
     });
 
-    const ApiServerTestLive = makeApiServerTestLayerWith(abilityApiServiceMock);
+    const ApiServerTestLive = makeApiServerTestLayerWith(abilityCatalogMock);
 
     const TestLive = TestAppApiClientTestLive.pipe(
       Layer.provide(ApiServerTestLive),
@@ -55,7 +55,7 @@ describe("ability client", () => {
   });
 
   test("gets an ability", async () => {
-    const abilityApiServiceMock = makeAbilityApiServiceMock({
+    const abilityCatalogMock = makeAbilityCatalogMock({
       getById: ({ id }) => {
         if (id === ABILITY_ID) {
           return E.succeedSome(ability);
@@ -65,7 +65,7 @@ describe("ability client", () => {
       },
     });
 
-    const ApiServerTestLive = makeApiServerTestLayerWith(abilityApiServiceMock);
+    const ApiServerTestLive = makeApiServerTestLayerWith(abilityCatalogMock);
 
     const TestLive = TestAppApiClientTestLive.pipe(
       Layer.provide(ApiServerTestLive),
@@ -85,9 +85,9 @@ describe("ability client", () => {
   });
 
   test("returns NotFound when an ability does not exist", async () => {
-    const abilityApiServiceMock = makeAbilityApiServiceMock();
+    const abilityCatalogMock = makeAbilityCatalogMock();
 
-    const ApiServerTestLive = makeApiServerTestLayerWith(abilityApiServiceMock);
+    const ApiServerTestLive = makeApiServerTestLayerWith(abilityCatalogMock);
 
     const TestLive = TestAppApiClientTestLive.pipe(
       Layer.provide(ApiServerTestLive),

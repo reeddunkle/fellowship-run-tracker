@@ -3,7 +3,7 @@ import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { createConfigurationApiResponse } from "@frt/api/services/api/configuration/create-configuration-api-response.ts";
+import { createConfigurationApiResponse } from "@frt/api/services/configuration-library/create-configuration-api-response.ts";
 import { ConfigurationDAO } from "@frt/db/daos/configuration/configuration-dao.ts";
 import { type ConfigurationDAOError } from "@frt/db/errors/configuration-dao-error.ts";
 import {
@@ -32,7 +32,7 @@ type GetConfigurationByIdOptions = {
   readonly id: ConfigurationId;
 };
 
-export type ConfigurationApiServiceShape = {
+export type ConfigurationLibraryShape = {
   readonly delete: (
     options: DeleteConfigurationOptions,
   ) => E.Effect<void, ConfigurationDAOError>;
@@ -66,16 +66,14 @@ export type ConfigurationApiServiceShape = {
   ) => E.Effect<ConfigurationApiConfiguration, ConfigurationDAOError>;
 };
 
-const makeConfigurationApiService = E.gen(function* () {
+const makeConfigurationLibrary = E.gen(function* () {
   const configurationDAO = yield* ConfigurationDAO;
 
-  const deleteConfiguration: ConfigurationApiServiceShape["delete"] = ({
-    id,
-  }) => {
+  const deleteConfiguration: ConfigurationLibraryShape["delete"] = ({ id }) => {
     return configurationDAO.delete({ id });
   };
 
-  const deleteByDungeonAndLevel: ConfigurationApiServiceShape["deleteByDungeonAndLevel"] =
+  const deleteByDungeonAndLevel: ConfigurationLibraryShape["deleteByDungeonAndLevel"] =
     ({ dungeonId, dungeonLevel }) => {
       return configurationDAO.deleteByDungeonAndLevel({
         dungeonId,
@@ -83,7 +81,7 @@ const makeConfigurationApiService = E.gen(function* () {
       });
     };
 
-  const getAll: ConfigurationApiServiceShape["getAll"] = () => {
+  const getAll: ConfigurationLibraryShape["getAll"] = () => {
     return configurationDAO.getAll().pipe(
       E.map((configurations) => {
         return configurations.map(createConfigurationApiResponse);
@@ -91,13 +89,13 @@ const makeConfigurationApiService = E.gen(function* () {
     );
   };
 
-  const getById: ConfigurationApiServiceShape["getById"] = ({ id }) => {
+  const getById: ConfigurationLibraryShape["getById"] = ({ id }) => {
     return configurationDAO
       .getById({ id })
       .pipe(E.map(Option.map(createConfigurationApiResponse)));
   };
 
-  const save: ConfigurationApiServiceShape["save"] = ({
+  const save: ConfigurationLibraryShape["save"] = ({
     configuration,
     label,
   }) => {
@@ -109,7 +107,7 @@ const makeConfigurationApiService = E.gen(function* () {
       .pipe(E.map(createConfigurationApiResponse));
   };
 
-  const saveReplacingDungeonAndLevel: ConfigurationApiServiceShape["saveReplacingDungeonAndLevel"] =
+  const saveReplacingDungeonAndLevel: ConfigurationLibraryShape["saveReplacingDungeonAndLevel"] =
     ({ configuration, label }) => {
       return configurationDAO
         .saveReplacingDungeonAndLevel({
@@ -119,7 +117,7 @@ const makeConfigurationApiService = E.gen(function* () {
         .pipe(E.map(createConfigurationApiResponse));
     };
 
-  const update: ConfigurationApiServiceShape["update"] = ({
+  const update: ConfigurationLibraryShape["update"] = ({
     configuration,
     id,
     label,
@@ -141,16 +139,16 @@ const makeConfigurationApiService = E.gen(function* () {
     save,
     saveReplacingDungeonAndLevel,
     update,
-  } satisfies ConfigurationApiServiceShape;
+  } satisfies ConfigurationLibraryShape;
 });
 
-export class ConfigurationApiService extends Context.Service<
-  ConfigurationApiService,
-  ConfigurationApiServiceShape
+export class ConfigurationLibrary extends Context.Service<
+  ConfigurationLibrary,
+  ConfigurationLibraryShape
 >()(
-  "@frt/api/services/api/configuration/configuration-api-service/ConfigurationApiService",
+  "@frt/api/services/configuration-library/configuration-library-service/ConfigurationLibrary",
 ) {
-  static readonly layerNoDeps = Layer.effect(this, makeConfigurationApiService);
+  static readonly layerNoDeps = Layer.effect(this, makeConfigurationLibrary);
 
   static readonly layer = this.layerNoDeps.pipe(
     Layer.provide(ConfigurationDAO.layer),

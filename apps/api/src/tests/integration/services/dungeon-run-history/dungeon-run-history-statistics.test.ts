@@ -2,11 +2,11 @@ import * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
 import { describe, expect, test } from "vitest";
 
-import { DungeonRunApiService } from "@frt/api/services/api/dungeon-run/dungeon-run-api-service.ts";
+import { DungeonRunHistory } from "@frt/api/services/dungeon-run-history/dungeon-run-history-service.ts";
 import {
-  makeDungeonRunApiServiceIntegrationTestHarness,
+  makeDungeonRunHistoryIntegrationTestHarness,
   seedDungeonRunWithObservations,
-} from "@frt/api/tests/common/harnesses/dungeon-run-api-service-integration-test-harness.ts";
+} from "@frt/api/tests/common/harnesses/dungeon-run-history-integration-test-harness.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import {
   MOCK_DUNGEON_ID,
@@ -99,16 +99,16 @@ const seedHistoryFixture = E.gen(function* () {
   });
 });
 
-describe("DungeonRunApiService against real seeded data", () => {
+describe("DungeonRunHistory against real seeded data", () => {
   test("computes best/mean/median and run/sample counts per ownership group", async () => {
-    const harness = makeDungeonRunApiServiceIntegrationTestHarness();
+    const harness = makeDungeonRunHistoryIntegrationTestHarness();
 
     const program = E.gen(function* () {
       yield* seedHistoryFixture;
 
-      const dungeonRunApiService = yield* DungeonRunApiService;
+      const dungeonRunHistory = yield* DungeonRunHistory;
 
-      const result = yield* dungeonRunApiService.getHistory({
+      const result = yield* dungeonRunHistory.getHistory({
         dungeonId: MOCK_DUNGEON_ID,
         dungeonLevel: MOCK_DUNGEON_LEVEL,
       });
@@ -157,19 +157,19 @@ describe("DungeonRunApiService against real seeded data", () => {
   });
 
   test("deleting history through the real DAO stack only removes the user's own runs", async () => {
-    const harness = makeDungeonRunApiServiceIntegrationTestHarness();
+    const harness = makeDungeonRunHistoryIntegrationTestHarness();
 
     const program = E.gen(function* () {
       yield* seedHistoryFixture;
 
-      const dungeonRunApiService = yield* DungeonRunApiService;
+      const dungeonRunHistory = yield* DungeonRunHistory;
 
-      yield* dungeonRunApiService.deleteHistory({
+      yield* dungeonRunHistory.deleteHistory({
         dungeonId: MOCK_DUNGEON_ID,
         dungeonLevel: MOCK_DUNGEON_LEVEL,
       });
 
-      const result = yield* dungeonRunApiService.getHistory({
+      const result = yield* dungeonRunHistory.getHistory({
         dungeonId: MOCK_DUNGEON_ID,
         dungeonLevel: MOCK_DUNGEON_LEVEL,
       });

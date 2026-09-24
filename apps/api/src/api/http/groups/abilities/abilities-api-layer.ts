@@ -4,7 +4,7 @@ import * as Option from "effect/Option";
 import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 import * as HttpApiError from "effect/unstable/httpapi/HttpApiError";
 
-import { AbilityApiService } from "@frt/api/services/api/ability/ability-api-service.ts";
+import { AbilityCatalog } from "@frt/api/services/ability-catalog/ability-catalog-service.ts";
 import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
 import { type AbilityDAOError } from "@frt/db/daos/ability/ability-dao.ts";
 
@@ -24,15 +24,15 @@ const AbilitiesApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "abilities",
   E.fn(function* (handlers) {
-    const abilityApiService = yield* AbilityApiService;
+    const abilityCatalog = yield* AbilityCatalog;
 
     return handlers
       .handle("getAbilities", () => {
-        return abilityApiService.getAll().pipe(E.catch(mapAbilityApiError));
+        return abilityCatalog.getAll().pipe(E.catch(mapAbilityApiError));
       })
       .handle("getAbility", ({ params }) => {
         return E.gen(function* () {
-          const ability = yield* abilityApiService
+          const ability = yield* abilityCatalog
             .getById({
               id: params.id,
             })
@@ -51,5 +51,5 @@ const AbilitiesApiHandlersInferred = HttpApiBuilder.group(
 export const AbilitiesApiLayer: Layer.Layer<
   Layer.Success<typeof AbilitiesApiHandlersInferred>,
   Layer.Error<typeof AbilitiesApiHandlersInferred>,
-  AbilityApiService
+  AbilityCatalog
 > = AbilitiesApiHandlersInferred;

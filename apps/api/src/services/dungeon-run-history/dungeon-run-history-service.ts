@@ -3,7 +3,7 @@ import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { DungeonRunApiResponseError } from "@frt/api/errors/dungeon-run-api-response-error.ts";
-import { createDungeonRunApiResponse } from "@frt/api/services/api/dungeon-run/create-dungeon-run-api-response.ts";
+import { createDungeonRunApiResponse } from "@frt/api/services/dungeon-run-history/create-dungeon-run-api-response.ts";
 import {
   DungeonRunRepository,
   type DungeonRunRepositoryError,
@@ -18,26 +18,26 @@ type DungeonRunHistoryOptions = {
   readonly dungeonLevel: DungeonRunModel["dungeonLevel"];
 };
 
-export type DungeonRunApiServiceError =
+export type DungeonRunHistoryError =
   | DungeonRunApiResponseError
   | DungeonRunObservationDAOError
   | DungeonRunRepositoryError;
 
-export type DungeonRunApiServiceShape = {
+export type DungeonRunHistoryShape = {
   readonly deleteHistory: (
     options: DungeonRunHistoryOptions,
-  ) => E.Effect<void, DungeonRunApiServiceError>;
+  ) => E.Effect<void, DungeonRunHistoryError>;
 
   readonly getHistory: (
     options: DungeonRunHistoryOptions,
-  ) => E.Effect<DungeonRunApiHistory, DungeonRunApiServiceError>;
+  ) => E.Effect<DungeonRunApiHistory, DungeonRunHistoryError>;
 };
 
-const makeDungeonRunApiService = E.gen(function* () {
+const makeDungeonRunHistory = E.gen(function* () {
   const dungeonRunObservationDAO = yield* DungeonRunObservationDAO;
   const dungeonRunRepository = yield* DungeonRunRepository;
 
-  const deleteHistory: DungeonRunApiServiceShape["deleteHistory"] = ({
+  const deleteHistory: DungeonRunHistoryShape["deleteHistory"] = ({
     dungeonId,
     dungeonLevel,
   }) => {
@@ -47,7 +47,7 @@ const makeDungeonRunApiService = E.gen(function* () {
     });
   };
 
-  const getHistory: DungeonRunApiServiceShape["getHistory"] = ({
+  const getHistory: DungeonRunHistoryShape["getHistory"] = ({
     dungeonId,
     dungeonLevel,
   }) => {
@@ -72,16 +72,16 @@ const makeDungeonRunApiService = E.gen(function* () {
   return {
     deleteHistory,
     getHistory,
-  } satisfies DungeonRunApiServiceShape;
+  } satisfies DungeonRunHistoryShape;
 });
 
-export class DungeonRunApiService extends Context.Service<
-  DungeonRunApiService,
-  DungeonRunApiServiceShape
+export class DungeonRunHistory extends Context.Service<
+  DungeonRunHistory,
+  DungeonRunHistoryShape
 >()(
-  "@frt/api/services/api/dungeon-run/dungeon-run-api-service/DungeonRunApiService",
+  "@frt/api/services/dungeon-run-history/dungeon-run-history-service/DungeonRunHistory",
 ) {
-  static readonly layerNoDeps = Layer.effect(this, makeDungeonRunApiService);
+  static readonly layerNoDeps = Layer.effect(this, makeDungeonRunHistory);
 
   static readonly layer = this.layerNoDeps.pipe(
     Layer.provide(DungeonRunObservationDAO.layer),

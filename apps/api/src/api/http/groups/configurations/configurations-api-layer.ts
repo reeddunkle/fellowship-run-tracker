@@ -4,7 +4,7 @@ import * as Option from "effect/Option";
 import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 import * as HttpApiError from "effect/unstable/httpapi/HttpApiError";
 
-import { ConfigurationApiService } from "@frt/api/services/api/configuration/configuration-api-service.ts";
+import { ConfigurationLibrary } from "@frt/api/services/configuration-library/configuration-library-service.ts";
 import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
 import { type ConfigurationDAOError } from "@frt/db/errors/configuration-dao-error.ts";
 import { type FellowshipMilestoneConfiguration } from "@frt/shared/fellowship/configurations/configuration-types.ts";
@@ -25,17 +25,17 @@ const ConfigurationsApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "configurations",
   E.fn(function* (handlers) {
-    const configurationApiService = yield* ConfigurationApiService;
+    const configurationLibrary = yield* ConfigurationLibrary;
 
     return handlers
       .handle("getConfigurations", () => {
-        return configurationApiService
+        return configurationLibrary
           .getAll()
           .pipe(E.catch(mapConfigurationError));
       })
       .handle("getConfiguration", ({ params }) => {
         return E.gen(function* () {
-          const configuration = yield* configurationApiService
+          const configuration = yield* configurationLibrary
             .getById({
               id: params.id,
             })
@@ -55,7 +55,7 @@ const ConfigurationsApiHandlersInferred = HttpApiBuilder.group(
           milestones: payload.configuration.milestones,
         } satisfies FellowshipMilestoneConfiguration;
 
-        return configurationApiService
+        return configurationLibrary
           .save({
             configuration,
             label: payload.label,
@@ -69,7 +69,7 @@ const ConfigurationsApiHandlersInferred = HttpApiBuilder.group(
           milestones: payload.configuration.milestones,
         } satisfies FellowshipMilestoneConfiguration;
 
-        return configurationApiService
+        return configurationLibrary
           .saveReplacingDungeonAndLevel({
             configuration,
             label: payload.label,
@@ -83,7 +83,7 @@ const ConfigurationsApiHandlersInferred = HttpApiBuilder.group(
           milestones: payload.configuration.milestones,
         } satisfies FellowshipMilestoneConfiguration;
 
-        return configurationApiService
+        return configurationLibrary
           .update({
             configuration,
             id: params.id,
@@ -92,14 +92,14 @@ const ConfigurationsApiHandlersInferred = HttpApiBuilder.group(
           .pipe(E.catch(mapConfigurationError));
       })
       .handle("deleteConfiguration", ({ params }) => {
-        return configurationApiService
+        return configurationLibrary
           .delete({
             id: params.id,
           })
           .pipe(E.catch(mapConfigurationError));
       })
       .handle("deleteConfigurationsByDungeonAndLevel", ({ payload }) => {
-        return configurationApiService
+        return configurationLibrary
           .deleteByDungeonAndLevel({
             dungeonId: payload.dungeonId,
             dungeonLevel: payload.dungeonLevel,
@@ -112,5 +112,5 @@ const ConfigurationsApiHandlersInferred = HttpApiBuilder.group(
 export const ConfigurationsApiLayer: Layer.Layer<
   Layer.Success<typeof ConfigurationsApiHandlersInferred>,
   Layer.Error<typeof ConfigurationsApiHandlersInferred>,
-  ConfigurationApiService
+  ConfigurationLibrary
 > = ConfigurationsApiHandlersInferred;

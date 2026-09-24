@@ -5,12 +5,12 @@ import * as Layer from "effect/Layer";
 import type * as Ref from "effect/Ref";
 import type * as Stream from "effect/Stream";
 
+import { DungeonRunWebSocketBroadcaster } from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
 import { type LocalLogDungeonRunPersistence } from "@frt/api/application/dungeon-run-processing/local-log-dungeon-run-persistence.ts";
 import {
   type FellowshipTrackerAlreadyRunningError,
   type FellowshipTrackerConfigurationNotFoundError,
 } from "@frt/api/errors/fellowship-tracker-error.ts";
-import { DungeonRunWebSocketBroadcaster } from "@frt/api/services/api/websocket-broadcaster-service.ts";
 import { DungeonRunRepository } from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
 import { type DungeonRunProcessingState } from "@frt/api/services/fellowship/dungeon-runs/dungeon-run-processing-state.ts";
 import {

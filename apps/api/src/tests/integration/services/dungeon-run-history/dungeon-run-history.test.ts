@@ -3,7 +3,7 @@ import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 import { describe, expect, test } from "vitest";
 
-import { DungeonRunApiService } from "@frt/api/services/api/dungeon-run/dungeon-run-api-service.ts";
+import { DungeonRunHistory } from "@frt/api/services/dungeon-run-history/dungeon-run-history-service.ts";
 import { DungeonRunRepository } from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import {
@@ -113,7 +113,7 @@ function makeTestLayer({
   readonly onDeleteHistory?: () => void;
   readonly onGetHistory?: () => void;
 } = {}) {
-  return DungeonRunApiService.layerNoDeps.pipe(
+  return DungeonRunHistory.layerNoDeps.pipe(
     Layer.provide(
       Layer.mergeAll(
         makeDungeonRunObservationDAOTestLayer({ history, onGetHistory }),
@@ -123,12 +123,12 @@ function makeTestLayer({
   );
 }
 
-describe("DungeonRunApiService", () => {
+describe("DungeonRunHistory", () => {
   test("returns dungeon run history grouped by ownership for a dungeon and level", async () => {
     const program = E.gen(function* () {
-      const dungeonRunApiService = yield* DungeonRunApiService;
+      const dungeonRunHistory = yield* DungeonRunHistory;
 
-      const result = yield* dungeonRunApiService.getHistory({
+      const result = yield* dungeonRunHistory.getHistory({
         dungeonId: MOCK_DUNGEON_ID,
         dungeonLevel: MOCK_DUNGEON_LEVEL,
       });
@@ -178,9 +178,9 @@ describe("DungeonRunApiService", () => {
 
   test("returns empty history when the dungeon and level have no observations", async () => {
     const program = E.gen(function* () {
-      const dungeonRunApiService = yield* DungeonRunApiService;
+      const dungeonRunHistory = yield* DungeonRunHistory;
 
-      const result = yield* dungeonRunApiService.getHistory({
+      const result = yield* dungeonRunHistory.getHistory({
         dungeonId: MOCK_DUNGEON_ID,
         dungeonLevel: MOCK_DUNGEON_LEVEL,
       });
@@ -201,9 +201,9 @@ describe("DungeonRunApiService", () => {
     let getHistoryCallCount = 0;
 
     const program = E.gen(function* () {
-      const dungeonRunApiService = yield* DungeonRunApiService;
+      const dungeonRunHistory = yield* DungeonRunHistory;
 
-      yield* dungeonRunApiService.getHistory({
+      yield* dungeonRunHistory.getHistory({
         dungeonId: MOCK_DUNGEON_ID,
         dungeonLevel: MOCK_DUNGEON_LEVEL,
       });
@@ -226,9 +226,9 @@ describe("DungeonRunApiService", () => {
     let deleteCallCount = 0;
 
     const program = E.gen(function* () {
-      const dungeonRunApiService = yield* DungeonRunApiService;
+      const dungeonRunHistory = yield* DungeonRunHistory;
 
-      yield* dungeonRunApiService.deleteHistory({
+      yield* dungeonRunHistory.deleteHistory({
         dungeonId: MOCK_DUNGEON_ID,
         dungeonLevel: MOCK_DUNGEON_LEVEL,
       });

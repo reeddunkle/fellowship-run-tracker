@@ -11,7 +11,7 @@ import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { describe, expect, test } from "vitest";
 
 import { makeApiServerTestLayerWith } from "@frt/api/tests/common/layers/api-server-test-layer.ts";
-import { makeConfigurationApiServiceMock } from "@frt/api/tests/common/mocks/configuration-api-service-mock.ts";
+import { makeConfigurationLibraryMock } from "@frt/api/tests/common/mocks/configuration-library-mock.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
 import { ConfigurationDAOError } from "@frt/db/errors/configuration-dao-error.ts";
@@ -135,7 +135,7 @@ function request(
 
 describe("configuration routes", () => {
   test("GET /configurations returns all configurations", async () => {
-    const configurationApiServiceTest = makeConfigurationApiServiceMock({
+    const configurationLibraryMock = makeConfigurationLibraryMock({
       getAll: () => {
         return E.succeed([MOCK_CONFIGURATION]);
       },
@@ -165,7 +165,7 @@ describe("configuration routes", () => {
       }).pipe(
         E.provide(
           Layer.mergeAll(
-            makeApiServerTestLayerWith(configurationApiServiceTest),
+            makeApiServerTestLayerWith(configurationLibraryMock),
             FetchHttpClient.layer,
           ),
         ),
@@ -176,7 +176,7 @@ describe("configuration routes", () => {
   });
 
   test("GET /configurations/:id returns a configuration", async () => {
-    const configurationApiServiceTest = makeConfigurationApiServiceMock({
+    const configurationLibraryMock = makeConfigurationLibraryMock({
       getById: ({ id }) => {
         if (id === MOCK_CONFIGURATION_ID) {
           return E.succeedSome(MOCK_CONFIGURATION);
@@ -214,7 +214,7 @@ describe("configuration routes", () => {
       }).pipe(
         E.provide(
           Layer.mergeAll(
-            makeApiServerTestLayerWith(configurationApiServiceTest),
+            makeApiServerTestLayerWith(configurationLibraryMock),
             FetchHttpClient.layer,
           ),
         ),
@@ -225,7 +225,7 @@ describe("configuration routes", () => {
   });
 
   test("GET /configurations/:id returns 404 when the configuration does not exist", async () => {
-    const configurationApiServiceTest = makeConfigurationApiServiceMock();
+    const configurationLibraryMock = makeConfigurationLibraryMock();
 
     const program = E.scoped(
       E.gen(function* () {
@@ -249,7 +249,7 @@ describe("configuration routes", () => {
       }).pipe(
         E.provide(
           Layer.mergeAll(
-            makeApiServerTestLayerWith(configurationApiServiceTest),
+            makeApiServerTestLayerWith(configurationLibraryMock),
             FetchHttpClient.layer,
           ),
         ),
@@ -260,7 +260,7 @@ describe("configuration routes", () => {
   });
 
   test("POST /configurations saves a configuration", async () => {
-    const configurationApiServiceTest = makeConfigurationApiServiceMock({
+    const configurationLibraryMock = makeConfigurationLibraryMock({
       save: ({ configuration: savedConfiguration, label }) => {
         expect(savedConfiguration).toEqual({
           dungeonId: MOCK_SAVE_CONFIGURATION_REQUEST.configuration.dungeonId,
@@ -304,7 +304,7 @@ describe("configuration routes", () => {
       }).pipe(
         E.provide(
           Layer.mergeAll(
-            makeApiServerTestLayerWith(configurationApiServiceTest),
+            makeApiServerTestLayerWith(configurationLibraryMock),
             FetchHttpClient.layer,
           ),
         ),
@@ -325,7 +325,7 @@ describe("configuration routes", () => {
       label: MOCK_UPDATED_CONFIGURATION_LABEL,
     } as const;
 
-    const configurationApiServiceTest = makeConfigurationApiServiceMock({
+    const configurationLibraryMock = makeConfigurationLibraryMock({
       save: ({ configuration: savedConfiguration, label }) => {
         expect(savedConfiguration).toEqual(updatedRequest.configuration);
         expect(label).toBe(MOCK_UPDATED_CONFIGURATION_LABEL);
@@ -364,7 +364,7 @@ describe("configuration routes", () => {
       }).pipe(
         E.provide(
           Layer.mergeAll(
-            makeApiServerTestLayerWith(configurationApiServiceTest),
+            makeApiServerTestLayerWith(configurationLibraryMock),
             FetchHttpClient.layer,
           ),
         ),
@@ -375,7 +375,7 @@ describe("configuration routes", () => {
   });
 
   test("POST /configurations returns 400 for an invalid request body", async () => {
-    const configurationApiServiceTest = makeConfigurationApiServiceMock();
+    const configurationLibraryMock = makeConfigurationLibraryMock();
 
     const program = E.scoped(
       E.gen(function* () {
@@ -401,7 +401,7 @@ describe("configuration routes", () => {
       }).pipe(
         E.provide(
           Layer.mergeAll(
-            makeApiServerTestLayerWith(configurationApiServiceTest),
+            makeApiServerTestLayerWith(configurationLibraryMock),
             FetchHttpClient.layer,
           ),
         ),
@@ -422,7 +422,7 @@ describe("configuration routes", () => {
       label: MOCK_UPDATED_CONFIGURATION_LABEL,
     } as const;
 
-    const configurationApiServiceTest = makeConfigurationApiServiceMock({
+    const configurationLibraryMock = makeConfigurationLibraryMock({
       update: ({ configuration, id, label }) => {
         expect(id).toBe(MOCK_CONFIGURATION_ID);
         expect(configuration).toEqual(updatedRequest.configuration);
@@ -466,7 +466,7 @@ describe("configuration routes", () => {
       }).pipe(
         E.provide(
           Layer.mergeAll(
-            makeApiServerTestLayerWith(configurationApiServiceTest),
+            makeApiServerTestLayerWith(configurationLibraryMock),
             FetchHttpClient.layer,
           ),
         ),
@@ -477,7 +477,7 @@ describe("configuration routes", () => {
   });
 
   test("PUT /configurations/:id returns 400 for an invalid request body", async () => {
-    const configurationApiServiceTest = makeConfigurationApiServiceMock();
+    const configurationLibraryMock = makeConfigurationLibraryMock();
 
     const program = E.scoped(
       E.gen(function* () {
@@ -507,7 +507,7 @@ describe("configuration routes", () => {
       }).pipe(
         E.provide(
           Layer.mergeAll(
-            makeApiServerTestLayerWith(configurationApiServiceTest),
+            makeApiServerTestLayerWith(configurationLibraryMock),
             FetchHttpClient.layer,
           ),
         ),
@@ -520,7 +520,7 @@ describe("configuration routes", () => {
   test("DELETE /configurations/:id deletes a configuration", async () => {
     let deletedConfigurationId: string | undefined;
 
-    const configurationApiServiceTest = makeConfigurationApiServiceMock({
+    const configurationLibraryMock = makeConfigurationLibraryMock({
       delete: ({ id }) => {
         deletedConfigurationId = id;
 
@@ -554,7 +554,7 @@ describe("configuration routes", () => {
       }).pipe(
         E.provide(
           Layer.mergeAll(
-            makeApiServerTestLayerWith(configurationApiServiceTest),
+            makeApiServerTestLayerWith(configurationLibraryMock),
             FetchHttpClient.layer,
           ),
         ),
@@ -565,7 +565,7 @@ describe("configuration routes", () => {
   });
 
   test("returns 400 for a malformed configuration id", async () => {
-    const configurationApiServiceTest = makeConfigurationApiServiceMock();
+    const configurationLibraryMock = makeConfigurationLibraryMock();
 
     const program = E.scoped(
       E.gen(function* () {
@@ -579,7 +579,7 @@ describe("configuration routes", () => {
       }).pipe(
         E.provide(
           Layer.mergeAll(
-            makeApiServerTestLayerWith(configurationApiServiceTest),
+            makeApiServerTestLayerWith(configurationLibraryMock),
             FetchHttpClient.layer,
           ),
         ),
@@ -590,7 +590,7 @@ describe("configuration routes", () => {
   });
 
   test("returns 404 for an unsupported method", async () => {
-    const configurationApiServiceTest = makeConfigurationApiServiceMock();
+    const configurationLibraryMock = makeConfigurationLibraryMock();
 
     const program = E.scoped(
       E.gen(function* () {
@@ -612,7 +612,7 @@ describe("configuration routes", () => {
       }).pipe(
         E.provide(
           Layer.mergeAll(
-            makeApiServerTestLayerWith(configurationApiServiceTest),
+            makeApiServerTestLayerWith(configurationLibraryMock),
             FetchHttpClient.layer,
           ),
         ),
@@ -623,7 +623,7 @@ describe("configuration routes", () => {
   });
 
   test("returns 500 when loading configurations fails", async () => {
-    const configurationApiServiceTest = makeConfigurationApiServiceMock({
+    const configurationLibraryMock = makeConfigurationLibraryMock({
       getAll: () => {
         return E.fail(
           new ConfigurationDAOError({
@@ -653,7 +653,7 @@ describe("configuration routes", () => {
       }).pipe(
         E.provide(
           Layer.mergeAll(
-            makeApiServerTestLayerWith(configurationApiServiceTest),
+            makeApiServerTestLayerWith(configurationLibraryMock),
             FetchHttpClient.layer,
           ),
         ),

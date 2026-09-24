@@ -4,7 +4,7 @@ import * as HashMap from "effect/HashMap";
 import { describe, expect, test } from "vitest";
 
 import { publishDungeonRunState } from "@frt/api/api/websocket/dungeon-run/publish-dungeon-run-state.ts";
-import { DungeonRunWebSocketBroadcaster } from "@frt/api/services/api/websocket-broadcaster-service.ts";
+import { DungeonRunWebSocketBroadcaster } from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
 import {
   type ConfiguredDungeonRunProcessingState,
   type ConfiguredDungeonRunState,

@@ -6,7 +6,7 @@ import { describe, expect, test } from "vitest";
 import {
   DungeonRunWebSocketBroadcaster,
   type WebSocketWriter,
-} from "@frt/api/services/api/websocket-broadcaster-service.ts";
+} from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 
 function makeSocketError(): Socket.SocketError {

@@ -2,7 +2,7 @@ import * as E from "effect/Effect";
 import * as Schema from "effect/Schema";
 
 import { createDungeonRunApiState } from "@frt/api/api/websocket/dungeon-run/dungeon-run-api-state.ts";
-import { DungeonRunWebSocketBroadcaster } from "@frt/api/services/api/websocket-broadcaster-service.ts";
+import { DungeonRunWebSocketBroadcaster } from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
 import { type DungeonRunProcessingState } from "@frt/api/services/fellowship/dungeon-runs/dungeon-run-processing-state.ts";
 import {
   type DungeonRunApiMessage,

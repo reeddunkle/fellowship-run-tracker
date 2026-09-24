@@ -2,30 +2,27 @@ import type * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { DungeonRunApiService } from "@frt/api/services/api/dungeon-run/dungeon-run-api-service.ts";
+import { DungeonRunHistory } from "@frt/api/services/dungeon-run-history/dungeon-run-history-service.ts";
 import { makePersistenceTestLayer } from "@frt/api/tests/common/layers/persistence-test-layer.ts";
 import { DungeonRunDAO } from "@frt/db/daos/dungeon-run/dungeon-run-dao.ts";
 import { DungeonRunObservationDAO } from "@frt/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
 import { type DungeonId } from "@frt/shared/fellowship/validation/fellowship-common.ts";
 import { type RequirementEventType } from "@frt/shared/fellowship/validation/requirement-event-type-schema.ts";
 
-export type MakeDungeonRunApiServiceIntegrationTestHarnessOptions = {
+export type MakeDungeonRunHistoryIntegrationTestHarnessOptions = {
   readonly databaseFilename?: string;
 };
 
-export function makeDungeonRunApiServiceIntegrationTestHarness({
+export function makeDungeonRunHistoryIntegrationTestHarness({
   databaseFilename = ":memory:",
-}: MakeDungeonRunApiServiceIntegrationTestHarnessOptions = {}) {
+}: MakeDungeonRunHistoryIntegrationTestHarnessOptions = {}) {
   const PersistenceTestLive = makePersistenceTestLayer(databaseFilename);
 
-  const DungeonRunApiServiceTestLive = DungeonRunApiService.layer.pipe(
+  const DungeonRunHistoryTestLive = DungeonRunHistory.layer.pipe(
     Layer.provide(PersistenceTestLive),
   );
 
-  const layer = Layer.mergeAll(
-    PersistenceTestLive,
-    DungeonRunApiServiceTestLive,
-  );
+  const layer = Layer.mergeAll(PersistenceTestLive, DungeonRunHistoryTestLive);
 
   return {
     layer,

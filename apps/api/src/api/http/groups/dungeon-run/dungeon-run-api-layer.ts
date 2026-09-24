@@ -4,13 +4,13 @@ import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 import * as HttpApiError from "effect/unstable/httpapi/HttpApiError";
 
 import {
-  DungeonRunApiService,
-  type DungeonRunApiServiceError,
-} from "@frt/api/services/api/dungeon-run/dungeon-run-api-service.ts";
+  DungeonRunHistory,
+  type DungeonRunHistoryError,
+} from "@frt/api/services/dungeon-run-history/dungeon-run-history-service.ts";
 import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
 
 function mapDungeonRunApiError(
-  error: DungeonRunApiServiceError,
+  error: DungeonRunHistoryError,
 ): E.Effect<never, HttpApiError.InternalServerError> {
   return E.gen(function* () {
     yield* E.logError("Dungeon run API operation failed.", {
@@ -25,11 +25,11 @@ const DungeonRunApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "dungeonRun",
   E.fn(function* (handlers) {
-    const dungeonRunApiService = yield* DungeonRunApiService;
+    const dungeonRunHistory = yield* DungeonRunHistory;
 
     return handlers
       .handle("deleteDungeonRunHistory", ({ params }) => {
-        return dungeonRunApiService
+        return dungeonRunHistory
           .deleteHistory({
             dungeonId: params.dungeonId,
             dungeonLevel: params.dungeonLevel,
@@ -37,7 +37,7 @@ const DungeonRunApiHandlersInferred = HttpApiBuilder.group(
           .pipe(E.catch(mapDungeonRunApiError));
       })
       .handle("getDungeonRunHistory", ({ params }) => {
-        return dungeonRunApiService
+        return dungeonRunHistory
           .getHistory({
             dungeonId: params.dungeonId,
             dungeonLevel: params.dungeonLevel,
@@ -50,5 +50,5 @@ const DungeonRunApiHandlersInferred = HttpApiBuilder.group(
 export const DungeonRunApiLayer: Layer.Layer<
   Layer.Success<typeof DungeonRunApiHandlersInferred>,
   Layer.Error<typeof DungeonRunApiHandlersInferred>,
-  DungeonRunApiService
+  DungeonRunHistory
 > = DungeonRunApiHandlersInferred;

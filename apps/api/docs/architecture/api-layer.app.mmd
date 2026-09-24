@@ -32,14 +32,14 @@ flowchart TB
     style 6_wrap stroke:none
   end
   style 6 fill:transparent
-  subgraph 8 ["`FellowshipTracker.layerWith(options)`"]
+  subgraph 8 ["`LiveSplitConnectionManager.layer`"]
     subgraph 8_wrap[" "]
       subgraph 8_requires [Requires]
-        8_requires_0["SqlClient"]
+        8_requires_0["MainDatabase"]
       end
       style 8_requires stroke:none
       subgraph 8_provides [Provides]
-        8_provides_0["FellowshipTracker"]
+        8_provides_0["LiveSplitConnectionManager"]
       end
       style 8_provides stroke:none
     end
@@ -47,49 +47,14 @@ flowchart TB
     style 8_wrap stroke:none
   end
   style 8 fill:transparent
-  subgraph 9 ["`makeApiServicesLayer(options)`"]
-    subgraph 9_wrap[" "]
-      subgraph 9_requires [Requires]
-        9_requires_0["SqlClient"]
-      end
-      style 9_requires stroke:none
-      subgraph 9_provides [Provides]
-        9_provides_0["AbilityApiService"]
-        9_provides_1["AppSettingsApiService"]
-        9_provides_2["ConfigurationApiService"]
-        9_provides_3["DungeonApiService"]
-        9_provides_4["DungeonRunApiService"]
-        9_provides_5["EncounterApiService"]
-        9_provides_6["FellowshipLogsApiService"]
-        9_provides_7["LiveSplitApiService"]
-        9_provides_8["UnitApiService"]
-      end
-      style 9_provides stroke:none
-    end
-    style 9_wrap fill:transparent
-    style 9_wrap stroke:none
-  end
-  style 9 fill:transparent
-  subgraph 10 ["`ApiRuntimeLayer`"]
+  subgraph 10 ["`this.layerNoDeps`"]
     subgraph 10_wrap[" "]
       subgraph 10_requires [Requires]
-        10_requires_0["SqlClient"]
+        10_requires_0["LiveSplitConnectionManager"]
       end
       style 10_requires stroke:none
       subgraph 10_provides [Provides]
-        10_provides_0["AbilityApiService"]
-        10_provides_1["AppSettingsApiService"]
-        10_provides_3["ConfigurationApiService"]
-        10_provides_5["DungeonApiService"]
-        10_provides_6["DungeonRunApiService"]
-        10_provides_7["DungeonRunWebSocketBroadcaster"]
-        10_provides_8["EncounterApiService"]
-        10_provides_9["FellowshipLogsApiService"]
-        10_provides_10["FellowshipTracker"]
-        10_provides_15["LiveSplitApiService"]
-        10_provides_16["LiveSplitWebSocketBroadcaster"]
-        10_provides_20["TrackingWebSocketBroadcaster"]
-        10_provides_21["UnitApiService"]
+        10_provides_0["LiveSplit"]
       end
       style 10_provides stroke:none
     end
@@ -97,18 +62,999 @@ flowchart TB
     style 10_wrap stroke:none
   end
   style 10 fill:transparent
-  10_requires_0 -.-> 9_requires_0
-  10_provides_0 -.-> 9_provides_0
-  10_provides_1 -.-> 9_provides_1
-  10_provides_3 -.-> 9_provides_2
-  10_provides_5 -.-> 9_provides_3
-  10_provides_6 -.-> 9_provides_4
-  10_provides_8 -.-> 9_provides_5
-  10_provides_9 -.-> 9_provides_6
-  10_provides_15 -.-> 9_provides_7
-  10_provides_21 -.-> 9_provides_8
-  10_requires_0 -.-> 8_requires_0
-  10_provides_10 -.-> 8_provides_0
-  10_provides_7 -.-> 6_provides_0
-  10_provides_16 -.-> 4_provides_0
-  10_provides_20 -.-> 2_provides_0
+  subgraph 11 ["`LiveSplit.layer`"]
+    subgraph 11_wrap[" "]
+      subgraph 11_requires [Requires]
+        11_requires_0["MainDatabase"]
+      end
+      style 11_requires stroke:none
+      subgraph 11_provides [Provides]
+        11_provides_0["LiveSplit"]
+      end
+      style 11_provides stroke:none
+    end
+    style 11_wrap fill:transparent
+    style 11_wrap stroke:none
+  end
+  style 11 fill:transparent
+  subgraph 14 ["`AppSettings.layer`"]
+    subgraph 14_wrap[" "]
+      subgraph 14_requires [Requires]
+        14_requires_0["MainDatabase"]
+      end
+      style 14_requires stroke:none
+      subgraph 14_provides [Provides]
+        14_provides_0["AppSettings"]
+      end
+      style 14_provides stroke:none
+    end
+    style 14_wrap fill:transparent
+    style 14_wrap stroke:none
+  end
+  style 14 fill:transparent
+  subgraph 16 ["`FileMonitorSource.layer`"]
+    subgraph 16_wrap[" "]
+      subgraph 16_provides [Provides]
+        16_provides_0["FileMonitorSource"]
+      end
+      style 16_provides stroke:none
+    end
+    style 16_wrap fill:transparent
+    style 16_wrap stroke:none
+  end
+  style 16 fill:transparent
+  subgraph 17 ["`FileMonitor.layer`"]
+    subgraph 17_wrap[" "]
+      subgraph 17_provides [Provides]
+        17_provides_0["FileMonitor"]
+      end
+      style 17_provides stroke:none
+    end
+    style 17_wrap fill:transparent
+    style 17_wrap stroke:none
+  end
+  style 17 fill:transparent
+  subgraph 20 ["`this.layerNoDeps`"]
+    subgraph 20_wrap[" "]
+      subgraph 20_requires [Requires]
+        20_requires_0["AppSettings"]
+        20_requires_1["FileMonitor"]
+        20_requires_2["FileMonitorSource"]
+      end
+      style 20_requires stroke:none
+      subgraph 20_provides [Provides]
+        20_provides_0["Fellowship"]
+      end
+      style 20_provides stroke:none
+    end
+    style 20_wrap fill:transparent
+    style 20_wrap stroke:none
+  end
+  style 20 fill:transparent
+  subgraph 21 ["`Fellowship.layer`"]
+    subgraph 21_wrap[" "]
+      subgraph 21_requires [Requires]
+        21_requires_0["MainDatabase"]
+      end
+      style 21_requires stroke:none
+      subgraph 21_provides [Provides]
+        21_provides_0["Fellowship"]
+      end
+      style 21_provides stroke:none
+    end
+    style 21_wrap fill:transparent
+    style 21_wrap stroke:none
+  end
+  style 21 fill:transparent
+  subgraph 27 ["`LocalLogDungeonRunDAO.layer`"]
+    subgraph 27_wrap[" "]
+      subgraph 27_requires [Requires]
+        27_requires_0["MainDatabase"]
+      end
+      style 27_requires stroke:none
+      subgraph 27_provides [Provides]
+        27_provides_0["LocalLogDungeonRunDAO"]
+      end
+      style 27_provides stroke:none
+    end
+    style 27_wrap fill:transparent
+    style 27_wrap stroke:none
+  end
+  style 27 fill:transparent
+  subgraph 29 ["`FellowshipLogsDungeonRunDAO.layer`"]
+    subgraph 29_wrap[" "]
+      subgraph 29_requires [Requires]
+        29_requires_0["MainDatabase"]
+      end
+      style 29_requires stroke:none
+      subgraph 29_provides [Provides]
+        29_provides_0["FellowshipLogsDungeonRunDAO"]
+      end
+      style 29_provides stroke:none
+    end
+    style 29_wrap fill:transparent
+    style 29_wrap stroke:none
+  end
+  style 29 fill:transparent
+  subgraph 31 ["`DungeonRunObservationDAO.layer`"]
+    subgraph 31_wrap[" "]
+      subgraph 31_requires [Requires]
+        31_requires_0["MainDatabase"]
+      end
+      style 31_requires stroke:none
+      subgraph 31_provides [Provides]
+        31_provides_0["DungeonRunObservationDAO"]
+      end
+      style 31_provides stroke:none
+    end
+    style 31_wrap fill:transparent
+    style 31_wrap stroke:none
+  end
+  style 31 fill:transparent
+  subgraph 33 ["`DungeonRunDAO.layer`"]
+    subgraph 33_wrap[" "]
+      subgraph 33_requires [Requires]
+        33_requires_0["MainDatabase"]
+      end
+      style 33_requires stroke:none
+      subgraph 33_provides [Provides]
+        33_provides_0["DungeonRunDAO"]
+      end
+      style 33_provides stroke:none
+    end
+    style 33_wrap fill:transparent
+    style 33_wrap stroke:none
+  end
+  style 33 fill:transparent
+  subgraph 35 ["`this.layerNoDeps`"]
+    subgraph 35_wrap[" "]
+      subgraph 35_requires [Requires]
+        35_requires_0["DungeonRunDAO"]
+        35_requires_1["DungeonRunObservationDAO"]
+        35_requires_2["FellowshipLogsDungeonRunDAO"]
+        35_requires_3["LocalLogDungeonRunDAO"]
+        35_requires_4["MainDatabase"]
+      end
+      style 35_requires stroke:none
+      subgraph 35_provides [Provides]
+        35_provides_0["DungeonRunRepository"]
+      end
+      style 35_provides stroke:none
+    end
+    style 35_wrap fill:transparent
+    style 35_wrap stroke:none
+  end
+  style 35 fill:transparent
+  subgraph 36 ["`DungeonRunRepository.layer`"]
+    subgraph 36_wrap[" "]
+      subgraph 36_requires [Requires]
+        36_requires_0["MainDatabase"]
+      end
+      style 36_requires stroke:none
+      subgraph 36_provides [Provides]
+        36_provides_0["DungeonRunRepository"]
+      end
+      style 36_provides stroke:none
+    end
+    style 36_wrap fill:transparent
+    style 36_wrap stroke:none
+  end
+  style 36 fill:transparent
+  subgraph 42 ["`ConfigurationDAO.layer`"]
+    subgraph 42_wrap[" "]
+      subgraph 42_requires [Requires]
+        42_requires_0["MainDatabase"]
+      end
+      style 42_requires stroke:none
+      subgraph 42_provides [Provides]
+        42_provides_0["ConfigurationDAO"]
+      end
+      style 42_provides stroke:none
+    end
+    style 42_wrap fill:transparent
+    style 42_wrap stroke:none
+  end
+  style 42 fill:transparent
+  subgraph 45 ["`this.layerNoDeps`"]
+    subgraph 45_wrap[" "]
+      subgraph 45_requires [Requires]
+        45_requires_0["ConfigurationDAO"]
+        45_requires_1["DungeonRunObservationDAO"]
+        45_requires_2["DungeonRunRepository"]
+        45_requires_3["DungeonRunWebSocketBroadcaster"]
+        45_requires_4["Fellowship"]
+        45_requires_5["LiveSplit"]
+      end
+      style 45_requires stroke:none
+      subgraph 45_provides [Provides]
+        45_provides_0["FellowshipTracker"]
+      end
+      style 45_provides stroke:none
+    end
+    style 45_wrap fill:transparent
+    style 45_wrap stroke:none
+  end
+  style 45 fill:transparent
+  subgraph 46 ["`FellowshipTracker.layer`"]
+    subgraph 46_wrap[" "]
+      subgraph 46_requires [Requires]
+        46_requires_0["MainDatabase"]
+      end
+      style 46_requires stroke:none
+      subgraph 46_provides [Provides]
+        46_provides_0["FellowshipTracker"]
+      end
+      style 46_provides stroke:none
+    end
+    style 46_wrap fill:transparent
+    style 46_wrap stroke:none
+  end
+  style 46 fill:transparent
+  subgraph 48 ["`BackgroundJobWebSocketBroadcaster.layer`"]
+    subgraph 48_wrap[" "]
+      subgraph 48_provides [Provides]
+        48_provides_0["BackgroundJobWebSocketBroadcaster"]
+      end
+      style 48_provides stroke:none
+    end
+    style 48_wrap fill:transparent
+    style 48_wrap stroke:none
+  end
+  style 48 fill:transparent
+  subgraph 52 ["`FellowshipLogsDungeonRunImporter.layer`"]
+    subgraph 52_wrap[" "]
+      subgraph 52_requires [Requires]
+        52_requires_0["FellowshipLogsCacheDatabase"]
+        52_requires_1["MainDatabase"]
+      end
+      style 52_requires stroke:none
+      subgraph 52_provides [Provides]
+        52_provides_0["FellowshipLogsDungeonRunImporter"]
+      end
+      style 52_provides stroke:none
+    end
+    style 52_wrap fill:transparent
+    style 52_wrap stroke:none
+  end
+  style 52 fill:transparent
+  subgraph 56 ["`BackgroundJobDAO.layer`"]
+    subgraph 56_wrap[" "]
+      subgraph 56_requires [Requires]
+        56_requires_0["StateDatabase"]
+      end
+      style 56_requires stroke:none
+      subgraph 56_provides [Provides]
+        56_provides_0["BackgroundJobDAO"]
+      end
+      style 56_provides stroke:none
+    end
+    style 56_wrap fill:transparent
+    style 56_wrap stroke:none
+  end
+  style 56 fill:transparent
+  subgraph 58 ["`this.layerNoDeps`"]
+    subgraph 58_wrap[" "]
+      subgraph 58_requires [Requires]
+        58_requires_0["BackgroundJobDAO"]
+        58_requires_1["DungeonRunRepository"]
+        58_requires_2["FellowshipLogsDungeonRunImporter"]
+        58_requires_3["FellowshipLogsResponseDAO"]
+      end
+      style 58_requires stroke:none
+      subgraph 58_provides [Provides]
+        58_provides_0["BackgroundJobService"]
+      end
+      style 58_provides stroke:none
+    end
+    style 58_wrap fill:transparent
+    style 58_wrap stroke:none
+  end
+  style 58 fill:transparent
+  subgraph 59 ["`BackgroundJobService.layer`"]
+    subgraph 59_wrap[" "]
+      subgraph 59_requires [Requires]
+        59_requires_0["FellowshipLogsCacheDatabase"]
+        59_requires_1["FellowshipLogsResponseDAO"]
+        59_requires_2["MainDatabase"]
+        59_requires_3["StateDatabase"]
+      end
+      style 59_requires stroke:none
+      subgraph 59_provides [Provides]
+        59_provides_0["BackgroundJobService"]
+      end
+      style 59_provides stroke:none
+    end
+    style 59_wrap fill:transparent
+    style 59_wrap stroke:none
+  end
+  style 59 fill:transparent
+  subgraph 61 ["`Layer.provideMerge(BackgroundJobService.layer)`"]
+    subgraph 61_wrap[" "]
+      subgraph 61_requires [Requires]
+        61_requires_0["FellowshipLogsCacheDatabase"]
+        61_requires_1["FellowshipLogsResponseDAO"]
+        61_requires_2["MainDatabase"]
+        61_requires_3["StateDatabase"]
+      end
+      style 61_requires stroke:none
+      subgraph 61_provides [Provides]
+        61_provides_0["AbilityCatalog"]
+        61_provides_1["AppSettingsApiService"]
+        61_provides_2["BackgroundJobApiService"]
+        61_provides_3["BackgroundJobService"]
+        61_provides_4["ConfigurationLibrary"]
+        61_provides_5["DungeonCatalog"]
+        61_provides_6["DungeonRunHistory"]
+        61_provides_7["EncounterCatalog"]
+        61_provides_8["FellowshipLogsApiService"]
+        61_provides_9["LiveSplitApiService"]
+        61_provides_10["UnitCatalog"]
+      end
+      style 61_provides stroke:none
+    end
+    style 61_wrap fill:transparent
+    style 61_wrap stroke:none
+  end
+  style 61 fill:transparent
+  subgraph 62 ["`UnitCatalog.layer`"]
+    subgraph 62_wrap[" "]
+      subgraph 62_requires [Requires]
+        62_requires_0["MainDatabase"]
+      end
+      style 62_requires stroke:none
+      subgraph 62_provides [Provides]
+        62_provides_0["UnitCatalog"]
+      end
+      style 62_provides stroke:none
+    end
+    style 62_wrap fill:transparent
+    style 62_wrap stroke:none
+  end
+  style 62 fill:transparent
+  subgraph 63 ["`LiveSplitApiService.layer`"]
+    subgraph 63_wrap[" "]
+      subgraph 63_requires [Requires]
+        63_requires_0["MainDatabase"]
+      end
+      style 63_requires stroke:none
+      subgraph 63_provides [Provides]
+        63_provides_0["LiveSplitApiService"]
+      end
+      style 63_provides stroke:none
+    end
+    style 63_wrap fill:transparent
+    style 63_wrap stroke:none
+  end
+  style 63 fill:transparent
+  subgraph 64 ["`FellowshipLogsApiService.layer`"]
+    subgraph 64_wrap[" "]
+      subgraph 64_requires [Requires]
+        64_requires_0["BackgroundJobService"]
+        64_requires_1["FellowshipLogsCacheDatabase"]
+        64_requires_2["MainDatabase"]
+      end
+      style 64_requires stroke:none
+      subgraph 64_provides [Provides]
+        64_provides_0["FellowshipLogsApiService"]
+      end
+      style 64_provides stroke:none
+    end
+    style 64_wrap fill:transparent
+    style 64_wrap stroke:none
+  end
+  style 64 fill:transparent
+  subgraph 65 ["`EncounterCatalog.layer`"]
+    subgraph 65_wrap[" "]
+      subgraph 65_requires [Requires]
+        65_requires_0["MainDatabase"]
+      end
+      style 65_requires stroke:none
+      subgraph 65_provides [Provides]
+        65_provides_0["EncounterCatalog"]
+      end
+      style 65_provides stroke:none
+    end
+    style 65_wrap fill:transparent
+    style 65_wrap stroke:none
+  end
+  style 65 fill:transparent
+  subgraph 66 ["`DungeonRunHistory.layer`"]
+    subgraph 66_wrap[" "]
+      subgraph 66_requires [Requires]
+        66_requires_0["MainDatabase"]
+      end
+      style 66_requires stroke:none
+      subgraph 66_provides [Provides]
+        66_provides_0["DungeonRunHistory"]
+      end
+      style 66_provides stroke:none
+    end
+    style 66_wrap fill:transparent
+    style 66_wrap stroke:none
+  end
+  style 66 fill:transparent
+  subgraph 67 ["`DungeonCatalog.layer`"]
+    subgraph 67_wrap[" "]
+      subgraph 67_requires [Requires]
+        67_requires_0["MainDatabase"]
+      end
+      style 67_requires stroke:none
+      subgraph 67_provides [Provides]
+        67_provides_0["DungeonCatalog"]
+      end
+      style 67_provides stroke:none
+    end
+    style 67_wrap fill:transparent
+    style 67_wrap stroke:none
+  end
+  style 67 fill:transparent
+  subgraph 68 ["`ConfigurationLibrary.layer`"]
+    subgraph 68_wrap[" "]
+      subgraph 68_requires [Requires]
+        68_requires_0["MainDatabase"]
+      end
+      style 68_requires stroke:none
+      subgraph 68_provides [Provides]
+        68_provides_0["ConfigurationLibrary"]
+      end
+      style 68_provides stroke:none
+    end
+    style 68_wrap fill:transparent
+    style 68_wrap stroke:none
+  end
+  style 68 fill:transparent
+  subgraph 69 ["`BackgroundJobApiService.layer`"]
+    subgraph 69_wrap[" "]
+      subgraph 69_requires [Requires]
+        69_requires_0["BackgroundJobService"]
+      end
+      style 69_requires stroke:none
+      subgraph 69_provides [Provides]
+        69_provides_0["BackgroundJobApiService"]
+      end
+      style 69_provides stroke:none
+    end
+    style 69_wrap fill:transparent
+    style 69_wrap stroke:none
+  end
+  style 69 fill:transparent
+  subgraph 70 ["`AppSettingsApiService.layer`"]
+    subgraph 70_wrap[" "]
+      subgraph 70_requires [Requires]
+        70_requires_0["MainDatabase"]
+      end
+      style 70_requires stroke:none
+      subgraph 70_provides [Provides]
+        70_provides_0["AppSettingsApiService"]
+      end
+      style 70_provides stroke:none
+    end
+    style 70_wrap fill:transparent
+    style 70_wrap stroke:none
+  end
+  style 70 fill:transparent
+  subgraph 71 ["`AbilityCatalog.layer`"]
+    subgraph 71_wrap[" "]
+      subgraph 71_requires [Requires]
+        71_requires_0["MainDatabase"]
+      end
+      style 71_requires stroke:none
+      subgraph 71_provides [Provides]
+        71_provides_0["AbilityCatalog"]
+      end
+      style 71_provides stroke:none
+    end
+    style 71_wrap fill:transparent
+    style 71_wrap stroke:none
+  end
+  style 71 fill:transparent
+  subgraph 72 ["`ApiServicesLayer`"]
+    subgraph 72_wrap[" "]
+      subgraph 72_requires [Requires]
+        72_requires_0["BackgroundJobService"]
+        72_requires_1["FellowshipLogsCacheDatabase"]
+        72_requires_2["MainDatabase"]
+      end
+      style 72_requires stroke:none
+      subgraph 72_provides [Provides]
+        72_provides_0["AbilityCatalog"]
+        72_provides_1["AppSettingsApiService"]
+        72_provides_2["BackgroundJobApiService"]
+        72_provides_3["ConfigurationLibrary"]
+        72_provides_4["DungeonCatalog"]
+        72_provides_5["DungeonRunHistory"]
+        72_provides_6["EncounterCatalog"]
+        72_provides_7["FellowshipLogsApiService"]
+        72_provides_8["LiveSplitApiService"]
+        72_provides_9["UnitCatalog"]
+      end
+      style 72_provides stroke:none
+    end
+    style 72_wrap fill:transparent
+    style 72_wrap stroke:none
+  end
+  style 72 fill:transparent
+  subgraph 74 ["`ApiServicesWithBackgroundJobsLayer`"]
+    subgraph 74_wrap[" "]
+      subgraph 74_requires [Requires]
+        74_requires_0["FellowshipLogsCacheDatabase"]
+        74_requires_1["FellowshipLogsResponseDAO"]
+        74_requires_2["MainDatabase"]
+        74_requires_3["StateDatabase"]
+      end
+      style 74_requires stroke:none
+      subgraph 74_provides [Provides]
+        74_provides_0["AbilityCatalog"]
+        74_provides_1["AppSettingsApiService"]
+        74_provides_2["BackgroundJobApiService"]
+        74_provides_3["BackgroundJobService"]
+        74_provides_4["ConfigurationLibrary"]
+        74_provides_5["DungeonCatalog"]
+        74_provides_6["DungeonRunHistory"]
+        74_provides_7["EncounterCatalog"]
+        74_provides_8["FellowshipLogsApiService"]
+        74_provides_9["LiveSplitApiService"]
+        74_provides_10["UnitCatalog"]
+      end
+      style 74_provides stroke:none
+    end
+    style 74_wrap fill:transparent
+    style 74_wrap stroke:none
+  end
+  style 74 fill:transparent
+  subgraph 76 ["`ApiRuntimeLayer`"]
+    subgraph 76_wrap[" "]
+      subgraph 76_requires [Requires]
+        76_requires_0["FellowshipLogsCacheDatabase"]
+        76_requires_1["FellowshipLogsResponseDAO"]
+        76_requires_2["MainDatabase"]
+        76_requires_3["StateDatabase"]
+      end
+      style 76_requires stroke:none
+      subgraph 76_provides [Provides]
+        76_provides_0["AbilityCatalog"]
+        76_provides_1["AppSettingsApiService"]
+        76_provides_2["BackgroundJobApiService"]
+        76_provides_3["BackgroundJobService"]
+        76_provides_4["BackgroundJobWebSocketBroadcaster"]
+        76_provides_6["ConfigurationLibrary"]
+        76_provides_8["DungeonCatalog"]
+        76_provides_9["DungeonRunHistory"]
+        76_provides_10["DungeonRunWebSocketBroadcaster"]
+        76_provides_11["EncounterCatalog"]
+        76_provides_12["FellowshipLogsApiService"]
+        76_provides_13["FellowshipTracker"]
+        76_provides_18["LiveSplitApiService"]
+        76_provides_19["LiveSplitWebSocketBroadcaster"]
+        76_provides_23["TrackingWebSocketBroadcaster"]
+        76_provides_24["UnitCatalog"]
+      end
+      style 76_provides stroke:none
+    end
+    style 76_wrap fill:transparent
+    style 76_wrap stroke:none
+  end
+  style 76 fill:transparent
+  subgraph 79 ["`ApiLifecycleLayer`"]
+    subgraph 79_wrap[" "]
+      subgraph 79_requires [Requires]
+        79_requires_0["BackgroundJobApiService"]
+        79_requires_1["BackgroundJobService"]
+        79_requires_2["BackgroundJobWebSocketBroadcaster"]
+        79_requires_3["FellowshipTracker"]
+        79_requires_5["LiveSplitApiService"]
+        79_requires_6["LiveSplitWebSocketBroadcaster"]
+        79_requires_7["TrackingWebSocketBroadcaster"]
+      end
+      style 79_requires stroke:none
+    end
+    style 79_wrap fill:transparent
+    style 79_wrap stroke:none
+  end
+  style 79 fill:transparent
+  subgraph 84 ["`TrackingRoutes`"]
+    subgraph 84_wrap[" "]
+      subgraph 84_requires [Requires]
+        84_requires_3["TrackingWebSocketBroadcaster"]
+      end
+      style 84_requires stroke:none
+    end
+    style 84_wrap fill:transparent
+    style 84_wrap stroke:none
+  end
+  style 84 fill:transparent
+  subgraph 85 ["`LiveSplitRoutes`"]
+    subgraph 85_wrap[" "]
+      subgraph 85_requires [Requires]
+        85_requires_3["LiveSplitWebSocketBroadcaster"]
+      end
+      style 85_requires stroke:none
+    end
+    style 85_wrap fill:transparent
+    style 85_wrap stroke:none
+  end
+  style 85 fill:transparent
+  subgraph 86 ["`DungeonRunEventsRoutes`"]
+    subgraph 86_wrap[" "]
+      subgraph 86_requires [Requires]
+        86_requires_3["DungeonRunWebSocketBroadcaster"]
+      end
+      style 86_requires stroke:none
+    end
+    style 86_wrap fill:transparent
+    style 86_wrap stroke:none
+  end
+  style 86 fill:transparent
+  subgraph 87 ["`BackgroundJobRoutes`"]
+    subgraph 87_wrap[" "]
+      subgraph 87_requires [Requires]
+        87_requires_3["BackgroundJobWebSocketBroadcas"]
+      end
+      style 87_requires stroke:none
+    end
+    style 87_wrap fill:transparent
+    style 87_wrap stroke:none
+  end
+  style 87 fill:transparent
+  subgraph 88 ["`WebsocketRoutes`"]
+    subgraph 88_wrap[" "]
+      subgraph 88_requires [Requires]
+        88_requires_3["BackgroundJobWebSocketBroadcas"]
+        88_requires_4["DungeonRunWebSocketBroadcaster"]
+        88_requires_5["LiveSplitWebSocketBroadcaster"]
+        88_requires_6["TrackingWebSocketBroadcaster"]
+      end
+      style 88_requires stroke:none
+    end
+    style 88_wrap fill:transparent
+    style 88_wrap stroke:none
+  end
+  style 88 fill:transparent
+  subgraph 90 ["`UnitsApiLayer`"]
+    subgraph 90_wrap[" "]
+      subgraph 90_requires [Requires]
+        90_requires_0["UnitCatalog"]
+      end
+      style 90_requires stroke:none
+    end
+    style 90_wrap fill:transparent
+    style 90_wrap stroke:none
+  end
+  style 90 fill:transparent
+  subgraph 92 ["`TrackingApiLayer`"]
+    subgraph 92_wrap[" "]
+      subgraph 92_requires [Requires]
+        92_requires_0["FellowshipTracker"]
+      end
+      style 92_requires stroke:none
+    end
+    style 92_wrap fill:transparent
+    style 92_wrap stroke:none
+  end
+  style 92 fill:transparent
+  subgraph 94 ["`LiveSplitApiLayer`"]
+    subgraph 94_wrap[" "]
+      subgraph 94_requires [Requires]
+        94_requires_0["LiveSplitApiService"]
+      end
+      style 94_requires stroke:none
+    end
+    style 94_wrap fill:transparent
+    style 94_wrap stroke:none
+  end
+  style 94 fill:transparent
+  subgraph 96 ["`FellowshipLogsApiLayer`"]
+    subgraph 96_wrap[" "]
+      subgraph 96_requires [Requires]
+        96_requires_0["FellowshipLogsApiService"]
+      end
+      style 96_requires stroke:none
+    end
+    style 96_wrap fill:transparent
+    style 96_wrap stroke:none
+  end
+  style 96 fill:transparent
+  subgraph 98 ["`EncountersApiLayer`"]
+    subgraph 98_wrap[" "]
+      subgraph 98_requires [Requires]
+        98_requires_0["EncounterCatalog"]
+      end
+      style 98_requires stroke:none
+    end
+    style 98_wrap fill:transparent
+    style 98_wrap stroke:none
+  end
+  style 98 fill:transparent
+  subgraph 100 ["`DungeonsApiLayer`"]
+    subgraph 100_wrap[" "]
+      subgraph 100_requires [Requires]
+        100_requires_0["DungeonCatalog"]
+      end
+      style 100_requires stroke:none
+    end
+    style 100_wrap fill:transparent
+    style 100_wrap stroke:none
+  end
+  style 100 fill:transparent
+  subgraph 102 ["`DungeonRunApiLayer`"]
+    subgraph 102_wrap[" "]
+      subgraph 102_requires [Requires]
+        102_requires_0["DungeonRunHistory"]
+      end
+      style 102_requires stroke:none
+    end
+    style 102_wrap fill:transparent
+    style 102_wrap stroke:none
+  end
+  style 102 fill:transparent
+  subgraph 104 ["`ConfigurationsApiLayer`"]
+    subgraph 104_wrap[" "]
+      subgraph 104_requires [Requires]
+        104_requires_0["ConfigurationLibrary"]
+      end
+      style 104_requires stroke:none
+    end
+    style 104_wrap fill:transparent
+    style 104_wrap stroke:none
+  end
+  style 104 fill:transparent
+  subgraph 106 ["`BackgroundJobApiLayer`"]
+    subgraph 106_wrap[" "]
+      subgraph 106_requires [Requires]
+        106_requires_0["BackgroundJobApiService"]
+      end
+      style 106_requires stroke:none
+    end
+    style 106_wrap fill:transparent
+    style 106_wrap stroke:none
+  end
+  style 106 fill:transparent
+  subgraph 108 ["`AppSettingsApiLayer`"]
+    subgraph 108_wrap[" "]
+      subgraph 108_requires [Requires]
+        108_requires_0["AppSettingsApiService"]
+      end
+      style 108_requires stroke:none
+    end
+    style 108_wrap fill:transparent
+    style 108_wrap stroke:none
+  end
+  style 108 fill:transparent
+  subgraph 110 ["`AbilitiesApiLayer`"]
+    subgraph 110_wrap[" "]
+      subgraph 110_requires [Requires]
+        110_requires_0["AbilityCatalog"]
+      end
+      style 110_requires stroke:none
+    end
+    style 110_wrap fill:transparent
+    style 110_wrap stroke:none
+  end
+  style 110 fill:transparent
+  subgraph 113 ["`HttpApiRoutes`"]
+    subgraph 113_wrap[" "]
+      subgraph 113_requires [Requires]
+        113_requires_0["AbilityCatalog"]
+        113_requires_1["AppSettingsApiService"]
+        113_requires_2["BackgroundJobApiService"]
+        113_requires_3["ConfigurationLibrary"]
+        113_requires_4["DungeonCatalog"]
+        113_requires_5["DungeonRunHistory"]
+        113_requires_6["EncounterCatalog"]
+        113_requires_7["FellowshipLogsApiService"]
+        113_requires_8["FellowshipTracker"]
+        113_requires_13["LiveSplitApiService"]
+        113_requires_15["UnitCatalog"]
+      end
+      style 113_requires stroke:none
+    end
+    style 113_wrap fill:transparent
+    style 113_wrap stroke:none
+  end
+  style 113 fill:transparent
+  subgraph 116 ["`ApiRoutes`"]
+    subgraph 116_wrap[" "]
+      subgraph 116_requires [Requires]
+        116_requires_0["AbilityCatalog"]
+        116_requires_1["AppSettingsApiService"]
+        116_requires_2["BackgroundJobApiService"]
+        116_requires_3["ConfigurationLibrary"]
+        116_requires_4["DungeonCatalog"]
+        116_requires_5["DungeonRunHistory"]
+        116_requires_6["EncounterCatalog"]
+        116_requires_7["FellowshipLogsApiService"]
+        116_requires_8["FellowshipTracker"]
+        116_requires_13["LiveSplitApiService"]
+        116_requires_17["BackgroundJobWebSocketBroadcas"]
+        116_requires_18["DungeonRunWebSocketBroadcaster"]
+        116_requires_19["LiveSplitWebSocketBroadcaster"]
+        116_requires_20["TrackingWebSocketBroadcaster"]
+        116_requires_21["UnitCatalog"]
+      end
+      style 116_requires stroke:none
+    end
+    style 116_wrap fill:transparent
+    style 116_wrap stroke:none
+  end
+  style 116 fill:transparent
+  subgraph 118 ["`ApiServer`"]
+    subgraph 118_wrap[" "]
+      subgraph 118_requires [Requires]
+        118_requires_0["AbilityCatalog"]
+        118_requires_1["AppSettingsApiService"]
+        118_requires_2["BackgroundJobApiService"]
+        118_requires_3["BackgroundJobWebSocketBroadcaster"]
+        118_requires_4["ConfigurationLibrary"]
+        118_requires_5["DungeonCatalog"]
+        118_requires_6["DungeonRunHistory"]
+        118_requires_7["DungeonRunWebSocketBroadcaster"]
+        118_requires_8["EncounterCatalog"]
+        118_requires_9["FellowshipLogsApiService"]
+        118_requires_10["FellowshipTracker"]
+        118_requires_15["LiveSplitApiService"]
+        118_requires_16["LiveSplitWebSocketBroadcaster"]
+        118_requires_18["TrackingWebSocketBroadcaster"]
+        118_requires_19["UnitCatalog"]
+      end
+      style 118_requires stroke:none
+    end
+    style 118_wrap fill:transparent
+    style 118_wrap stroke:none
+  end
+  style 118 fill:transparent
+  subgraph 121 ["`ApiLayer`"]
+    subgraph 121_wrap[" "]
+      subgraph 121_requires [Requires]
+        121_requires_0["FellowshipLogsCacheDatabase"]
+        121_requires_1["FellowshipLogsResponseDAO"]
+        121_requires_2["MainDatabase"]
+        121_requires_3["StateDatabase"]
+      end
+      style 121_requires stroke:none
+    end
+    style 121_wrap fill:transparent
+    style 121_wrap stroke:none
+  end
+  style 121 fill:transparent
+  61_requires_0 -.-> 59_requires_0
+  61_requires_1 -.-> 59_requires_1
+  61_requires_2 -.-> 59_requires_2
+  61_requires_3 -.-> 59_requires_3
+  61_provides_3 -.-> 59_provides_0
+  72_requires_2 -.-> 71_requires_0
+  72_provides_0 -.-> 71_provides_0
+  72_requires_2 -.-> 70_requires_0
+  72_provides_1 -.-> 70_provides_0
+  72_requires_0 -.-> 69_requires_0
+  72_provides_2 -.-> 69_provides_0
+  72_requires_2 -.-> 68_requires_0
+  72_provides_3 -.-> 68_provides_0
+  72_requires_2 -.-> 67_requires_0
+  72_provides_4 -.-> 67_provides_0
+  72_requires_2 -.-> 66_requires_0
+  72_provides_5 -.-> 66_provides_0
+  72_requires_2 -.-> 65_requires_0
+  72_provides_6 -.-> 65_provides_0
+  72_requires_0 -.-> 64_requires_0
+  72_requires_1 -.-> 64_requires_1
+  72_requires_2 -.-> 64_requires_2
+  72_provides_7 -.-> 64_provides_0
+  72_requires_2 -.-> 63_requires_0
+  72_provides_8 -.-> 63_provides_0
+  72_requires_2 -.-> 62_requires_0
+  72_provides_9 -.-> 62_provides_0
+  61_requires_0 -.-> 72_requires_1
+  61_requires_2 -.-> 72_requires_2
+  61_provides_0 -.-> 72_provides_0
+  61_provides_1 -.-> 72_provides_1
+  61_provides_2 -.-> 72_provides_2
+  61_provides_4 -.-> 72_provides_3
+  61_provides_5 -.-> 72_provides_4
+  61_provides_6 -.-> 72_provides_5
+  61_provides_7 -.-> 72_provides_6
+  61_provides_8 -.-> 72_provides_7
+  61_provides_9 -.-> 72_provides_8
+  61_provides_10 -.-> 72_provides_9
+  74_requires_0 -.-> 61_requires_0
+  74_requires_1 -.-> 61_requires_1
+  74_requires_2 -.-> 61_requires_2
+  74_requires_3 -.-> 61_requires_3
+  74_provides_0 -.-> 61_provides_0
+  74_provides_1 -.-> 61_provides_1
+  74_provides_2 -.-> 61_provides_2
+  74_provides_3 -.-> 61_provides_3
+  74_provides_4 -.-> 61_provides_4
+  74_provides_5 -.-> 61_provides_5
+  74_provides_6 -.-> 61_provides_6
+  74_provides_7 -.-> 61_provides_7
+  74_provides_8 -.-> 61_provides_8
+  74_provides_9 -.-> 61_provides_9
+  74_provides_10 -.-> 61_provides_10
+  76_requires_0 -.-> 74_requires_0
+  76_requires_1 -.-> 74_requires_1
+  76_requires_2 -.-> 74_requires_2
+  76_requires_3 -.-> 74_requires_3
+  76_provides_0 -.-> 74_provides_0
+  76_provides_1 -.-> 74_provides_1
+  76_provides_2 -.-> 74_provides_2
+  76_provides_3 -.-> 74_provides_3
+  76_provides_6 -.-> 74_provides_4
+  76_provides_8 -.-> 74_provides_5
+  76_provides_9 -.-> 74_provides_6
+  76_provides_11 -.-> 74_provides_7
+  76_provides_12 -.-> 74_provides_8
+  76_provides_18 -.-> 74_provides_9
+  76_provides_24 -.-> 74_provides_10
+  76_provides_4 -.-> 48_provides_0
+  76_requires_2 -.-> 46_requires_0
+  76_provides_13 -.-> 46_provides_0
+  76_provides_10 -.-> 6_provides_0
+  76_provides_19 -.-> 4_provides_0
+  76_provides_23 -.-> 2_provides_0
+  88_requires_3 -.-> 87_requires_3
+  88_requires_4 -.-> 86_requires_3
+  88_requires_5 -.-> 85_requires_3
+  88_requires_6 -.-> 84_requires_3
+  118_requires_0 -.-> 116_requires_0
+  118_requires_1 -.-> 116_requires_1
+  118_requires_2 -.-> 116_requires_2
+  118_requires_4 -.-> 116_requires_3
+  118_requires_5 -.-> 116_requires_4
+  118_requires_6 -.-> 116_requires_5
+  118_requires_8 -.-> 116_requires_6
+  118_requires_9 -.-> 116_requires_7
+  118_requires_10 -.-> 116_requires_8
+  118_requires_15 -.-> 116_requires_13
+  118_requires_19 -.-> 116_requires_21
+  11_requires_0 -.-> 8_requires_0
+  11_provides_0 -.-> 10_provides_0
+  46_requires_0 -.-> 11_requires_0
+  21_requires_0 -.-> 14_requires_0
+  21_provides_0 -.-> 20_provides_0
+  46_requires_0 -.-> 21_requires_0
+  36_requires_0 -.-> 27_requires_0
+  36_requires_0 -.-> 29_requires_0
+  36_requires_0 -.-> 31_requires_0
+  36_requires_0 -.-> 33_requires_0
+  36_requires_0 -.-> 35_requires_4
+  36_provides_0 -.-> 35_provides_0
+  46_requires_0 -.-> 36_requires_0
+  46_requires_0 -.-> 31_requires_0
+  46_requires_0 -.-> 42_requires_0
+  46_provides_0 -.-> 45_provides_0
+  59_requires_0 -.-> 52_requires_0
+  59_requires_2 -.-> 52_requires_1
+  59_requires_2 -.-> 36_requires_0
+  59_requires_3 -.-> 56_requires_0
+  59_requires_1 -.-> 58_requires_3
+  59_provides_0 -.-> 58_provides_0
+  121_requires_0 -.-> 76_requires_0
+  121_requires_1 -.-> 76_requires_1
+  121_requires_2 -.-> 76_requires_2
+  121_requires_3 -.-> 76_requires_3
+  113_requires_15 -.-> 90_requires_0
+  113_requires_8 -.-> 92_requires_0
+  113_requires_13 -.-> 94_requires_0
+  113_requires_7 -.-> 96_requires_0
+  113_requires_6 -.-> 98_requires_0
+  113_requires_4 -.-> 100_requires_0
+  113_requires_5 -.-> 102_requires_0
+  113_requires_3 -.-> 104_requires_0
+  113_requires_2 -.-> 106_requires_0
+  113_requires_1 -.-> 108_requires_0
+  113_requires_0 -.-> 110_requires_0
+  116_requires_0 -.-> 113_requires_0
+  116_requires_1 -.-> 113_requires_1
+  116_requires_2 -.-> 113_requires_2
+  116_requires_3 -.-> 113_requires_3
+  116_requires_4 -.-> 113_requires_4
+  116_requires_5 -.-> 113_requires_5
+  116_requires_6 -.-> 113_requires_6
+  116_requires_7 -.-> 113_requires_7
+  116_requires_8 -.-> 113_requires_8
+  116_requires_13 -.-> 113_requires_13
+  116_requires_21 -.-> 113_requires_15
+  116_requires_17 -.-> 88_requires_3
+  116_requires_18 -.-> 88_requires_4
+  116_requires_19 -.-> 88_requires_5
+  116_requires_20 -.-> 88_requires_6

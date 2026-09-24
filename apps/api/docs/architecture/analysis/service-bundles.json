@@ -1,26 +1,455 @@
 {
-  "bundleRelationships": [],
-  "bundles": [
+  "bundleRelationships": [
     {
-      "name": "ApiRuntimeLayer",
-      "requires": ["SqlClient"],
-      "services": [
-        "AbilityApiService",
+      "bundle": "FellowshipTracker.layer",
+      "comparedBundle": "ApiRuntimeLayer",
+      "onlyInBundle": [],
+      "onlyInComparedBundle": [
+        "AbilityCatalog",
         "AppSettingsApiService",
-        "ConfigurationApiService",
-        "DungeonApiService",
-        "DungeonRunApiService",
+        "BackgroundJobApiService",
+        "BackgroundJobService",
+        "BackgroundJobWebSocketBroadcaster",
+        "ConfigurationLibrary",
+        "DungeonCatalog",
+        "DungeonRunHistory",
         "DungeonRunWebSocketBroadcaster",
-        "EncounterApiService",
+        "EncounterCatalog",
+        "FellowshipLogsApiService",
+        "LiveSplitApiService",
+        "LiveSplitWebSocketBroadcaster",
+        "TrackingWebSocketBroadcaster",
+        "UnitCatalog"
+      ],
+      "relationship": "strict-subset",
+      "sharedServices": ["FellowshipTracker"]
+    },
+    {
+      "bundle": "BackgroundJobService.layer",
+      "comparedBundle": "Layer.provideMerge(BackgroundJobService.layer)",
+      "onlyInBundle": [],
+      "onlyInComparedBundle": [
+        "AbilityCatalog",
+        "AppSettingsApiService",
+        "BackgroundJobApiService",
+        "ConfigurationLibrary",
+        "DungeonCatalog",
+        "DungeonRunHistory",
+        "EncounterCatalog",
+        "FellowshipLogsApiService",
+        "LiveSplitApiService",
+        "UnitCatalog"
+      ],
+      "relationship": "strict-subset",
+      "sharedServices": ["BackgroundJobService"]
+    },
+    {
+      "bundle": "BackgroundJobService.layer",
+      "comparedBundle": "ApiServicesWithBackgroundJobsLayer",
+      "onlyInBundle": [],
+      "onlyInComparedBundle": [
+        "AbilityCatalog",
+        "AppSettingsApiService",
+        "BackgroundJobApiService",
+        "ConfigurationLibrary",
+        "DungeonCatalog",
+        "DungeonRunHistory",
+        "EncounterCatalog",
+        "FellowshipLogsApiService",
+        "LiveSplitApiService",
+        "UnitCatalog"
+      ],
+      "relationship": "strict-subset",
+      "sharedServices": ["BackgroundJobService"]
+    },
+    {
+      "bundle": "BackgroundJobService.layer",
+      "comparedBundle": "ApiRuntimeLayer",
+      "onlyInBundle": [],
+      "onlyInComparedBundle": [
+        "AbilityCatalog",
+        "AppSettingsApiService",
+        "BackgroundJobApiService",
+        "BackgroundJobWebSocketBroadcaster",
+        "ConfigurationLibrary",
+        "DungeonCatalog",
+        "DungeonRunHistory",
+        "DungeonRunWebSocketBroadcaster",
+        "EncounterCatalog",
         "FellowshipLogsApiService",
         "FellowshipTracker",
         "LiveSplitApiService",
         "LiveSplitWebSocketBroadcaster",
         "TrackingWebSocketBroadcaster",
-        "UnitApiService"
+        "UnitCatalog"
+      ],
+      "relationship": "strict-subset",
+      "sharedServices": ["BackgroundJobService"]
+    },
+    {
+      "bundle": "Layer.provideMerge(BackgroundJobService.layer)",
+      "comparedBundle": "ApiServicesLayer",
+      "onlyInBundle": ["BackgroundJobService"],
+      "onlyInComparedBundle": [],
+      "relationship": "strict-superset",
+      "sharedServices": [
+        "AbilityCatalog",
+        "AppSettingsApiService",
+        "BackgroundJobApiService",
+        "ConfigurationLibrary",
+        "DungeonCatalog",
+        "DungeonRunHistory",
+        "EncounterCatalog",
+        "FellowshipLogsApiService",
+        "LiveSplitApiService",
+        "UnitCatalog"
+      ]
+    },
+    {
+      "bundle": "Layer.provideMerge(BackgroundJobService.layer)",
+      "comparedBundle": "ApiServicesWithBackgroundJobsLayer",
+      "onlyInBundle": [],
+      "onlyInComparedBundle": [],
+      "relationship": "equal",
+      "sharedServices": [
+        "AbilityCatalog",
+        "AppSettingsApiService",
+        "BackgroundJobApiService",
+        "BackgroundJobService",
+        "ConfigurationLibrary",
+        "DungeonCatalog",
+        "DungeonRunHistory",
+        "EncounterCatalog",
+        "FellowshipLogsApiService",
+        "LiveSplitApiService",
+        "UnitCatalog"
+      ]
+    },
+    {
+      "bundle": "Layer.provideMerge(BackgroundJobService.layer)",
+      "comparedBundle": "ApiRuntimeLayer",
+      "onlyInBundle": [],
+      "onlyInComparedBundle": [
+        "BackgroundJobWebSocketBroadcaster",
+        "DungeonRunWebSocketBroadcaster",
+        "FellowshipTracker",
+        "LiveSplitWebSocketBroadcaster",
+        "TrackingWebSocketBroadcaster"
+      ],
+      "relationship": "strict-subset",
+      "sharedServices": [
+        "AbilityCatalog",
+        "AppSettingsApiService",
+        "BackgroundJobApiService",
+        "BackgroundJobService",
+        "ConfigurationLibrary",
+        "DungeonCatalog",
+        "DungeonRunHistory",
+        "EncounterCatalog",
+        "FellowshipLogsApiService",
+        "LiveSplitApiService",
+        "UnitCatalog"
+      ]
+    },
+    {
+      "bundle": "ApiServicesLayer",
+      "comparedBundle": "ApiServicesWithBackgroundJobsLayer",
+      "onlyInBundle": [],
+      "onlyInComparedBundle": ["BackgroundJobService"],
+      "relationship": "strict-subset",
+      "sharedServices": [
+        "AbilityCatalog",
+        "AppSettingsApiService",
+        "BackgroundJobApiService",
+        "ConfigurationLibrary",
+        "DungeonCatalog",
+        "DungeonRunHistory",
+        "EncounterCatalog",
+        "FellowshipLogsApiService",
+        "LiveSplitApiService",
+        "UnitCatalog"
+      ]
+    },
+    {
+      "bundle": "ApiServicesLayer",
+      "comparedBundle": "ApiRuntimeLayer",
+      "onlyInBundle": [],
+      "onlyInComparedBundle": [
+        "BackgroundJobService",
+        "BackgroundJobWebSocketBroadcaster",
+        "DungeonRunWebSocketBroadcaster",
+        "FellowshipTracker",
+        "LiveSplitWebSocketBroadcaster",
+        "TrackingWebSocketBroadcaster"
+      ],
+      "relationship": "strict-subset",
+      "sharedServices": [
+        "AbilityCatalog",
+        "AppSettingsApiService",
+        "BackgroundJobApiService",
+        "ConfigurationLibrary",
+        "DungeonCatalog",
+        "DungeonRunHistory",
+        "EncounterCatalog",
+        "FellowshipLogsApiService",
+        "LiveSplitApiService",
+        "UnitCatalog"
+      ]
+    },
+    {
+      "bundle": "ApiServicesWithBackgroundJobsLayer",
+      "comparedBundle": "ApiRuntimeLayer",
+      "onlyInBundle": [],
+      "onlyInComparedBundle": [
+        "BackgroundJobWebSocketBroadcaster",
+        "DungeonRunWebSocketBroadcaster",
+        "FellowshipTracker",
+        "LiveSplitWebSocketBroadcaster",
+        "TrackingWebSocketBroadcaster"
+      ],
+      "relationship": "strict-subset",
+      "sharedServices": [
+        "AbilityCatalog",
+        "AppSettingsApiService",
+        "BackgroundJobApiService",
+        "BackgroundJobService",
+        "ConfigurationLibrary",
+        "DungeonCatalog",
+        "DungeonRunHistory",
+        "EncounterCatalog",
+        "FellowshipLogsApiService",
+        "LiveSplitApiService",
+        "UnitCatalog"
+      ]
+    }
+  ],
+  "bundles": [
+    {
+      "name": "LiveSplit.layer",
+      "requires": ["MainDatabase"],
+      "services": ["LiveSplit"]
+    },
+    {
+      "name": "Fellowship.layer",
+      "requires": ["MainDatabase"],
+      "services": ["Fellowship"]
+    },
+    {
+      "name": "DungeonRunRepository.layer",
+      "requires": ["MainDatabase"],
+      "services": ["DungeonRunRepository"]
+    },
+    {
+      "name": "FellowshipTracker.layer",
+      "requires": ["MainDatabase"],
+      "services": ["FellowshipTracker"]
+    },
+    {
+      "name": "BackgroundJobService.layer",
+      "requires": [
+        "FellowshipLogsCacheDatabase",
+        "FellowshipLogsResponseDAO",
+        "MainDatabase",
+        "StateDatabase"
+      ],
+      "services": ["BackgroundJobService"]
+    },
+    {
+      "name": "Layer.provideMerge(BackgroundJobService.layer)",
+      "requires": [
+        "FellowshipLogsCacheDatabase",
+        "FellowshipLogsResponseDAO",
+        "MainDatabase",
+        "StateDatabase"
+      ],
+      "services": [
+        "AbilityCatalog",
+        "AppSettingsApiService",
+        "BackgroundJobApiService",
+        "BackgroundJobService",
+        "ConfigurationLibrary",
+        "DungeonCatalog",
+        "DungeonRunHistory",
+        "EncounterCatalog",
+        "FellowshipLogsApiService",
+        "LiveSplitApiService",
+        "UnitCatalog"
+      ]
+    },
+    {
+      "name": "ApiServicesLayer",
+      "requires": [
+        "BackgroundJobService",
+        "FellowshipLogsCacheDatabase",
+        "MainDatabase"
+      ],
+      "services": [
+        "AbilityCatalog",
+        "AppSettingsApiService",
+        "BackgroundJobApiService",
+        "ConfigurationLibrary",
+        "DungeonCatalog",
+        "DungeonRunHistory",
+        "EncounterCatalog",
+        "FellowshipLogsApiService",
+        "LiveSplitApiService",
+        "UnitCatalog"
+      ]
+    },
+    {
+      "name": "ApiServicesWithBackgroundJobsLayer",
+      "requires": [
+        "FellowshipLogsCacheDatabase",
+        "FellowshipLogsResponseDAO",
+        "MainDatabase",
+        "StateDatabase"
+      ],
+      "services": [
+        "AbilityCatalog",
+        "AppSettingsApiService",
+        "BackgroundJobApiService",
+        "BackgroundJobService",
+        "ConfigurationLibrary",
+        "DungeonCatalog",
+        "DungeonRunHistory",
+        "EncounterCatalog",
+        "FellowshipLogsApiService",
+        "LiveSplitApiService",
+        "UnitCatalog"
+      ]
+    },
+    {
+      "name": "ApiRuntimeLayer",
+      "requires": [
+        "FellowshipLogsCacheDatabase",
+        "FellowshipLogsResponseDAO",
+        "MainDatabase",
+        "StateDatabase"
+      ],
+      "services": [
+        "AbilityCatalog",
+        "AppSettingsApiService",
+        "BackgroundJobApiService",
+        "BackgroundJobService",
+        "BackgroundJobWebSocketBroadcaster",
+        "ConfigurationLibrary",
+        "DungeonCatalog",
+        "DungeonRunHistory",
+        "DungeonRunWebSocketBroadcaster",
+        "EncounterCatalog",
+        "FellowshipLogsApiService",
+        "FellowshipTracker",
+        "LiveSplitApiService",
+        "LiveSplitWebSocketBroadcaster",
+        "TrackingWebSocketBroadcaster",
+        "UnitCatalog"
       ]
     }
   ],
   "requirementReductions": [],
-  "serviceMemberships": []
+  "serviceMemberships": [
+    {
+      "bundles": ["FellowshipTracker.layer", "ApiRuntimeLayer"],
+      "service": "FellowshipTracker"
+    },
+    {
+      "bundles": [
+        "BackgroundJobService.layer",
+        "Layer.provideMerge(BackgroundJobService.layer)",
+        "ApiServicesWithBackgroundJobsLayer",
+        "ApiRuntimeLayer"
+      ],
+      "service": "BackgroundJobService"
+    },
+    {
+      "bundles": [
+        "Layer.provideMerge(BackgroundJobService.layer)",
+        "ApiServicesLayer",
+        "ApiServicesWithBackgroundJobsLayer",
+        "ApiRuntimeLayer"
+      ],
+      "service": "AbilityCatalog"
+    },
+    {
+      "bundles": [
+        "Layer.provideMerge(BackgroundJobService.layer)",
+        "ApiServicesLayer",
+        "ApiServicesWithBackgroundJobsLayer",
+        "ApiRuntimeLayer"
+      ],
+      "service": "AppSettingsApiService"
+    },
+    {
+      "bundles": [
+        "Layer.provideMerge(BackgroundJobService.layer)",
+        "ApiServicesLayer",
+        "ApiServicesWithBackgroundJobsLayer",
+        "ApiRuntimeLayer"
+      ],
+      "service": "BackgroundJobApiService"
+    },
+    {
+      "bundles": [
+        "Layer.provideMerge(BackgroundJobService.layer)",
+        "ApiServicesLayer",
+        "ApiServicesWithBackgroundJobsLayer",
+        "ApiRuntimeLayer"
+      ],
+      "service": "ConfigurationLibrary"
+    },
+    {
+      "bundles": [
+        "Layer.provideMerge(BackgroundJobService.layer)",
+        "ApiServicesLayer",
+        "ApiServicesWithBackgroundJobsLayer",
+        "ApiRuntimeLayer"
+      ],
+      "service": "DungeonCatalog"
+    },
+    {
+      "bundles": [
+        "Layer.provideMerge(BackgroundJobService.layer)",
+        "ApiServicesLayer",
+        "ApiServicesWithBackgroundJobsLayer",
+        "ApiRuntimeLayer"
+      ],
+      "service": "DungeonRunHistory"
+    },
+    {
+      "bundles": [
+        "Layer.provideMerge(BackgroundJobService.layer)",
+        "ApiServicesLayer",
+        "ApiServicesWithBackgroundJobsLayer",
+        "ApiRuntimeLayer"
+      ],
+      "service": "EncounterCatalog"
+    },
+    {
+      "bundles": [
+        "Layer.provideMerge(BackgroundJobService.layer)",
+        "ApiServicesLayer",
+        "ApiServicesWithBackgroundJobsLayer",
+        "ApiRuntimeLayer"
+      ],
+      "service": "FellowshipLogsApiService"
+    },
+    {
+      "bundles": [
+        "Layer.provideMerge(BackgroundJobService.layer)",
+        "ApiServicesLayer",
+        "ApiServicesWithBackgroundJobsLayer",
+        "ApiRuntimeLayer"
+      ],
+      "service": "LiveSplitApiService"
+    },
+    {
+      "bundles": [
+        "Layer.provideMerge(BackgroundJobService.layer)",
+        "ApiServicesLayer",
+        "ApiServicesWithBackgroundJobsLayer",
+        "ApiRuntimeLayer"
+      ],
+      "service": "UnitCatalog"
+    }
+  ]
 }

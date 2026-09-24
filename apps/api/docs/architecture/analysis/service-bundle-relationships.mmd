@@ -1,1 +1,17 @@
 flowchart LR
+  FellowshipTracker_layer["FellowshipTracker.layer"]
+  ApiRuntimeLayer["ApiRuntimeLayer"]
+  BackgroundJobService_layer["BackgroundJobService.layer"]
+  Layer_provideMerge_BackgroundJobService_layer_["Layer.provideMerge(BackgroundJobService.layer)"]
+  ApiServicesWithBackgroundJobsLayer["ApiServicesWithBackgroundJobsLayer"]
+  ApiServicesLayer["ApiServicesLayer"]
+  FellowshipTracker_layer -->|"strict subset · 1 shared"| ApiRuntimeLayer
+  BackgroundJobService_layer -->|"strict subset · 1 shared"| Layer_provideMerge_BackgroundJobService_layer_
+  BackgroundJobService_layer -->|"strict subset · 1 shared"| ApiServicesWithBackgroundJobsLayer
+  BackgroundJobService_layer -->|"strict subset · 1 shared"| ApiRuntimeLayer
+  ApiServicesLayer -->|"strict subset · 10 shared"| Layer_provideMerge_BackgroundJobService_layer_
+  Layer_provideMerge_BackgroundJobService_layer_ ---|"equal · 11 services"| ApiServicesWithBackgroundJobsLayer
+  Layer_provideMerge_BackgroundJobService_layer_ -->|"strict subset · 11 shared"| ApiRuntimeLayer
+  ApiServicesLayer -->|"strict subset · 10 shared"| ApiServicesWithBackgroundJobsLayer
+  ApiServicesLayer -->|"strict subset · 10 shared"| ApiRuntimeLayer
+  ApiServicesWithBackgroundJobsLayer -->|"strict subset · 11 shared"| ApiRuntimeLayer

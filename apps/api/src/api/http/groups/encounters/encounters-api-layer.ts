@@ -4,7 +4,7 @@ import * as Option from "effect/Option";
 import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 import * as HttpApiError from "effect/unstable/httpapi/HttpApiError";
 
-import { EncounterApiService } from "@frt/api/services/api/encounter/encounter-api-service.ts";
+import { EncounterCatalog } from "@frt/api/services/encounter-catalog/encounter-catalog-service.ts";
 import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
 import { type EncounterDAOError } from "@frt/db/daos/encounter/encounter-dao.ts";
 
@@ -24,15 +24,15 @@ const EncountersApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "encounters",
   E.fn(function* (handlers) {
-    const encounterApiService = yield* EncounterApiService;
+    const encounterCatalog = yield* EncounterCatalog;
 
     return handlers
       .handle("getEncounters", () => {
-        return encounterApiService.getAll().pipe(E.catch(mapEncounterApiError));
+        return encounterCatalog.getAll().pipe(E.catch(mapEncounterApiError));
       })
       .handle("getEncounter", ({ params }) => {
         return E.gen(function* () {
-          const encounter = yield* encounterApiService
+          const encounter = yield* encounterCatalog
             .getById({
               dungeonId: params.dungeonId,
               id: params.id,
@@ -52,5 +52,5 @@ const EncountersApiHandlersInferred = HttpApiBuilder.group(
 export const EncountersApiLayer: Layer.Layer<
   Layer.Success<typeof EncountersApiHandlersInferred>,
   Layer.Error<typeof EncountersApiHandlersInferred>,
-  EncounterApiService
+  EncounterCatalog
 > = EncountersApiHandlersInferred;

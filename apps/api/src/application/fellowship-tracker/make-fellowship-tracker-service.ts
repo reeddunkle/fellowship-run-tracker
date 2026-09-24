@@ -8,6 +8,7 @@ import * as Ref from "effect/Ref";
 import * as Semaphore from "effect/Semaphore";
 
 import { publishDungeonRunState } from "@frt/api/api/websocket/dungeon-run/publish-dungeon-run-state.ts";
+import { DungeonRunWebSocketBroadcaster } from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
 import { makeLocalLogDungeonRunPersistence } from "@frt/api/application/dungeon-run-processing/local-log-dungeon-run-persistence.ts";
 import { classifyTrackingFailure } from "@frt/api/application/fellowship-tracker/classify-tracking-failure.ts";
 import { observeFellowshipLiveStatus } from "@frt/api/application/fellowship-tracker/observe-fellowship-live-status.ts";
@@ -15,7 +16,6 @@ import {
   FellowshipTrackerAlreadyRunningError,
   FellowshipTrackerConfigurationNotFoundError,
 } from "@frt/api/errors/fellowship-tracker-error.ts";
-import { DungeonRunWebSocketBroadcaster } from "@frt/api/services/api/websocket-broadcaster-service.ts";
 import { DungeonRunRepository } from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
 import {
   createInitialDungeonRunProcessingState,

@@ -3,23 +3,23 @@ import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import {
-  ConfigurationApiService,
-  type ConfigurationApiServiceShape,
-} from "@frt/api/services/api/configuration/configuration-api-service.ts";
-import { createConfigurationApiResponse } from "@frt/api/services/api/configuration/create-configuration-api-response.ts";
+  ConfigurationLibrary,
+  type ConfigurationLibraryShape,
+} from "@frt/api/services/configuration-library/configuration-library-service.ts";
+import { createConfigurationApiResponse } from "@frt/api/services/configuration-library/create-configuration-api-response.ts";
 import {
   MOCK_CONFIGURATION_DEFINITION_ID,
   MOCK_CONFIGURATION_FINGERPRINT,
   MOCK_CONFIGURATION_ID,
 } from "@frt/db/tests/common/fixtures/configuration-fixtures.ts";
 
-export type MakeConfigurationApiServiceMockOptions =
-  Partial<ConfigurationApiServiceShape>;
+export type MakeConfigurationLibraryMockOptions =
+  Partial<ConfigurationLibraryShape>;
 
 const MOCK_CREATED_AT = DateTime.makeUnsafe("2026-01-01T00:00:00.000Z");
 const MOCK_UPDATED_AT = DateTime.makeUnsafe("2026-01-01T00:00:00.000Z");
 
-export function makeConfigurationApiServiceMock({
+export function makeConfigurationLibraryMock({
   delete: deleteConfiguration = () => {
     return E.void;
   },
@@ -71,8 +71,8 @@ export function makeConfigurationApiServiceMock({
       }),
     );
   },
-}: MakeConfigurationApiServiceMockOptions = {}) {
-  return Layer.succeed(ConfigurationApiService, {
+}: MakeConfigurationLibraryMockOptions = {}) {
+  return Layer.succeed(ConfigurationLibrary, {
     delete: deleteConfiguration,
     deleteByDungeonAndLevel,
     getAll,
@@ -80,7 +80,7 @@ export function makeConfigurationApiServiceMock({
     save,
     saveReplacingDungeonAndLevel,
     update,
-  } satisfies ConfigurationApiServiceShape);
+  } satisfies ConfigurationLibraryShape);
 }
 
-export const ConfigurationApiServiceMock = makeConfigurationApiServiceMock();
+export const ConfigurationLibraryMock = makeConfigurationLibraryMock();

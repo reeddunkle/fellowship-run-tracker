@@ -1,8 +1,8 @@
 import * as E from "effect/Effect";
 import * as Stream from "effect/Stream";
 
+import { BackgroundJobWebSocketBroadcaster } from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
 import { BackgroundJobApiService } from "@frt/api/services/api/background-job/background-job-api-service.ts";
-import { BackgroundJobWebSocketBroadcaster } from "@frt/api/services/api/websocket-broadcaster-service.ts";
 import { BackgroundJobService } from "@frt/api/services/background-job/background-job-service.ts";
 import { type BackgroundJobApiMessage } from "@frt/api-contract/websocket/background-job/background-job-api-message-schema.ts";
 

@@ -4,7 +4,7 @@ import * as Option from "effect/Option";
 import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 import * as HttpApiError from "effect/unstable/httpapi/HttpApiError";
 
-import { UnitApiService } from "@frt/api/services/api/unit/unit-api-service.ts";
+import { UnitCatalog } from "@frt/api/services/unit-catalog/unit-catalog-service.ts";
 import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
 import { type UnitDAOError } from "@frt/db/daos/unit/unit-dao.ts";
 
@@ -24,15 +24,15 @@ const UnitsApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "units",
   E.fn(function* (handlers) {
-    const unitApiService = yield* UnitApiService;
+    const unitCatalog = yield* UnitCatalog;
 
     return handlers
       .handle("getUnits", () => {
-        return unitApiService.getAll().pipe(E.catch(mapUnitApiError));
+        return unitCatalog.getAll().pipe(E.catch(mapUnitApiError));
       })
       .handle("getUnit", ({ params }) => {
         return E.gen(function* () {
-          const unit = yield* unitApiService
+          const unit = yield* unitCatalog
             .getById({
               id: params.id,
             })
@@ -51,5 +51,5 @@ const UnitsApiHandlersInferred = HttpApiBuilder.group(
 export const UnitsApiLayer: Layer.Layer<
   Layer.Success<typeof UnitsApiHandlersInferred>,
   Layer.Error<typeof UnitsApiHandlersInferred>,
-  UnitApiService
+  UnitCatalog
 > = UnitsApiHandlersInferred;

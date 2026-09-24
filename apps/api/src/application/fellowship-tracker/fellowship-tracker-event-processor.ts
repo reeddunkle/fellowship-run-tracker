@@ -3,9 +3,9 @@ import * as Ref from "effect/Ref";
 import * as Stream from "effect/Stream";
 
 import { publishDungeonRunState } from "@frt/api/api/websocket/dungeon-run/publish-dungeon-run-state.ts";
+import { DungeonRunWebSocketBroadcaster } from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
 import { type LocalLogDungeonRunPersistence } from "@frt/api/application/dungeon-run-processing/local-log-dungeon-run-persistence.ts";
 import { logDungeonRunProcessingEvent } from "@frt/api/application/dungeon-run-processing/log-dungeon-run-processing-event.ts";
-import { DungeonRunWebSocketBroadcaster } from "@frt/api/services/api/websocket-broadcaster-service.ts";
 import { type DungeonRunProcessingState } from "@frt/api/services/fellowship/dungeon-runs/dungeon-run-processing-state.ts";
 import {
   type ProcessDungeonRunEventStreamResult,

@@ -3,7 +3,7 @@ import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { createEncounterApiResponse } from "@frt/api/services/api/encounter/create-encounter-api-response.ts";
+import { createEncounterApiResponse } from "@frt/api/services/encounter-catalog/create-encounter-api-response.ts";
 import {
   EncounterDAO,
   type EncounterDAOError,
@@ -19,7 +19,7 @@ type GetEncounterByIdOptions = {
   readonly id: string;
 };
 
-export type EncounterApiServiceShape = {
+export type EncounterCatalogShape = {
   readonly getAll: () => E.Effect<EncounterApiEncounterList, EncounterDAOError>;
 
   readonly getById: (
@@ -27,10 +27,10 @@ export type EncounterApiServiceShape = {
   ) => E.Effect<Option.Option<EncounterApiEncounter>, EncounterDAOError>;
 };
 
-const makeEncounterApiService = E.gen(function* () {
+const makeEncounterCatalog = E.gen(function* () {
   const encounterDAO = yield* EncounterDAO;
 
-  const getAll: EncounterApiServiceShape["getAll"] = () => {
+  const getAll: EncounterCatalogShape["getAll"] = () => {
     return encounterDAO.getAll().pipe(
       E.map((encounters) => {
         return encounters.map(createEncounterApiResponse);
@@ -38,7 +38,7 @@ const makeEncounterApiService = E.gen(function* () {
     );
   };
 
-  const getById: EncounterApiServiceShape["getById"] = ({ dungeonId, id }) => {
+  const getById: EncounterCatalogShape["getById"] = ({ dungeonId, id }) => {
     return encounterDAO
       .getById({
         dungeonId,
@@ -50,16 +50,16 @@ const makeEncounterApiService = E.gen(function* () {
   return {
     getAll,
     getById,
-  } satisfies EncounterApiServiceShape;
+  } satisfies EncounterCatalogShape;
 });
 
-export class EncounterApiService extends Context.Service<
-  EncounterApiService,
-  EncounterApiServiceShape
+export class EncounterCatalog extends Context.Service<
+  EncounterCatalog,
+  EncounterCatalogShape
 >()(
-  "@frt/api/services/api/encounter/encounter-api-service/EncounterApiService",
+  "@frt/api/services/encounter-catalog/encounter-catalog-service/EncounterCatalog",
 ) {
-  static readonly layerNoDeps = Layer.effect(this, makeEncounterApiService);
+  static readonly layerNoDeps = Layer.effect(this, makeEncounterCatalog);
 
   static readonly layer = this.layerNoDeps.pipe(
     Layer.provide(EncounterDAO.layer),

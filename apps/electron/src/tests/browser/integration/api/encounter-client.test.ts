@@ -4,7 +4,7 @@ import * as Layer from "effect/Layer";
 import { describe, expect, test } from "vitest";
 
 import { makeApiServerTestLayerWith } from "@frt/api/tests/common/layers/api-server-test-layer.ts";
-import { makeEncounterApiServiceMock } from "@frt/api/tests/common/mocks/encounter-api-service-mock.ts";
+import { makeEncounterCatalogMock } from "@frt/api/tests/common/mocks/encounter-catalog-mock.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { type EncounterApiEncounter } from "@frt/shared/encounter/encounter-api-schema.ts";
 
@@ -31,15 +31,13 @@ const encounter = {
 
 describe("encounter client", () => {
   test("gets all encounters", async () => {
-    const encounterApiServiceMock = makeEncounterApiServiceMock({
+    const encounterCatalogMock = makeEncounterCatalogMock({
       getAll: () => {
         return E.succeed([encounter]);
       },
     });
 
-    const ApiServerTestLive = makeApiServerTestLayerWith(
-      encounterApiServiceMock,
-    );
+    const ApiServerTestLive = makeApiServerTestLayerWith(encounterCatalogMock);
 
     const TestLive = TestAppApiClientTestLive.pipe(
       Layer.provide(ApiServerTestLive),
@@ -57,7 +55,7 @@ describe("encounter client", () => {
   });
 
   test("gets an encounter", async () => {
-    const encounterApiServiceMock = makeEncounterApiServiceMock({
+    const encounterCatalogMock = makeEncounterCatalogMock({
       getById: ({ dungeonId, id }) => {
         if (dungeonId === DUNGEON_ID && id === ENCOUNTER_ID) {
           return E.succeedSome(encounter);
@@ -67,9 +65,7 @@ describe("encounter client", () => {
       },
     });
 
-    const ApiServerTestLive = makeApiServerTestLayerWith(
-      encounterApiServiceMock,
-    );
+    const ApiServerTestLive = makeApiServerTestLayerWith(encounterCatalogMock);
 
     const TestLive = TestAppApiClientTestLive.pipe(
       Layer.provide(ApiServerTestLive),
@@ -90,11 +86,9 @@ describe("encounter client", () => {
   });
 
   test("returns NotFound when an encounter does not exist", async () => {
-    const encounterApiServiceMock = makeEncounterApiServiceMock();
+    const encounterCatalogMock = makeEncounterCatalogMock();
 
-    const ApiServerTestLive = makeApiServerTestLayerWith(
-      encounterApiServiceMock,
-    );
+    const ApiServerTestLive = makeApiServerTestLayerWith(encounterCatalogMock);
 
     const TestLive = TestAppApiClientTestLive.pipe(
       Layer.provide(ApiServerTestLive),

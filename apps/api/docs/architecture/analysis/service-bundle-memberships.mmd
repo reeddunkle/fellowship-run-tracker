@@ -1,1 +1,65 @@
 flowchart LR
+  FellowshipTracker_layer["FellowshipTracker.layer"]
+  ApiRuntimeLayer["ApiRuntimeLayer"]
+  BackgroundJobService_layer["BackgroundJobService.layer"]
+  Layer_provideMerge_BackgroundJobService_layer_["Layer.provideMerge(BackgroundJobService.layer)"]
+  ApiServicesWithBackgroundJobsLayer["ApiServicesWithBackgroundJobsLayer"]
+  ApiServicesLayer["ApiServicesLayer"]
+  FellowshipTracker["FellowshipTracker"]
+  BackgroundJobService["BackgroundJobService"]
+  AbilityCatalog["AbilityCatalog"]
+  AppSettingsApiService["AppSettingsApiService"]
+  BackgroundJobApiService["BackgroundJobApiService"]
+  ConfigurationLibrary["ConfigurationLibrary"]
+  DungeonCatalog["DungeonCatalog"]
+  DungeonRunHistory["DungeonRunHistory"]
+  EncounterCatalog["EncounterCatalog"]
+  FellowshipLogsApiService["FellowshipLogsApiService"]
+  LiveSplitApiService["LiveSplitApiService"]
+  UnitCatalog["UnitCatalog"]
+  FellowshipTracker_layer -.-> FellowshipTracker
+  ApiRuntimeLayer -.-> FellowshipTracker
+  BackgroundJobService_layer -.-> BackgroundJobService
+  Layer_provideMerge_BackgroundJobService_layer_ -.-> BackgroundJobService
+  ApiServicesWithBackgroundJobsLayer -.-> BackgroundJobService
+  ApiRuntimeLayer -.-> BackgroundJobService
+  Layer_provideMerge_BackgroundJobService_layer_ -.-> AbilityCatalog
+  ApiServicesLayer -.-> AbilityCatalog
+  ApiServicesWithBackgroundJobsLayer -.-> AbilityCatalog
+  ApiRuntimeLayer -.-> AbilityCatalog
+  Layer_provideMerge_BackgroundJobService_layer_ -.-> AppSettingsApiService
+  ApiServicesLayer -.-> AppSettingsApiService
+  ApiServicesWithBackgroundJobsLayer -.-> AppSettingsApiService
+  ApiRuntimeLayer -.-> AppSettingsApiService
+  Layer_provideMerge_BackgroundJobService_layer_ -.-> BackgroundJobApiService
+  ApiServicesLayer -.-> BackgroundJobApiService
+  ApiServicesWithBackgroundJobsLayer -.-> BackgroundJobApiService
+  ApiRuntimeLayer -.-> BackgroundJobApiService
+  Layer_provideMerge_BackgroundJobService_layer_ -.-> ConfigurationLibrary
+  ApiServicesLayer -.-> ConfigurationLibrary
+  ApiServicesWithBackgroundJobsLayer -.-> ConfigurationLibrary
+  ApiRuntimeLayer -.-> ConfigurationLibrary
+  Layer_provideMerge_BackgroundJobService_layer_ -.-> DungeonCatalog
+  ApiServicesLayer -.-> DungeonCatalog
+  ApiServicesWithBackgroundJobsLayer -.-> DungeonCatalog
+  ApiRuntimeLayer -.-> DungeonCatalog
+  Layer_provideMerge_BackgroundJobService_layer_ -.-> DungeonRunHistory
+  ApiServicesLayer -.-> DungeonRunHistory
+  ApiServicesWithBackgroundJobsLayer -.-> DungeonRunHistory
+  ApiRuntimeLayer -.-> DungeonRunHistory
+  Layer_provideMerge_BackgroundJobService_layer_ -.-> EncounterCatalog
+  ApiServicesLayer -.-> EncounterCatalog
+  ApiServicesWithBackgroundJobsLayer -.-> EncounterCatalog
+  ApiRuntimeLayer -.-> EncounterCatalog
+  Layer_provideMerge_BackgroundJobService_layer_ -.-> FellowshipLogsApiService
+  ApiServicesLayer -.-> FellowshipLogsApiService
+  ApiServicesWithBackgroundJobsLayer -.-> FellowshipLogsApiService
+  ApiRuntimeLayer -.-> FellowshipLogsApiService
+  Layer_provideMerge_BackgroundJobService_layer_ -.-> LiveSplitApiService
+  ApiServicesLayer -.-> LiveSplitApiService
+  ApiServicesWithBackgroundJobsLayer -.-> LiveSplitApiService
+  ApiRuntimeLayer -.-> LiveSplitApiService
+  Layer_provideMerge_BackgroundJobService_layer_ -.-> UnitCatalog
+  ApiServicesLayer -.-> UnitCatalog
+  ApiServicesWithBackgroundJobsLayer -.-> UnitCatalog
+  ApiRuntimeLayer -.-> UnitCatalog

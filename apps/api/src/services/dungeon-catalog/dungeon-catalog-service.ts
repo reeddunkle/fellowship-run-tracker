@@ -3,7 +3,7 @@ import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { createDungeonApiResponse } from "@frt/api/services/api/dungeon/create-dungeon-api-response.ts";
+import { createDungeonApiResponse } from "@frt/api/services/dungeon-catalog/create-dungeon-api-response.ts";
 import {
   DungeonDAO,
   type DungeonDAOError,
@@ -18,7 +18,7 @@ type GetDungeonByIdOptions = {
   readonly id: DungeonId;
 };
 
-export type DungeonApiServiceShape = {
+export type DungeonCatalogShape = {
   readonly getAll: () => E.Effect<DungeonApiDungeonList, DungeonDAOError>;
 
   readonly getById: (
@@ -26,10 +26,10 @@ export type DungeonApiServiceShape = {
   ) => E.Effect<Option.Option<DungeonApiDungeon>, DungeonDAOError>;
 };
 
-const makeDungeonApiService = E.gen(function* () {
+const makeDungeonCatalog = E.gen(function* () {
   const dungeonDAO = yield* DungeonDAO;
 
-  const getAll: DungeonApiServiceShape["getAll"] = () => {
+  const getAll: DungeonCatalogShape["getAll"] = () => {
     return dungeonDAO.getAll().pipe(
       E.map((dungeons) => {
         return dungeons.map(createDungeonApiResponse);
@@ -37,7 +37,7 @@ const makeDungeonApiService = E.gen(function* () {
     );
   };
 
-  const getById: DungeonApiServiceShape["getById"] = ({ id }) => {
+  const getById: DungeonCatalogShape["getById"] = ({ id }) => {
     return dungeonDAO
       .getById({ id })
       .pipe(E.map(Option.map(createDungeonApiResponse)));
@@ -46,14 +46,16 @@ const makeDungeonApiService = E.gen(function* () {
   return {
     getAll,
     getById,
-  } satisfies DungeonApiServiceShape;
+  } satisfies DungeonCatalogShape;
 });
 
-export class DungeonApiService extends Context.Service<
-  DungeonApiService,
-  DungeonApiServiceShape
->()("@frt/api/services/api/dungeon/dungeon-api-service/DungeonApiService") {
-  static readonly layerNoDeps = Layer.effect(this, makeDungeonApiService);
+export class DungeonCatalog extends Context.Service<
+  DungeonCatalog,
+  DungeonCatalogShape
+>()(
+  "@frt/api/services/dungeon-catalog/dungeon-catalog-service/DungeonCatalog",
+) {
+  static readonly layerNoDeps = Layer.effect(this, makeDungeonCatalog);
 
   static readonly layer = this.layerNoDeps.pipe(
     Layer.provide(DungeonDAO.layer),

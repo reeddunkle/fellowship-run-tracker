@@ -4,7 +4,7 @@ import * as HttpServerRequest from "effect/unstable/http/HttpServerRequest";
 import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
 import * as Socket from "effect/unstable/socket/Socket";
 
-import { BackgroundJobWebSocketBroadcaster } from "@frt/api/services/api/websocket-broadcaster-service.ts";
+import { BackgroundJobWebSocketBroadcaster } from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
 import { ROUTES } from "@frt/api-contract/constants/routes.ts";
 
 const handleBackgroundJobRequest = E.gen(function* () {

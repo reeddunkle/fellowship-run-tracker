@@ -12,7 +12,7 @@ import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
 import * as Socket from "effect/unstable/socket/Socket";
 import { describe, expect, test } from "vitest";
 
-import { DungeonRunWebSocketBroadcaster } from "@frt/api/services/api/websocket-broadcaster-service.ts";
+import { DungeonRunWebSocketBroadcaster } from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
 import { ApiServerTest } from "@frt/api/tests/common/layers/api-server-test-layer.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { ROUTES } from "@frt/api-contract/constants/routes.ts";

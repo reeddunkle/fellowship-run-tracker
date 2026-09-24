@@ -4,7 +4,7 @@ import * as Schema from "effect/Schema";
 import { describe, expect, test } from "vitest";
 
 import { FellowshipLogsDungeonRunImporter } from "@frt/api/application/fellowship-logs-dungeon-run-importer/fellowship-logs-dungeon-run-importer-service.ts";
-import { DungeonRunApiService } from "@frt/api/services/api/dungeon-run/dungeon-run-api-service.ts";
+import { DungeonRunHistory } from "@frt/api/services/dungeon-run-history/dungeon-run-history-service.ts";
 import { makeFellowshipLogsDungeonRunImporterIntegrationTestHarness } from "@frt/api/tests/common/harnesses/fellowship-logs-dungeon-run-importer-integration-test-harness.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { MainDatabase } from "@frt/db/databases/main-database.ts";
@@ -18,21 +18,21 @@ const REPORT_CODE = Schema.decodeSync(FellowshipLogsReportCodeSchema)(
 
 const FIGHT_ID = Schema.decodeSync(FellowshipLogsFightIdSchema)(15);
 
-describe("DungeonRunApiService with Fellowship Logs import", () => {
+describe("DungeonRunHistory with Fellowship Logs import", () => {
   test("returns history created from imported Fellowship Logs observations", async () => {
     const harness =
       makeFellowshipLogsDungeonRunImporterIntegrationTestHarness();
 
-    const DungeonRunApiServiceTestLive = DungeonRunApiService.layer.pipe(
+    const DungeonRunHistoryTestLive = DungeonRunHistory.layer.pipe(
       Layer.provide(harness.layer),
     );
 
-    const TestLive = Layer.merge(harness.layer, DungeonRunApiServiceTestLive);
+    const TestLive = Layer.merge(harness.layer, DungeonRunHistoryTestLive);
 
     const program = E.gen(function* () {
       const fellowshipLogsDungeonRunImporter =
         yield* FellowshipLogsDungeonRunImporter;
-      const dungeonRunApiService = yield* DungeonRunApiService;
+      const dungeonRunHistory = yield* DungeonRunHistory;
       const sql = yield* MainDatabase;
 
       const importResult = yield* fellowshipLogsDungeonRunImporter.importReport(
@@ -68,7 +68,7 @@ describe("DungeonRunApiService with Fellowship Logs import", () => {
         dungeonRun.dungeonId,
       );
 
-      const result = yield* dungeonRunApiService.getHistory({
+      const result = yield* dungeonRunHistory.getHistory({
         dungeonId,
         dungeonLevel: dungeonRun.dungeonLevel,
       });

@@ -4,7 +4,7 @@ import * as Result from "effect/Result";
 import { describe, expect, test } from "vitest";
 
 import { makeApiServerTestLayerWith } from "@frt/api/tests/common/layers/api-server-test-layer.ts";
-import { makeConfigurationApiServiceMock } from "@frt/api/tests/common/mocks/configuration-api-service-mock.ts";
+import { makeConfigurationLibraryMock } from "@frt/api/tests/common/mocks/configuration-library-mock.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import {
   MOCK_CONFIGURATION,
@@ -28,14 +28,14 @@ import { TestAppApiClientTestLive } from "@/tests/browser/common/layers/app-api-
 
 describe("configuration client", () => {
   test("gets all configurations", async () => {
-    const configurationApiServiceTest = makeConfigurationApiServiceMock({
+    const configurationLibraryMock = makeConfigurationLibraryMock({
       getAll: () => {
         return E.succeed([MOCK_CONFIGURATION]);
       },
     });
 
     const ApiServerTestLive = makeApiServerTestLayerWith(
-      configurationApiServiceTest,
+      configurationLibraryMock,
     );
 
     const TestLive = TestAppApiClientTestLive.pipe(
@@ -54,7 +54,7 @@ describe("configuration client", () => {
   });
 
   test("gets a configuration", async () => {
-    const configurationApiServiceTest = makeConfigurationApiServiceMock({
+    const configurationLibraryMock = makeConfigurationLibraryMock({
       getById: ({ id }) => {
         if (id === MOCK_CONFIGURATION_ID) {
           return E.succeedSome(MOCK_CONFIGURATION);
@@ -65,7 +65,7 @@ describe("configuration client", () => {
     });
 
     const ApiServerTestLive = makeApiServerTestLayerWith(
-      configurationApiServiceTest,
+      configurationLibraryMock,
     );
 
     const TestLive = TestAppApiClientTestLive.pipe(
@@ -86,10 +86,10 @@ describe("configuration client", () => {
   });
 
   test("returns NotFound when a configuration does not exist", async () => {
-    const configurationApiServiceTest = makeConfigurationApiServiceMock();
+    const configurationLibraryMock = makeConfigurationLibraryMock();
 
     const ApiServerTestLive = makeApiServerTestLayerWith(
-      configurationApiServiceTest,
+      configurationLibraryMock,
     );
 
     const TestLive = TestAppApiClientTestLive.pipe(
@@ -114,7 +114,7 @@ describe("configuration client", () => {
   });
 
   test("saves a configuration", async () => {
-    const configurationApiServiceTest = makeConfigurationApiServiceMock({
+    const configurationLibraryMock = makeConfigurationLibraryMock({
       save: ({ configuration: savedConfiguration, label }) => {
         expect(savedConfiguration).toEqual({
           dungeonId: MOCK_SAVE_CONFIGURATION_REQUEST.configuration.dungeonId,
@@ -130,7 +130,7 @@ describe("configuration client", () => {
     });
 
     const ApiServerTestLive = makeApiServerTestLayerWith(
-      configurationApiServiceTest,
+      configurationLibraryMock,
     );
 
     const TestLive = TestAppApiClientTestLive.pipe(
@@ -162,7 +162,7 @@ describe("configuration client", () => {
       label: MOCK_UPDATED_CONFIGURATION_LABEL,
     } as const;
 
-    const configurationApiServiceTest = makeConfigurationApiServiceMock({
+    const configurationLibraryMock = makeConfigurationLibraryMock({
       save: ({ configuration: savedConfiguration, label }) => {
         expect(savedConfiguration).toEqual(updatedRequest.configuration);
         expect(label).toBe(MOCK_UPDATED_CONFIGURATION_LABEL);
@@ -172,7 +172,7 @@ describe("configuration client", () => {
     });
 
     const ApiServerTestLive = makeApiServerTestLayerWith(
-      configurationApiServiceTest,
+      configurationLibraryMock,
     );
 
     const TestLive = TestAppApiClientTestLive.pipe(
@@ -205,7 +205,7 @@ describe("configuration client", () => {
       label: MOCK_UPDATED_CONFIGURATION_LABEL,
     } as const;
 
-    const configurationApiServiceTest = makeConfigurationApiServiceMock({
+    const configurationLibraryMock = makeConfigurationLibraryMock({
       update: ({ configuration: updatedValue, id, label }) => {
         expect(id).toBe(MOCK_CONFIGURATION_ID);
         expect(updatedValue).toEqual(updatedRequest.configuration);
@@ -216,7 +216,7 @@ describe("configuration client", () => {
     });
 
     const ApiServerTestLive = makeApiServerTestLayerWith(
-      configurationApiServiceTest,
+      configurationLibraryMock,
     );
 
     const TestLive = TestAppApiClientTestLive.pipe(
@@ -242,7 +242,7 @@ describe("configuration client", () => {
   test("deletes a configuration", async () => {
     let deletedConfigurationId: string | undefined;
 
-    const configurationApiServiceTest = makeConfigurationApiServiceMock({
+    const configurationLibraryMock = makeConfigurationLibraryMock({
       delete: ({ id }) => {
         deletedConfigurationId = id;
 
@@ -251,7 +251,7 @@ describe("configuration client", () => {
     });
 
     const ApiServerTestLive = makeApiServerTestLayerWith(
-      configurationApiServiceTest,
+      configurationLibraryMock,
     );
 
     const TestLive = TestAppApiClientTestLive.pipe(

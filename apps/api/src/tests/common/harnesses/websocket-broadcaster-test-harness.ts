@@ -4,7 +4,7 @@ import * as Ref from "effect/Ref";
 import {
   type WebSocketBroadcasterService,
   type WebSocketWriter,
-} from "@frt/api/services/api/websocket-broadcaster-service.ts";
+} from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
 
 export function makeWebSocketBroadcasterTestHarness() {
   return E.gen(function* () {

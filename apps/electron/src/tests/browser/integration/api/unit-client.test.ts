@@ -4,7 +4,7 @@ import * as Layer from "effect/Layer";
 import { describe, expect, test } from "vitest";
 
 import { makeApiServerTestLayerWith } from "@frt/api/tests/common/layers/api-server-test-layer.ts";
-import { makeUnitApiServiceMock } from "@frt/api/tests/common/mocks/unit-api-service-mock.ts";
+import { makeUnitCatalogMock } from "@frt/api/tests/common/mocks/unit-catalog-mock.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { type UnitApiUnit } from "@frt/shared/unit/unit-api-schema.ts";
 
@@ -30,13 +30,13 @@ const unit = {
 
 describe("unit client", () => {
   test("gets all units", async () => {
-    const unitApiServiceMock = makeUnitApiServiceMock({
+    const unitCatalogMock = makeUnitCatalogMock({
       getAll: () => {
         return E.succeed([unit]);
       },
     });
 
-    const ApiServerTestLive = makeApiServerTestLayerWith(unitApiServiceMock);
+    const ApiServerTestLive = makeApiServerTestLayerWith(unitCatalogMock);
 
     const TestLive = TestAppApiClientTestLive.pipe(
       Layer.provide(ApiServerTestLive),
@@ -57,7 +57,7 @@ describe("unit client", () => {
   });
 
   test("gets a unit", async () => {
-    const unitApiServiceMock = makeUnitApiServiceMock({
+    const unitCatalogMock = makeUnitCatalogMock({
       getById: ({ id }) => {
         if (id === UNIT_ID) {
           return E.succeedSome(unit);
@@ -67,7 +67,7 @@ describe("unit client", () => {
       },
     });
 
-    const ApiServerTestLive = makeApiServerTestLayerWith(unitApiServiceMock);
+    const ApiServerTestLive = makeApiServerTestLayerWith(unitCatalogMock);
 
     const TestLive = TestAppApiClientTestLive.pipe(
       Layer.provide(ApiServerTestLive),
@@ -90,9 +90,9 @@ describe("unit client", () => {
   });
 
   test("returns NotFound when a unit does not exist", async () => {
-    const unitApiServiceMock = makeUnitApiServiceMock();
+    const unitCatalogMock = makeUnitCatalogMock();
 
-    const ApiServerTestLive = makeApiServerTestLayerWith(unitApiServiceMock);
+    const ApiServerTestLive = makeApiServerTestLayerWith(unitCatalogMock);
 
     const TestLive = TestAppApiClientTestLive.pipe(
       Layer.provide(ApiServerTestLive),

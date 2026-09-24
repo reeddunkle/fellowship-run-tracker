@@ -123,7 +123,7 @@ export class BackgroundJobWebSocketBroadcaster extends Context.Service<
   BackgroundJobWebSocketBroadcaster,
   WebSocketBroadcasterService
 >()(
-  "@frt/api/services/api/websocket-broadcaster-service/BackgroundJobWebSocketBroadcaster",
+  "@frt/api/api/websocket/websocket-broadcaster-service/BackgroundJobWebSocketBroadcaster",
 ) {
   static readonly layer = Layer.effect(this, makeWebSocketBroadcaster);
 }
@@ -132,7 +132,7 @@ export class DungeonRunWebSocketBroadcaster extends Context.Service<
   DungeonRunWebSocketBroadcaster,
   WebSocketBroadcasterService
 >()(
-  "@frt/api/services/api/websocket-broadcaster-service/DungeonRunWebSocketBroadcaster",
+  "@frt/api/api/websocket/websocket-broadcaster-service/DungeonRunWebSocketBroadcaster",
 ) {
   static readonly layer = Layer.effect(this, makeWebSocketBroadcaster);
 }
@@ -141,7 +141,7 @@ export class TrackingWebSocketBroadcaster extends Context.Service<
   TrackingWebSocketBroadcaster,
   WebSocketBroadcasterService
 >()(
-  "@frt/api/services/api/websocket-broadcaster-service/TrackingWebSocketBroadcaster",
+  "@frt/api/api/websocket/websocket-broadcaster-service/TrackingWebSocketBroadcaster",
 ) {
   static readonly layer = Layer.effect(this, makeWebSocketBroadcaster);
 }
@@ -150,7 +150,7 @@ export class LiveSplitWebSocketBroadcaster extends Context.Service<
   LiveSplitWebSocketBroadcaster,
   WebSocketBroadcasterService
 >()(
-  "@frt/api/services/api/websocket-broadcaster-service/LiveSplitWebSocketBroadcaster",
+  "@frt/api/api/websocket/websocket-broadcaster-service/LiveSplitWebSocketBroadcaster",
 ) {
   static readonly layer = Layer.effect(this, makeWebSocketBroadcaster);
 }

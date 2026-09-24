@@ -7,7 +7,7 @@ import { describe, expect, test } from "vitest";
 import {
   DungeonRunWebSocketBroadcaster,
   type WebSocketBroadcasterService,
-} from "@frt/api/services/api/websocket-broadcaster-service.ts";
+} from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
 import {
   ApiServicesTest,
   makeApiServerTestLayer,
