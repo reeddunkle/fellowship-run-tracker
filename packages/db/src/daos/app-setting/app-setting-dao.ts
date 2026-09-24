@@ -7,7 +7,7 @@ import type * as SqlError from "effect/unstable/sql/SqlError";
 
 import { makeAppSettingDAO } from "@frt/db/daos/app-setting/make-app-setting-dao.ts";
 import { type AppSettingModel } from "@frt/db/models/app-setting-model.ts";
-import { type FellowshipLogDirectory } from "@frt/shared/validation/app-settings/app-settings-schema.ts";
+import { type FellowshipLogDirectory } from "@frt/shared/app-settings/app-settings-schema.ts";
 
 export type AppSettingDAOError = SqlError.SqlError | Schema.SchemaError;
 

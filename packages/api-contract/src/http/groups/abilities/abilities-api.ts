@@ -7,7 +7,7 @@ import {
   AbilityApiAbilityListSchema,
   AbilityApiAbilitySchema,
 } from "@frt/shared/ability/ability-api-schema.ts";
-import { NonEmptyStringSchema } from "@frt/shared/validation/common-schemas.ts";
+import { NonEmptyStringSchema } from "@frt/shared/util/common-schemas.ts";
 
 const ABILITIES_ROUTE = "/abilities" as const;
 

@@ -10,7 +10,7 @@ import { LiveSplitFile } from "@frt/api/services/live-split/files/live-split-fil
 import { generateLSSFile } from "@frt/api/services/live-split/files/lss/generate-lss-file.ts";
 import { GenerateLSSUnknownDungeonError } from "@frt/cli/errors/generate-lss-error.ts";
 import { DungeonDAO } from "@frt/db/daos/dungeon/dungeon-dao.ts";
-import { NonEmptyStringSchema } from "@frt/shared/validation/common-schemas.ts";
+import { NonEmptyStringSchema } from "@frt/shared/util/common-schemas.ts";
 
 const GenerateLSSLayer = Layer.unwrap(
   E.map(getDatabaseOptions(), (databaseOptions) => {

@@ -3,7 +3,7 @@ import * as E from "effect/Effect";
 import * as Path from "effect/Path";
 import * as Schema from "effect/Schema";
 
-import { FilePathSchema } from "@frt/shared/validation/common-schemas.ts";
+import { FilePathSchema } from "@frt/shared/util/common-schemas.ts";
 
 const GetDirectoryPathArgsSchema = Schema.Struct({
   filePath: FilePathSchema,

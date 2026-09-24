@@ -13,7 +13,7 @@ import {
 import { LocalLogDungeonRunDAOError } from "@frt/db/errors/local-log-dungeon-run-dao-error.ts";
 import { UnexpectedDatabaseError } from "@frt/db/errors/unexpected-database-error.ts";
 import { LocalLogDungeonRunModel } from "@frt/db/models/local-log-dungeon-run-model.ts";
-import { type DungeonRunId } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
+import { type DungeonRunId } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 
 type DungeonRunStatus = typeof DungeonRunStatusSchema.Type;
 

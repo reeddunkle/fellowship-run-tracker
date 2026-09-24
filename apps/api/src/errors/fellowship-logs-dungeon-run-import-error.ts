@@ -1,8 +1,8 @@
 import * as Data from "effect/Data";
 
-import { type DungeonRunId } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
-import { type FellowshipLogsFightId } from "@frt/shared/validation/fellowship-logs/fellowship-logs-fight-id-schema.ts";
-import { type FellowshipLogsReportCode } from "@frt/shared/validation/fellowship-logs/fellowship-logs-report-code-schema.ts";
+import { type DungeonRunId } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
+import { type FellowshipLogsFightId } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
+import { type FellowshipLogsReportCode } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
 export class FellowshipLogsDungeonRunImportRunNotFoundError extends Data.TaggedError(
   "FellowshipLogsDungeonRunImportRunNotFoundError",

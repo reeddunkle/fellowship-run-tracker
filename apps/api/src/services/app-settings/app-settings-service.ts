@@ -33,7 +33,7 @@ import {
   FellowshipLogsClientSecretSchema,
   type LiveSplitHost,
   type LiveSplitPort,
-} from "@frt/shared/validation/app-settings/app-settings-schema.ts";
+} from "@frt/shared/app-settings/app-settings-schema.ts";
 
 export type AppSettingsValue = {
   readonly fellowshipLogDirectory: FellowshipLogDirectory;

@@ -5,8 +5,8 @@ import {
   FellowshipLogsApiRateLimitExceededError,
   FellowshipLogsApiRunNotFoundError,
 } from "@frt/api-contract/errors/fellowship-logs-api-error.ts";
-import { FellowshipLogsFightIdSchema } from "@frt/shared/validation/fellowship-logs/fellowship-logs-fight-id-schema.ts";
-import { FellowshipLogsReportCodeSchema } from "@frt/shared/validation/fellowship-logs/fellowship-logs-report-code-schema.ts";
+import { FellowshipLogsFightIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
+import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
 import { getMetadataErrorMessage } from "@/renderer/components/fellowship-logs/import-url-form/get-metadata-error-message.ts";
 

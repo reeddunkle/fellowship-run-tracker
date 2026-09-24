@@ -5,7 +5,7 @@ import * as Schema from "effect/Schema";
 import { MainDatabase } from "@frt/db/databases/main-database.ts";
 import { UnitModel } from "@frt/db/models/unit-model.ts";
 import { UnitStatusSchema } from "@frt/shared/unit/unit-status-schema.ts";
-import { NonEmptyStringSchema } from "@frt/shared/validation/common-schemas.ts";
+import { NonEmptyStringSchema } from "@frt/shared/util/common-schemas.ts";
 
 import { type UnitDAOShape } from "./unit-dao.ts";
 

@@ -1,7 +1,7 @@
 import { EllipsisVerticalIcon, Trash2Icon } from "lucide-react";
 
 import { type ConfigurationApiConfiguration } from "@frt/shared/configuration/configuration-api-schema.ts";
-import { type ConfigurationId } from "@frt/shared/validation/configuration/configuration-id-schema.ts";
+import { type ConfigurationId } from "@frt/shared/configuration/configuration-id-schema.ts";
 import { Button } from "@frt/ui/button.tsx";
 import { cn } from "@frt/ui/class-names.ts";
 import {

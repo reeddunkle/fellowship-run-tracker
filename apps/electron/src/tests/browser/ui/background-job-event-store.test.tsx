@@ -7,10 +7,10 @@ import {
   type BackgroundJobApiSnapshot,
   type ImportFellowshipLogsDungeonRunBackgroundJobApiItem,
 } from "@frt/shared/background-job/background-job-api-schema.ts";
-import { BackgroundJobIdSchema } from "@frt/shared/validation/background-job/background-job-id-schema.ts";
-import { DungeonRunIdSchema } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
-import { FellowshipLogsFightIdSchema } from "@frt/shared/validation/fellowship-logs/fellowship-logs-fight-id-schema.ts";
-import { FellowshipLogsReportCodeSchema } from "@frt/shared/validation/fellowship-logs/fellowship-logs-report-code-schema.ts";
+import { BackgroundJobIdSchema } from "@frt/shared/background-job/background-job-id-schema.ts";
+import { DungeonRunIdSchema } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
+import { FellowshipLogsFightIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
+import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
 import { type BackgroundJobEventStreamEvent } from "@/renderer/api/background-job/background-job-event-stream.ts";
 import { getBackgroundJobsQueryOptions } from "@/renderer/api/background-job/background-job-queries.ts";

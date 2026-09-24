@@ -9,9 +9,9 @@ import type * as Schema from "effect/Schema";
 import { makeBackgroundJobDAO } from "@frt/db/daos/background-job/make-background-job-dao.ts";
 import { type BackgroundJobDAOError } from "@frt/db/errors/background-job-dao-error.ts";
 import { type BackgroundJobModel } from "@frt/db/models/background-job-model.ts";
-import { type BackgroundJobFailure } from "@frt/shared/validation/background-job/background-job-failure-schema.ts";
-import { type BackgroundJobId } from "@frt/shared/validation/background-job/background-job-id-schema.ts";
-import { type BackgroundJobStatus } from "@frt/shared/validation/background-job/background-job-status-schema.ts";
+import { type BackgroundJobFailure } from "@frt/shared/background-job/background-job-failure-schema.ts";
+import { type BackgroundJobId } from "@frt/shared/background-job/background-job-id-schema.ts";
+import { type BackgroundJobStatus } from "@frt/shared/background-job/background-job-status-schema.ts";
 
 type InsertBackgroundJobOptions = {
   readonly idempotencyKey: string | null;

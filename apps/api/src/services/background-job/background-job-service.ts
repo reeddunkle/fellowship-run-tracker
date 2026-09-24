@@ -14,7 +14,7 @@ import { makeBackgroundJobService } from "@frt/api/services/background-job/make-
 import { DungeonRunRepository } from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
 import { BackgroundJobDAO } from "@frt/db/daos/background-job/background-job-dao.ts";
 import { type BackgroundJobModel } from "@frt/db/models/background-job-model.ts";
-import { type BackgroundJobId } from "@frt/shared/validation/background-job/background-job-id-schema.ts";
+import { type BackgroundJobId } from "@frt/shared/background-job/background-job-id-schema.ts";
 
 export type VisibleBackgroundJob = {
   readonly job: BackgroundJobModel;

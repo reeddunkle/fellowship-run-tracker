@@ -3,12 +3,12 @@ import { type ReactNode, useState } from "react";
 
 import { DEFAULT_APP_STATE } from "@frt/shared/app-state/app-state-schema.ts";
 import { type ConfigurationApiConfigurationList } from "@frt/shared/configuration/configuration-api-schema.ts";
+import { type ConfigurationId } from "@frt/shared/configuration/configuration-id-schema.ts";
 import {
   type DungeonRunApiComparisonGroup,
   type DungeonRunApiHistory,
 } from "@frt/shared/dungeon-run/dungeon-run-api-schema.ts";
 import { type DungeonId } from "@frt/shared/fellowship/validation/fellowship-common.ts";
-import { type ConfigurationId } from "@frt/shared/validation/configuration/configuration-id-schema.ts";
 
 import { getConfigurationsQueryOptions } from "@/renderer/api/configuration/configuration-queries.ts";
 import { getDungeonRunHistoryQueryOptions } from "@/renderer/api/dungeon-run/dungeon-run-queries.ts";

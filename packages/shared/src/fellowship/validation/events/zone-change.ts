@@ -14,7 +14,7 @@ import {
 import {
   EmptyStringSchema,
   JsonStringSchema,
-} from "@frt/shared/validation/common-schemas.ts";
+} from "@frt/shared/util/common-schemas.ts";
 
 const ZoneChangeLogLineSchema = Schema.Tuple([
   Schema.DateTimeUtcFromString, // timestamp

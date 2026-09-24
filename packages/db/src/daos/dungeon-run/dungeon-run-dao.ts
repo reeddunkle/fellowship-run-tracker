@@ -6,7 +6,7 @@ import type * as Option from "effect/Option";
 import { makeDungeonRunDAO } from "@frt/db/daos/dungeon-run/make-dungeon-run-dao.ts";
 import { type DungeonRunDAOError } from "@frt/db/errors/dungeon-run-dao-error.ts";
 import { type DungeonRunModel } from "@frt/db/models/dungeon-run-model.ts";
-import { type DungeonRunId } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
+import { type DungeonRunId } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 
 type GetDungeonRunByIdOptions = {
   readonly id: DungeonRunId;

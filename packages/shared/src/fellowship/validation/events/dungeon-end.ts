@@ -17,7 +17,7 @@ import {
   IntegerFromStringSchema,
   JsonIntegerArraySchema,
   JsonStringSchema,
-} from "@frt/shared/validation/common-schemas.ts";
+} from "@frt/shared/util/common-schemas.ts";
 
 const DungeonEndLogLineSchema = Schema.Tuple([
   Schema.DateTimeUtcFromString, // timestamp

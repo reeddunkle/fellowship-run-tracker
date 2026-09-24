@@ -3,7 +3,7 @@ import * as Model from "effect/unstable/schema/Model";
 import {
   FellowshipLogDirectorySchema,
   SettingIdSchema,
-} from "@frt/shared/validation/app-settings/app-settings-schema.ts";
+} from "@frt/shared/app-settings/app-settings-schema.ts";
 
 export class AppSettingModel extends Model.Class<AppSettingModel>(
   "AppSettingModel",

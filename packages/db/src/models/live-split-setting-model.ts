@@ -5,7 +5,7 @@ import {
   LiveSplitHostSchema,
   LiveSplitPortSchema,
   SettingIdSchema,
-} from "@frt/shared/validation/app-settings/app-settings-schema.ts";
+} from "@frt/shared/app-settings/app-settings-schema.ts";
 
 export class LiveSplitSettingModel extends Model.Class<LiveSplitSettingModel>(
   "LiveSplitSettingModel",

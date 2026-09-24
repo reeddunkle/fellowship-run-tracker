@@ -5,7 +5,7 @@ import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
 
 import { BackgroundJobApiNotFoundError } from "@frt/api-contract/errors/background-job-api-error.ts";
 import { BackgroundJobApiSnapshotSchema } from "@frt/shared/background-job/background-job-api-schema.ts";
-import { BackgroundJobIdSchema } from "@frt/shared/validation/background-job/background-job-id-schema.ts";
+import { BackgroundJobIdSchema } from "@frt/shared/background-job/background-job-id-schema.ts";
 
 const BACKGROUND_JOBS_ROUTE = "/background-jobs" as const;
 

@@ -36,10 +36,10 @@ import {
   MOCK_CONFIGURATION_LABEL,
 } from "@frt/db/tests/common/fixtures/configuration-fixtures.ts";
 import { type ConfigurationDefinitionId } from "@frt/db/validation/configuration/configuration-definition-id-schema.ts";
+import { type ConfigurationId } from "@frt/shared/configuration/configuration-id-schema.ts";
+import { type ConfigurationLabel } from "@frt/shared/configuration/configuration-label-schema.ts";
+import { DungeonRunIdSchema } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 import { type FellowshipMilestoneConfiguration } from "@frt/shared/fellowship/configurations/configuration-types.ts";
-import { type ConfigurationId } from "@frt/shared/validation/configuration/configuration-id-schema.ts";
-import { type ConfigurationLabel } from "@frt/shared/validation/configuration/configuration-label-schema.ts";
-import { DungeonRunIdSchema } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
 
 import { makeFellowshipTestHarness } from "./fellowship-test-harness.ts";
 import { makeWebSocketBroadcasterTestHarness } from "./websocket-broadcaster-test-harness.ts";

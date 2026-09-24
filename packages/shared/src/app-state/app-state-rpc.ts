@@ -4,8 +4,8 @@ import {
   DungeonRunTimeColumnStateSchema,
   ThemeSchema,
 } from "@frt/shared/app-state/app-state-schema.ts";
-import { ConfigurationIdSchema } from "@frt/shared/validation/configuration/configuration-id-schema.ts";
-import { DungeonRunComparisonGroupSchema } from "@frt/shared/validation/dungeon-run/dungeon-run-comparison-group-schema.ts";
+import { ConfigurationIdSchema } from "@frt/shared/configuration/configuration-id-schema.ts";
+import { DungeonRunComparisonGroupSchema } from "@frt/shared/dungeon-run/dungeon-run-comparison-group-schema.ts";
 
 export const AppStateRpcRequestSchema = Schema.TaggedUnion({
   GetDungeonRunComparisonGroup: {},

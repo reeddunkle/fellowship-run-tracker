@@ -5,7 +5,7 @@ import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
 
 import { DungeonRunApiHistorySchema } from "@frt/shared/dungeon-run/dungeon-run-api-schema.ts";
 import { DungeonIdSchema } from "@frt/shared/fellowship/validation/fellowship-common.ts";
-import { PositiveIntegerFromStringSchema } from "@frt/shared/validation/common-schemas.ts";
+import { PositiveIntegerFromStringSchema } from "@frt/shared/util/common-schemas.ts";
 
 const DUNGEON_RUNS_ROUTE = "/dungeon-run" as const;
 

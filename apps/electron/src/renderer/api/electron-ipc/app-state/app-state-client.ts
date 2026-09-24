@@ -10,8 +10,8 @@ import {
 import {
   type ConfigurationId,
   ConfigurationIdSchema,
-} from "@frt/shared/validation/configuration/configuration-id-schema.ts";
-import { DungeonRunComparisonGroupSchema } from "@frt/shared/validation/dungeon-run/dungeon-run-comparison-group-schema.ts";
+} from "@frt/shared/configuration/configuration-id-schema.ts";
+import { DungeonRunComparisonGroupSchema } from "@frt/shared/dungeon-run/dungeon-run-comparison-group-schema.ts";
 
 import { AppStateClientError } from "@/errors/app-state-error.ts";
 

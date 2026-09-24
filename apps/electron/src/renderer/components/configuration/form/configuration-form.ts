@@ -2,8 +2,8 @@ import * as E from "effect/Effect";
 import * as Match from "effect/Match";
 import * as Schema from "effect/Schema";
 
+import { type ConfigurationId } from "@frt/shared/configuration/configuration-id-schema.ts";
 import { FELLOWSHIP_EVENT } from "@frt/shared/fellowship/constants/fellowship-event.ts";
-import { type ConfigurationId } from "@frt/shared/validation/configuration/configuration-id-schema.ts";
 
 import { useAppForm } from "@/renderer/components/form/app-form.ts";
 

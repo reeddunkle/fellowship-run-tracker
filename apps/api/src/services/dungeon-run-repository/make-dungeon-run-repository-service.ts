@@ -10,7 +10,7 @@ import { DungeonRunObservationDAO } from "@frt/db/daos/dungeon-run-observation/d
 import { FellowshipLogsDungeonRunDAO } from "@frt/db/daos/fellowship-logs-dungeon-run/fellowship-logs-dungeon-run-dao.ts";
 import { LocalLogDungeonRunDAO } from "@frt/db/daos/local-log-dungeon-run/local-log-dungeon-run-dao.ts";
 import { MainDatabase } from "@frt/db/databases/main-database.ts";
-import { type DungeonRunId } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
+import { type DungeonRunId } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 
 type FinishedDungeonRunStatus = Exclude<
   typeof DungeonRunStatusSchema.Type,

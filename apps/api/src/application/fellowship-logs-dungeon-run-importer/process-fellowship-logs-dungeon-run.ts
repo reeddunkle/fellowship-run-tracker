@@ -21,8 +21,8 @@ import { FELLOWSHIP_EVENT } from "@frt/shared/fellowship/constants/fellowship-ev
 import { type DungeonStartEvent } from "@frt/shared/fellowship/validation/events/dungeon-start.ts";
 import { type DungeonId } from "@frt/shared/fellowship/validation/fellowship-common.ts";
 import { type FellowshipEvent } from "@frt/shared/fellowship/validation/fellowship-event-schema.ts";
-import { type FellowshipLogsFightId } from "@frt/shared/validation/fellowship-logs/fellowship-logs-fight-id-schema.ts";
-import { type FellowshipLogsReportCode } from "@frt/shared/validation/fellowship-logs/fellowship-logs-report-code-schema.ts";
+import { type FellowshipLogsFightId } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
+import { type FellowshipLogsReportCode } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
 export type ProcessFellowshipLogsDungeonRunOptions<StreamError> = {
   readonly events: Stream.Stream<FellowshipEvent, StreamError>;

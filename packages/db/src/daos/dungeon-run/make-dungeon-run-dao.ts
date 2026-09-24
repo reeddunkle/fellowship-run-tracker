@@ -12,7 +12,7 @@ import {
 } from "@frt/db/errors/dungeon-run-error.ts";
 import { UnexpectedDatabaseError } from "@frt/db/errors/unexpected-database-error.ts";
 import { DungeonRunModel } from "@frt/db/models/dungeon-run-model.ts";
-import { type DungeonRunId } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
+import { type DungeonRunId } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 
 function mapDungeonRunDAOError(cause: unknown): DungeonRunDAOError {
   if (cause instanceof DungeonRunDAOError) {

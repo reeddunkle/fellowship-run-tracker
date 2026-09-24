@@ -14,11 +14,11 @@ import {
   type DungeonRunObservationApi,
   type DungeonRunStateApi,
 } from "@frt/api-contract/websocket/dungeon-run/dungeon-run-api-message-schema.ts";
+import { type ConfigurationId } from "@frt/shared/configuration/configuration-id-schema.ts";
 import {
   type DungeonRunApiComparisonGroup,
   type DungeonRunApiHistory,
 } from "@frt/shared/dungeon-run/dungeon-run-api-schema.ts";
-import { type ConfigurationId } from "@frt/shared/validation/configuration/configuration-id-schema.ts";
 import { ReactContextError } from "@frt/ui/errors/react-context-error.ts";
 
 import {

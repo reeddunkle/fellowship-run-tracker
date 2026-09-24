@@ -3,7 +3,7 @@ import * as Schema from "effect/Schema";
 import {
   NonEmptyStringSchema,
   PositiveIntegerSchema,
-} from "@frt/shared/validation/common-schemas.ts";
+} from "@frt/shared/util/common-schemas.ts";
 
 const FellowshipLogsAccessTokenSchema =
   Schema.RedactedFromValue(NonEmptyStringSchema);

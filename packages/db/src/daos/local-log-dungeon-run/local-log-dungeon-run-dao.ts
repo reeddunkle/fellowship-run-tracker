@@ -7,7 +7,7 @@ import type * as Option from "effect/Option";
 import { makeLocalLogDungeonRunDAO } from "@frt/db/daos/local-log-dungeon-run/make-local-log-dungeon-run-dao.ts";
 import { type LocalLogDungeonRunDAOError } from "@frt/db/errors/local-log-dungeon-run-dao-error.ts";
 import { type LocalLogDungeonRunModel } from "@frt/db/models/local-log-dungeon-run-model.ts";
-import { type DungeonRunId } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
+import { type DungeonRunId } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 
 type CreateLocalLogDungeonRunOptions = {
   readonly dungeonRunId: DungeonRunId;

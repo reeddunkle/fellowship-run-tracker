@@ -10,7 +10,7 @@ import { type LiveSplitSettingModel } from "@frt/db/models/live-split-setting-mo
 import {
   type LiveSplitHost,
   type LiveSplitPort,
-} from "@frt/shared/validation/app-settings/app-settings-schema.ts";
+} from "@frt/shared/app-settings/app-settings-schema.ts";
 
 export type LiveSplitSettingDAOError = SqlError.SqlError | Schema.SchemaError;
 

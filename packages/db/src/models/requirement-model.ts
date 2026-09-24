@@ -6,7 +6,7 @@ import { RequirementEventTypeSchema } from "@frt/shared/fellowship/validation/re
 import {
   NonEmptyStringSchema,
   PositiveIntegerSchema,
-} from "@frt/shared/validation/common-schemas.ts";
+} from "@frt/shared/util/common-schemas.ts";
 
 export class RequirementModel extends Model.Class<RequirementModel>(
   "RequirementModel",

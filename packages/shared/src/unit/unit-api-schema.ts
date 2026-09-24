@@ -1,7 +1,7 @@
 import * as Schema from "effect/Schema";
 
 import { UnitStatusSchema } from "@frt/shared/unit/unit-status-schema.ts";
-import { NonEmptyStringSchema } from "@frt/shared/validation/common-schemas.ts";
+import { NonEmptyStringSchema } from "@frt/shared/util/common-schemas.ts";
 
 export const UnitApiUnitSchema = Schema.Struct({
   createdAt: Schema.DateTimeUtcFromString,

@@ -1,12 +1,12 @@
 import * as Schema from "effect/Schema";
 
+import { DungeonRunComparisonGroupSchema } from "@frt/shared/dungeon-run/dungeon-run-comparison-group-schema.ts";
 import { RequirementEventTypeSchema } from "@frt/shared/fellowship/validation/requirement-event-type-schema.ts";
 import {
   NonEmptyStringSchema,
   NonNegativeIntegerSchema,
   PositiveIntegerSchema,
-} from "@frt/shared/validation/common-schemas.ts";
-import { DungeonRunComparisonGroupSchema } from "@frt/shared/validation/dungeon-run/dungeon-run-comparison-group-schema.ts";
+} from "@frt/shared/util/common-schemas.ts";
 
 export type DungeonRunApiComparisonGroup =
   typeof DungeonRunComparisonGroupSchema.Type;

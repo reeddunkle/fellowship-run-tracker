@@ -8,7 +8,7 @@ import {
   type ConfigurationApiConfiguration,
   type ConfigurationApiConfigurationList,
 } from "@frt/shared/configuration/configuration-api-schema.ts";
-import { type ConfigurationId } from "@frt/shared/validation/configuration/configuration-id-schema.ts";
+import { type ConfigurationId } from "@frt/shared/configuration/configuration-id-schema.ts";
 
 import { saveConfigurationApiRequest } from "@/renderer/components/configuration/form/configuration-editor-adapter.ts";
 import { type DecodedConfigurationEditorValue } from "@/renderer/components/configuration/form/configuration-form-schema.ts";

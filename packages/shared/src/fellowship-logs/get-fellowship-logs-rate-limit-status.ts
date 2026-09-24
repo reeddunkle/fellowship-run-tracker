@@ -1,4 +1,4 @@
-import { type FellowshipLogsRateLimitSnapshot } from "@frt/shared/fellowship-logs/validation/fellowship-logs-rate-limit-schema.ts";
+import { type FellowshipLogsRateLimitSnapshot } from "@frt/shared/fellowship-logs/fellowship-logs-rate-limit-schema.ts";
 
 export type FellowshipLogsRateLimitStatus = {
   readonly isExhausted: boolean;

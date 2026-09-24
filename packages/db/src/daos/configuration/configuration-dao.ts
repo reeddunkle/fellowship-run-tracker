@@ -7,10 +7,10 @@ import { makeConfigurationDAO } from "@frt/db/daos/configuration/make-configurat
 import { type ConfigurationDAOError } from "@frt/db/errors/configuration-dao-error.ts";
 import { type ConfigurationModel } from "@frt/db/models/configuration-model.ts";
 import { type ConfigurationDefinitionId } from "@frt/db/validation/configuration/configuration-definition-id-schema.ts";
+import { type ConfigurationFingerprint } from "@frt/shared/configuration/configuration-fingerprint-schema.ts";
+import { type ConfigurationId } from "@frt/shared/configuration/configuration-id-schema.ts";
+import { type ConfigurationLabel } from "@frt/shared/configuration/configuration-label-schema.ts";
 import { type FellowshipMilestoneConfiguration } from "@frt/shared/fellowship/configurations/configuration-types.ts";
-import { type ConfigurationFingerprint } from "@frt/shared/validation/configuration/configuration-fingerprint-schema.ts";
-import { type ConfigurationId } from "@frt/shared/validation/configuration/configuration-id-schema.ts";
-import { type ConfigurationLabel } from "@frt/shared/validation/configuration/configuration-label-schema.ts";
 
 export type PersistedConfiguration = {
   readonly configuration: FellowshipMilestoneConfiguration;

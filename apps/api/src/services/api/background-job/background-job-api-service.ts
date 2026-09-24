@@ -10,7 +10,7 @@ import {
 import { createBackgroundJobApiItem } from "@frt/api/services/api/background-job/create-background-job-api-response.ts";
 import { BackgroundJobService } from "@frt/api/services/background-job/background-job-service.ts";
 import { type BackgroundJobApiSnapshot } from "@frt/shared/background-job/background-job-api-schema.ts";
-import { type BackgroundJobId } from "@frt/shared/validation/background-job/background-job-id-schema.ts";
+import { type BackgroundJobId } from "@frt/shared/background-job/background-job-id-schema.ts";
 
 type BackgroundJobIdOptions = {
   readonly id: BackgroundJobId;

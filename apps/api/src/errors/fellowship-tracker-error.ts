@@ -1,6 +1,6 @@
 import * as Data from "effect/Data";
 
-import { type ConfigurationId } from "@frt/shared/validation/configuration/configuration-id-schema.ts";
+import { type ConfigurationId } from "@frt/shared/configuration/configuration-id-schema.ts";
 
 export class FellowshipTrackerAlreadyRunningError extends Data.TaggedError(
   "FellowshipTrackerAlreadyRunningError",

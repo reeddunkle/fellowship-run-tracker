@@ -1,7 +1,7 @@
 import * as Schema from "effect/Schema";
 import * as Model from "effect/unstable/schema/Model";
 
-import { NonEmptyStringSchema } from "@frt/shared/validation/common-schemas.ts";
+import { NonEmptyStringSchema } from "@frt/shared/util/common-schemas.ts";
 
 export class AbilityModel extends Model.Class<AbilityModel>("AbilityModel")({
   createdAt: Model.DateTimeInsertFromNumber,

@@ -1,9 +1,6 @@
 import * as Schema from "effect/Schema";
 
-import {
-  HostSchema,
-  PortSchema,
-} from "@frt/shared/validation/common-schemas.ts";
+import { HostSchema, PortSchema } from "@frt/shared/util/common-schemas.ts";
 
 export const PublicApiHostSchema = HostSchema.pipe(
   Schema.brand("PublicApiHost"),

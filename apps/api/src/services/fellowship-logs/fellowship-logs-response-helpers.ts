@@ -17,11 +17,11 @@ import {
   type FellowshipLogsGraphQLRequest,
   type FellowshipLogsGraphQLResponse,
 } from "@frt/api/services/fellowship-logs/validation/fellowship-logs-graphql-schema.ts";
-import { getFellowshipLogsRateLimitStatus } from "@frt/shared/fellowship-logs/get-fellowship-logs-rate-limit-status.ts";
 import {
   type FellowshipLogsRateLimitData,
   type FellowshipLogsRateLimitSnapshot,
-} from "@frt/shared/fellowship-logs/validation/fellowship-logs-rate-limit-schema.ts";
+} from "@frt/shared/fellowship-logs/fellowship-logs-rate-limit-schema.ts";
+import { getFellowshipLogsRateLimitStatus } from "@frt/shared/fellowship-logs/get-fellowship-logs-rate-limit-status.ts";
 
 export function getGraphQLResponseData<Data>(
   response: FellowshipLogsGraphQLResponse<Data>,

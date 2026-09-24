@@ -6,10 +6,10 @@ import {
   type ConfigurationApiConfiguration,
   type SaveConfigurationApiRequest,
 } from "@frt/shared/configuration/configuration-api-schema.ts";
+import { ConfigurationFingerprintSchema } from "@frt/shared/configuration/configuration-fingerprint-schema.ts";
+import { ConfigurationIdSchema } from "@frt/shared/configuration/configuration-id-schema.ts";
+import { ConfigurationLabelSchema } from "@frt/shared/configuration/configuration-label-schema.ts";
 import { type FellowshipMilestoneConfiguration } from "@frt/shared/fellowship/configurations/configuration-types.ts";
-import { ConfigurationFingerprintSchema } from "@frt/shared/validation/configuration/configuration-fingerprint-schema.ts";
-import { ConfigurationIdSchema } from "@frt/shared/validation/configuration/configuration-id-schema.ts";
-import { ConfigurationLabelSchema } from "@frt/shared/validation/configuration/configuration-label-schema.ts";
 
 export const MOCK_CONFIGURATION_DEFINITION_ID = Schema.decodeSync(
   ConfigurationDefinitionIdSchema,

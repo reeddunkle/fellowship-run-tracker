@@ -6,8 +6,8 @@ import { FellowshipLogsDungeonRunImporter } from "@frt/api/application/fellowshi
 import { makeFellowshipLogsDungeonRunImporterIntegrationTestHarness } from "@frt/api/tests/common/harnesses/fellowship-logs-dungeon-run-importer-integration-test-harness.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { MainDatabase } from "@frt/db/databases/main-database.ts";
-import { FellowshipLogsFightIdSchema } from "@frt/shared/validation/fellowship-logs/fellowship-logs-fight-id-schema.ts";
-import { FellowshipLogsReportCodeSchema } from "@frt/shared/validation/fellowship-logs/fellowship-logs-report-code-schema.ts";
+import { FellowshipLogsFightIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
+import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
 const REPORT_CODE = Schema.decodeSync(FellowshipLogsReportCodeSchema)(
   "XdfFZzgHBJNr6m3v",

@@ -3,7 +3,7 @@ import * as Command from "effect/unstable/cli/Command";
 import * as Flag from "effect/unstable/cli/Flag";
 
 import { filterFellowshipLogFile } from "@frt/api/services/fellowship/utilities/filter-fellowship-log-file.ts";
-import { NonEmptyStringSchema } from "@frt/shared/validation/common-schemas.ts";
+import { NonEmptyStringSchema } from "@frt/shared/util/common-schemas.ts";
 
 type FilterLogCommandInput = {
   readonly inputFilePath: string;

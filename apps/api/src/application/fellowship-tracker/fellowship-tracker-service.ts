@@ -21,10 +21,10 @@ import { LiveSplit } from "@frt/api/services/live-split/core/live-split-service.
 import { ConfigurationDAO } from "@frt/db/daos/configuration/configuration-dao.ts";
 import { DungeonRunObservationDAO } from "@frt/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
 import { type ConfigurationDAOError } from "@frt/db/errors/configuration-dao-error.ts";
+import { type ConfigurationId } from "@frt/shared/configuration/configuration-id-schema.ts";
 import { type FellowshipMilestoneConfiguration } from "@frt/shared/fellowship/configurations/configuration-types.ts";
 import { type DungeonId } from "@frt/shared/fellowship/validation/fellowship-common.ts";
 import { type FellowshipEvent } from "@frt/shared/fellowship/validation/fellowship-event-schema.ts";
-import { type ConfigurationId } from "@frt/shared/validation/configuration/configuration-id-schema.ts";
 
 import { makeFellowshipTracker } from "./make-fellowship-tracker-service.ts";
 

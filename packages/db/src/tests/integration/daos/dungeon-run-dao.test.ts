@@ -15,7 +15,7 @@ import {
 } from "@frt/db/tests/common/fixtures/dungeon-run-fixtures.ts";
 import { makeDatabasePersistenceTestLayer } from "@frt/db/tests/common/layers/database-persistence-test-layer.ts";
 import { runTest } from "@frt/db/tests/common/run-test.ts";
-import { DungeonRunIdSchema } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
+import { DungeonRunIdSchema } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 
 function getDungeonRun<T>(dungeonRun: Option.Option<T>): T {
   if (Option.isNone(dungeonRun)) {

@@ -6,7 +6,7 @@ import {
   ElectronRendererHostSchema,
   type ElectronRendererPort,
   ElectronRendererPortSchema,
-} from "@frt/shared/validation/electron-renderer-env-schema.ts";
+} from "@frt/shared/electron-renderer/electron-renderer-env-schema.ts";
 
 const RendererEnvSchema = Schema.Struct({
   ELECTRON_RENDERER_HOST: ElectronRendererHostSchema,

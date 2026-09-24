@@ -16,11 +16,11 @@ import { type FellowshipLogsDungeonRunDAOError } from "@frt/db/errors/fellowship
 import { type LocalLogDungeonRunDAOError } from "@frt/db/errors/local-log-dungeon-run-dao-error.ts";
 import { type DungeonRunModel } from "@frt/db/models/dungeon-run-model.ts";
 import { type FellowshipLogsDungeonRunModel } from "@frt/db/models/fellowship-logs-dungeon-run-model.ts";
+import { type DungeonRunId } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 import { type RequirementTargetId } from "@frt/shared/fellowship/requirements/requirement-lookup.ts";
 import { type RequirementEventType } from "@frt/shared/fellowship/validation/requirement-event-type-schema.ts";
-import { type DungeonRunId } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
-import { type FellowshipLogsFightId } from "@frt/shared/validation/fellowship-logs/fellowship-logs-fight-id-schema.ts";
-import { type FellowshipLogsReportCode } from "@frt/shared/validation/fellowship-logs/fellowship-logs-report-code-schema.ts";
+import { type FellowshipLogsFightId } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
+import { type FellowshipLogsReportCode } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
 import { makeDungeonRunRepository } from "./make-dungeon-run-repository-service.ts";
 

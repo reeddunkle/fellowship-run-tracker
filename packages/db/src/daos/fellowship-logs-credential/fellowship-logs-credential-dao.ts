@@ -8,7 +8,7 @@ import type * as SqlError from "effect/unstable/sql/SqlError";
 import { makeFellowshipLogsCredentialDAO } from "@frt/db/daos/fellowship-logs-credential/make-fellowship-logs-credential-dao.ts";
 import { type FellowshipLogsCredentialModel } from "@frt/db/models/fellowship-logs-credential-model.ts";
 import { type EncryptedValue } from "@frt/db/validation/encryption/encrypted-value-schema.ts";
-import { type FellowshipLogsClientId } from "@frt/shared/validation/app-settings/app-settings-schema.ts";
+import { type FellowshipLogsClientId } from "@frt/shared/app-settings/app-settings-schema.ts";
 
 export type FellowshipLogsCredentialDAOError =
   | SqlError.SqlError

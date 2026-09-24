@@ -1,7 +1,7 @@
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
-import { type ConfigurationId } from "@frt/shared/validation/configuration/configuration-id-schema.ts";
+import { type ConfigurationId } from "@frt/shared/configuration/configuration-id-schema.ts";
 
 import {
   ConfigurationEditorSchema,

@@ -1,6 +1,6 @@
 import * as Schema from "effect/Schema";
 
-import { NonNegativeIntegerSchema } from "@frt/shared/validation/common-schemas.ts";
+import { NonNegativeIntegerSchema } from "@frt/shared/util/common-schemas.ts";
 
 const FellowshipLogsDungeonStartEventSchema = Schema.Struct({
   affixes: Schema.Array(Schema.Int),

@@ -8,8 +8,8 @@ import { makeFellowshipLogsResponseDAO } from "@frt/db/daos/fellowship-logs-resp
 import { type FellowshipLogsResponseDAOError } from "@frt/db/errors/fellowship-logs-response-dao-error.ts";
 import { type FellowshipLogsResponseModel } from "@frt/db/models/fellowship-logs-response-model.ts";
 import { type FellowshipLogsResponseOperation } from "@frt/db/validation/fellowship-logs-response/fellowship-logs-response-operation-schema.ts";
-import { type FellowshipLogsFightId } from "@frt/shared/validation/fellowship-logs/fellowship-logs-fight-id-schema.ts";
-import { type FellowshipLogsReportCode } from "@frt/shared/validation/fellowship-logs/fellowship-logs-report-code-schema.ts";
+import { type FellowshipLogsFightId } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
+import { type FellowshipLogsReportCode } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
 type FellowshipLogsResponseKeyOptions = {
   readonly key: string;

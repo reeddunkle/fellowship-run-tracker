@@ -4,7 +4,7 @@ import { type UnexpectedDatabaseError } from "@frt/db/errors/unexpected-database
 import { type ConfigurationDefinitionId } from "@frt/db/validation/configuration/configuration-definition-id-schema.ts";
 import { type MilestoneId } from "@frt/db/validation/milestone/milestone-id-schema.ts";
 import { type RequirementId } from "@frt/db/validation/requirement/requirement-id-schema.ts";
-import { type ConfigurationId } from "@frt/shared/validation/configuration/configuration-id-schema.ts";
+import { type ConfigurationId } from "@frt/shared/configuration/configuration-id-schema.ts";
 
 export class ConfigurationDefinitionNotFoundError extends Data.TaggedError(
   "ConfigurationDefinitionNotFoundError",

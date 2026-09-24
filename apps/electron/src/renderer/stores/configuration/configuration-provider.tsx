@@ -6,7 +6,7 @@ import {
   type ConfigurationApiConfigurationList,
   type SaveConfigurationApiRequest,
 } from "@frt/shared/configuration/configuration-api-schema.ts";
-import { type ConfigurationId } from "@frt/shared/validation/configuration/configuration-id-schema.ts";
+import { type ConfigurationId } from "@frt/shared/configuration/configuration-id-schema.ts";
 import { ReactContextError } from "@frt/ui/errors/react-context-error.ts";
 
 import { useSetSelectedConfigurationId } from "@/renderer/api/app-state/app-state-mutations.ts";

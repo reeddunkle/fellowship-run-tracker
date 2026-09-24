@@ -22,7 +22,7 @@ import {
   MOCK_DUNGEON_ID,
   MOCK_DUNGEON_LEVEL,
 } from "@frt/db/tests/common/fixtures/configuration-fixtures.ts";
-import { type DungeonRunId } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
+import { type DungeonRunId } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 
 const UnusedFellowshipLogsDungeonRunImporter = Layer.succeed(
   FellowshipLogsDungeonRunImporter,

@@ -12,7 +12,7 @@ import {
 } from "@frt/db/tests/common/fixtures/configuration-fixtures.ts";
 import { makeDatabasePersistenceTestLayer } from "@frt/db/tests/common/layers/database-persistence-test-layer.ts";
 import { runTest } from "@frt/db/tests/common/run-test.ts";
-import { DungeonRunIdSchema } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
+import { DungeonRunIdSchema } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 
 const RUN_STARTED_AT = DateTime.makeUnsafe("2026-09-05T16:00:00.000Z");
 

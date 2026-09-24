@@ -10,7 +10,7 @@ import {
 } from "react";
 
 import { type TrackingApiStatus } from "@frt/api-contract/application/fellowship-tracker/tracking-api-schema.ts";
-import { type ConfigurationId } from "@frt/shared/validation/configuration/configuration-id-schema.ts";
+import { type ConfigurationId } from "@frt/shared/configuration/configuration-id-schema.ts";
 import { ReactContextError } from "@frt/ui/errors/react-context-error.ts";
 
 import { type ApiEventConnectionState } from "@/renderer/api/common.ts";

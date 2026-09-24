@@ -6,8 +6,8 @@ import {
 import type * as E from "effect/Effect";
 
 import { type AppState } from "@frt/shared/app-state/app-state-schema.ts";
-import { type ConfigurationId } from "@frt/shared/validation/configuration/configuration-id-schema.ts";
-import { type DungeonRunComparisonGroupSchema } from "@frt/shared/validation/dungeon-run/dungeon-run-comparison-group-schema.ts";
+import { type ConfigurationId } from "@frt/shared/configuration/configuration-id-schema.ts";
+import { type DungeonRunComparisonGroupSchema } from "@frt/shared/dungeon-run/dungeon-run-comparison-group-schema.ts";
 
 import { browserRuntime } from "@/renderer/runtimes/browser-runtime.ts";
 import {

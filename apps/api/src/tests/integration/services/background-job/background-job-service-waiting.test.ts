@@ -28,10 +28,10 @@ import {
   MOCK_DUNGEON_ID,
   MOCK_DUNGEON_LEVEL,
 } from "@frt/db/tests/common/fixtures/configuration-fixtures.ts";
-import { type BackgroundJobId } from "@frt/shared/validation/background-job/background-job-id-schema.ts";
-import { DungeonRunIdSchema } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
-import { FellowshipLogsFightIdSchema } from "@frt/shared/validation/fellowship-logs/fellowship-logs-fight-id-schema.ts";
-import { FellowshipLogsReportCodeSchema } from "@frt/shared/validation/fellowship-logs/fellowship-logs-report-code-schema.ts";
+import { type BackgroundJobId } from "@frt/shared/background-job/background-job-id-schema.ts";
+import { DungeonRunIdSchema } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
+import { FellowshipLogsFightIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
+import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
 const REPORT_CODE = Schema.decodeSync(FellowshipLogsReportCodeSchema)(
   "XdfFZzgHBJNr6m3v",

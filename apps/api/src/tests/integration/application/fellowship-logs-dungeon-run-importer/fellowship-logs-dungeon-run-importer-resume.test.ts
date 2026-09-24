@@ -16,7 +16,7 @@ import { makePersistenceTestLayer } from "@frt/api/tests/common/layers/persisten
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { FellowshipLogsCacheDatabase } from "@frt/db/databases/fellowship-logs-cache-database.ts";
 import { MainDatabase } from "@frt/db/databases/main-database.ts";
-import { type DungeonRunId } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
+import { type DungeonRunId } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 
 function makeTestLayer(control: FellowshipLogsFetchControl) {
   const PersistenceTestLive = makePersistenceTestLayer();

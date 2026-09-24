@@ -16,7 +16,7 @@ import {
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { BackgroundJobApiNotFoundError } from "@frt/api-contract/errors/background-job-api-error.ts";
 import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
-import { BackgroundJobIdSchema } from "@frt/shared/validation/background-job/background-job-id-schema.ts";
+import { BackgroundJobIdSchema } from "@frt/shared/background-job/background-job-id-schema.ts";
 
 const JOB_ID = Schema.decodeSync(BackgroundJobIdSchema)(
   "00000000-0000-7000-8000-000000000000",

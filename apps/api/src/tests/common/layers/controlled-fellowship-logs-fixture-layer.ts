@@ -25,8 +25,8 @@ import { makeFellowshipLogsServiceFromQuery } from "@frt/api/services/fellowship
 import { FellowshipLogsDungeonRunMetadataResponseDataSchema } from "@frt/api/services/fellowship-logs/validation/fellowship-logs-dungeon-run-metadata-schema.ts";
 import { makeFellowshipLogsGraphQLResponseSchema } from "@frt/api/services/fellowship-logs/validation/fellowship-logs-graphql-schema.ts";
 import { FellowshipLogsReportResponseDataSchema } from "@frt/api/services/fellowship-logs/validation/fellowship-logs-report-schema.ts";
-import { FellowshipLogsFightIdSchema } from "@frt/shared/validation/fellowship-logs/fellowship-logs-fight-id-schema.ts";
-import { FellowshipLogsReportCodeSchema } from "@frt/shared/validation/fellowship-logs/fellowship-logs-report-code-schema.ts";
+import { FellowshipLogsFightIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
+import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
 export const RECORDED_FIGHT = {
   fightId: Schema.decodeSync(FellowshipLogsFightIdSchema)(15),

@@ -6,7 +6,7 @@ import {
   formatComparisonTime,
   parseColonTime,
   parseDecimalMinutes,
-} from "@frt/shared/validation/milestone/comparison-time-form-schema.ts";
+} from "@frt/shared/milestone/comparison-time-form-schema.ts";
 
 const decodeComparisonTimeResult = Schema.decodeUnknownResult(
   ComparisonTimeFormSchema,

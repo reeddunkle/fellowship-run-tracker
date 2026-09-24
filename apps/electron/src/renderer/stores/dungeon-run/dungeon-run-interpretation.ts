@@ -13,7 +13,7 @@ import {
 import {
   encodeRequirementObservationIdentity,
   encodeRequirementObservationOccurrenceIdentity,
-} from "@frt/shared/validation/common/requirement-observation-identity-schema.ts";
+} from "@frt/shared/fellowship/requirements/requirement-observation-identity-schema.ts";
 
 type DungeonRunObservationAnalytics = {
   readonly bestElapsedMilliseconds: number;

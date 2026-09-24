@@ -1,6 +1,6 @@
 import * as Data from "effect/Data";
 
-import { type DungeonRunId } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
+import { type DungeonRunId } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 
 /* [KEEP]
  * Reasons shared by the dungeon run DAO errors (see their `reason` field).

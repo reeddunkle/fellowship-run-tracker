@@ -47,9 +47,9 @@ import {
   REPORT_SELECTION,
   REPORT_VARIABLES,
 } from "@frt/api/services/fellowship-logs/query/report-query.ts";
-import { FellowshipLogsRateLimitResponseDataSchema } from "@frt/shared/fellowship-logs/validation/fellowship-logs-rate-limit-schema.ts";
-import { type FellowshipLogsFightId } from "@frt/shared/validation/fellowship-logs/fellowship-logs-fight-id-schema.ts";
-import { type FellowshipLogsReportCode } from "@frt/shared/validation/fellowship-logs/fellowship-logs-report-code-schema.ts";
+import { type FellowshipLogsFightId } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
+import { FellowshipLogsRateLimitResponseDataSchema } from "@frt/shared/fellowship-logs/fellowship-logs-rate-limit-schema.ts";
+import { type FellowshipLogsReportCode } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
 import { FellowshipLogsDungeonRunMetadataResponseDataSchema } from "./validation/fellowship-logs-dungeon-run-metadata-schema.ts";
 import { FellowshipLogsFightResponseDataSchema } from "./validation/fellowship-logs-fight-schema.ts";

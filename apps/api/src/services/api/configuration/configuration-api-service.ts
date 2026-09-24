@@ -11,9 +11,9 @@ import {
   type ConfigurationApiConfigurationList,
   type DeleteConfigurationsByDungeonAndLevelApiRequest,
 } from "@frt/shared/configuration/configuration-api-schema.ts";
+import { type ConfigurationId } from "@frt/shared/configuration/configuration-id-schema.ts";
+import { type ConfigurationLabel } from "@frt/shared/configuration/configuration-label-schema.ts";
 import { type FellowshipMilestoneConfiguration } from "@frt/shared/fellowship/configurations/configuration-types.ts";
-import { type ConfigurationId } from "@frt/shared/validation/configuration/configuration-id-schema.ts";
-import { type ConfigurationLabel } from "@frt/shared/validation/configuration/configuration-label-schema.ts";
 
 type SaveConfigurationOptions = {
   readonly configuration: FellowshipMilestoneConfiguration;

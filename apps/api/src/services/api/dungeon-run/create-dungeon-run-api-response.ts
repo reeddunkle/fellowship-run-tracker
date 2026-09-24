@@ -13,7 +13,7 @@ import {
   type DungeonRunApiHistory,
   type DungeonRunApiObservationStatistics,
 } from "@frt/shared/dungeon-run/dungeon-run-api-schema.ts";
-import { RequirementObservationOccurrenceIdentityFromStringSchema } from "@frt/shared/validation/common/requirement-observation-identity-schema.ts";
+import { RequirementObservationOccurrenceIdentityFromStringSchema } from "@frt/shared/fellowship/requirements/requirement-observation-identity-schema.ts";
 
 const DungeonRunApiObservationStatisticsOrder = Order.mapInput(
   Order.Tuple([Order.String, Order.String, Order.Number, Order.String]),

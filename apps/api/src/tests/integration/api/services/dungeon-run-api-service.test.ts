@@ -14,7 +14,7 @@ import {
   MOCK_DUNGEON_ID,
   MOCK_DUNGEON_LEVEL,
 } from "@frt/db/tests/common/fixtures/configuration-fixtures.ts";
-import { DungeonRunIdSchema } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
+import { DungeonRunIdSchema } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 
 const FIRST_OWN_DUNGEON_RUN_ID = Schema.decodeSync(DungeonRunIdSchema)(
   "00000000-0000-7000-8000-000000000001",

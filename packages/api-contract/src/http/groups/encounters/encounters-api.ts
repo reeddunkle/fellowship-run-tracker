@@ -8,7 +8,7 @@ import {
   EncounterApiEncounterSchema,
 } from "@frt/shared/encounter/encounter-api-schema.ts";
 import { DungeonIdSchema } from "@frt/shared/fellowship/validation/fellowship-common.ts";
-import { NonEmptyStringSchema } from "@frt/shared/validation/common-schemas.ts";
+import { NonEmptyStringSchema } from "@frt/shared/util/common-schemas.ts";
 
 const ENCOUNTERS_ROUTE = "/encounters" as const;
 

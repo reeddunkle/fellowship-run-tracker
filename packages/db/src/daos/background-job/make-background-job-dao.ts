@@ -12,8 +12,8 @@ import {
 } from "@frt/db/errors/background-job-error.ts";
 import { UnexpectedDatabaseError } from "@frt/db/errors/unexpected-database-error.ts";
 import { BackgroundJobModel } from "@frt/db/models/background-job-model.ts";
-import { BackgroundJobFailureSchema } from "@frt/shared/validation/background-job/background-job-failure-schema.ts";
-import { type BackgroundJobId } from "@frt/shared/validation/background-job/background-job-id-schema.ts";
+import { BackgroundJobFailureSchema } from "@frt/shared/background-job/background-job-failure-schema.ts";
+import { type BackgroundJobId } from "@frt/shared/background-job/background-job-id-schema.ts";
 
 const BackgroundJobFailureFromJsonString = Schema.fromJsonString(
   BackgroundJobFailureSchema,

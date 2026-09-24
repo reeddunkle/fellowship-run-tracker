@@ -6,8 +6,8 @@ import {
   serializeCanonicalConfiguration,
   serializeCanonicalConfigurationDefinition,
 } from "@frt/shared/configuration/canonicalize-configuration.ts";
+import { type ConfigurationFingerprint } from "@frt/shared/configuration/configuration-fingerprint-schema.ts";
 import { type FellowshipMilestoneConfiguration } from "@frt/shared/fellowship/configurations/configuration-types.ts";
-import { type ConfigurationFingerprint } from "@frt/shared/validation/configuration/configuration-fingerprint-schema.ts";
 
 function bytesToHex(bytes: Uint8Array): string {
   return Array.from(bytes, (byte) => {

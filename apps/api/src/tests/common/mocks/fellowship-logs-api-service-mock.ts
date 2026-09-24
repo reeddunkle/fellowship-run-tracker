@@ -7,7 +7,7 @@ import {
   FellowshipLogsApiService,
   type FellowshipLogsApiServiceShape,
 } from "@frt/api/services/api/fellowship-logs/fellowship-logs-api-service.ts";
-import { BackgroundJobIdSchema } from "@frt/shared/validation/background-job/background-job-id-schema.ts";
+import { BackgroundJobIdSchema } from "@frt/shared/background-job/background-job-id-schema.ts";
 
 export type MakeFellowshipLogsApiServiceMockOptions =
   Partial<FellowshipLogsApiServiceShape>;

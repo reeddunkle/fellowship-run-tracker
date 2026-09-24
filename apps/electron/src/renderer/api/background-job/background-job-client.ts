@@ -1,6 +1,6 @@
 import * as E from "effect/Effect";
 
-import { type BackgroundJobId } from "@frt/shared/validation/background-job/background-job-id-schema.ts";
+import { type BackgroundJobId } from "@frt/shared/background-job/background-job-id-schema.ts";
 
 import { AppApiClient } from "@/renderer/services/app-api-client/app-api-client";
 

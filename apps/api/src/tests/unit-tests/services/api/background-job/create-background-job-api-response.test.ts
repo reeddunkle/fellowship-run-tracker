@@ -5,7 +5,7 @@ import { describe, expect, test } from "vitest";
 
 import { createBackgroundJobApiItem } from "@frt/api/services/api/background-job/create-background-job-api-response.ts";
 import { BackgroundJobModel } from "@frt/db/models/background-job-model.ts";
-import { BackgroundJobIdSchema } from "@frt/shared/validation/background-job/background-job-id-schema.ts";
+import { BackgroundJobIdSchema } from "@frt/shared/background-job/background-job-id-schema.ts";
 
 const CREATED_AT = DateTime.makeUnsafe("2026-09-23T08:00:00.000Z");
 const STARTED_AT = DateTime.makeUnsafe("2026-09-23T08:00:01.000Z");

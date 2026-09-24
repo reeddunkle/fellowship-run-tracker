@@ -8,11 +8,11 @@ import {
   FellowshipLogsClientSecretSchema,
   LiveSplitHostSchema,
   LiveSplitPortSchema,
-} from "@frt/shared/validation/app-settings/app-settings-schema.ts";
+} from "@frt/shared/app-settings/app-settings-schema.ts";
 import {
   EmptyStringSchema,
   IntegerFromStringSchema,
-} from "@frt/shared/validation/common-schemas.ts";
+} from "@frt/shared/util/common-schemas.ts";
 
 const LiveSplitPortFromStringSchema = IntegerFromStringSchema.pipe(
   Schema.decodeTo(LiveSplitPortSchema),

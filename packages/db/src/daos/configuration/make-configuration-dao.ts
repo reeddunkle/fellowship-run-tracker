@@ -37,7 +37,7 @@ import { type MilestoneId } from "@frt/db/validation/milestone/milestone-id-sche
 import {
   type ConfigurationId,
   ConfigurationIdSchema,
-} from "@frt/shared/validation/configuration/configuration-id-schema.ts";
+} from "@frt/shared/configuration/configuration-id-schema.ts";
 
 function mapConfigurationDAOError(cause: unknown): ConfigurationDAOError {
   if (cause instanceof ConfigurationDAOError) {

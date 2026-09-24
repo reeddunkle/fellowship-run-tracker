@@ -19,13 +19,13 @@ import { MilestoneModel } from "@frt/db/models/milestone-model.ts";
 import { MilestoneRequirementModel } from "@frt/db/models/milestone-requirement-model.ts";
 import { RequirementModel } from "@frt/db/models/requirement-model.ts";
 import { type ConfigurationDefinitionId } from "@frt/db/validation/configuration/configuration-definition-id-schema.ts";
+import { type ConfigurationLabel } from "@frt/shared/configuration/configuration-label-schema.ts";
 import { type FellowshipMilestoneConfiguration } from "@frt/shared/fellowship/configurations/configuration-types.ts";
 import { FELLOWSHIP_EVENT } from "@frt/shared/fellowship/constants/fellowship-event.ts";
 import { getRequirementLookup } from "@frt/shared/fellowship/requirements/requirement-lookup.ts";
 import { type FellowshipRequirement } from "@frt/shared/fellowship/validation/fellowship-configuration-file-schema.ts";
 import { type RequirementEventType } from "@frt/shared/fellowship/validation/requirement-event-type-schema.ts";
 import { isNonEmptyArray } from "@frt/shared/util/is-non-empty-array.ts";
-import { type ConfigurationLabel } from "@frt/shared/validation/configuration/configuration-label-schema.ts";
 
 import { type PersistedConfiguration } from "./configuration-dao.ts";
 

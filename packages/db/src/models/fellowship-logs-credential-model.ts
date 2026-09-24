@@ -5,7 +5,7 @@ import { EncryptedValueEncodedSchema } from "@frt/db/validation/encryption/encry
 import {
   FellowshipLogsClientIdSchema,
   SettingIdSchema,
-} from "@frt/shared/validation/app-settings/app-settings-schema.ts";
+} from "@frt/shared/app-settings/app-settings-schema.ts";
 
 export class FellowshipLogsCredentialModel extends Model.Class<FellowshipLogsCredentialModel>(
   "FellowshipLogsCredentialModel",

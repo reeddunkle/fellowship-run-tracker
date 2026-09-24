@@ -1,4 +1,4 @@
-import { type BackgroundJobFailure } from "@frt/shared/validation/background-job/background-job-failure-schema.ts";
+import { type BackgroundJobFailure } from "@frt/shared/background-job/background-job-failure-schema.ts";
 
 const FAILURE_MESSAGE_BY_TAG: Partial<Record<string, string>> = {
   BackgroundJobAttemptsExhaustedError:

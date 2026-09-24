@@ -4,7 +4,7 @@ import * as Schema from "effect/Schema";
 import { FELLOWSHIP_EVENT } from "@frt/shared/fellowship/constants/fellowship-event.ts";
 import { parseUnitId } from "@frt/shared/fellowship/validation/events/parse-unit-id.ts";
 import { TimestampSchema } from "@frt/shared/fellowship/validation/fellowship-common.ts";
-import { JsonStringSchema } from "@frt/shared/validation/common-schemas.ts";
+import { JsonStringSchema } from "@frt/shared/util/common-schemas.ts";
 
 const UnitDestroyedLogLineSchema = Schema.Tuple([
   Schema.DateTimeUtcFromString, // timestamp

@@ -27,8 +27,8 @@ import {
 } from "@frt/api-contract/errors/fellowship-logs-api-error.ts";
 import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
 import { MOCK_DUNGEON_ID } from "@frt/db/tests/common/fixtures/configuration-fixtures.ts";
+import { DungeonRunIdSchema } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 import { FellowshipLogsApiDungeonRunReferenceSchema } from "@frt/shared/fellowship-logs/fellowship-logs-api-schema.ts";
-import { DungeonRunIdSchema } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
 
 const MOCK_RUN = Schema.decodeSync(FellowshipLogsApiDungeonRunReferenceSchema)({
   fightId: 7,

@@ -1,6 +1,6 @@
 import * as Data from "effect/Data";
 
-import { type BackgroundJobId } from "@frt/shared/validation/background-job/background-job-id-schema.ts";
+import { type BackgroundJobId } from "@frt/shared/background-job/background-job-id-schema.ts";
 
 export class BackgroundJobNotFoundError extends Data.TaggedError(
   "BackgroundJobNotFoundError",

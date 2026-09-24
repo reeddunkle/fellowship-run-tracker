@@ -1,7 +1,7 @@
 import { type ConfigurationApiConfiguration } from "@frt/shared/configuration/configuration-api-schema.ts";
 import { type DungeonRunApiObservationStatistics } from "@frt/shared/dungeon-run/dungeon-run-api-schema.ts";
+import { encodeRequirementObservationOccurrenceIdentity } from "@frt/shared/fellowship/requirements/requirement-observation-identity-schema.ts";
 import { type RequirementEventType } from "@frt/shared/fellowship/validation/requirement-event-type-schema.ts";
-import { encodeRequirementObservationOccurrenceIdentity } from "@frt/shared/validation/common/requirement-observation-identity-schema.ts";
 
 export type HistoryRequirementComparisonRow = {
   readonly comparison: DungeonRunApiObservationStatistics | undefined;

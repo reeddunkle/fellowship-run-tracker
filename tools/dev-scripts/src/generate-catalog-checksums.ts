@@ -18,7 +18,7 @@ import { CATALOG_CHECKSUMS_FILE_PATH } from "@frt/db/catalogs/catalog-paths.ts";
 import { FELLOWSHIP_DUNGEON } from "@frt/db/catalogs/dungeon/fellowship-dungeon-catalog.ts";
 import { FELLOWSHIP_ENCOUNTER } from "@frt/db/catalogs/encounter/fellowship-encounter-catalog.ts";
 import { loadFellowshipUnitCatalog } from "@frt/db/catalogs/unit/load-fellowship-unit-catalog.ts";
-import { encodeJson } from "@frt/shared/validation/common-schemas.ts";
+import { encodeJson } from "@frt/shared/util/common-schemas.ts";
 
 const OUTPUT_FILE_PATH = CATALOG_CHECKSUMS_FILE_PATH;
 

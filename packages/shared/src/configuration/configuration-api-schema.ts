@@ -1,19 +1,19 @@
 import * as Schema from "effect/Schema";
 
+import { ConfigurationFingerprintSchema } from "@frt/shared/configuration/configuration-fingerprint-schema.ts";
+import { ConfigurationIdSchema } from "@frt/shared/configuration/configuration-id-schema.ts";
+import { ConfigurationLabelSchema } from "@frt/shared/configuration/configuration-label-schema.ts";
 import {
   DungeonIdSchema,
   DungeonLevelSchema,
 } from "@frt/shared/fellowship/validation/fellowship-common.ts";
 import { FellowshipConfigurationFileSchema } from "@frt/shared/fellowship/validation/fellowship-configuration-file-schema.ts";
 import { RequirementEventTypeSchema } from "@frt/shared/fellowship/validation/requirement-event-type-schema.ts";
+import { MilestoneComparisonTimeSchema } from "@frt/shared/milestone/milestone-comparison-time-schema.ts";
 import {
   NonEmptyStringSchema,
   PositiveIntegerSchema,
-} from "@frt/shared/validation/common-schemas.ts";
-import { ConfigurationFingerprintSchema } from "@frt/shared/validation/configuration/configuration-fingerprint-schema.ts";
-import { ConfigurationIdSchema } from "@frt/shared/validation/configuration/configuration-id-schema.ts";
-import { ConfigurationLabelSchema } from "@frt/shared/validation/configuration/configuration-label-schema.ts";
-import { MilestoneComparisonTimeSchema } from "@frt/shared/validation/milestone/milestone-comparison-time-schema.ts";
+} from "@frt/shared/util/common-schemas.ts";
 
 export const SaveConfigurationApiRequestSchema = Schema.Struct({
   configuration: FellowshipConfigurationFileSchema,

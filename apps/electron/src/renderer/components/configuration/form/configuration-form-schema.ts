@@ -1,17 +1,17 @@
 import { type StandardSchemaV1 } from "@standard-schema/spec";
 import * as Schema from "effect/Schema";
 
+import { ConfigurationLabelSchema } from "@frt/shared/configuration/configuration-label-schema.ts";
 import {
   DungeonIdSchema,
   DungeonLevelSchema,
 } from "@frt/shared/fellowship/validation/fellowship-common.ts";
 import { RequirementEventTypeSchema } from "@frt/shared/fellowship/validation/requirement-event-type-schema.ts";
+import { ComparisonTimeFormSchema } from "@frt/shared/milestone/comparison-time-form-schema.ts";
 import {
   NonEmptyStringSchema,
   PositiveIntegerSchema,
-} from "@frt/shared/validation/common-schemas.ts";
-import { ConfigurationLabelSchema } from "@frt/shared/validation/configuration/configuration-label-schema.ts";
-import { ComparisonTimeFormSchema } from "@frt/shared/validation/milestone/comparison-time-form-schema.ts";
+} from "@frt/shared/util/common-schemas.ts";
 
 const RequirementEditorSchema = Schema.Struct({
   id: Schema.String,

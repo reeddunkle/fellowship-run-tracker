@@ -1,6 +1,6 @@
 import * as Schema from "effect/Schema";
 
-import { BackgroundJobIdSchema } from "@frt/shared/validation/background-job/background-job-id-schema.ts";
+import { BackgroundJobIdSchema } from "@frt/shared/background-job/background-job-id-schema.ts";
 
 export class BackgroundJobApiNotFoundError extends Schema.TaggedError<BackgroundJobApiNotFoundError>()(
   "BackgroundJobApiNotFoundError",

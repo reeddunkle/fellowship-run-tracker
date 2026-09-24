@@ -1,7 +1,7 @@
 import * as E from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-import { UnknownFromJsonStringSchema } from "@frt/shared/validation/common-schemas.ts";
+import { UnknownFromJsonStringSchema } from "@frt/shared/util/common-schemas.ts";
 
 export type ParseJsonOptions<Error> = {
   readonly contents: string;

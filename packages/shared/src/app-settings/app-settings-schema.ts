@@ -5,7 +5,7 @@ import {
   HostSchema,
   NonEmptyStringSchema,
   PortSchema,
-} from "@frt/shared/validation/common-schemas.ts";
+} from "@frt/shared/util/common-schemas.ts";
 
 export const SettingIdSchema = Schema.Literal(1).pipe(
   Schema.brand("SettingId"),

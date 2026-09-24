@@ -15,7 +15,7 @@ import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
 import { type ChildProcessHandle } from "effect/unstable/process/ChildProcessSpawner";
 
 import { makePnpmCommand } from "@frt/api/helpers/make-pnpm-command.ts";
-import { encodeJson } from "@frt/shared/validation/common-schemas.ts";
+import { encodeJson } from "@frt/shared/util/common-schemas.ts";
 
 import {
   type EffectTsGoLspError,

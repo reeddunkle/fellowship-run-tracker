@@ -7,7 +7,7 @@ import {
 } from "@frt/shared/configuration/configuration-api-schema.ts";
 import { FELLOWSHIP_EVENT } from "@frt/shared/fellowship/constants/fellowship-event.ts";
 import { type FellowshipRequirement } from "@frt/shared/fellowship/validation/fellowship-configuration-file-schema.ts";
-import { formatComparisonTime } from "@frt/shared/validation/milestone/comparison-time-form-schema.ts";
+import { formatComparisonTime } from "@frt/shared/milestone/comparison-time-form-schema.ts";
 
 import {
   type ConfigurationEditorValue,

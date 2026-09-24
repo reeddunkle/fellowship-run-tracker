@@ -10,13 +10,13 @@ import { DungeonRunNotFoundError } from "@frt/db/errors/dungeon-run-error.ts";
 import { DungeonRunObservationDAOError } from "@frt/db/errors/dungeon-run-observation-dao-error.ts";
 import { UnexpectedDatabaseError } from "@frt/db/errors/unexpected-database-error.ts";
 import { DungeonRunObservationModel } from "@frt/db/models/dungeon-run-observation-model.ts";
+import { DungeonRunIdSchema } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 import { RequirementEventTypeSchema } from "@frt/shared/fellowship/validation/requirement-event-type-schema.ts";
 import {
   BooleanIntSchema,
   NonEmptyStringSchema,
   PositiveIntegerSchema,
-} from "@frt/shared/validation/common-schemas.ts";
-import { DungeonRunIdSchema } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
+} from "@frt/shared/util/common-schemas.ts";
 
 const DungeonRunObservationHistorySchema = Schema.Struct({
   dungeonRunId: DungeonRunIdSchema,

@@ -2,7 +2,7 @@ import * as Schema from "effect/Schema";
 import * as Model from "effect/unstable/schema/Model";
 
 import { UnitStatusSchema } from "@frt/shared/unit/unit-status-schema.ts";
-import { NonEmptyStringSchema } from "@frt/shared/validation/common-schemas.ts";
+import { NonEmptyStringSchema } from "@frt/shared/util/common-schemas.ts";
 
 export class UnitModel extends Model.Class<UnitModel>("UnitModel")({
   createdAt: Model.DateTimeInsertFromNumber,

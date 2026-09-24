@@ -5,11 +5,11 @@ import {
   DungeonIdSchema,
   DungeonLevelSchema,
 } from "@frt/shared/fellowship/validation/fellowship-common.ts";
+import { MilestoneComparisonTimeSchema } from "@frt/shared/milestone/milestone-comparison-time-schema.ts";
 import {
   NonEmptyStringSchema,
   PositiveIntegerSchema,
-} from "@frt/shared/validation/common-schemas.ts";
-import { MilestoneComparisonTimeSchema } from "@frt/shared/validation/milestone/milestone-comparison-time-schema.ts";
+} from "@frt/shared/util/common-schemas.ts";
 
 const RequirementOccurrenceFields = {
   requiredCount: PositiveIntegerSchema,

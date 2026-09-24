@@ -11,11 +11,11 @@ import {
   FellowshipLogsClientSecretSchema,
   LiveSplitHostSchema,
   LiveSplitPortSchema,
-} from "@frt/shared/validation/app-settings/app-settings-schema.ts";
+} from "@frt/shared/app-settings/app-settings-schema.ts";
 import {
   ElectronRendererHostSchema,
   ElectronRendererPortSchema,
-} from "@frt/shared/validation/electron-renderer-env-schema.ts";
+} from "@frt/shared/electron-renderer/electron-renderer-env-schema.ts";
 
 export const appConfig = {
   electronRendererHost: Config.schema(

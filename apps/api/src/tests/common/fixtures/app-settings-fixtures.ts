@@ -4,7 +4,7 @@ import {
   FellowshipLogDirectorySchema,
   LiveSplitHostSchema,
   LiveSplitPortSchema,
-} from "@frt/shared/validation/app-settings/app-settings-schema.ts";
+} from "@frt/shared/app-settings/app-settings-schema.ts";
 
 export const MOCK_FELLOWSHIP_LOG_DIRECTORY = Schema.decodeSync(
   FellowshipLogDirectorySchema,

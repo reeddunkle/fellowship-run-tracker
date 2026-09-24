@@ -1,16 +1,16 @@
 import * as Schema from "effect/Schema";
 
+import { BackgroundJobFailureSchema } from "@frt/shared/background-job/background-job-failure-schema.ts";
+import { BackgroundJobIdSchema } from "@frt/shared/background-job/background-job-id-schema.ts";
+import { BackgroundJobStatusSchema } from "@frt/shared/background-job/background-job-status-schema.ts";
+import { DungeonRunIdSchema } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 import { DungeonIdSchema } from "@frt/shared/fellowship/validation/fellowship-common.ts";
-import { BackgroundJobFailureSchema } from "@frt/shared/validation/background-job/background-job-failure-schema.ts";
-import { BackgroundJobIdSchema } from "@frt/shared/validation/background-job/background-job-id-schema.ts";
-import { BackgroundJobStatusSchema } from "@frt/shared/validation/background-job/background-job-status-schema.ts";
+import { FellowshipLogsFightIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
+import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 import {
   NonNegativeIntegerSchema,
   PositiveIntegerSchema,
-} from "@frt/shared/validation/common-schemas.ts";
-import { DungeonRunIdSchema } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
-import { FellowshipLogsFightIdSchema } from "@frt/shared/validation/fellowship-logs/fellowship-logs-fight-id-schema.ts";
-import { FellowshipLogsReportCodeSchema } from "@frt/shared/validation/fellowship-logs/fellowship-logs-report-code-schema.ts";
+} from "@frt/shared/util/common-schemas.ts";
 
 export const ImportFellowshipLogsDungeonRunJobPayloadSchema = Schema.Struct({
   dungeonId: DungeonIdSchema,

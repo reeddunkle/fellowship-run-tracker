@@ -3,7 +3,7 @@ import * as Schema from "effect/Schema";
 import * as SchemaGetter from "effect/SchemaGetter";
 import * as SchemaIssue from "effect/SchemaIssue";
 
-import { NonNegativeIntegerSchema } from "@frt/shared/validation/common-schemas.ts";
+import { NonNegativeIntegerSchema } from "@frt/shared/util/common-schemas.ts";
 
 const invalidMessage = "Expected MM:SS, MM:SS.mmm, or decimal minutes format";
 

@@ -14,8 +14,8 @@ import { makeFellowshipLogsServiceFromQuery } from "@frt/api/services/fellowship
 import { makeFellowshipLogsGraphQLResponseSchema } from "@frt/api/services/fellowship-logs/validation/fellowship-logs-graphql-schema.ts";
 import { passThroughFellowshipLogsResponseCache } from "@frt/api/tests/common/mocks/fellowship-logs-response-cache-mock.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
-import { FellowshipLogsFightIdSchema } from "@frt/shared/validation/fellowship-logs/fellowship-logs-fight-id-schema.ts";
-import { FellowshipLogsReportCodeSchema } from "@frt/shared/validation/fellowship-logs/fellowship-logs-report-code-schema.ts";
+import { FellowshipLogsFightIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
+import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
 const LIMIT_PER_HOUR = 3600;
 

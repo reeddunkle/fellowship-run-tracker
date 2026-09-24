@@ -1,6 +1,6 @@
 import * as Schema from "effect/Schema";
 
-import { NonEmptyStringSchema } from "@frt/shared/validation/common-schemas.ts";
+import { NonEmptyStringSchema } from "@frt/shared/util/common-schemas.ts";
 
 const FellowshipLogsGraphQLVariablesSchema = Schema.Record(
   Schema.String,

@@ -6,7 +6,7 @@ import {
   FellowshipLogsClientSecretSchema,
   LiveSplitHostSchema,
   LiveSplitPortSchema,
-} from "@frt/shared/validation/app-settings/app-settings-schema.ts";
+} from "@frt/shared/app-settings/app-settings-schema.ts";
 
 export const AppSettingsApiAppSettingsSchema = Schema.Struct({
   fellowshipLogDirectory: FellowshipLogDirectorySchema,

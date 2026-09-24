@@ -22,6 +22,7 @@ import {
 } from "@frt/api/services/fellowship-logs/fellowship-logs-service.ts";
 import { type DungeonRunDAOError } from "@frt/db/errors/dungeon-run-dao-error.ts";
 import { type FellowshipLogsDungeonRunDAOError } from "@frt/db/errors/fellowship-logs-dungeon-run-dao-error.ts";
+import { type DungeonRunId } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 import {
   type FellowshipLogsApiDungeonRunMetadata,
   type FellowshipLogsApiDungeonRunReference,
@@ -30,7 +31,6 @@ import {
   type FellowshipLogsApiQueueDungeonRunImportOptions,
   type FellowshipLogsApiQueueDungeonRunImportResult,
 } from "@frt/shared/fellowship-logs/fellowship-logs-api-schema.ts";
-import { type DungeonRunId } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
 
 export type QueueFellowshipLogsDungeonRunImportError =
   | BackgroundJobError

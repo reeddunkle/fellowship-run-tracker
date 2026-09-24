@@ -1,13 +1,13 @@
 import * as Schema from "effect/Schema";
 import * as Model from "effect/unstable/schema/Model";
 
-import { BackgroundJobFailureSchema } from "@frt/shared/validation/background-job/background-job-failure-schema.ts";
-import { BackgroundJobIdSchema } from "@frt/shared/validation/background-job/background-job-id-schema.ts";
-import { BackgroundJobStatusSchema } from "@frt/shared/validation/background-job/background-job-status-schema.ts";
+import { BackgroundJobFailureSchema } from "@frt/shared/background-job/background-job-failure-schema.ts";
+import { BackgroundJobIdSchema } from "@frt/shared/background-job/background-job-id-schema.ts";
+import { BackgroundJobStatusSchema } from "@frt/shared/background-job/background-job-status-schema.ts";
 import {
   NonEmptyStringSchema,
   NonNegativeIntegerSchema,
-} from "@frt/shared/validation/common-schemas.ts";
+} from "@frt/shared/util/common-schemas.ts";
 
 export class BackgroundJobModel extends Model.Class<BackgroundJobModel>(
   "BackgroundJobModel",

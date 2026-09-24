@@ -1,7 +1,7 @@
 import * as E from "effect/Effect";
 
 import { type SaveConfigurationApiRequest } from "@frt/shared/configuration/configuration-api-schema.ts";
-import { type ConfigurationId } from "@frt/shared/validation/configuration/configuration-id-schema.ts";
+import { type ConfigurationId } from "@frt/shared/configuration/configuration-id-schema.ts";
 
 import { AppApiClient } from "@/renderer/services/app-api-client/app-api-client";
 

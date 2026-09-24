@@ -1,10 +1,10 @@
 import * as E from "effect/Effect";
 
+import { type DungeonRunId } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 import {
   type FellowshipLogsApiDungeonRunReference,
   type FellowshipLogsApiQueueDungeonRunImportOptions,
 } from "@frt/shared/fellowship-logs/fellowship-logs-api-schema.ts";
-import { type DungeonRunId } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
 
 import { AppApiClient } from "@/renderer/services/app-api-client/app-api-client";
 

@@ -7,9 +7,9 @@ import { type FellowshipLogsImportedDungeonRunRow } from "@frt/db/daos/fellowshi
 import { makeFellowshipLogsDungeonRunDAO } from "@frt/db/daos/fellowship-logs-dungeon-run/make-fellowship-logs-dungeon-run-dao.ts";
 import { type FellowshipLogsDungeonRunDAOError } from "@frt/db/errors/fellowship-logs-dungeon-run-dao-error.ts";
 import { type FellowshipLogsDungeonRunModel } from "@frt/db/models/fellowship-logs-dungeon-run-model.ts";
-import { type DungeonRunId } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
-import { type FellowshipLogsFightId } from "@frt/shared/validation/fellowship-logs/fellowship-logs-fight-id-schema.ts";
-import { type FellowshipLogsReportCode } from "@frt/shared/validation/fellowship-logs/fellowship-logs-report-code-schema.ts";
+import { type DungeonRunId } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
+import { type FellowshipLogsFightId } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
+import { type FellowshipLogsReportCode } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
 type CreateFellowshipLogsDungeonRunOptions = {
   readonly dungeonRunId: DungeonRunId;

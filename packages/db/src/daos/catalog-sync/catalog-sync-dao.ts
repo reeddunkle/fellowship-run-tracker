@@ -7,7 +7,7 @@ import type * as SqlError from "effect/unstable/sql/SqlError";
 
 import { type CatalogSyncModel } from "@frt/db/models/catalog-sync-model.ts";
 import { type CatalogName } from "@frt/db/validation/catalog-sync/catalog-sync-schema.ts";
-import { type NonEmptyString } from "@frt/shared/validation/common-schemas.ts";
+import { type NonEmptyString } from "@frt/shared/util/common-schemas.ts";
 
 import { makeCatalogSyncDAO } from "./make-catalog-sync-dao.ts";
 

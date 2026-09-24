@@ -69,10 +69,6 @@ function BackgroundJobCategoryListContent({
   return jobs.length === 0 ? null : <BackgroundJobItems jobs={jobs} />;
 }
 
-/** [KEEP]
- * One category's jobs, kept live by the background job WebSocket. Renders
- * nothing when the category is empty.
- */
 export function BackgroundJobCategoryList({
   categoryId,
 }: {

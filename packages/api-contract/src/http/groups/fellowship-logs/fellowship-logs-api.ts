@@ -11,6 +11,7 @@ import {
   FellowshipLogsApiRunNotFinishedError,
   FellowshipLogsApiRunNotFoundError,
 } from "@frt/api-contract/errors/fellowship-logs-api-error.ts";
+import { DungeonRunIdSchema } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 import {
   FellowshipLogsApiDungeonRunMetadataSchema,
   FellowshipLogsApiDungeonRunReferenceSchema,
@@ -19,7 +20,6 @@ import {
   FellowshipLogsApiQueueDungeonRunImportOptionsSchema,
   FellowshipLogsApiQueueDungeonRunImportResultSchema,
 } from "@frt/shared/fellowship-logs/fellowship-logs-api-schema.ts";
-import { DungeonRunIdSchema } from "@frt/shared/validation/dungeon-run/dungeon-run-id-schema.ts";
 
 const FELLOWSHIP_LOGS_ROUTE = "/fellowship-logs" as const;
 

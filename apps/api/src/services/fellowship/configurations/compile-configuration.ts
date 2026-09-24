@@ -15,9 +15,9 @@ import {
   type RequirementsByEvent,
 } from "@frt/shared/fellowship/configurations/configuration-types.ts";
 import { getRequirementLookup } from "@frt/shared/fellowship/requirements/requirement-lookup.ts";
+import { type RequirementObservationIdentity } from "@frt/shared/fellowship/requirements/requirement-observation-identity-schema.ts";
 import { type FellowshipRequirement } from "@frt/shared/fellowship/validation/fellowship-configuration-file-schema.ts";
 import { type RequirementEventType } from "@frt/shared/fellowship/validation/requirement-event-type-schema.ts";
-import { type RequirementObservationIdentity } from "@frt/shared/validation/common/requirement-observation-identity-schema.ts";
 
 type CompiledConfigurationIndexes = {
   readonly milestonesById: HashMap.HashMap<string, CompiledMilestoneDefinition>;

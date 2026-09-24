@@ -4,7 +4,7 @@ import {
   IntegerFromStringSchema,
   NonEmptyStringSchema,
   PositiveIntegerSchema,
-} from "@frt/shared/validation/common-schemas.ts";
+} from "@frt/shared/util/common-schemas.ts";
 
 const ETERNAL_DUNGEON_LEVEL_OFFSET = 20;
 

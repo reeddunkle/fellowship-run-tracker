@@ -3,7 +3,7 @@ import * as Command from "effect/unstable/cli/Command";
 import * as Flag from "effect/unstable/cli/Flag";
 
 import { generateFellowshipUnitCatalog } from "@frt/cli/catalogs/generate-fellowship-unit-catalog.ts";
-import { NonEmptyStringSchema } from "@frt/shared/validation/common-schemas.ts";
+import { NonEmptyStringSchema } from "@frt/shared/util/common-schemas.ts";
 
 const runGenerateUnitCatalogCommand = E.fn("cli.generate-unit-catalog")(
   function* ({ inputFilePath }: { readonly inputFilePath: string }) {

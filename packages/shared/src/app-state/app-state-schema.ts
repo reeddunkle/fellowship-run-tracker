@@ -1,7 +1,7 @@
 import * as Schema from "effect/Schema";
 
-import { ConfigurationIdSchema } from "@frt/shared/validation/configuration/configuration-id-schema.ts";
-import { DungeonRunComparisonGroupSchema } from "@frt/shared/validation/dungeon-run/dungeon-run-comparison-group-schema.ts";
+import { ConfigurationIdSchema } from "@frt/shared/configuration/configuration-id-schema.ts";
+import { DungeonRunComparisonGroupSchema } from "@frt/shared/dungeon-run/dungeon-run-comparison-group-schema.ts";
 
 export const DUNGEON_RUN_TIME_COLUMN = {
   AVERAGE_DELTA: "AVERAGE_DELTA",

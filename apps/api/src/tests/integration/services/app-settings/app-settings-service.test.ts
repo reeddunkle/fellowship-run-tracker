@@ -20,7 +20,7 @@ import {
   FellowshipLogsClientSecretSchema,
   LiveSplitHostSchema,
   LiveSplitPortSchema,
-} from "@frt/shared/validation/app-settings/app-settings-schema.ts";
+} from "@frt/shared/app-settings/app-settings-schema.ts";
 
 const UPDATED_SETTINGS = {
   fellowshipLogDirectory: Schema.decodeSync(FellowshipLogDirectorySchema)(

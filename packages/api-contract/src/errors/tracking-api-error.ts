@@ -1,6 +1,6 @@
 import * as Schema from "effect/Schema";
 
-import { ConfigurationIdSchema } from "@frt/shared/validation/configuration/configuration-id-schema.ts";
+import { ConfigurationIdSchema } from "@frt/shared/configuration/configuration-id-schema.ts";
 
 export class TrackingApiAlreadyRunningError extends Schema.TaggedError<TrackingApiAlreadyRunningError>()(
   "TrackingApiAlreadyRunningError",

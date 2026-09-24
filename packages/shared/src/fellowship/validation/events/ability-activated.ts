@@ -6,7 +6,7 @@ import { TimestampSchema } from "@frt/shared/fellowship/validation/fellowship-co
 import {
   IntegerFromStringSchema,
   JsonStringSchema,
-} from "@frt/shared/validation/common-schemas.ts";
+} from "@frt/shared/util/common-schemas.ts";
 
 const AbilityActivatedLogLineSchema = Schema.Tuple([
   Schema.DateTimeUtcFromString, // timestamp

@@ -1,7 +1,7 @@
 import { FileTextIcon } from "lucide-react";
 
 import { type ConfigurationApiConfiguration } from "@frt/shared/configuration/configuration-api-schema.ts";
-import { type ConfigurationId } from "@frt/shared/validation/configuration/configuration-id-schema.ts";
+import { type ConfigurationId } from "@frt/shared/configuration/configuration-id-schema.ts";
 import { SidebarMenuSubButton, SidebarMenuSubItem } from "@frt/ui/sidebar.tsx";
 
 import { formatRelativeDateTime } from "@/util/format-date-time.ts";
