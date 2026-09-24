@@ -1,7 +1,6 @@
 import {
   type QueryClient,
   queryOptions,
-  useQuery,
   useSuspenseQuery,
 } from "@tanstack/react-query";
 import * as E from "effect/Effect";
@@ -16,7 +15,6 @@ import { browserRuntime } from "@/renderer/runtimes/browser-runtime.ts";
 import {
   type BackgroundJobCategoryId,
   getBackgroundJobCategoryId,
-  getBackgroundJobSummary,
 } from "./background-job-categories.ts";
 import { getBackgroundJobs } from "./background-job-client.ts";
 
@@ -102,16 +100,4 @@ export function useBackgroundJobCategorySuspense(
     },
   });
   return data;
-}
-
-export function useBackgroundJobSummary(categoryId: BackgroundJobCategoryId) {
-  const { data } = useQuery({
-    ...getBackgroundJobsQueryOptions(),
-    select: (snapshot) => {
-      return getBackgroundJobSummary(
-        filterBackgroundJobsByCategory(snapshot.jobs, categoryId),
-      );
-    },
-  });
-  return data ?? getBackgroundJobSummary([]);
 }

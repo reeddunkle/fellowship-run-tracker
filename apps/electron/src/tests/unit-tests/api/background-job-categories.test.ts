@@ -6,10 +6,7 @@ import { BackgroundJobIdSchema } from "@frt/shared/background-job/background-job
 import { FellowshipLogsFightIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
 import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
-import {
-  getBackgroundJobSummary,
-  groupBackgroundJobsByCategory,
-} from "@/renderer/api/background-job/background-job-categories.ts";
+import { groupBackgroundJobsByCategory } from "@/renderer/api/background-job/background-job-categories.ts";
 
 function makeImportJob(
   id: string,
@@ -63,90 +60,5 @@ describe("groupBackgroundJobsByCategory", () => {
 
   test("leaves out categories with no jobs", () => {
     expect(groupBackgroundJobsByCategory([])).toEqual([]);
-  });
-});
-
-describe("getBackgroundJobSummary", () => {
-  test("is idle with no jobs", () => {
-    expect(getBackgroundJobSummary([])).toEqual({
-      activeCount: 0,
-      failedCount: 0,
-      queuedCount: 0,
-      runningJob: undefined,
-      state: "idle",
-      waitingCount: 0,
-    });
-  });
-
-  test("counts active jobs and finds the running one", () => {
-    const runningJob = makeImportJob("job-1", "RUNNING");
-
-    const summary = getBackgroundJobSummary([
-      runningJob,
-      makeImportJob("job-2", "QUEUED"),
-      makeImportJob("job-3", "QUEUED"),
-      makeImportJob("job-4", "SUCCEEDED"),
-    ]);
-
-    expect(summary).toEqual({
-      activeCount: 3,
-      failedCount: 0,
-      queuedCount: 2,
-      runningJob,
-      state: "running",
-      waitingCount: 0,
-    });
-  });
-
-  test("reports failures ahead of running jobs", () => {
-    const summary = getBackgroundJobSummary([
-      makeImportJob("job-1", "RUNNING"),
-      makeImportJob("job-2", "FAILED"),
-    ]);
-
-    expect(summary.state).toBe("failed");
-    expect(summary.failedCount).toBe(1);
-    expect(summary.activeCount).toBe(1);
-  });
-
-  test("stays failed after the queue drains until failures are cleared", () => {
-    const summary = getBackgroundJobSummary([
-      makeImportJob("job-1", "FAILED"),
-      makeImportJob("job-2", "SUCCEEDED"),
-    ]);
-
-    expect(summary.state).toBe("failed");
-    expect(summary.activeCount).toBe(0);
-  });
-
-  test("is idle when only succeeded jobs remain", () => {
-    expect(
-      getBackgroundJobSummary([makeImportJob("job-1", "SUCCEEDED")]).state,
-    ).toBe("idle");
-  });
-
-  test("is waiting when a job waits and nothing runs", () => {
-    const summary = getBackgroundJobSummary([
-      makeImportJob("job-1", "WAITING"),
-      makeImportJob("job-2", "QUEUED"),
-    ]);
-
-    expect(summary).toEqual({
-      activeCount: 2,
-      failedCount: 0,
-      queuedCount: 1,
-      runningJob: undefined,
-      state: "waiting",
-      waitingCount: 1,
-    });
-  });
-
-  test("reports a running job ahead of a waiting one", () => {
-    const summary = getBackgroundJobSummary([
-      makeImportJob("job-1", "WAITING"),
-      makeImportJob("job-2", "RUNNING"),
-    ]);
-
-    expect(summary.state).toBe("running");
   });
 });

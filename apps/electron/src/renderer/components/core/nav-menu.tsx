@@ -2,8 +2,6 @@ import { Link } from "@tanstack/react-router";
 
 import { navigationMenuTriggerStyle } from "@frt/ui/navigation-menu.tsx";
 
-import { FellowshipLogsNavBadge } from "@/renderer/components/core/fellowship-logs-nav-badge.tsx";
-
 export function NavMenu() {
   return (
     <nav className="flex items-center gap-1">
@@ -32,11 +30,10 @@ export function NavMenu() {
         activeProps={{
           className: "bg-muted text-foreground shadow-sm",
         }}
-        className={navigationMenuTriggerStyle({ className: "gap-2" })}
+        className={navigationMenuTriggerStyle()}
         to="/fellowship-logs"
       >
         Fellowship Logs
-        <FellowshipLogsNavBadge />
       </Link>
       <Link
         activeProps={{
