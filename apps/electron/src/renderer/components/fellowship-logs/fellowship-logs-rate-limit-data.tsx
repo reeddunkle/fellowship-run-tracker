@@ -3,7 +3,7 @@ import { getFellowshipLogsRateLimitStatus } from "@frt/shared/fellowship-logs/ge
 import { cn } from "@frt/ui/class-names.ts";
 
 import { getRateLimitDataItems } from "@/renderer/api/fellowship-logs/fellowship-logs-rate-limit-messages.ts";
-import { useNowMilliseconds } from "@/renderer/api/fellowship-logs/use-fellowship-logs-rate-limit-status.ts";
+import { useNowMilliseconds } from "@/renderer/stores/clock/use-now-milliseconds.ts";
 
 type FellowshipLogsRateLimitDataProps = {
   readonly className?: string | undefined;

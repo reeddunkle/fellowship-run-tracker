@@ -106,9 +106,4 @@ export const prepareFellowshipLogsCacheSchema = E.fn(
       `;
     }),
   );
-
-  // [TODO] Remove?
-  if (userVersion !== 0) {
-    yield* sql`VACUUM`;
-  }
 });
