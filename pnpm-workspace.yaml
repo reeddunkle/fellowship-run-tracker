@@ -16,11 +16,11 @@ minimumReleaseAgeExclude:
   - "tsx"
 
 overrides:
-  # @electron-forge/core-utils pins @electron/rebuild@^3.7.0, which depends on
-  # @electron/node-gyp via a pinned git commit instead of the npm registry.
-  # Force resolution to the equivalent npm-published version so pnpm's
-  # blockExoticSubdeps protection doesn't need to be disabled repo-wide.
-  '@electron/node-gyp': '10.2.0-electron.2'
+  # @electron-forge 7.x pins @electron/rebuild@^3, which depends on a git-hosted
+  # fork (@electron/node-gyp) that blockExoticSubdeps rejects. v4 uses upstream
+  # node-gyp from npm and keeps the same `rebuild()` API Forge calls.
+  # Remove once Forge 8 (which depends on @electron/rebuild@^4) is stable.
+  '@electron/rebuild': '^4.2.0'
 
   # @effect/platform-node depends on @effect/platform-node-shared via a caret
   # range (e.g. ^4.0.0-beta.107), which semver lets resolve to a newer rc that
@@ -29,7 +29,6 @@ overrides:
 
 allowBuilds:
   '@playwright/browser-chromium': true # Playwright uses for browser tests
-  better-sqlite3: true # Effect SQLite uses for database access
   esbuild: true # Vite/tsx use for builds
   msgpackr-extract: false # Effect dependency via msgpackr
   puppeteer: true # Mermaid uses for rendering
@@ -49,12 +48,13 @@ catalogs:
     "@effect/tsgo-win32-x64": "0.45.0"
   electron:
     "electron": "^44.3.0"
+    "@electron/fuses": "^1.8.0"
+
+    # Match versions
     "@electron-forge/cli": "^7.10.2"
     "@electron-forge/maker-zip": "^7.10.2"
     "@electron-forge/plugin-auto-unpack-natives": "^7.10.2"
     "@electron-forge/plugin-fuses": "^7.10.2"
-    "@electron/fuses": "^1.8.0"
-    "@vercel/nft": "1.11.0"
   mermaid:
     "@mermaid-js/mermaid-cli": "^11.17.0"
   node:
@@ -97,6 +97,7 @@ catalogs:
     "vitest-browser-react": "^2.2.0"
   tooling:
     "@oxlint/plugins": ^1.83.0
+    "@vercel/nft": "1.11.0"
     "jsonc-parser": ^3.3.1
     "knip": ^6.35.0
     "npm-run-all2": ^9.0.3

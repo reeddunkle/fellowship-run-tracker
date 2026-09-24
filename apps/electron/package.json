@@ -63,7 +63,7 @@
     "@electron-forge/plugin-auto-unpack-natives": "catalog:electron",
     "@electron-forge/plugin-fuses": "catalog:electron",
     "@electron/fuses": "catalog:electron",
-    "@vercel/nft": "catalog:electron",
+    "@vercel/nft": "catalog:tooling",
     "electron": "catalog:electron",
     "npm-run-all2": "catalog:tooling",
     "playwright": "catalog:testing",
