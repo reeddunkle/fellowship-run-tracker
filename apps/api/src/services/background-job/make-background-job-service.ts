@@ -215,58 +215,60 @@ export const makeBackgroundJobService = E.gen(function* () {
     );
   };
 
-  const runClaimedJob = E.fn("BackgroundJobService.runClaimedJob")(function* (
-    claimed: BackgroundJobModel,
-  ) {
-    const decoded = yield* Schema.decodeUnknownEffect(BackgroundJobSchema)(
-      claimed.payload,
-    ).pipe(E.result);
+  const runClaimedJob = E.fn("BackgroundJobService.runClaimedJob")(
+    function* (claimed: BackgroundJobModel) {
+      const decoded = yield* Schema.decodeUnknownEffect(BackgroundJobSchema)(
+        claimed.payload,
+      ).pipe(E.result);
 
-    if (Result.isFailure(decoded)) {
-      return yield* backgroundJobDAO.markFailed({
-        error: toBackgroundJobFailure(
-          new BackgroundJobInvalidPayloadError({ cause: decoded.failure }),
-        ),
-        id: claimed.id,
-      });
-    }
+      if (Result.isFailure(decoded)) {
+        return yield* backgroundJobDAO.markFailed({
+          error: toBackgroundJobFailure(
+            new BackgroundJobInvalidPayloadError({ cause: decoded.failure }),
+          ),
+          id: claimed.id,
+        });
+      }
 
-    const reportProgress = (fraction: number) => {
-      return E.sync(() => {
-        progressById.set(claimed.id, fraction);
-      }).pipe(E.andThen(bumpRevision));
-    };
+      const reportProgress = (fraction: number) => {
+        return E.sync(() => {
+          progressById.set(claimed.id, fraction);
+        }).pipe(E.andThen(bumpRevision));
+      };
 
-    const fiber = yield* stateLock.withPermit(
-      E.gen(function* () {
-        if (cancelRequests.delete(claimed.id)) {
-          return undefined;
-        }
+      const fiber = yield* stateLock.withPermit(
+        E.gen(function* () {
+          if (cancelRequests.delete(claimed.id)) {
+            return undefined;
+          }
 
-        const forked = yield* runBackgroundJob(decoded.success, {
-          reportProgress,
-        }).pipe(E.forkChild);
+          const forked = yield* runBackgroundJob(decoded.success, {
+            reportProgress,
+          }).pipe(E.forkChild);
 
-        runningFibers.set(claimed.id, forked);
+          runningFibers.set(claimed.id, forked);
 
-        return forked;
-      }),
-    );
+          return forked;
+        }),
+      );
 
-    if (fiber === undefined) {
-      return yield* backgroundJobDAO.delete({
-        id: claimed.id,
-        statuses: ["RUNNING"],
-      });
-    }
+      if (fiber === undefined) {
+        return yield* backgroundJobDAO.delete({
+          id: claimed.id,
+          statuses: ["RUNNING"],
+        });
+      }
 
-    const exit = yield* Fiber.await(fiber);
+      const exit = yield* Fiber.await(fiber);
 
-    yield* settle({ exit, job: claimed }).pipe(
-      E.retry({ schedule: SETTLE_RETRY_SCHEDULE, times: SETTLE_RETRY_TIMES }),
-      E.ensuring(releaseJob(claimed.id)),
-    );
-  });
+      yield* settle({ exit, job: claimed }).pipe(
+        E.retry({ schedule: SETTLE_RETRY_SCHEDULE, times: SETTLE_RETRY_TIMES }),
+      );
+    },
+    (effect, claimed) => {
+      return effect.pipe(E.ensuring(releaseJob(claimed.id)));
+    },
+  );
 
   const awaitWork = E.fn("BackgroundJobService.awaitWork")(function* (
     queue: BackgroundJobQueueName,
@@ -388,7 +390,6 @@ export const makeBackgroundJobService = E.gen(function* () {
     );
   };
 
-  // [TODO] Review lock handling
   const cancel: BackgroundJobServiceShape["cancel"] = ({ id }) => {
     return E.gen(function* () {
       const fiberToInterrupt = yield* stateLock.withPermit(
@@ -423,6 +424,18 @@ export const makeBackgroundJobService = E.gen(function* () {
               yield* bumpRevision;
 
               return undefined;
+            }
+
+            const claimedJob = yield* backgroundJobDAO.getById({ id });
+
+            if (
+              Option.isNone(claimedJob) ||
+              claimedJob.value.status !== "RUNNING"
+            ) {
+              return yield* new BackgroundJobNotFoundError({
+                id,
+                operation: "Cancel",
+              });
             }
           }
 
