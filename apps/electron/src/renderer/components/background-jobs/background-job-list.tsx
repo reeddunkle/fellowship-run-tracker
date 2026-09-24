@@ -10,6 +10,7 @@ import { useBackgroundJobCategorySuspense } from "@/renderer/api/background-job/
 
 import { BackgroundJobRow } from "./background-job-row.tsx";
 
+// [TODO] Research best way to "auto-remove" completed items (e.g. just filter here?)
 export function BackgroundJobItems({
   jobs,
 }: {
@@ -22,6 +23,7 @@ export function BackgroundJobItems({
     .map((job) => {
       return job.id;
     });
+
   const isQueueWaiting = jobs.some((job) => {
     return job.status === "WAITING";
   });
