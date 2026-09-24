@@ -81,10 +81,12 @@ export const makeLocalLogDungeonRunDAO = E.gen(function* () {
 
   const create: LocalLogDungeonRunDAOShape["create"] = ({ dungeonRunId }) => {
     return E.gen(function* () {
-      const localLogDungeonRun = LocalLogDungeonRunModel.insert.make({
-        dungeonRunId,
-        status: "ACTIVE",
-      });
+      const localLogDungeonRun = yield* LocalLogDungeonRunModel.insert
+        .makeEffect({
+          dungeonRunId,
+          status: "ACTIVE",
+        })
+        .pipe(E.mapError(mapLocalLogDungeonRunDAOError));
 
       const insert = yield* Schema.encodeEffect(LocalLogDungeonRunModel.insert)(
         localLogDungeonRun,

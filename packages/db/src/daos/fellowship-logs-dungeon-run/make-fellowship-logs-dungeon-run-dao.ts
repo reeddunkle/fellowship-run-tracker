@@ -100,11 +100,13 @@ export const makeFellowshipLogsDungeonRunDAO = E.gen(function* () {
   }) => {
     return E.gen(function* () {
       const fellowshipLogsDungeonRun =
-        FellowshipLogsDungeonRunModel.insert.make({
-          dungeonRunId,
-          fightId,
-          reportCode,
-        });
+        yield* FellowshipLogsDungeonRunModel.insert
+          .makeEffect({
+            dungeonRunId,
+            fightId,
+            reportCode,
+          })
+          .pipe(E.mapError(mapFellowshipLogsDungeonRunDAOError));
 
       const insert = yield* Schema.encodeEffect(
         FellowshipLogsDungeonRunModel.insert,

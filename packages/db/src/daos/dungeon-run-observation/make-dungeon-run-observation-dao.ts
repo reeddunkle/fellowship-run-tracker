@@ -147,12 +147,14 @@ export const makeDungeonRunObservationDAO = E.gen(function* () {
     type,
   }) => {
     return E.gen(function* () {
-      const observation = DungeonRunObservationModel.insert.make({
-        dungeonRunId,
-        observedAt,
-        targetId,
-        type,
-      });
+      const observation = yield* DungeonRunObservationModel.insert
+        .makeEffect({
+          dungeonRunId,
+          observedAt,
+          targetId,
+          type,
+        })
+        .pipe(E.mapError(mapDungeonRunObservationDAOError));
 
       const insert = yield* Schema.encodeEffect(
         DungeonRunObservationModel.insert,

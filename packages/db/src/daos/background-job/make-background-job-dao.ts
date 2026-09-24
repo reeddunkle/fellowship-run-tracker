@@ -127,7 +127,7 @@ export const makeBackgroundJobDAO = E.gen(function* () {
     queue,
   }) => {
     return E.gen(function* () {
-      const job = BackgroundJobModel.insert.make({
+      const job = yield* BackgroundJobModel.insert.makeEffect({
         attempts: 0,
         availableAt: null,
         error: null,

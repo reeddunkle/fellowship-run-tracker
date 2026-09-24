@@ -80,14 +80,16 @@ export const makeDungeonRunDAO = E.gen(function* () {
     startedAt,
   }) => {
     return E.gen(function* () {
-      const dungeonRun = DungeonRunModel.insert.make({
-        dungeonId,
-        dungeonLevel,
-        endedAt,
-        isOwnRun,
-        source,
-        startedAt,
-      });
+      const dungeonRun = yield* DungeonRunModel.insert
+        .makeEffect({
+          dungeonId,
+          dungeonLevel,
+          endedAt,
+          isOwnRun,
+          source,
+          startedAt,
+        })
+        .pipe(E.mapError(mapDungeonRunDAOError));
 
       const insert = yield* Schema.encodeEffect(DungeonRunModel.insert)(
         dungeonRun,

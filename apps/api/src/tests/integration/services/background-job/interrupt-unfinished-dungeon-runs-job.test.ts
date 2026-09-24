@@ -4,6 +4,7 @@ import * as FileSystem from "effect/FileSystem";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Path from "effect/Path";
+import * as TestClock from "effect/testing/TestClock";
 import { describe, expect, test } from "vitest";
 
 import { FellowshipLogsDungeonRunImporter } from "@frt/api/application/fellowship-logs-dungeon-run-importer/fellowship-logs-dungeon-run-importer-service.ts";
@@ -121,9 +122,7 @@ function runJobAfterRestart({
 
     const seededIds = yield* runSession(databaseFilename, seed);
 
-    // [TODO] Find better way
-    // The next session needs to wait for seeded runs to finish.
-    yield* E.sleep("5 millis");
+    yield* TestClock.adjust("1 second");
 
     return yield* runSession(
       databaseFilename,
@@ -149,7 +148,11 @@ function runJobAfterRestart({
         return yield* E.forEach([...seededIds, ...nextSessionIds], getLocalRun);
       }),
     );
-  }).pipe(E.scoped, E.provide(NodePlatformLayer), runTest);
+  }).pipe(
+    E.scoped,
+    E.provide(Layer.merge(NodePlatformLayer, TestClock.layer())),
+    runTest,
+  );
 }
 
 function toEpochMillis(dateTime: DateTime.Utc | null | undefined) {
