@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as BackgroundJobsRouteImport } from './routes/background-jobs'
 import { Route as FellowshipLogsRouteImport } from './routes/fellowship-logs'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -18,11 +17,6 @@ import { Route as SettingsRouteImport } from './routes/settings'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BackgroundJobsRoute = BackgroundJobsRouteImport.update({
-  id: '/background-jobs',
-  path: '/background-jobs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FellowshipLogsRoute = FellowshipLogsRouteImport.update({
@@ -43,14 +37,12 @@ const SettingsRoute = SettingsRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/background-jobs': typeof BackgroundJobsRoute
   '/fellowship-logs': typeof FellowshipLogsRoute
   '/history': typeof HistoryRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/background-jobs': typeof BackgroundJobsRoute
   '/fellowship-logs': typeof FellowshipLogsRoute
   '/history': typeof HistoryRoute
   '/settings': typeof SettingsRoute
@@ -58,29 +50,20 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/background-jobs': typeof BackgroundJobsRoute
   '/fellowship-logs': typeof FellowshipLogsRoute
   '/history': typeof HistoryRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    '/' | '/background-jobs' | '/fellowship-logs' | '/history' | '/settings'
+  fullPaths: '/' | '/fellowship-logs' | '/history' | '/settings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/background-jobs' | '/fellowship-logs' | '/history' | '/settings'
-  id:
-    | '__root__'
-    | '/'
-    | '/background-jobs'
-    | '/fellowship-logs'
-    | '/history'
-    | '/settings'
+  to: '/' | '/fellowship-logs' | '/history' | '/settings'
+  id: '__root__' | '/' | '/fellowship-logs' | '/history' | '/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  BackgroundJobsRoute: typeof BackgroundJobsRoute
   FellowshipLogsRoute: typeof FellowshipLogsRoute
   HistoryRoute: typeof HistoryRoute
   SettingsRoute: typeof SettingsRoute
@@ -93,13 +76,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/background-jobs': {
-      id: '/background-jobs'
-      path: '/background-jobs'
-      fullPath: '/background-jobs'
-      preLoaderRoute: typeof BackgroundJobsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/fellowship-logs': {
@@ -128,7 +104,6 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  BackgroundJobsRoute: BackgroundJobsRoute,
   FellowshipLogsRoute: FellowshipLogsRoute,
   HistoryRoute: HistoryRoute,
   SettingsRoute: SettingsRoute,

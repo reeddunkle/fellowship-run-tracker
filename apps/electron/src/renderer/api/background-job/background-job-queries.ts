@@ -17,7 +17,6 @@ import {
   type BackgroundJobCategoryId,
   getBackgroundJobCategoryId,
   getBackgroundJobSummary,
-  groupBackgroundJobsByCategory,
 } from "./background-job-categories.ts";
 import { getBackgroundJobs } from "./background-job-client.ts";
 
@@ -84,14 +83,13 @@ export function updateCachedBackgroundJobs(
   );
 }
 
-export function useBackgroundJobGroupsSuspense() {
-  const { data } = useSuspenseQuery({
-    ...getBackgroundJobsQueryOptions(),
-    select: (snapshot) => {
-      return groupBackgroundJobsByCategory(snapshot.jobs);
-    },
+function filterBackgroundJobsByCategory(
+  jobs: ReadonlyArray<BackgroundJobApiItem>,
+  categoryId: BackgroundJobCategoryId,
+): ReadonlyArray<BackgroundJobApiItem> {
+  return jobs.filter((job) => {
+    return getBackgroundJobCategoryId(job) === categoryId;
   });
-  return data;
 }
 
 export function useBackgroundJobCategorySuspense(
@@ -100,19 +98,19 @@ export function useBackgroundJobCategorySuspense(
   const { data } = useSuspenseQuery({
     ...getBackgroundJobsQueryOptions(),
     select: (snapshot) => {
-      return snapshot.jobs.filter((job) => {
-        return getBackgroundJobCategoryId(job) === categoryId;
-      });
+      return filterBackgroundJobsByCategory(snapshot.jobs, categoryId);
     },
   });
   return data;
 }
 
-export function useBackgroundJobSummary() {
+export function useBackgroundJobSummary(categoryId: BackgroundJobCategoryId) {
   const { data } = useQuery({
     ...getBackgroundJobsQueryOptions(),
     select: (snapshot) => {
-      return getBackgroundJobSummary(snapshot.jobs);
+      return getBackgroundJobSummary(
+        filterBackgroundJobsByCategory(snapshot.jobs, categoryId),
+      );
     },
   });
   return data ?? getBackgroundJobSummary([]);

@@ -1,7 +1,8 @@
 import * as Context from "effect/Context";
-import type * as E from "effect/Effect";
+import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { appConfig } from "@frt/api/app-config.ts";
 import {
   type FellowshipLogsDungeonRunImportAlreadyImportedError,
   type FellowshipLogsDungeonRunImportDungeonLevelNotFoundError,
@@ -25,6 +26,7 @@ import { type FellowshipLogsFightId } from "@frt/shared/fellowship-logs/fellowsh
 import { type FellowshipLogsReportCode } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
 import { makeFellowshipLogsDungeonRunImporter } from "./make-fellowship-logs-dungeon-run-importer-service.ts";
+import { makeSimulatedFellowshipLogsDungeonRunImporter } from "./make-simulated-fellowship-logs-dungeon-run-importer.ts";
 
 type FellowshipLogsDungeonRunReference = {
   readonly fightId: FellowshipLogsFightId;
@@ -73,8 +75,29 @@ export class FellowshipLogsDungeonRunImporter extends Context.Service<
     makeFellowshipLogsDungeonRunImporter,
   );
 
-  static readonly layer = this.layerNoDeps.pipe(
+  static readonly liveLayer = this.layerNoDeps.pipe(
     Layer.provide(DungeonRunRepository.layer),
     Layer.provide(FellowshipLogs.layer),
+  );
+
+  static readonly simulatedLayer = Layer.effect(
+    this,
+    E.map(
+      makeFellowshipLogsDungeonRunImporter,
+      makeSimulatedFellowshipLogsDungeonRunImporter,
+    ),
+  ).pipe(
+    Layer.provide(DungeonRunRepository.layer),
+    Layer.provide(FellowshipLogs.layer),
+  );
+
+  static readonly layer = Layer.unwrap(
+    E.gen(function* () {
+      const simulateImports = yield* appConfig.fellowshipLogsSimulateImports;
+
+      return simulateImports
+        ? FellowshipLogsDungeonRunImporter.simulatedLayer
+        : FellowshipLogsDungeonRunImporter.liveLayer;
+    }),
   );
 }

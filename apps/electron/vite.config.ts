@@ -78,6 +78,9 @@ export default defineConfig(({ mode }) => {
     define: {
       "import.meta.env.PUBLIC_API_HOST": JSON.stringify(apiHost),
       "import.meta.env.PUBLIC_API_PORT": JSON.stringify(apiPort),
+      "import.meta.env.PUBLIC_SIMULATE_FELLOWSHIP_LOGS_IMPORTS": JSON.stringify(
+        workspaceEnv.FELLOWSHIP_LOGS_SIMULATE_IMPORTS === "true",
+      ),
     },
 
     envDir: workspaceRoot,

@@ -56,6 +56,9 @@ export const appConfig = {
     FellowshipLogsClientSecretSchema,
     "FELLOWSHIP_LOGS_CLIENT_SECRET",
   ).pipe(Config.option),
+  fellowshipLogsSimulateImports: Config.boolean(
+    "FELLOWSHIP_LOGS_SIMULATE_IMPORTS",
+  ).pipe(Config.withDefault(false)),
   fellowshipLogsUseFixtures: Config.boolean(
     "FELLOWSHIP_LOGS_USE_FIXTURES",
   ).pipe(Config.withDefault(false)),

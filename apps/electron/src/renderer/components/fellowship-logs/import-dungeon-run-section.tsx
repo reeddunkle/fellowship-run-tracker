@@ -15,7 +15,6 @@ import {
   getQueueWhileOutOfPointsMessage,
 } from "@/renderer/api/fellowship-logs/fellowship-logs-rate-limit-messages.ts";
 import { useFellowshipLogsRateLimitStatus } from "@/renderer/api/fellowship-logs/use-fellowship-logs-rate-limit-status.ts";
-import { BackgroundJobCategoryList } from "@/renderer/components/background-jobs/background-job-list.tsx";
 import { useFellowshipDataStore } from "@/renderer/stores/fellowship-data/fellowship-data-store.tsx";
 
 import { ImportConfirmationCard } from "./import-confirmation/import-confirmation-card.tsx";
@@ -115,7 +114,6 @@ export function ImportDungeonRunSection() {
       {queueMutation.data !== undefined ? (
         <ImportQueuedMessage result={queueMutation.data} />
       ) : null}
-      <BackgroundJobCategoryList categoryId="fellowship-logs-import" />
       {metadataMutation.data !== undefined && reference !== undefined ? (
         <ImportConfirmationCard
           error={queueMutation.error ?? undefined}

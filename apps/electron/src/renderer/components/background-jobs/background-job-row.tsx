@@ -1,4 +1,3 @@
-import * as Match from "effect/Match";
 import {
   CircleAlertIcon,
   CircleCheckIcon,
@@ -9,10 +8,7 @@ import {
   XIcon,
 } from "lucide-react";
 
-import {
-  type BackgroundJobApiItem,
-  type ImportFellowshipLogsDungeonRunBackgroundJobApiItem,
-} from "@frt/shared/background-job/background-job-api-schema.ts";
+import { type BackgroundJobApiItem } from "@frt/shared/background-job/background-job-api-schema.ts";
 import { Button } from "@frt/ui/button.tsx";
 import {
   Item,
@@ -31,15 +27,15 @@ import {
   useDismissBackgroundJob,
   useRetryBackgroundJob,
 } from "@/renderer/api/background-job/background-job-mutations.ts";
-import {
-  getWaitingImportMessage,
-  WAITING_FOR_POINTS_MESSAGE,
-} from "@/renderer/api/fellowship-logs/fellowship-logs-rate-limit-messages.ts";
 import { useNowMilliseconds } from "@/renderer/stores/clock/use-now-milliseconds.ts";
-import { useFellowshipDataStore } from "@/renderer/stores/fellowship-data/fellowship-data-store.tsx";
 import { formatRelativeDateTimeFromMilliseconds } from "@/util/format-date-time.ts";
 
-import { getImportJobFailureMessage } from "./get-import-job-failure-message.ts";
+import {
+  getBackgroundJobFailureMessage,
+  getBackgroundJobQueuedDescription,
+  getBackgroundJobWaitingMessage,
+} from "./background-job-descriptions.ts";
+import { BackgroundJobName } from "./background-job-name.tsx";
 
 function BackgroundJobStatusIcon({
   job,
@@ -65,79 +61,14 @@ function BackgroundJobStatusIcon({
   return <ClockIcon className="text-muted-foreground" />;
 }
 
-function ImportJobTitle({
-  job,
-}: {
-  readonly job: ImportFellowshipLogsDungeonRunBackgroundJobApiItem;
-}) {
-  const dungeonsById = useFellowshipDataStore((state) => state.dungeonsById);
-
-  const dungeonName =
-    dungeonsById[job.payload.dungeonId]?.name ?? job.payload.dungeonId;
-
-  return (
-    <ItemTitle>
-      {dungeonName} +{job.payload.dungeonLevel}
-    </ItemTitle>
-  );
-}
-
-function BackgroundJobTitle({ job }: { readonly job: BackgroundJobApiItem }) {
-  return Match.value(job).pipe(
-    Match.discriminatorsExhaustive("kind")({
-      ImportFellowshipLogsDungeonRun: (importJob) => {
-        return <ImportJobTitle job={importJob} />;
-      },
-    }),
-  );
-}
-
-function getFailureMessage(job: BackgroundJobApiItem): string {
-  return Match.value(job).pipe(
-    Match.discriminatorsExhaustive("kind")({
-      ImportFellowshipLogsDungeonRun: (importJob) => {
-        return getImportJobFailureMessage(importJob.error);
-      },
-    }),
-  );
-}
-
-function getWaitingMessage(
-  job: BackgroundJobApiItem,
-  nowMilliseconds: number,
-): string {
-  return Match.value(job).pipe(
-    Match.discriminatorsExhaustive("kind")({
-      ImportFellowshipLogsDungeonRun: (importJob) => {
-        return getWaitingImportMessage(
-          importJob.availableAtMilliseconds,
-          nowMilliseconds,
-        );
-      },
-    }),
-  );
-}
-
 function WaitingStatusLine({ job }: { readonly job: BackgroundJobApiItem }) {
   const nowMilliseconds = useNowMilliseconds();
 
   return (
-    <ItemDescription>{getWaitingMessage(job, nowMilliseconds)}</ItemDescription>
+    <ItemDescription>
+      {getBackgroundJobWaitingMessage(job, nowMilliseconds)}
+    </ItemDescription>
   );
-}
-
-function getQueuedDescription({
-  isQueueWaiting,
-  queuePosition,
-}: {
-  readonly isQueueWaiting: boolean;
-  readonly queuePosition: number;
-}): string {
-  if (isQueueWaiting) {
-    return WAITING_FOR_POINTS_MESSAGE;
-  }
-
-  return queuePosition === 1 ? "Up next" : `#${queuePosition} in line`;
 }
 
 function BackgroundJobStatusLine({
@@ -167,7 +98,9 @@ function BackgroundJobStatusLine({
   }
 
   if (job.status === "FAILED") {
-    return <ItemDescription>{getFailureMessage(job)}</ItemDescription>;
+    return (
+      <ItemDescription>{getBackgroundJobFailureMessage(job)}</ItemDescription>
+    );
   }
 
   if (job.status === "WAITING") {
@@ -186,7 +119,7 @@ function BackgroundJobStatusLine({
 
   return (
     <ItemDescription>
-      {getQueuedDescription({ isQueueWaiting, queuePosition })}
+      {getBackgroundJobQueuedDescription({ isQueueWaiting, queuePosition })}
     </ItemDescription>
   );
 }
@@ -273,7 +206,9 @@ export function BackgroundJobRow({
         <BackgroundJobStatusIcon job={job} />
       </ItemMedia>
       <ItemContent>
-        <BackgroundJobTitle job={job} />
+        <ItemTitle>
+          <BackgroundJobName job={job} />
+        </ItemTitle>
         <BackgroundJobStatusLine
           isQueueWaiting={isQueueWaiting}
           job={job}

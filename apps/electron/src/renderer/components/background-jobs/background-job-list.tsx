@@ -8,25 +8,16 @@ import { Skeleton } from "@frt/ui/skeleton.tsx";
 import { type BackgroundJobCategoryId } from "@/renderer/api/background-job/background-job-categories.ts";
 import { useBackgroundJobCategorySuspense } from "@/renderer/api/background-job/background-job-queries.ts";
 
+import { getBackgroundJobQueueContext } from "./background-job-descriptions.ts";
 import { BackgroundJobRow } from "./background-job-row.tsx";
 
 // [TODO] Research best way to "auto-remove" completed items (e.g. just filter here?)
-export function BackgroundJobItems({
+function BackgroundJobItems({
   jobs,
 }: {
   readonly jobs: ReadonlyArray<BackgroundJobApiItem>;
 }) {
-  const queuedJobIds = jobs
-    .filter((job) => {
-      return job.status === "QUEUED";
-    })
-    .map((job) => {
-      return job.id;
-    });
-
-  const isQueueWaiting = jobs.some((job) => {
-    return job.status === "WAITING";
-  });
+  const { isQueueWaiting, queuedJobIds } = getBackgroundJobQueueContext(jobs);
 
   return (
     <ItemGroup>
@@ -42,11 +33,11 @@ export function BackgroundJobItems({
   );
 }
 
-export function BackgroundJobListLoadError() {
+function BackgroundJobListLoadError() {
   return <p className="text-sm text-destructive">Failed to load jobs.</p>;
 }
 
-export function BackgroundJobListSkeleton() {
+function BackgroundJobListSkeleton() {
   return (
     <section aria-busy="true" aria-label="Loading jobs" aria-live="polite">
       <Item aria-hidden="true" variant="outline">
@@ -59,28 +50,40 @@ export function BackgroundJobListSkeleton() {
   );
 }
 
+type BackgroundJobCategoryListProps = {
+  readonly categoryId: BackgroundJobCategoryId;
+  readonly emptyMessage?: string | undefined;
+};
+
 function BackgroundJobCategoryListContent({
   categoryId,
-}: {
-  readonly categoryId: BackgroundJobCategoryId;
-}) {
+  emptyMessage,
+}: BackgroundJobCategoryListProps) {
   const jobs = useBackgroundJobCategorySuspense(categoryId);
 
-  return jobs.length === 0 ? null : <BackgroundJobItems jobs={jobs} />;
+  if (jobs.length > 0) {
+    return <BackgroundJobItems jobs={jobs} />;
+  }
+
+  return emptyMessage === undefined ? null : (
+    <p className="text-sm text-muted-foreground">{emptyMessage}</p>
+  );
 }
 
 export function BackgroundJobCategoryList({
   categoryId,
-}: {
-  readonly categoryId: BackgroundJobCategoryId;
-}) {
+  emptyMessage,
+}: BackgroundJobCategoryListProps) {
   return (
     <CatchBoundary
       errorComponent={BackgroundJobListLoadError}
       getResetKey={() => categoryId}
     >
       <Suspense fallback={<BackgroundJobListSkeleton />}>
-        <BackgroundJobCategoryListContent categoryId={categoryId} />
+        <BackgroundJobCategoryListContent
+          categoryId={categoryId}
+          emptyMessage={emptyMessage}
+        />
       </Suspense>
     </CatchBoundary>
   );

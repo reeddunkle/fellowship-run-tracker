@@ -42,8 +42,8 @@ function getSummaryLines({
   });
 }
 
-export function BackgroundJobsNavBadge() {
-  const summary = useBackgroundJobSummary();
+export function FellowshipLogsNavBadge() {
+  const summary = useBackgroundJobSummary("fellowship-logs-import");
 
   if (summary.state === "idle") {
     return null;
