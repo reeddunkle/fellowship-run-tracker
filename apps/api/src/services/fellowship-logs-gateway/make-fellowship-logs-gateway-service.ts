@@ -105,6 +105,7 @@ export function makeFellowshipLogsGatewayFromQuery(query: Query) {
               },
             },
             FellowshipLogsGatewayDungeonRunMetadataResponseDataSchema,
+            { operation: "DUNGEON_RUN_METADATA" },
           ),
         );
 
@@ -135,7 +136,7 @@ export function makeFellowshipLogsGatewayFromQuery(query: Query) {
           query: RATE_LIMIT_DATA_QUERY,
         },
         FellowshipLogsRateLimitResponseDataSchema,
-        { skipCapacityCheck: true },
+        { operation: "RATE_LIMIT_DATA", skipCapacityCheck: true },
       ).pipe(E.andThen(rateLimitTracker.getLastKnown()));
     };
 
@@ -169,6 +170,7 @@ export function makeFellowshipLogsGatewayFromQuery(query: Query) {
             },
           },
           FellowshipLogsGatewayFightResponseDataSchema,
+          { operation: "FIGHT" },
         ),
       );
 
@@ -206,6 +208,7 @@ export function makeFellowshipLogsGatewayFromQuery(query: Query) {
             },
           },
           FellowshipLogsGatewayReportResponseDataSchema,
+          { operation: "REPORT_PAGE" },
         );
 
         const responseData = isCacheable

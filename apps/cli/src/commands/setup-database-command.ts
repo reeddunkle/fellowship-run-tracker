@@ -3,6 +3,7 @@ import * as Layer from "effect/Layer";
 import * as Command from "effect/unstable/cli/Command";
 
 import { getDatabaseOptions } from "@frt/api/helpers/get-database-options.ts";
+import { makeAnalyticsDatabaseLayer } from "@frt/db/databases/analytics-database.ts";
 import { makeFellowshipLogsCacheDatabaseLayer } from "@frt/db/databases/fellowship-logs-cache-database.ts";
 import { makeMainDatabaseLayer } from "@frt/db/databases/main-database.ts";
 import { makeStateDatabaseLayer } from "@frt/db/databases/state-database.ts";
@@ -15,6 +16,7 @@ const DatabasesLayer = Layer.unwrap(
       makeFellowshipLogsCacheDatabaseLayer(
         databaseOptions.fellowshipLogsCacheDatabaseFilename,
       ),
+      makeAnalyticsDatabaseLayer(databaseOptions.analyticsDatabaseFilename),
     );
   }),
 );

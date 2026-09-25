@@ -24,6 +24,14 @@ export function getLastKnownRateLimitData() {
   });
 }
 
+export function getAnalytics() {
+  return E.gen(function* () {
+    const client = yield* AppApiClient;
+
+    return yield* client.fellowshipLogs.getFellowshipLogsAnalytics();
+  });
+}
+
 export function getDungeonRunMetadata(
   options: FellowshipLogsApiDungeonRunReference,
 ) {

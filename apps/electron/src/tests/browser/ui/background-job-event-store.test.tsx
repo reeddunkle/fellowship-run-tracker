@@ -49,6 +49,7 @@ const SUCCEEDED_JOB: ImportFellowshipLogsDungeonRunBackgroundJobApiItem = {
   attempts: 1,
   finishedAtMilliseconds: 2,
   result: {
+    approximatePointsSpent: 12,
     dungeonRunId: Schema.decodeSync(DungeonRunIdSchema)("dungeon-run-1"),
   },
   startedAtMilliseconds: 1,

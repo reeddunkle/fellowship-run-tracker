@@ -13,6 +13,7 @@ import {
 } from "@frt/api-contract/errors/fellowship-logs-api-error.ts";
 import { DungeonRunIdSchema } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 import {
+  FellowshipLogsApiAnalyticsSummarySchema,
   FellowshipLogsApiDungeonRunMetadataSchema,
   FellowshipLogsApiDungeonRunReferenceSchema,
   FellowshipLogsApiImportedDungeonRunListSchema,
@@ -88,6 +89,15 @@ const GetFellowshipLogsDungeonRunsEndpoint = HttpApiEndpoint.get(
   },
 );
 
+const GetFellowshipLogsAnalyticsEndpoint = HttpApiEndpoint.get(
+  "getFellowshipLogsAnalytics",
+  `${FELLOWSHIP_LOGS_ROUTE}/analytics`,
+  {
+    error: HttpApiError.InternalServerErrorNoContent,
+    success: FellowshipLogsApiAnalyticsSummarySchema,
+  },
+);
+
 const DeleteFellowshipLogsDungeonRunEndpoint = HttpApiEndpoint.delete(
   "deleteFellowshipLogsDungeonRun",
   `${FELLOWSHIP_LOGS_ROUTE}/dungeon-runs/:dungeonRunId`,
@@ -107,4 +117,5 @@ export const FellowshipLogsApi = HttpApiGroup.make("fellowshipLogs")
   .add(GetFellowshipLogsLastKnownRateLimitDataEndpoint)
   .add(QueueFellowshipLogsDungeonRunImportEndpoint)
   .add(GetFellowshipLogsDungeonRunsEndpoint)
-  .add(DeleteFellowshipLogsDungeonRunEndpoint);
+  .add(DeleteFellowshipLogsDungeonRunEndpoint)
+  .add(GetFellowshipLogsAnalyticsEndpoint);

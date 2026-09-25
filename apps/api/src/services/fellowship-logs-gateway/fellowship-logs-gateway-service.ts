@@ -19,6 +19,7 @@ import {
   NodePlatformLayer,
 } from "@frt/api/layers/node-platform-layer.ts";
 import { AppSettingsStore } from "@frt/api/services/app-settings-store/app-settings-store-service.ts";
+import { FellowshipLogsAnalytics } from "@frt/api/services/fellowship-logs-analytics/fellowship-logs-analytics-service.ts";
 import { FellowshipLogsGatewayResponseCache } from "@frt/api/services/fellowship-logs-gateway/cache/fellowship-logs-gateway-response-cache-service.ts";
 import { type DungeonId } from "@frt/shared/fellowship/validation/fellowship-common.ts";
 import { type FellowshipEvent } from "@frt/shared/fellowship/validation/fellowship-event-schema.ts";
@@ -136,6 +137,7 @@ export class FellowshipLogsGateway extends Context.Service<
 
   static readonly liveLayer = this.layerNoDeps.pipe(
     Layer.provide(AppSettingsStore.layer),
+    Layer.provide(FellowshipLogsAnalytics.layer),
     Layer.provide(FellowshipLogsGatewayResponseCache.layer),
     Layer.provide(NodeHttpClientLayer),
   );
@@ -145,7 +147,10 @@ export class FellowshipLogsGateway extends Context.Service<
     makeFellowshipLogsGatewayFixture({
       fixtureDirectory: FELLOWSHIP_LOGS_FIXTURE_DIRECTORY,
     }),
-  ).pipe(Layer.provide(NodePlatformLayer));
+  ).pipe(
+    Layer.provide(FellowshipLogsAnalytics.layer),
+    Layer.provide(NodePlatformLayer),
+  );
 
   static readonly layer = Layer.unwrap(
     E.gen(function* () {

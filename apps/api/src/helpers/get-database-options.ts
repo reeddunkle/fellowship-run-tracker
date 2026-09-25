@@ -29,6 +29,10 @@ const getDatabaseFilename = E.fn(function* (
 
 export const getDatabaseOptions = E.fn(function* () {
   return {
+    analyticsDatabaseFilename: yield* getDatabaseFilename(
+      "ANALYTICS_DATABASE_FILENAME",
+      appPaths.analyticsDatabaseFile,
+    ),
     databaseFilename: yield* getDatabaseFilename(
       "DATABASE_FILENAME",
       appPaths.databaseFile,

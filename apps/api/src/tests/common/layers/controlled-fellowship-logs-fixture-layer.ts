@@ -11,6 +11,7 @@ import {
   FellowshipLogsGatewayRequestError,
 } from "@frt/api/errors/fellowship-logs-gateway-error.ts";
 import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
+import { FellowshipLogsAnalytics } from "@frt/api/services/fellowship-logs-analytics/fellowship-logs-analytics-service.ts";
 import { FellowshipLogsGatewayResponseCache } from "@frt/api/services/fellowship-logs-gateway/cache/fellowship-logs-gateway-response-cache-service.ts";
 import {
   FELLOWSHIP_LOGS_FIXTURE_DIRECTORY,
@@ -264,6 +265,7 @@ export function makeControlledFellowshipLogsFixtureLayer(
       } satisfies FellowshipLogsGatewayShape;
     }),
   ).pipe(
+    Layer.provide(FellowshipLogsAnalytics.layer),
     Layer.provide(FellowshipLogsGatewayResponseCache.layer),
     Layer.provide(NodePlatformLayer),
   );

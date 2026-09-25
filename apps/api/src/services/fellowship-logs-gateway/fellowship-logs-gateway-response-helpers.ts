@@ -11,12 +11,15 @@ import {
   type FellowshipLogsGatewayRateLimitRejectedError,
   type FellowshipLogsGatewayRequestError,
 } from "@frt/api/errors/fellowship-logs-gateway-error.ts";
+import { FellowshipLogsAnalytics } from "@frt/api/services/fellowship-logs-analytics/fellowship-logs-analytics-service.ts";
+import { addFellowshipLogsGatewayPointsSpent } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-points-spent.ts";
 import { type Query } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
 import {
   type FellowshipLogsGatewayGraphQLError,
   type FellowshipLogsGatewayGraphQLRequest,
   type FellowshipLogsGatewayGraphQLResponse,
 } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-graphql-schema.ts";
+import { type FellowshipLogsRequestOperation } from "@frt/db/validation/fellowship-logs-request/fellowship-logs-request-schema.ts";
 import {
   type FellowshipLogsRateLimitData,
   type FellowshipLogsRateLimitSnapshot,
@@ -51,8 +54,12 @@ type ResponseDataWithRateLimit = {
 
 const UNKNOWN_RESET_DELAY = Duration.minutes(5);
 
-type TrackResponseOptions = {
+type TrackRequestOptions = {
   readonly costKey: string;
+  readonly operation: FellowshipLogsRequestOperation;
+};
+
+type TrackResponseOptions = TrackRequestOptions & {
   readonly skipCapacityCheck?: boolean;
 };
 
@@ -64,7 +71,7 @@ type FellowshipLogsGatewayRateLimitDataTracker = {
   readonly getRejectedResetsAt: () => E.Effect<DateTime.Utc>;
   readonly track: (
     rateLimitData: FellowshipLogsRateLimitData | undefined,
-    costKey: string,
+    options: TrackRequestOptions,
   ) => E.Effect<void>;
 };
 
@@ -117,43 +124,63 @@ function getRequestCost({
 
 export function makeFellowshipLogsGatewayRateLimitDataTracker() {
   return E.gen(function* () {
+    const analytics = yield* FellowshipLogsAnalytics;
     const stateRef = yield* Ref.make<RateLimitTrackerState>({
       costByKey: {},
       snapshot: null,
     });
 
-    const track: FellowshipLogsGatewayRateLimitDataTracker["track"] = (
-      rateLimitData,
-      costKey,
+    const updateState = (
+      rateLimitData: FellowshipLogsRateLimitData,
+      costKey: string,
     ) => {
-      if (rateLimitData === undefined) {
-        return E.void;
-      }
-
       return E.gen(function* () {
         const nowMilliseconds = yield* Clock.currentTimeMillis;
 
-        yield* Ref.update(stateRef, ({ costByKey, snapshot }) => {
+        return yield* Ref.modify(stateRef, ({ costByKey, snapshot }) => {
           const cost = getRequestCost({
             nowMilliseconds,
             previous: snapshot,
             rateLimitData,
           });
 
-          return {
-            costByKey:
-              cost === null
-                ? costByKey
-                : {
-                    ...costByKey,
-                    [costKey]: Math.max(costByKey[costKey] ?? 0, cost),
-                  },
-            snapshot: {
-              ...rateLimitData,
-              observedAtMilliseconds: nowMilliseconds,
+          return [
+            cost,
+            {
+              costByKey:
+                cost === null
+                  ? costByKey
+                  : {
+                      ...costByKey,
+                      [costKey]: Math.max(costByKey[costKey] ?? 0, cost),
+                    },
+              snapshot: {
+                ...rateLimitData,
+                observedAtMilliseconds: nowMilliseconds,
+              },
             },
-          };
+          ] as const;
         });
+      });
+    };
+
+    const track: FellowshipLogsGatewayRateLimitDataTracker["track"] = (
+      rateLimitData,
+      { costKey, operation },
+    ) => {
+      return E.gen(function* () {
+        const pointsSpent =
+          rateLimitData === undefined
+            ? null
+            : yield* updateState(rateLimitData, costKey);
+
+        yield* analytics.record({ operation, pointsSpent, source: "API" });
+
+        const { costByKey } = yield* Ref.get(stateRef);
+
+        yield* addFellowshipLogsGatewayPointsSpent(
+          pointsSpent ?? costByKey[costKey] ?? 0,
+        );
       });
     };
 
@@ -221,7 +248,7 @@ export function makeFellowshipLogsGatewayRateLimitDataTracker() {
 
 export function readAndTrackGraphQLResponse(
   tracker: FellowshipLogsGatewayRateLimitDataTracker,
-  { costKey, skipCapacityCheck = false }: TrackResponseOptions,
+  { costKey, operation, skipCapacityCheck = false }: TrackResponseOptions,
 ) {
   return function trackResponse<Data extends ResponseDataWithRateLimit>(
     responseEffect: E.Effect<
@@ -252,7 +279,10 @@ export function readAndTrackGraphQLResponse(
         }),
       );
 
-      yield* tracker.track(response.data?.rateLimitData, costKey);
+      yield* tracker.track(response.data?.rateLimitData, {
+        costKey,
+        operation,
+      });
 
       if (response.errors?.some(isRateLimitGraphQLError) === true) {
         return yield* failRejected;
@@ -263,7 +293,7 @@ export function readAndTrackGraphQLResponse(
   };
 }
 
-type TrackedQueryOptions = Pick<TrackResponseOptions, "skipCapacityCheck">;
+type TrackedQueryOptions = Omit<TrackResponseOptions, "costKey">;
 
 export function makeTrackedQuery(
   query: Query,
@@ -272,7 +302,7 @@ export function makeTrackedQuery(
   return function trackedQuery<Data extends ResponseDataWithRateLimit>(
     request: FellowshipLogsGatewayGraphQLRequest,
     responseSchema: Schema.Decoder<Data, never>,
-    options?: TrackedQueryOptions,
+    options: TrackedQueryOptions,
   ) {
     return query(request, responseSchema).pipe(
       readAndTrackGraphQLResponse(tracker, {

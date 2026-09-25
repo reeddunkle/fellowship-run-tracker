@@ -13,10 +13,12 @@ import { DungeonRunObservationDAO } from "@frt/db/daos/dungeon-run-observation/d
 import { EncounterDAO } from "@frt/db/daos/encounter/encounter-dao.ts";
 import { FellowshipLogsCredentialDAO } from "@frt/db/daos/fellowship-logs-credential/fellowship-logs-credential-dao.ts";
 import { FellowshipLogsDungeonRunDAO } from "@frt/db/daos/fellowship-logs-dungeon-run/fellowship-logs-dungeon-run-dao.ts";
+import { FellowshipLogsRequestDAO } from "@frt/db/daos/fellowship-logs-request/fellowship-logs-request-dao.ts";
 import { FellowshipLogsResponseDAO } from "@frt/db/daos/fellowship-logs-response/fellowship-logs-response-dao.ts";
 import { LiveSplitSettingDAO } from "@frt/db/daos/live-split-setting/live-split-setting-dao.ts";
 import { LocalLogDungeonRunDAO } from "@frt/db/daos/local-log-dungeon-run/local-log-dungeon-run-dao.ts";
 import { UnitDAO } from "@frt/db/daos/unit/unit-dao.ts";
+import { makeAnalyticsDatabaseLayer } from "@frt/db/databases/analytics-database.ts";
 import { makeFellowshipLogsCacheDatabaseLayer } from "@frt/db/databases/fellowship-logs-cache-database.ts";
 import { makeMainDatabaseLayer } from "@frt/db/databases/main-database.ts";
 import { makeStateDatabaseLayer } from "@frt/db/databases/state-database.ts";
@@ -39,6 +41,7 @@ const MainDatabaseDAOsLayer = Layer.mergeAll(
 );
 
 export function makeDatabasePersistenceLayer({
+  analyticsDatabaseFilename,
   databaseFilename,
   fellowshipLogsCacheDatabaseFilename,
   stateDatabaseFilename,
@@ -60,10 +63,15 @@ export function makeDatabasePersistenceLayer({
       ),
     );
 
+  const AnalyticsPersistenceLayer = FellowshipLogsRequestDAO.layer.pipe(
+    Layer.provideMerge(makeAnalyticsDatabaseLayer(analyticsDatabaseFilename)),
+  );
+
   const PersistenceLayer = Layer.mergeAll(
     MainPersistenceLayer,
     StatePersistenceLayer,
     FellowshipLogsCachePersistenceLayer,
+    AnalyticsPersistenceLayer,
   );
 
   const CatalogSyncLayer = Layer.effectDiscard(syncCatalogs).pipe(

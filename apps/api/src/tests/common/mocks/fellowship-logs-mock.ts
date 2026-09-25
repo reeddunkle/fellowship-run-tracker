@@ -19,6 +19,16 @@ export function makeFellowshipLogsMock({
   deleteImportedDungeonRun = () => {
     return E.void;
   },
+  getAnalyticsSummary = () => {
+    return E.succeed({
+      apiRequestCount: 0,
+      cacheHitCount: 0,
+      cacheHitRate: 0,
+      estimatedPointsSaved: 0,
+      pointsSpent: 0,
+      trackingSinceMilliseconds: null,
+    });
+  },
   getDungeonRunMetadata = () => {
     return E.succeed({
       dungeonId: "0",
@@ -64,6 +74,7 @@ export function makeFellowshipLogsMock({
 }: MakeFellowshipLogsMockOptions = {}) {
   return Layer.succeed(FellowshipLogs, {
     deleteImportedDungeonRun,
+    getAnalyticsSummary,
     getDungeonRunMetadata,
     getImportedDungeonRuns,
     getLastKnownRateLimitData,

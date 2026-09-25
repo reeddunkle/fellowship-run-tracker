@@ -18,6 +18,7 @@ import { type BackgroundJobPayload } from "@frt/api/services/background-job-queu
 import { HIDDEN_BACKGROUND_JOB_QUEUE_NAMES } from "@frt/api/services/background-job-queue/background-job-queues.ts";
 import { DungeonRunRepository } from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
 import { pruneFellowshipLogsGatewayCache } from "@frt/api/services/fellowship-logs-gateway/cache/prune-fellowship-logs-gateway-cache.ts";
+import { withFellowshipLogsGatewayPointsSpent } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-points-spent.ts";
 import { BackgroundJobDAO } from "@frt/db/daos/background-job/background-job-dao.ts";
 import { type FellowshipLogsResponseDAO } from "@frt/db/daos/fellowship-logs-response/fellowship-logs-response-dao.ts";
 
@@ -83,8 +84,12 @@ const makeBackgroundJobRunner = E.gen(function* () {
                   ).pipe(E.as({ dungeonRunId }));
                 },
               ),
-              E.map(({ dungeonRunId }): Schema.Json => {
-                return { dungeonRunId };
+              withFellowshipLogsGatewayPointsSpent,
+              E.map(([{ dungeonRunId }, pointsSpent]): Schema.Json => {
+                return {
+                  approximatePointsSpent: Math.round(pointsSpent),
+                  dungeonRunId,
+                };
               }),
             );
         },

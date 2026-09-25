@@ -6,6 +6,10 @@ import type * as SqlClient from "effect/unstable/sql/SqlClient";
 import { describe, expect, test } from "vitest";
 
 import {
+  AnalyticsDatabase,
+  makeAnalyticsDatabaseLayer,
+} from "@frt/db/databases/analytics-database.ts";
+import {
   FellowshipLogsCacheDatabase,
   makeFellowshipLogsCacheDatabaseLayer,
 } from "@frt/db/databases/fellowship-logs-cache-database.ts";
@@ -98,6 +102,18 @@ describe("Databases", () => {
 
       expect(yield* listTables(sql)).toEqual([{ name: "background_job" }]);
     }).pipe(E.provide(makeStateDatabaseLayer(":memory:")));
+
+    await runTest(program);
+  });
+
+  test("the analytics database holds Fellowship Logs requests", async () => {
+    const program = E.gen(function* () {
+      const sql = yield* AnalyticsDatabase;
+
+      expect(yield* listTables(sql)).toEqual([
+        { name: "fellowship_logs_request" },
+      ]);
+    }).pipe(E.provide(makeAnalyticsDatabaseLayer(":memory:")));
 
     await runTest(program);
   });

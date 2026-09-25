@@ -158,6 +158,11 @@ const FellowshipLogsApiHandlersInferred = HttpApiBuilder.group(
             dungeonRunId: params.dungeonRunId,
           })
           .pipe(E.catch(mapDeleteFellowshipLogsDungeonRunError));
+      })
+      .handle("getFellowshipLogsAnalytics", () => {
+        return fellowshipLogs
+          .getAnalyticsSummary()
+          .pipe(E.catch(logInternalServerError));
       });
   }),
 );

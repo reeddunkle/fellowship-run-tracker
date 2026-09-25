@@ -8,6 +8,7 @@ import { BackgroundJobCategoryList } from "@/renderer/components/background-jobs
 import { AppLayout } from "@/renderer/components/core/app-layout.tsx";
 import { FellowshipDataProvider } from "@/renderer/stores/fellowship-data/fellowship-data-store.tsx";
 
+import { FellowshipLogsAnalyticsSection } from "./fellowship-logs-analytics-section.tsx";
 import { FellowshipLogsRateLimitSection } from "./fellowship-logs-rate-limit-section.tsx";
 import { ImportDungeonRunSection } from "./import-dungeon-run-section.tsx";
 import { ImportedDungeonRunsList } from "./imported-dungeon-runs-list.tsx";
@@ -43,6 +44,7 @@ export function FellowshipLogsPage({
             </p>
           </div>
           <FellowshipLogsRateLimitSection />
+          <FellowshipLogsAnalyticsSection />
           <Separator />
           <div className="grid gap-2">
             <p className="text-sm font-medium">Import a run</p>

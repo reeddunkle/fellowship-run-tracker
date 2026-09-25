@@ -16,14 +16,17 @@ import {
   createFellowshipLogsImportedDungeonRunApiResponse,
   createFellowshipLogsRateLimitDataApiResponse,
 } from "@frt/api/services/fellowship-logs/create-fellowship-logs-api-response.ts";
+import { FellowshipLogsAnalytics } from "@frt/api/services/fellowship-logs-analytics/fellowship-logs-analytics-service.ts";
 import {
   FellowshipLogsGateway,
   type FellowshipLogsGatewayRequestOperationError,
 } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
 import { type DungeonRunDAOError } from "@frt/db/errors/dungeon-run-dao-error.ts";
 import { type FellowshipLogsDungeonRunDAOError } from "@frt/db/errors/fellowship-logs-dungeon-run-dao-error.ts";
+import { type FellowshipLogsRequestDAOError } from "@frt/db/errors/fellowship-logs-request-dao-error.ts";
 import { type DungeonRunId } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 import {
+  type FellowshipLogsApiAnalyticsSummary,
   type FellowshipLogsApiDungeonRunMetadata,
   type FellowshipLogsApiDungeonRunReference,
   type FellowshipLogsApiImportedDungeonRunList,
@@ -42,6 +45,11 @@ type DeleteImportedDungeonRunOptions = {
 };
 
 export type FellowshipLogsShape = {
+  readonly getAnalyticsSummary: () => E.Effect<
+    FellowshipLogsApiAnalyticsSummary,
+    FellowshipLogsRequestDAOError
+  >;
+
   readonly deleteImportedDungeonRun: (
     options: DeleteImportedDungeonRunOptions,
   ) => E.Effect<void, DungeonRunDAOError>;
@@ -77,6 +85,7 @@ export type FellowshipLogsShape = {
 };
 
 const makeFellowshipLogs = E.gen(function* () {
+  const analytics = yield* FellowshipLogsAnalytics;
   const backgroundJobQueue = yield* BackgroundJobQueue;
   const dungeonRunRepository = yield* DungeonRunRepository;
   const fellowshipLogsGateway = yield* FellowshipLogsGateway;
@@ -156,6 +165,7 @@ const makeFellowshipLogs = E.gen(function* () {
 
   return {
     deleteImportedDungeonRun,
+    getAnalyticsSummary: analytics.getSummary,
     getDungeonRunMetadata,
     getImportedDungeonRuns,
     getLastKnownRateLimitData,
@@ -178,6 +188,7 @@ export class FellowshipLogs extends Context.Service<
    */
   static readonly layer = this.layerNoDeps.pipe(
     Layer.provide(DungeonRunRepository.layer),
+    Layer.provide(FellowshipLogsAnalytics.layer),
     Layer.provide(FellowshipLogsGateway.layer),
   );
 }

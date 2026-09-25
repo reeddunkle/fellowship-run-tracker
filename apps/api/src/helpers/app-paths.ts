@@ -6,6 +6,11 @@ import { getAppDataDirectory } from "@frt/api/helpers/get-app-data-directory.ts"
 const appDataDirectory = getAppDataDirectory();
 
 export const appPaths = {
+  analyticsDatabaseFile: path.join(
+    appDataDirectory,
+    "database",
+    "analytics.db",
+  ),
   appState: path.join(appDataDirectory, "app-state"),
   databaseFile: path.join(
     appDataDirectory,
