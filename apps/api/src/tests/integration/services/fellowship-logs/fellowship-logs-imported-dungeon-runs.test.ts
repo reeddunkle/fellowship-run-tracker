@@ -12,6 +12,7 @@ import {
 } from "@frt/api/services/background-job-queue/background-job-queue-service.ts";
 import { getBackgroundJobIdempotencyKey } from "@frt/api/services/background-job-queue/get-background-job-idempotency-key.ts";
 import { FellowshipLogs } from "@frt/api/services/fellowship-logs/fellowship-logs-service.ts";
+import { FellowshipLogsAnalytics } from "@frt/api/services/fellowship-logs-analytics/fellowship-logs-analytics-service.ts";
 import { makeFellowshipLogsDungeonRunImporterIntegrationTestHarness } from "@frt/api/tests/common/harnesses/fellowship-logs-dungeon-run-importer-integration-test-harness.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { BackgroundJobDAO } from "@frt/db/daos/background-job/background-job-dao.ts";
@@ -75,9 +76,10 @@ function makeTestLayer() {
 
   const FellowshipLogsTestLive = FellowshipLogs.layerNoDeps.pipe(
     Layer.provide(
-      Layer.merge(
+      Layer.mergeAll(
         harness.layer,
         BackgroundJobServiceTestLive.pipe(Layer.provide(harness.layer)),
+        FellowshipLogsAnalytics.layer.pipe(Layer.provide(harness.layer)),
       ),
     ),
   );

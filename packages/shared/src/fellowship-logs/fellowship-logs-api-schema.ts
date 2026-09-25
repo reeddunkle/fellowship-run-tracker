@@ -11,6 +11,7 @@ import { FellowshipLogsRateLimitSnapshotSchema } from "@frt/shared/fellowship-lo
 import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 import {
   NonNegativeIntegerSchema,
+  NonNegativeNumberSchema,
   PositiveIntegerSchema,
 } from "@frt/shared/util/common-schemas.ts";
 
@@ -61,6 +62,18 @@ export const FellowshipLogsApiLastKnownRateLimitDataSchema = Schema.NullOr(
 
 export type FellowshipLogsApiLastKnownRateLimitData =
   typeof FellowshipLogsApiLastKnownRateLimitDataSchema.Type;
+
+export const FellowshipLogsApiAnalyticsSummarySchema = Schema.Struct({
+  apiRequestCount: NonNegativeIntegerSchema,
+  cacheHitCount: NonNegativeIntegerSchema,
+  cacheHitRate: NonNegativeNumberSchema,
+  estimatedPointsSaved: NonNegativeIntegerSchema,
+  pointsSpent: NonNegativeIntegerSchema,
+  trackingSinceMilliseconds: Schema.NullOr(NonNegativeIntegerSchema),
+});
+
+export type FellowshipLogsApiAnalyticsSummary =
+  typeof FellowshipLogsApiAnalyticsSummarySchema.Type;
 
 const FellowshipLogsApiImportedDungeonRunSchema = Schema.Struct({
   dungeonId: DungeonIdSchema,

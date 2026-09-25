@@ -8,6 +8,7 @@ import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
 import { FellowshipLogsGatewayResponseCacheCompressionError } from "@frt/api/errors/fellowship-logs-gateway-response-cache-error.ts";
+import { FellowshipLogsAnalytics } from "@frt/api/services/fellowship-logs-analytics/fellowship-logs-analytics-service.ts";
 import {
   type FellowshipLogsGatewayCachedRequest,
   type FellowshipLogsGatewayResponseCacheShape,
@@ -52,6 +53,7 @@ function decompress(body: Uint8Array) {
 }
 
 export const makeFellowshipLogsGatewayResponseCache = E.gen(function* () {
+  const analytics = yield* FellowshipLogsAnalytics;
   const responseDAO = yield* FellowshipLogsResponseDAO;
 
   const read = E.fn("FellowshipLogsGatewayResponseCache.read")(function* <
@@ -146,6 +148,12 @@ export const makeFellowshipLogsGatewayResponseCache = E.gen(function* () {
       const cachedData = yield* read(request);
 
       if (Option.isSome(cachedData)) {
+        yield* analytics.record({
+          operation: request.operation,
+          pointsSpent: null,
+          source: "CACHE",
+        });
+
         return cachedData.value;
       }
 

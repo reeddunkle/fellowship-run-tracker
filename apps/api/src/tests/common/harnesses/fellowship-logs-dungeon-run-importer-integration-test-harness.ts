@@ -14,7 +14,9 @@ export function makeFellowshipLogsDungeonRunImporterIntegrationTestHarness({
 }: MakeFellowshipLogsDungeonRunImporterIntegrationTestHarnessOptions = {}) {
   const PersistenceTestLive = makePersistenceTestLayer(databaseFilename);
 
-  const FellowshipLogsFixtureTestLive = FellowshipLogsGateway.fixtureLayer;
+  const FellowshipLogsFixtureTestLive = FellowshipLogsGateway.fixtureLayer.pipe(
+    Layer.provide(PersistenceTestLive),
+  );
 
   const FellowshipLogsDungeonRunImporterTestLive =
     FellowshipLogsDungeonRunImporter.layerNoDeps.pipe(

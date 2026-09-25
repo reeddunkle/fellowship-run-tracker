@@ -353,7 +353,10 @@ describe("BackgroundJobQueue", () => {
       tag: "FellowshipLogsDungeonRunImportRunNotFoundError",
     });
     expect(retriedJob.error).toBeNull();
-    expect(retriedJob.result).toEqual({ dungeonRunId: STUB_DUNGEON_RUN_ID });
+    expect(retriedJob.result).toEqual({
+      approximatePointsSpent: 0,
+      dungeonRunId: STUB_DUNGEON_RUN_ID,
+    });
   });
 
   test("resumes a job that was running when the app closed", async () => {
@@ -559,7 +562,10 @@ describe("BackgroundJobQueue", () => {
     );
 
     expect(cancelError._tag).toBe("BackgroundJobQueueNotFoundError");
-    expect(retriedJob.result).toEqual({ dungeonRunId: STUB_DUNGEON_RUN_ID });
+    expect(retriedJob.result).toEqual({
+      approximatePointsSpent: 0,
+      dungeonRunId: STUB_DUNGEON_RUN_ID,
+    });
   });
 
   test("marks an import job succeeded when its run was already imported", async () => {
@@ -594,7 +600,10 @@ describe("BackgroundJobQueue", () => {
       },
     );
 
-    expect(job.result).toEqual({ dungeonRunId: existingDungeonRunId });
+    expect(job.result).toEqual({
+      approximatePointsSpent: 0,
+      dungeonRunId: existingDungeonRunId,
+    });
   });
 
   test("keeps processing a queue after an unexpected worker defect", async () => {

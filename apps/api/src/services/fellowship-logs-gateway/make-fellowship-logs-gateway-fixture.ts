@@ -119,6 +119,7 @@ export function makeFellowshipLogsGatewayFixture({
         const responseData = yield* E.succeed(response).pipe(
           readAndTrackGraphQLResponse(rateLimitTracker, {
             costKey: "ReportPage",
+            operation: "REPORT_PAGE",
           }),
         );
 
@@ -181,6 +182,7 @@ export function makeFellowshipLogsGatewayFixture({
           E.mapError(mapFixtureError),
           readAndTrackGraphQLResponse(rateLimitTracker, {
             costKey: "DungeonRunMetadata",
+            operation: "DUNGEON_RUN_METADATA",
           }),
         );
 
@@ -290,6 +292,7 @@ export function makeFellowshipLogsGatewayFixture({
         E.mapError(mapFixtureError),
         readAndTrackGraphQLResponse(rateLimitTracker, {
           costKey: "RateLimitData",
+          operation: "RATE_LIMIT_DATA",
           skipCapacityCheck: true,
         }),
         E.andThen(rateLimitTracker.getLastKnown()),

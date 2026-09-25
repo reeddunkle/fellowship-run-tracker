@@ -7,6 +7,7 @@ import {
   type BackgroundJobQueueContext,
   getBackgroundJobFailureMessage,
   getBackgroundJobQueuedDescription,
+  getBackgroundJobResultDescription,
   getBackgroundJobWaitingMessage,
 } from "./background-job-descriptions.ts";
 
@@ -38,7 +39,11 @@ function BackgroundJobToastStatus({
   }
 
   if (job.status === "SUCCEEDED") {
-    return "Finished";
+    const resultDescription = getBackgroundJobResultDescription(job);
+
+    return resultDescription === null
+      ? "Finished"
+      : `Finished · ${resultDescription}`;
   }
 
   return getBackgroundJobQueuedDescription({

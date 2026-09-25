@@ -8,10 +8,13 @@ import {
   FellowshipLogsGatewayRateLimitRejectedError,
   FellowshipLogsGatewayRequestError,
 } from "@frt/api/errors/fellowship-logs-gateway-error.ts";
+import { FellowshipLogsAnalytics } from "@frt/api/services/fellowship-logs-analytics/fellowship-logs-analytics-service.ts";
 import { FellowshipLogsGatewayResponseCache } from "@frt/api/services/fellowship-logs-gateway/cache/fellowship-logs-gateway-response-cache-service.ts";
+import { withFellowshipLogsGatewayPointsSpent } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-points-spent.ts";
 import { type Query } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
 import { makeFellowshipLogsGatewayFromQuery } from "@frt/api/services/fellowship-logs-gateway/make-fellowship-logs-gateway-service.ts";
 import { makeFellowshipLogsGatewayGraphQLResponseSchema } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-graphql-schema.ts";
+import { ignoredFellowshipLogsAnalytics } from "@frt/api/tests/common/mocks/fellowship-logs-analytics-mock.ts";
 import { passThroughFellowshipLogsGatewayResponseCache } from "@frt/api/tests/common/mocks/fellowship-logs-gateway-response-cache-mock.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { FellowshipLogsFightIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
@@ -116,7 +119,11 @@ function makeStubQuery(responses: ReadonlyArray<StubResponse>) {
 }
 
 function runWithTestClock<A, Err>(
-  effect: E.Effect<A, Err, FellowshipLogsGatewayResponseCache>,
+  effect: E.Effect<
+    A,
+    Err,
+    FellowshipLogsAnalytics | FellowshipLogsGatewayResponseCache
+  >,
 ) {
   return runTest(
     effect.pipe(
@@ -124,6 +131,7 @@ function runWithTestClock<A, Err>(
         FellowshipLogsGatewayResponseCache,
         passThroughFellowshipLogsGatewayResponseCache,
       ),
+      E.provideService(FellowshipLogsAnalytics, ignoredFellowshipLogsAnalytics),
       E.provide(TestClock.layer()),
     ),
   );
@@ -281,5 +289,59 @@ describe("Fellowship Logs rate-limit gate", () => {
       reason: "RejectedByApi",
       resetsAt: DateTime.makeUnsafe(5 * 60 * 1_000),
     });
+  });
+
+  test("adds up the measured points spent by the requests it wraps", async () => {
+    const { query } = makeStubQuery([
+      makeMetadataResponse(100),
+      makeMetadataResponse(130),
+      makeMetadataResponse(170),
+    ]);
+
+    const pointsSpent = await runWithTestClock(
+      E.gen(function* () {
+        const fellowshipLogsGateway =
+          yield* makeFellowshipLogsGatewayFromQuery(query);
+
+        yield* fellowshipLogsGateway.getDungeonRunMetadata(RUN);
+
+        const [, points] = yield* withFellowshipLogsGatewayPointsSpent(
+          fellowshipLogsGateway
+            .getDungeonRunMetadata(RUN)
+            .pipe(E.andThen(fellowshipLogsGateway.getDungeonRunMetadata(RUN))),
+        );
+
+        return points;
+      }),
+    );
+
+    expect(pointsSpent).toBe(70);
+  });
+
+  test("falls back to the known cost of a query when a request's cost can't be measured", async () => {
+    const { query } = makeStubQuery([
+      makeMetadataResponse(100),
+      makeMetadataResponse(130),
+      makeMetadataResponse(40),
+    ]);
+
+    const pointsSpent = await runWithTestClock(
+      E.gen(function* () {
+        const fellowshipLogsGateway =
+          yield* makeFellowshipLogsGatewayFromQuery(query);
+
+        yield* fellowshipLogsGateway.getDungeonRunMetadata(RUN);
+        yield* fellowshipLogsGateway.getDungeonRunMetadata(RUN);
+        yield* TestClock.adjust(`${RESET_IN_SECONDS} seconds`);
+
+        const [, points] = yield* withFellowshipLogsGatewayPointsSpent(
+          fellowshipLogsGateway.getDungeonRunMetadata(RUN),
+        );
+
+        return points;
+      }),
+    );
+
+    expect(pointsSpent).toBe(30);
   });
 });

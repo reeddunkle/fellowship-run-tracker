@@ -1,3 +1,4 @@
+import * as E from "effect/Effect";
 import * as Schema from "effect/Schema";
 
 import { BackgroundJobFailureSchema } from "@frt/shared/background-job/background-job-failure-schema.ts";
@@ -21,6 +22,9 @@ export const ImportFellowshipLogsDungeonRunJobPayloadSchema = Schema.Struct({
 });
 
 export const ImportFellowshipLogsDungeonRunJobResultSchema = Schema.Struct({
+  approximatePointsSpent: Schema.NullOr(NonNegativeIntegerSchema).pipe(
+    Schema.withDecodingDefaultKey(E.succeed(null)),
+  ),
   dungeonRunId: DungeonRunIdSchema,
 });
 

@@ -33,6 +33,7 @@ import { formatRelativeDateTimeFromMilliseconds } from "@/util/format-date-time.
 import {
   getBackgroundJobFailureMessage,
   getBackgroundJobQueuedDescription,
+  getBackgroundJobResultDescription,
   getBackgroundJobWaitingMessage,
 } from "./background-job-descriptions.ts";
 import { BackgroundJobName } from "./background-job-name.tsx";
@@ -108,11 +109,17 @@ function BackgroundJobStatusLine({
   }
 
   if (job.status === "SUCCEEDED") {
+    const finished =
+      job.finishedAtMilliseconds === null
+        ? "Finished"
+        : `Finished ${formatRelativeDateTimeFromMilliseconds(job.finishedAtMilliseconds)}`;
+    const resultDescription = getBackgroundJobResultDescription(job);
+
     return (
       <ItemDescription>
-        {job.finishedAtMilliseconds === null
-          ? "Finished"
-          : `Finished ${formatRelativeDateTimeFromMilliseconds(job.finishedAtMilliseconds)}`}
+        {resultDescription === null
+          ? finished
+          : `${finished} · ${resultDescription}`}
       </ItemDescription>
     );
   }

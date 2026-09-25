@@ -3,6 +3,7 @@ import * as Migrator from "effect/unstable/sql/Migrator";
 import type * as SqlClient from "effect/unstable/sql/SqlClient";
 import { type SqlError } from "effect/unstable/sql/SqlError";
 
+import { createInitialAnalyticsSchema } from "@frt/db/migrations/analytics/0001-initial/index.ts";
 import { createInitialMainSchema } from "@frt/db/migrations/main/0001-initial/index.ts";
 import { createInitialStateSchema } from "@frt/db/migrations/state/0001-initial/index.ts";
 
@@ -23,5 +24,11 @@ export const migrateMainDatabase: MigrateDatabase = runMigrations({
 export const migrateStateDatabase: MigrateDatabase = runMigrations({
   loader: Migrator.fromRecord({
     "1_initial": createInitialStateSchema,
+  }),
+});
+
+export const migrateAnalyticsDatabase: MigrateDatabase = runMigrations({
+  loader: Migrator.fromRecord({
+    "1_initial": createInitialAnalyticsSchema,
   }),
 });

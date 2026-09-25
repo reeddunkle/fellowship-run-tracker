@@ -37,6 +37,26 @@ export function getBackgroundJobWaitingMessage(
   );
 }
 
+const PointsFormatter = new Intl.NumberFormat("en-US");
+
+export function getBackgroundJobResultDescription(
+  job: BackgroundJobApiItem,
+): string | null {
+  return Match.value(job).pipe(
+    Match.discriminatorsExhaustive("kind")({
+      ImportFellowshipLogsDungeonRun: ({ result }) => {
+        if (result === null || result.approximatePointsSpent === null) {
+          return null;
+        }
+
+        return result.approximatePointsSpent === 0
+          ? "no points used"
+          : `~${PointsFormatter.format(result.approximatePointsSpent)} points`;
+      },
+    }),
+  );
+}
+
 export function getBackgroundJobQueuedDescription({
   isQueueWaiting,
   queuePosition,

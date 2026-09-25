@@ -3,6 +3,7 @@ import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { browserRuntime } from "@/renderer/runtimes/browser-runtime.ts";
 
 import {
+  getAnalytics,
   getImportedDungeonRuns,
   getLastKnownRateLimitData,
 } from "./fellowship-logs-client.ts";
@@ -25,6 +26,20 @@ export function getFellowshipLogsLastKnownRateLimitDataQueryOptions() {
     queryKey: ["fellowship-logs", "rate-limit-data", "last-known"],
     staleTime: Infinity,
   });
+}
+
+function getFellowshipLogsAnalyticsQueryOptions() {
+  return queryOptions({
+    queryFn: () => {
+      return browserRuntime.runPromise(getAnalytics());
+    },
+    queryKey: ["fellowship-logs", "analytics"],
+    staleTime: Infinity,
+  });
+}
+
+export function useFellowshipLogsAnalyticsSuspense() {
+  return useSuspenseQuery(getFellowshipLogsAnalyticsQueryOptions());
 }
 
 export function useImportedDungeonRunsSuspense() {
