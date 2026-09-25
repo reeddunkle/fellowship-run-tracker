@@ -2,6 +2,8 @@ import * as E from "effect/Effect";
 import * as Schema from "effect/Schema";
 import { BrowserWindow, screen } from "electron";
 
+import { resolveDetachedWindowBounds } from "@/application/detached-window/detached-window-placement.ts";
+
 export function showWindow(sender: Electron.WebContents): void {
   const window = BrowserWindow.fromWebContents(sender);
 
@@ -33,14 +35,21 @@ export function resizeWindowToContent(
 
     const { height, width } = yield* decodeResizeWindowToContentArgs(input);
 
-    const display = screen.getDisplayMatching(window.getBounds());
+    const windowBounds = window.getBounds();
+    const contentBounds = window.getContentBounds();
+    const display = screen.getDisplayMatching(windowBounds);
 
     const maxHeight = display.workAreaSize.height - WINDOW_VERTICAL_MARGIN;
     const maxWidth = display.workAreaSize.width - WINDOW_HORIZONTAL_MARGIN;
 
-    window.setContentSize(
-      Math.min(Math.ceil(width), maxWidth),
-      Math.min(Math.ceil(height), maxHeight),
+    const frameHeight = windowBounds.height - contentBounds.height;
+    const frameWidth = windowBounds.width - contentBounds.width;
+
+    window.setBounds(
+      resolveDetachedWindowBounds(window, {
+        height: Math.min(Math.ceil(height), maxHeight) + frameHeight,
+        width: Math.min(Math.ceil(width), maxWidth) + frameWidth,
+      }),
     );
   });
 }

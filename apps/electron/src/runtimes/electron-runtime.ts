@@ -12,6 +12,7 @@ import { logCause } from "@frt/api/logging/log-cause.ts";
 import { AppLoggerLayer } from "@frt/api/services/logging/app-logger-service.ts";
 
 import { makeAppStateLayer } from "@/services/app-state/app-state-service-layer.ts";
+import { WindowState } from "@/services/window-state/window-state-service.ts";
 
 const ElectronApplicationLayer = Layer.unwrap(
   E.gen(function* () {
@@ -22,6 +23,7 @@ const ElectronApplicationLayer = Layer.unwrap(
     return Layer.mergeAll(
       ApiLayer.pipe(Layer.provide(makePersistenceLayer(databaseOptions))),
       makeAppStateLayer(appPaths.appState),
+      WindowState.layerWith(appPaths.appState),
     );
   }),
 );

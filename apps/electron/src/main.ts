@@ -14,9 +14,12 @@ import { logCause } from "@frt/api/logging/log-cause.ts";
 import { configureErrorLogging } from "@/application/configure-error-logging.ts";
 import { configureWebContentsSecurity } from "@/application/configure-web-contents-security.ts";
 import { configureWindowIpc } from "@/application/configure-window-ipc.ts";
+import { configureDetachedWindowPlacement } from "@/application/detached-window/configure-detached-window-placement.ts";
 import { exitOnStartupFailure } from "@/application/exit-on-startup-failure.ts";
+import { flushWindowStateSavesForQuit } from "@/application/window-state-tracking.ts";
 import { electronRuntime } from "@/runtimes/electron-runtime.ts";
 import { type AppState } from "@/services/app-state/app-state-service.ts";
+import { type WindowState } from "@/services/window-state/window-state-service.ts";
 
 import { createWindow } from "./application/create-window.ts";
 import { runElectronApplication } from "./application/run-electron-application.ts";
@@ -38,7 +41,7 @@ function exitOnFailure<A, Error>(exit: Exit.Exit<A, Error>) {
 }
 
 function runProgram<A, ProgramError>(
-  effect: E.Effect<A, ProgramError, Path.Path | AppState>,
+  effect: E.Effect<A, ProgramError, Path.Path | AppState | WindowState>,
 ) {
   return electronRuntime.runPromiseExit(effect.pipe(E.tapCause(logCause)));
 }
@@ -70,6 +73,7 @@ function runElectronMain() {
       preloadPath: path.join(currentDirectoryPath, "preload.cjs"),
     });
     configureWindowIpc(electronRuntime);
+    yield* configureDetachedWindowPlacement();
 
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) {
@@ -80,9 +84,11 @@ function runElectronMain() {
     app.once("before-quit", (event) => {
       event.preventDefault();
 
-      void disposeElectronRuntime().finally(() => {
-        app.quit();
-      });
+      void flushWindowStateSavesForQuit()
+        .then(disposeElectronRuntime)
+        .finally(() => {
+          app.quit();
+        });
     });
 
     app.on("window-all-closed", () => {

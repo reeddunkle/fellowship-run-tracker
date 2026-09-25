@@ -1,5 +1,7 @@
 import { type WindowOpenHandlerResponse } from "electron";
 
+import { getWindowBackgroundColor } from "@/application/window-background-color.ts";
+
 const DETACHED_WINDOW_FEATURE = "detachedWindow=true";
 
 // [KEEP] The renderer opens the detached window empty and renders into it directly.
@@ -26,7 +28,7 @@ export function handleDetachedWindowOpen({
   return {
     action: "allow",
     overrideBrowserWindowOptions: {
-      backgroundColor: "#242424",
+      backgroundColor: getWindowBackgroundColor(),
       show: false,
       webPreferences: {
         contextIsolation: true,
