@@ -18,7 +18,7 @@ import {
   NodeHttpClientLayer,
   NodePlatformLayer,
 } from "@frt/api/layers/node-platform-layer.ts";
-import { AppSettings } from "@frt/api/services/app-settings/app-settings-service.ts";
+import { AppSettingsStore } from "@frt/api/services/app-settings-store/app-settings-store-service.ts";
 import { FellowshipLogsGatewayResponseCache } from "@frt/api/services/fellowship-logs-gateway/cache/fellowship-logs-gateway-response-cache-service.ts";
 import { type DungeonId } from "@frt/shared/fellowship/validation/fellowship-common.ts";
 import { type FellowshipEvent } from "@frt/shared/fellowship/validation/fellowship-event-schema.ts";
@@ -135,7 +135,7 @@ export class FellowshipLogsGateway extends Context.Service<
   static readonly layerNoDeps = Layer.effect(this, makeFellowshipLogsGateway);
 
   static readonly liveLayer = this.layerNoDeps.pipe(
-    Layer.provide(AppSettings.layer),
+    Layer.provide(AppSettingsStore.layer),
     Layer.provide(FellowshipLogsGatewayResponseCache.layer),
     Layer.provide(NodeHttpClientLayer),
   );

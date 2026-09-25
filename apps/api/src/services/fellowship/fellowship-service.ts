@@ -5,7 +5,7 @@ import * as Match from "effect/Match";
 import type * as PlatformError from "effect/PlatformError";
 import * as Stream from "effect/Stream";
 
-import { AppSettings } from "@frt/api/services/app-settings/app-settings-service.ts";
+import { AppSettingsStore } from "@frt/api/services/app-settings-store/app-settings-store-service.ts";
 import {
   FileMonitor,
   type FileMonitorError,
@@ -48,7 +48,7 @@ export type FellowshipService = {
 };
 
 const makeFellowship = E.gen(function* () {
-  const appSettings = yield* AppSettings;
+  const appSettingsStore = yield* AppSettingsStore;
   const fileMonitor = yield* FileMonitor;
   const fileMonitorSource = yield* FileMonitorSource;
 
@@ -69,7 +69,7 @@ const makeFellowship = E.gen(function* () {
   const liveEvents: FellowshipService["liveEvents"] = () => {
     return Stream.unwrap(
       E.gen(function* () {
-        const settings = yield* appSettings.get();
+        const settings = yield* appSettingsStore.get();
 
         return fileMonitor
           .streamLatestFileLines({
@@ -85,7 +85,7 @@ const makeFellowship = E.gen(function* () {
   const liveStatus: FellowshipService["liveStatus"] = () => {
     return Stream.unwrap(
       E.gen(function* () {
-        const settings = yield* appSettings.get();
+        const settings = yield* appSettingsStore.get();
 
         return fileMonitorSource
           .streamStatus({
@@ -130,6 +130,6 @@ export class Fellowship extends Context.Service<
 
   static readonly layer = this.layerNoDeps.pipe(
     Layer.provide(Layer.mergeAll(FileMonitor.layer, FileMonitorSource.layer)),
-    Layer.provide(AppSettings.layer),
+    Layer.provide(AppSettingsStore.layer),
   );
 }

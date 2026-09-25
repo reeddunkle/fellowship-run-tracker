@@ -2,19 +2,18 @@ import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import {
-  AppSettingsApiService,
-  type AppSettingsApiServiceShape,
-} from "@frt/api/services/api/app-settings/app-settings-api-service.ts";
+  AppSettings,
+  type AppSettingsShape,
+} from "@frt/api/services/app-settings/app-settings-service.ts";
 import {
   MOCK_FELLOWSHIP_LOG_DIRECTORY,
   MOCK_LIVE_SPLIT_HOST,
   MOCK_LIVE_SPLIT_PORT,
 } from "@frt/api/tests/common/fixtures/app-settings-fixtures.ts";
 
-export type MakeAppSettingsApiServiceMockOptions =
-  Partial<AppSettingsApiServiceShape>;
+export type MakeAppSettingsMockOptions = Partial<AppSettingsShape>;
 
-function makeAppSettingsApiServiceMock({
+function makeAppSettingsMock({
   get = () => {
     return E.succeed({
       fellowshipLogDirectory: MOCK_FELLOWSHIP_LOG_DIRECTORY,
@@ -37,11 +36,11 @@ function makeAppSettingsApiServiceMock({
       liveSplitPort: appSettings.liveSplitPort,
     });
   },
-}: MakeAppSettingsApiServiceMockOptions = {}) {
-  return Layer.succeed(AppSettingsApiService, {
+}: MakeAppSettingsMockOptions = {}) {
+  return Layer.succeed(AppSettings, {
     get,
     set,
-  } satisfies AppSettingsApiServiceShape);
+  } satisfies AppSettingsShape);
 }
 
-export const AppSettingsApiServiceMock = makeAppSettingsApiServiceMock();
+export const AppSettingsMock = makeAppSettingsMock();

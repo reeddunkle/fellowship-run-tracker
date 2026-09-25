@@ -10,7 +10,7 @@ import {
   FellowshipLogsGatewayReportChangedError,
   FellowshipLogsGatewayRequestError,
 } from "@frt/api/errors/fellowship-logs-gateway-error.ts";
-import { AppSettings } from "@frt/api/services/app-settings/app-settings-service.ts";
+import { AppSettingsStore } from "@frt/api/services/app-settings-store/app-settings-store-service.ts";
 import {
   getFightResponseExpiresAt,
   getReportPageResponseExpiresAt,
@@ -373,11 +373,11 @@ function makeFellowshipLogsGatewayFromCredentials(
 }
 
 export const makeFellowshipLogsGateway = E.gen(function* () {
-  const appSettings = yield* AppSettings;
+  const appSettingsStore = yield* AppSettingsStore;
 
   const getCredentials = E.fn("FellowshipLogsGateway.getCredentials")(
     function* () {
-      const settings = yield* appSettings.get();
+      const settings = yield* appSettingsStore.get();
 
       if (
         settings.fellowshipLogsClientId === null ||

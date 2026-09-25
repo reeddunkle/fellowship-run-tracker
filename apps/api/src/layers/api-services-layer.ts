@@ -1,7 +1,7 @@
 import * as Layer from "effect/Layer";
 
 import { AbilityCatalog } from "@frt/api/services/ability-catalog/ability-catalog-service.ts";
-import { AppSettingsApiService } from "@frt/api/services/api/app-settings/app-settings-api-service.ts";
+import { AppSettings } from "@frt/api/services/app-settings/app-settings-service.ts";
 import { BackgroundJob } from "@frt/api/services/background-job/background-job-service.ts";
 import { ConfigurationLibrary } from "@frt/api/services/configuration-library/configuration-library-service.ts";
 import { DungeonCatalog } from "@frt/api/services/dungeon-catalog/dungeon-catalog-service.ts";
@@ -13,7 +13,7 @@ import { UnitCatalog } from "@frt/api/services/unit-catalog/unit-catalog-service
 
 export const ApiServicesLayer = Layer.mergeAll(
   AbilityCatalog.layer,
-  AppSettingsApiService.layer,
+  AppSettings.layer,
   BackgroundJob.layer,
   ConfigurationLibrary.layer,
   DungeonCatalog.layer,

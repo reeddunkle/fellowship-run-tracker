@@ -6,9 +6,9 @@ import { describe, expect, test } from "vitest";
 
 import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
 import {
-  AppSettings,
+  AppSettingsStore,
   type AppSettingsValue,
-} from "@frt/api/services/app-settings/app-settings-service.ts";
+} from "@frt/api/services/app-settings-store/app-settings-store-service.ts";
 import { Encryption } from "@frt/api/services/encryption/encryption-service.ts";
 import { makeEncryptionHarness } from "@frt/api/tests/common/harnesses/encryption-harness.ts";
 import { makePersistenceTestLayer } from "@frt/api/tests/common/layers/persistence-test-layer.ts";
@@ -48,8 +48,8 @@ function reveal(settings: AppSettingsValue) {
   };
 }
 
-function withAppSettings<A, Error>(
-  program: E.Effect<A, Error, AppSettings | MainDatabase>,
+function withAppSettingsStore<A, Error>(
+  program: E.Effect<A, Error, AppSettingsStore | MainDatabase>,
 ) {
   return E.scoped(
     E.gen(function* () {
@@ -57,7 +57,7 @@ function withAppSettings<A, Error>(
 
       const PersistenceTestLive = makePersistenceTestLayer();
 
-      const AppSettingsTestLive = AppSettings.layerNoDeps.pipe(
+      const AppSettingsStoreTestLive = AppSettingsStore.layerNoDeps.pipe(
         Layer.provide(
           Layer.merge(
             PersistenceTestLive,
@@ -67,7 +67,7 @@ function withAppSettings<A, Error>(
       );
 
       return yield* program.pipe(
-        E.provide(Layer.merge(PersistenceTestLive, AppSettingsTestLive)),
+        E.provide(Layer.merge(PersistenceTestLive, AppSettingsStoreTestLive)),
       );
     }),
   ).pipe(E.provide(NodePlatformLayer));
@@ -105,11 +105,11 @@ const countSettingRows = E.gen(function* () {
   return row;
 });
 
-describe("AppSettings", () => {
+describe("AppSettingsStore", () => {
   test("seeds one row in each settings table", async () => {
-    const counts = await withAppSettings(
+    const counts = await withAppSettingsStore(
       E.gen(function* () {
-        yield* AppSettings;
+        yield* AppSettingsStore;
 
         return yield* countSettingRows;
       }),
@@ -123,12 +123,12 @@ describe("AppSettings", () => {
   });
 
   test("saves settings across all three tables, encrypting the secret", async () => {
-    const { current, storedSecret } = await withAppSettings(
+    const { current, storedSecret } = await withAppSettingsStore(
       E.gen(function* () {
-        const appSettings = yield* AppSettings;
+        const appSettingsStore = yield* AppSettingsStore;
         const sql = yield* MainDatabase;
 
-        yield* appSettings.set(UPDATED_SETTINGS);
+        yield* appSettingsStore.set(UPDATED_SETTINGS);
 
         const [credential] = yield* sql<{ readonly clientSecret: string }>`
           SELECT
@@ -138,7 +138,7 @@ describe("AppSettings", () => {
         `;
 
         return {
-          current: yield* appSettings.get(),
+          current: yield* appSettingsStore.get(),
           storedSecret: credential?.clientSecret,
         };
       }),
@@ -150,18 +150,20 @@ describe("AppSettings", () => {
   });
 
   test("changes nothing when saving one of the tables fails", async () => {
-    const { current, directory, error } = await withAppSettings(
+    const { current, directory, error } = await withAppSettingsStore(
       E.gen(function* () {
-        const appSettings = yield* AppSettings;
+        const appSettingsStore = yield* AppSettingsStore;
         const sql = yield* MainDatabase;
 
-        const before = yield* appSettings.get();
+        const before = yield* appSettingsStore.get();
 
         // Written last, so the other two tables have already been updated
         // inside the transaction when this fails.
         yield* sql`DROP TABLE fellowship_logs_credential`;
 
-        const setError = yield* appSettings.set(UPDATED_SETTINGS).pipe(E.flip);
+        const setError = yield* appSettingsStore
+          .set(UPDATED_SETTINGS)
+          .pipe(E.flip);
 
         const [row] = yield* sql<{ readonly fellowshipLogDirectory: string }>`
           SELECT
@@ -171,7 +173,7 @@ describe("AppSettings", () => {
         `;
 
         return {
-          current: { after: yield* appSettings.get(), before },
+          current: { after: yield* appSettingsStore.get(), before },
           directory: {
             after: row?.fellowshipLogDirectory,
             before: before.fellowshipLogDirectory,

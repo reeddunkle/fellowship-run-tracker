@@ -3,12 +3,12 @@ import type * as Layer from "effect/Layer";
 import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 import * as HttpApiError from "effect/unstable/httpapi/HttpApiError";
 
-import { AppSettingsApiService } from "@frt/api/services/api/app-settings/app-settings-api-service.ts";
-import { type AppSettingsSetError } from "@frt/api/services/app-settings/app-settings-service.ts";
+import { AppSettings } from "@frt/api/services/app-settings/app-settings-service.ts";
+import { type AppSettingsStoreSetError } from "@frt/api/services/app-settings-store/app-settings-store-service.ts";
 import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
 
 function mapAppSettingsApiError(
-  error: AppSettingsSetError,
+  error: AppSettingsStoreSetError,
 ): E.Effect<never, HttpApiError.InternalServerError> {
   return E.gen(function* () {
     yield* E.logError("App settings API operation failed.", {
@@ -23,16 +23,14 @@ const AppSettingsApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "appSettings",
   E.fn(function* (handlers) {
-    const appSettingsApiService = yield* AppSettingsApiService;
+    const appSettings = yield* AppSettings;
 
     return handlers
       .handle("getAppSettings", () => {
-        return appSettingsApiService.get();
+        return appSettings.get();
       })
       .handle("putAppSettings", ({ payload }) => {
-        return appSettingsApiService
-          .set(payload)
-          .pipe(E.catch(mapAppSettingsApiError));
+        return appSettings.set(payload).pipe(E.catch(mapAppSettingsApiError));
       });
   }),
 );
@@ -40,5 +38,5 @@ const AppSettingsApiHandlersInferred = HttpApiBuilder.group(
 export const AppSettingsApiLayer: Layer.Layer<
   Layer.Success<typeof AppSettingsApiHandlersInferred>,
   Layer.Error<typeof AppSettingsApiHandlersInferred>,
-  AppSettingsApiService
+  AppSettings
 > = AppSettingsApiHandlersInferred;

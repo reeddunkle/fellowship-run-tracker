@@ -4,7 +4,7 @@ import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 
 import { AbilitiesApiLayer } from "@frt/api/api/http/groups/abilities/abilities-api-layer.ts";
-import { AppSettingsApiLayer } from "@frt/api/api/http/groups/app-settings/app-settings-layer.ts";
+import { AppSettingsApiLayer } from "@frt/api/api/http/groups/app-settings/app-settings-api-layer.ts";
 import { BackgroundJobApiLayer } from "@frt/api/api/http/groups/background-job/background-job-api-layer.ts";
 import { ConfigurationsApiLayer } from "@frt/api/api/http/groups/configurations/configurations-api-layer.ts";
 import { DungeonRunApiLayer } from "@frt/api/api/http/groups/dungeon-run/dungeon-run-api-layer.ts";

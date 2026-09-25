@@ -10,7 +10,7 @@ flowchart LR
   FellowshipTracker["FellowshipTracker"]
   BackgroundJobQueue["BackgroundJobQueue"]
   AbilityCatalog["AbilityCatalog"]
-  AppSettingsApiService["AppSettingsApiService"]
+  AppSettings["AppSettings"]
   BackgroundJob["BackgroundJob"]
   ConfigurationLibrary["ConfigurationLibrary"]
   DungeonCatalog["DungeonCatalog"]
@@ -33,10 +33,10 @@ flowchart LR
   ApiServicesLayer -.-> AbilityCatalog
   ApiServicesWithBackgroundJobQueueLayer -.-> AbilityCatalog
   ApiRuntimeLayer -.-> AbilityCatalog
-  Layer_provideMerge_BackgroundJobQueue_layer_ -.-> AppSettingsApiService
-  ApiServicesLayer -.-> AppSettingsApiService
-  ApiServicesWithBackgroundJobQueueLayer -.-> AppSettingsApiService
-  ApiRuntimeLayer -.-> AppSettingsApiService
+  Layer_provideMerge_BackgroundJobQueue_layer_ -.-> AppSettings
+  ApiServicesLayer -.-> AppSettings
+  ApiServicesWithBackgroundJobQueueLayer -.-> AppSettings
+  ApiRuntimeLayer -.-> AppSettings
   Layer_provideMerge_BackgroundJobQueue_layer_ -.-> BackgroundJob
   ApiServicesLayer -.-> BackgroundJob
   ApiServicesWithBackgroundJobQueueLayer -.-> BackgroundJob

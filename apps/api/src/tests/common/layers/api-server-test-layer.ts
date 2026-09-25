@@ -10,7 +10,7 @@ import {
 } from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
 import { type FellowshipTracker } from "@frt/api/application/fellowship-tracker/fellowship-tracker-service.ts";
 import { type AbilityCatalog } from "@frt/api/services/ability-catalog/ability-catalog-service.ts";
-import { type AppSettingsApiService } from "@frt/api/services/api/app-settings/app-settings-api-service.ts";
+import { type AppSettings } from "@frt/api/services/app-settings/app-settings-service.ts";
 import { type BackgroundJob } from "@frt/api/services/background-job/background-job-service.ts";
 import { type ConfigurationLibrary } from "@frt/api/services/configuration-library/configuration-library-service.ts";
 import { type DungeonCatalog } from "@frt/api/services/dungeon-catalog/dungeon-catalog-service.ts";
@@ -20,7 +20,7 @@ import { type FellowshipLogs } from "@frt/api/services/fellowship-logs/fellowshi
 import { type LiveSplit } from "@frt/api/services/live-split/live-split-service.ts";
 import { type UnitCatalog } from "@frt/api/services/unit-catalog/unit-catalog-service.ts";
 import { AbilityCatalogMock } from "@frt/api/tests/common/mocks/ability-catalog-mock.ts";
-import { AppSettingsApiServiceMock } from "@frt/api/tests/common/mocks/app-settings-api-service-mock.ts";
+import { AppSettingsMock } from "@frt/api/tests/common/mocks/app-settings-mock.ts";
 import { BackgroundJobMock } from "@frt/api/tests/common/mocks/background-job-mock.ts";
 import { ConfigurationLibraryMock } from "@frt/api/tests/common/mocks/configuration-library-mock.ts";
 import { DungeonCatalogMock } from "@frt/api/tests/common/mocks/dungeon-catalog-mock.ts";
@@ -33,7 +33,7 @@ import { UnitCatalogMock } from "@frt/api/tests/common/mocks/unit-catalog-mock.t
 
 export type ApiServices =
   | AbilityCatalog
-  | AppSettingsApiService
+  | AppSettings
   | BackgroundJob
   | ConfigurationLibrary
   | DungeonCatalog
@@ -46,7 +46,7 @@ export type ApiServices =
 
 type ApiServiceTestLayer =
   | Layer.Layer<AbilityCatalog>
-  | Layer.Layer<AppSettingsApiService>
+  | Layer.Layer<AppSettings>
   | Layer.Layer<BackgroundJob>
   | Layer.Layer<ConfigurationLibrary>
   | Layer.Layer<DungeonCatalog>
@@ -59,7 +59,7 @@ type ApiServiceTestLayer =
 
 export const ApiServicesTest: Layer.Layer<ApiServices> = Layer.mergeAll(
   AbilityCatalogMock,
-  AppSettingsApiServiceMock,
+  AppSettingsMock,
   BackgroundJobMock,
   ConfigurationLibraryMock,
   DungeonCatalogMock,

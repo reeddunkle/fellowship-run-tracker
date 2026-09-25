@@ -77,14 +77,14 @@ flowchart TB
     style 11_wrap stroke:none
   end
   style 11 fill:transparent
-  subgraph 14 ["`AppSettings.layer`"]
+  subgraph 14 ["`AppSettingsStore.layer`"]
     subgraph 14_wrap[" "]
       subgraph 14_requires [Requires]
         14_requires_0["MainDatabase"]
       end
       style 14_requires stroke:none
       subgraph 14_provides [Provides]
-        14_provides_0["AppSettings"]
+        14_provides_0["AppSettingsStore"]
       end
       style 14_provides stroke:none
     end
@@ -117,7 +117,7 @@ flowchart TB
   subgraph 20 ["`this.layerNoDeps`"]
     subgraph 20_wrap[" "]
       subgraph 20_requires [Requires]
-        20_requires_0["AppSettings"]
+        20_requires_0["AppSettingsStore"]
         20_requires_1["FileMonitor"]
         20_requires_2["FileMonitorSource"]
       end
@@ -379,7 +379,7 @@ flowchart TB
       style 57_requires stroke:none
       subgraph 57_provides [Provides]
         57_provides_0["AbilityCatalog"]
-        57_provides_1["AppSettingsApiService"]
+        57_provides_1["AppSettings"]
         57_provides_2["BackgroundJob"]
         57_provides_3["BackgroundJobQueue"]
         57_provides_4["ConfigurationLibrary"]
@@ -503,14 +503,14 @@ flowchart TB
     style 65_wrap stroke:none
   end
   style 65 fill:transparent
-  subgraph 66 ["`AppSettingsApiService.layer`"]
+  subgraph 66 ["`AppSettings.layer`"]
     subgraph 66_wrap[" "]
       subgraph 66_requires [Requires]
         66_requires_0["MainDatabase"]
       end
       style 66_requires stroke:none
       subgraph 66_provides [Provides]
-        66_provides_0["AppSettingsApiService"]
+        66_provides_0["AppSettings"]
       end
       style 66_provides stroke:none
     end
@@ -543,7 +543,7 @@ flowchart TB
       style 68_requires stroke:none
       subgraph 68_provides [Provides]
         68_provides_0["AbilityCatalog"]
-        68_provides_1["AppSettingsApiService"]
+        68_provides_1["AppSettings"]
         68_provides_2["BackgroundJob"]
         68_provides_3["ConfigurationLibrary"]
         68_provides_4["DungeonCatalog"]
@@ -570,7 +570,7 @@ flowchart TB
       style 70_requires stroke:none
       subgraph 70_provides [Provides]
         70_provides_0["AbilityCatalog"]
-        70_provides_1["AppSettingsApiService"]
+        70_provides_1["AppSettings"]
         70_provides_2["BackgroundJob"]
         70_provides_3["BackgroundJobQueue"]
         70_provides_4["ConfigurationLibrary"]
@@ -598,7 +598,7 @@ flowchart TB
       style 72_requires stroke:none
       subgraph 72_provides [Provides]
         72_provides_0["AbilityCatalog"]
-        72_provides_1["AppSettingsApiService"]
+        72_provides_1["AppSettings"]
         72_provides_2["BackgroundJob"]
         72_provides_3["BackgroundJobQueue"]
         72_provides_4["BackgroundJobWebSocketBroadcaster"]
@@ -797,7 +797,7 @@ flowchart TB
   subgraph 104 ["`AppSettingsApiLayer`"]
     subgraph 104_wrap[" "]
       subgraph 104_requires [Requires]
-        104_requires_0["AppSettingsApiService"]
+        104_requires_0["AppSettings"]
       end
       style 104_requires stroke:none
     end
@@ -820,7 +820,7 @@ flowchart TB
     subgraph 109_wrap[" "]
       subgraph 109_requires [Requires]
         109_requires_0["AbilityCatalog"]
-        109_requires_1["AppSettingsApiService"]
+        109_requires_1["AppSettings"]
         109_requires_2["BackgroundJob"]
         109_requires_3["ConfigurationLibrary"]
         109_requires_4["DungeonCatalog"]
@@ -841,7 +841,7 @@ flowchart TB
     subgraph 112_wrap[" "]
       subgraph 112_requires [Requires]
         112_requires_0["AbilityCatalog"]
-        112_requires_1["AppSettingsApiService"]
+        112_requires_1["AppSettings"]
         112_requires_2["BackgroundJob"]
         112_requires_3["ConfigurationLibrary"]
         112_requires_4["DungeonCatalog"]
@@ -866,7 +866,7 @@ flowchart TB
     subgraph 114_wrap[" "]
       subgraph 114_requires [Requires]
         114_requires_0["AbilityCatalog"]
-        114_requires_1["AppSettingsApiService"]
+        114_requires_1["AppSettings"]
         114_requires_2["BackgroundJob"]
         114_requires_3["BackgroundJobWebSocketBroadcaster"]
         114_requires_4["ConfigurationLibrary"]

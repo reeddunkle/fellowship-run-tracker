@@ -8,7 +8,7 @@ import {
   LiveSplitGatewayConnectionError,
   LiveSplitGatewayNotConnectedError,
 } from "@frt/api/errors/live-split-gateway-error.ts";
-import { AppSettings } from "@frt/api/services/app-settings/app-settings-service.ts";
+import { AppSettingsStore } from "@frt/api/services/app-settings-store/app-settings-store-service.ts";
 import {
   type LiveSplitGatewayClient,
   makeLiveSplitGatewayClient,
@@ -45,11 +45,11 @@ export type LiveSplitGatewayShape = {
 };
 
 const makeLiveSplitGateway = E.gen(function* () {
-  const appSettings = yield* AppSettings;
+  const appSettingsStore = yield* AppSettingsStore;
   const transportFactory = yield* LiveSplitGatewayTransportFactory;
 
   const acquireClient = E.gen(function* () {
-    const settings = yield* appSettings.get();
+    const settings = yield* appSettingsStore.get();
 
     const host = settings.liveSplitHost;
     const port = settings.liveSplitPort;
@@ -183,7 +183,7 @@ export class LiveSplitGateway extends Context.Service<
   static readonly layerNoDeps = Layer.effect(this, makeLiveSplitGateway);
 
   static readonly layer = this.layerNoDeps.pipe(
-    Layer.provide(AppSettings.layer),
+    Layer.provide(AppSettingsStore.layer),
     Layer.provide(LiveSplitGatewayTransportFactory.layer),
   );
 }

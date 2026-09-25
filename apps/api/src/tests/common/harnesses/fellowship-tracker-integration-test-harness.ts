@@ -3,7 +3,7 @@ import * as Layer from "effect/Layer";
 
 import { DungeonRunWebSocketBroadcaster } from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
 import { FellowshipTracker } from "@frt/api/application/fellowship-tracker/fellowship-tracker-service.ts";
-import { AppSettings } from "@frt/api/services/app-settings/app-settings-service.ts";
+import { AppSettingsStore } from "@frt/api/services/app-settings-store/app-settings-store-service.ts";
 import { Encryption } from "@frt/api/services/encryption/encryption-service.ts";
 import { Fellowship } from "@frt/api/services/fellowship/fellowship-service.ts";
 import { FileMonitor } from "@frt/api/services/filesystem/file-monitor-service.ts";
@@ -38,19 +38,19 @@ export function makeFellowshipTrackerIntegrationTestHarness({
       encryptionHarness.encryption,
     );
 
-    const AppSettingsTestLive = AppSettings.layerNoDeps.pipe(
+    const AppSettingsStoreTestLive = AppSettingsStore.layerNoDeps.pipe(
       Layer.provide(Layer.mergeAll(PersistenceTestLive, EncryptionTestLive)),
     );
 
     const FellowshipTestLive = Fellowship.layerNoDeps.pipe(
       Layer.provide(Layer.mergeAll(FileMonitor.layer, FileMonitorSource.layer)),
-      Layer.provide(AppSettingsTestLive),
+      Layer.provide(AppSettingsStoreTestLive),
     );
 
     const LiveSplitGatewayTestLive = LiveSplitGateway.layerNoDeps.pipe(
       Layer.provide(
         Layer.mergeAll(
-          AppSettingsTestLive,
+          AppSettingsStoreTestLive,
           liveSplitHarness.transportFactoryLayer,
         ),
       ),
@@ -79,7 +79,7 @@ export function makeFellowshipTrackerIntegrationTestHarness({
     const layer = Layer.mergeAll(
       PersistenceTestLive,
       EncryptionTestLive,
-      AppSettingsTestLive,
+      AppSettingsStoreTestLive,
       FellowshipTestLive,
       LiveSplitGatewayTestLive,
       LiveSplitTestLive,

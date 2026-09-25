@@ -6,7 +6,7 @@
       "onlyInBundle": [],
       "onlyInComparedBundle": [
         "AbilityCatalog",
-        "AppSettingsApiService",
+        "AppSettings",
         "BackgroundJob",
         "BackgroundJobQueue",
         "ConfigurationLibrary",
@@ -25,7 +25,7 @@
       "onlyInBundle": [],
       "onlyInComparedBundle": [
         "AbilityCatalog",
-        "AppSettingsApiService",
+        "AppSettings",
         "BackgroundJob",
         "ConfigurationLibrary",
         "DungeonCatalog",
@@ -43,7 +43,7 @@
       "onlyInBundle": [],
       "onlyInComparedBundle": [
         "AbilityCatalog",
-        "AppSettingsApiService",
+        "AppSettings",
         "BackgroundJob",
         "BackgroundJobQueue",
         "ConfigurationLibrary",
@@ -62,7 +62,7 @@
       "onlyInBundle": [],
       "onlyInComparedBundle": [
         "AbilityCatalog",
-        "AppSettingsApiService",
+        "AppSettings",
         "BackgroundJob",
         "BackgroundJobQueue",
         "BackgroundJobWebSocketBroadcaster",
@@ -86,7 +86,7 @@
       "onlyInBundle": [],
       "onlyInComparedBundle": [
         "AbilityCatalog",
-        "AppSettingsApiService",
+        "AppSettings",
         "BackgroundJob",
         "BackgroundJobQueue",
         "BackgroundJobWebSocketBroadcaster",
@@ -110,7 +110,7 @@
       "onlyInBundle": [],
       "onlyInComparedBundle": [
         "AbilityCatalog",
-        "AppSettingsApiService",
+        "AppSettings",
         "BackgroundJob",
         "ConfigurationLibrary",
         "DungeonCatalog",
@@ -129,7 +129,7 @@
       "onlyInBundle": [],
       "onlyInComparedBundle": [
         "AbilityCatalog",
-        "AppSettingsApiService",
+        "AppSettings",
         "BackgroundJob",
         "ConfigurationLibrary",
         "DungeonCatalog",
@@ -148,7 +148,7 @@
       "onlyInBundle": [],
       "onlyInComparedBundle": [
         "AbilityCatalog",
-        "AppSettingsApiService",
+        "AppSettings",
         "BackgroundJob",
         "BackgroundJobWebSocketBroadcaster",
         "ConfigurationLibrary",
@@ -174,7 +174,7 @@
       "relationship": "strict-superset",
       "sharedServices": [
         "AbilityCatalog",
-        "AppSettingsApiService",
+        "AppSettings",
         "BackgroundJob",
         "ConfigurationLibrary",
         "DungeonCatalog",
@@ -193,7 +193,7 @@
       "relationship": "equal",
       "sharedServices": [
         "AbilityCatalog",
-        "AppSettingsApiService",
+        "AppSettings",
         "BackgroundJob",
         "BackgroundJobQueue",
         "ConfigurationLibrary",
@@ -219,7 +219,7 @@
       "relationship": "strict-subset",
       "sharedServices": [
         "AbilityCatalog",
-        "AppSettingsApiService",
+        "AppSettings",
         "BackgroundJob",
         "BackgroundJobQueue",
         "ConfigurationLibrary",
@@ -239,7 +239,7 @@
       "relationship": "strict-subset",
       "sharedServices": [
         "AbilityCatalog",
-        "AppSettingsApiService",
+        "AppSettings",
         "BackgroundJob",
         "ConfigurationLibrary",
         "DungeonCatalog",
@@ -265,7 +265,7 @@
       "relationship": "strict-subset",
       "sharedServices": [
         "AbilityCatalog",
-        "AppSettingsApiService",
+        "AppSettings",
         "BackgroundJob",
         "ConfigurationLibrary",
         "DungeonCatalog",
@@ -290,7 +290,7 @@
       "relationship": "strict-subset",
       "sharedServices": [
         "AbilityCatalog",
-        "AppSettingsApiService",
+        "AppSettings",
         "BackgroundJob",
         "BackgroundJobQueue",
         "ConfigurationLibrary",
@@ -344,7 +344,7 @@
       ],
       "services": [
         "AbilityCatalog",
-        "AppSettingsApiService",
+        "AppSettings",
         "BackgroundJob",
         "BackgroundJobQueue",
         "ConfigurationLibrary",
@@ -365,7 +365,7 @@
       ],
       "services": [
         "AbilityCatalog",
-        "AppSettingsApiService",
+        "AppSettings",
         "BackgroundJob",
         "ConfigurationLibrary",
         "DungeonCatalog",
@@ -386,7 +386,7 @@
       ],
       "services": [
         "AbilityCatalog",
-        "AppSettingsApiService",
+        "AppSettings",
         "BackgroundJob",
         "BackgroundJobQueue",
         "ConfigurationLibrary",
@@ -408,7 +408,7 @@
       ],
       "services": [
         "AbilityCatalog",
-        "AppSettingsApiService",
+        "AppSettings",
         "BackgroundJob",
         "BackgroundJobQueue",
         "BackgroundJobWebSocketBroadcaster",
@@ -467,7 +467,7 @@
         "ApiServicesWithBackgroundJobQueueLayer",
         "ApiRuntimeLayer"
       ],
-      "service": "AppSettingsApiService"
+      "service": "AppSettings"
     },
     {
       "bundles": [
