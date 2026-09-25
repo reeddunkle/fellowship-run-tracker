@@ -1,6 +1,7 @@
 import * as Context from "effect/Context";
 import * as Deferred from "effect/Deferred";
 import * as E from "effect/Effect";
+import * as Layer from "effect/Layer";
 import * as Match from "effect/Match";
 import * as Option from "effect/Option";
 import * as Queue from "effect/Queue";
@@ -8,6 +9,7 @@ import * as Result from "effect/Result";
 import type * as Schema from "effect/Schema";
 import * as KeyValueStore from "effect/unstable/persistence/KeyValueStore";
 
+import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
 import {
   type AppStateValue,
   DEFAULT_APP_STATE,
@@ -24,52 +26,52 @@ import {
 const APP_STATE_KEY = "app-state";
 const CORRUPT_APP_STATE_BACKUP_KEY = "app-state-corrupt-backup";
 
-export type AppStateStorageError =
+export type AppStateStoreError =
   | KeyValueStore.KeyValueStoreError
   | Schema.SchemaError;
 
-export type AppStateStorageShape = {
+export type AppStateStoreShape = {
   readonly getDungeonRunComparisonGroup: E.Effect<
     typeof DungeonRunComparisonGroupSchema.Type,
-    AppStateStorageError
+    AppStateStoreError
   >;
 
   readonly getDungeonRunTimeColumns: E.Effect<
     AppStateValue["dungeonRun"]["timeColumns"],
-    AppStateStorageError
+    AppStateStoreError
   >;
 
   readonly getSelectedConfigurationId: E.Effect<
     ConfigurationId | null,
-    AppStateStorageError
+    AppStateStoreError
   >;
 
   readonly getSidebarOpen: E.Effect<
     AppStateValue["sidebarOpen"],
-    AppStateStorageError
+    AppStateStoreError
   >;
 
-  readonly getTheme: E.Effect<AppStateValue["theme"], AppStateStorageError>;
+  readonly getTheme: E.Effect<AppStateValue["theme"], AppStateStoreError>;
 
   readonly setDungeonRunComparisonGroup: (
     comparisonGroup: typeof DungeonRunComparisonGroupSchema.Type,
-  ) => E.Effect<void, AppStateStorageError>;
+  ) => E.Effect<void, AppStateStoreError>;
 
   readonly setDungeonRunTimeColumns: (
     timeColumns: AppStateValue["dungeonRun"]["timeColumns"],
-  ) => E.Effect<void, AppStateStorageError>;
+  ) => E.Effect<void, AppStateStoreError>;
 
   readonly setSelectedConfigurationId: (
     id: ConfigurationId | null,
-  ) => E.Effect<void, AppStateStorageError>;
+  ) => E.Effect<void, AppStateStoreError>;
 
   readonly setSidebarOpen: (
     sidebarOpen: AppStateValue["sidebarOpen"],
-  ) => E.Effect<void, AppStateStorageError>;
+  ) => E.Effect<void, AppStateStoreError>;
 
   readonly setTheme: (
     theme: AppStateValue["theme"],
-  ) => E.Effect<void, AppStateStorageError>;
+  ) => E.Effect<void, AppStateStoreError>;
 };
 
 type AppStateUpdate =
@@ -89,7 +91,7 @@ type AppStateUpdate =
   | { readonly _tag: "SetTheme"; readonly theme: AppStateValue["theme"] };
 
 type AppStateUpdateRequest = {
-  readonly deferred: Deferred.Deferred<void, AppStateStorageError>;
+  readonly deferred: Deferred.Deferred<void, AppStateStoreError>;
   readonly update: AppStateUpdate;
 };
 
@@ -129,15 +131,15 @@ function applyAppStateUpdate(
   );
 }
 
-export const makeAppStateStorage = E.gen(function* () {
+export const makeAppStateStore = E.gen(function* () {
   const keyValueStore = yield* KeyValueStore.KeyValueStore;
 
-  const appStateStorage = KeyValueStore.toSchemaStore(
+  const appStateSchemaStore = KeyValueStore.toSchemaStore(
     keyValueStore,
     PersistedAppStateSchema,
   );
 
-  const readState = appStateStorage.get(APP_STATE_KEY).pipe(
+  const readState = appStateSchemaStore.get(APP_STATE_KEY).pipe(
     E.flatMap(
       Option.match({
         onNone: () => {
@@ -151,7 +153,7 @@ export const makeAppStateStorage = E.gen(function* () {
             if (
               currentPersistedAppState.version !== persistedAppState.version
             ) {
-              yield* appStateStorage.set(
+              yield* appStateSchemaStore.set(
                 APP_STATE_KEY,
                 currentPersistedAppState,
               );
@@ -181,7 +183,7 @@ export const makeAppStateStorage = E.gen(function* () {
           },
         );
 
-        yield* appStateStorage.set(APP_STATE_KEY, {
+        yield* appStateSchemaStore.set(APP_STATE_KEY, {
           state: DEFAULT_APP_STATE,
           version: CURRENT_APP_STATE_VERSION,
         });
@@ -222,7 +224,7 @@ export const makeAppStateStorage = E.gen(function* () {
   );
 
   const write = (state: AppStateValue) => {
-    return appStateStorage.set(APP_STATE_KEY, {
+    return appStateSchemaStore.set(APP_STATE_KEY, {
       state,
       version: CURRENT_APP_STATE_VERSION,
     });
@@ -259,7 +261,7 @@ export const makeAppStateStorage = E.gen(function* () {
 
   const update = (appStateUpdate: AppStateUpdate) => {
     return E.gen(function* () {
-      const deferred = yield* Deferred.make<void, AppStateStorageError>();
+      const deferred = yield* Deferred.make<void, AppStateStoreError>();
 
       yield* Queue.offer(queue, {
         deferred,
@@ -270,7 +272,7 @@ export const makeAppStateStorage = E.gen(function* () {
     });
   };
 
-  const setDungeonRunComparisonGroup: AppStateStorageShape["setDungeonRunComparisonGroup"] =
+  const setDungeonRunComparisonGroup: AppStateStoreShape["setDungeonRunComparisonGroup"] =
     (comparisonGroup) => {
       return update({
         _tag: "SetDungeonRunComparisonGroup",
@@ -278,7 +280,7 @@ export const makeAppStateStorage = E.gen(function* () {
       });
     };
 
-  const setDungeonRunTimeColumns: AppStateStorageShape["setDungeonRunTimeColumns"] =
+  const setDungeonRunTimeColumns: AppStateStoreShape["setDungeonRunTimeColumns"] =
     (timeColumns) => {
       return update({
         _tag: "SetDungeonRunTimeColumns",
@@ -286,7 +288,7 @@ export const makeAppStateStorage = E.gen(function* () {
       });
     };
 
-  const setSelectedConfigurationId: AppStateStorageShape["setSelectedConfigurationId"] =
+  const setSelectedConfigurationId: AppStateStoreShape["setSelectedConfigurationId"] =
     (id) => {
       return update({
         _tag: "SetSelectedConfigurationId",
@@ -294,7 +296,7 @@ export const makeAppStateStorage = E.gen(function* () {
       });
     };
 
-  const setSidebarOpen: AppStateStorageShape["setSidebarOpen"] = (
+  const setSidebarOpen: AppStateStoreShape["setSidebarOpen"] = (
     sidebarOpen,
   ) => {
     return update({
@@ -303,7 +305,7 @@ export const makeAppStateStorage = E.gen(function* () {
     });
   };
 
-  const setTheme: AppStateStorageShape["setTheme"] = (theme) => {
+  const setTheme: AppStateStoreShape["setTheme"] = (theme) => {
     return update({
       _tag: "SetTheme",
       theme,
@@ -321,10 +323,18 @@ export const makeAppStateStorage = E.gen(function* () {
     setSelectedConfigurationId,
     setSidebarOpen,
     setTheme,
-  } satisfies AppStateStorageShape;
+  } satisfies AppStateStoreShape;
 });
 
-export class AppStateStorage extends Context.Service<
-  AppStateStorage,
-  AppStateStorageShape
->()("@frt/electron/storage/app-state/app-state-storage/AppStateStorage") {}
+export class AppStateStore extends Context.Service<
+  AppStateStore,
+  AppStateStoreShape
+>()(
+  "@frt/electron/services/app-state-store/app-state-store-service/AppStateStore",
+) {
+  static readonly layerWith = (directoryPath: string) =>
+    Layer.effect(this, makeAppStateStore).pipe(
+      Layer.provide(KeyValueStore.layerFileSystem(directoryPath)),
+      Layer.provide(NodePlatformLayer),
+    );
+}

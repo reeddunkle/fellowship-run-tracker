@@ -5,21 +5,20 @@ import { describe, expect, test } from "vitest";
 
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 
-import { makeAppStateStorage } from "@/storage/app-state/app-state-storage.ts";
+import { makeAppStateStore } from "@/services/app-state-store/app-state-store-service.ts";
 
-describe("AppStateStorage", () => {
+describe("AppStateStore", () => {
   test("preserves concurrent updates to different fields", async () => {
     const program = E.scoped(
       E.gen(function* () {
-        const storage = yield* makeAppStateStorage;
+        const store = yield* makeAppStateStore;
 
-        yield* E.all(
-          [storage.setTheme("light"), storage.setSidebarOpen(false)],
-          { concurrency: "unbounded" },
-        );
+        yield* E.all([store.setTheme("light"), store.setSidebarOpen(false)], {
+          concurrency: "unbounded",
+        });
 
-        expect(yield* storage.getSidebarOpen).toBe(false);
-        expect(yield* storage.getTheme).toBe("light");
+        expect(yield* store.getSidebarOpen).toBe(false);
+        expect(yield* store.getTheme).toBe("light");
       }),
     ).pipe(E.provide(KeyValueStore.layerMemory));
 
@@ -29,13 +28,13 @@ describe("AppStateStorage", () => {
   test("keeps the latest value when a batch updates one field repeatedly", async () => {
     const program = E.scoped(
       E.gen(function* () {
-        const storage = yield* makeAppStateStorage;
+        const store = yield* makeAppStateStore;
 
-        yield* E.all([storage.setTheme("light"), storage.setTheme("system")], {
+        yield* E.all([store.setTheme("light"), store.setTheme("system")], {
           concurrency: "unbounded",
         });
 
-        expect(yield* storage.getTheme).toBe("system");
+        expect(yield* store.getTheme).toBe("system");
       }),
     ).pipe(E.provide(KeyValueStore.layerMemory));
 
@@ -49,9 +48,9 @@ describe("AppStateStorage", () => {
         const keyValueStore = yield* KeyValueStore.KeyValueStore;
         yield* keyValueStore.set("app-state", invalidPersistedState);
 
-        const storage = yield* makeAppStateStorage;
+        const store = yield* makeAppStateStore;
 
-        expect(yield* storage.getTheme).toBe("dark");
+        expect(yield* store.getTheme).toBe("dark");
         expect(yield* keyValueStore.get("app-state-corrupt-backup")).toBe(
           invalidPersistedState,
         );
@@ -87,10 +86,10 @@ describe("AppStateStorage", () => {
             return keyValueStore.set(key, value);
           },
         } satisfies KeyValueStore.KeyValueStore;
-        const storage = yield* makeAppStateStorage.pipe(
+        const store = yield* makeAppStateStore.pipe(
           E.provideService(KeyValueStore.KeyValueStore, failingKeyValueStore),
         );
-        const result = yield* E.result(storage.getTheme);
+        const result = yield* E.result(store.getTheme);
 
         expect(Result.isFailure(result)).toBe(true);
         expect(yield* keyValueStore.get("app-state")).toBe(
@@ -125,13 +124,13 @@ describe("AppStateStorage", () => {
             return keyValueStore.set(key, value);
           },
         } satisfies KeyValueStore.KeyValueStore;
-        const storage = yield* makeAppStateStorage.pipe(
+        const store = yield* makeAppStateStore.pipe(
           E.provideService(KeyValueStore.KeyValueStore, failingKeyValueStore),
         );
         const results = yield* E.all(
           [
-            E.result(storage.setTheme("light")),
-            E.result(storage.setSidebarOpen(false)),
+            E.result(store.setTheme("light")),
+            E.result(store.setSidebarOpen(false)),
           ],
           { concurrency: "unbounded" },
         );

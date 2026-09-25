@@ -6,9 +6,9 @@ import { type ConfigurationId } from "@frt/shared/configuration/configuration-id
 import { type DungeonRunComparisonGroupSchema } from "@frt/shared/dungeon-run/dungeon-run-comparison-group-schema.ts";
 
 import { type AppStateClientError } from "@/errors/app-state-error.ts";
-import { type AppStateStorageError } from "@/storage/app-state/app-state-storage.ts";
+import { type AppStateStoreError } from "@/services/app-state-store/app-state-store-service.ts";
 
-type AppStateError = AppStateClientError | AppStateStorageError;
+type AppStateError = AppStateClientError | AppStateStoreError;
 
 export type AppStateShape = {
   readonly getDungeonRunComparisonGroup: E.Effect<
