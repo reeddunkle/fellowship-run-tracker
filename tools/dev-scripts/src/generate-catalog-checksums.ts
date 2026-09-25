@@ -12,7 +12,6 @@ import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 import * as Order from "effect/Order";
 
-import { fixWithBiome } from "@frt/api/helpers/fix-with-biome.ts";
 import { FELLOWSHIP_ABILITY } from "@frt/db/catalogs/ability/fellowship-ability-catalog.ts";
 import { CATALOG_CHECKSUMS_FILE_PATH } from "@frt/db/catalogs/catalog-paths.ts";
 import { FELLOWSHIP_DUNGEON } from "@frt/db/catalogs/dungeon/fellowship-dungeon-catalog.ts";
@@ -102,7 +101,6 @@ export const CATALOG_CHECKSUMS = ${encodedChecksums} as const;
   });
 
   yield* fileSystem.writeFileString(OUTPUT_FILE_PATH, contents);
-  yield* fixWithBiome([OUTPUT_FILE_PATH]);
 });
 
 const RuntimeLayer = Layer.mergeAll(NodeCrypto.layer, NodeServices.layer);
