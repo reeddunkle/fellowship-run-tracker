@@ -12,7 +12,7 @@ import { type FellowshipLogsReportCode } from "@frt/shared/fellowship-logs/fello
 
 import { makeFellowshipLogsGatewayResponseCache } from "./make-fellowship-logs-gateway-response-cache-service.ts";
 
-export type FellowshipLogsCachedRequest<
+export type FellowshipLogsGatewayCachedRequest<
   ResponseSchema extends Schema.Codec<unknown, unknown>,
 > = {
   readonly fightId: FellowshipLogsFightId | null;
@@ -33,7 +33,7 @@ export type FellowshipLogsGatewayResponseCacheShape = {
     Error,
     Requirements,
   >(
-    request: FellowshipLogsCachedRequest<ResponseSchema>,
+    request: FellowshipLogsGatewayCachedRequest<ResponseSchema>,
     fetch: E.Effect<ResponseSchema["Type"], Error, Requirements>,
   ) => E.Effect<ResponseSchema["Type"], Error, Requirements>;
 };

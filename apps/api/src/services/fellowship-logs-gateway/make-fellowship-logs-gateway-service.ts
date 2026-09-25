@@ -14,25 +14,25 @@ import { AppSettings } from "@frt/api/services/app-settings/app-settings-service
 import {
   getFightResponseExpiresAt,
   getReportPageResponseExpiresAt,
-  makeFellowshipLogsResponseKey,
-} from "@frt/api/services/fellowship-logs-gateway/cache/fellowship-logs-cache-policy.ts";
+  makeFellowshipLogsGatewayResponseKey,
+} from "@frt/api/services/fellowship-logs-gateway/cache/fellowship-logs-gateway-cache-policy.ts";
 import { FellowshipLogsGatewayResponseCache } from "@frt/api/services/fellowship-logs-gateway/cache/fellowship-logs-gateway-response-cache-service.ts";
 import { streamFellowshipLogsGatewayEvents } from "@frt/api/services/fellowship-logs-gateway/events/stream-fellowship-logs-gateway-events.ts";
 import { makeFellowshipLogsGatewayHttpQuery } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-http-query.ts";
+import {
+  deriveDungeonRunMetadata,
+  findFightOrFail,
+  getReportOrFail,
+  getReportPageProgress,
+  makeFellowshipLogsGatewayRateLimitDataTracker,
+  makeTrackedQuery,
+} from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-response-helpers.ts";
 import {
   type FellowshipLogsGatewayCredentials,
   type FellowshipLogsGatewayShape,
   type GetCredentials,
   type Query,
 } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
-import {
-  deriveDungeonRunMetadata,
-  findFightOrFail,
-  getReportOrFail,
-  getReportPageProgress,
-  makeFellowshipLogsRateLimitDataTracker,
-  makeTrackedQuery,
-} from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-response-helpers.ts";
 import {
   DUNGEON_RUN_METADATA_SELECTION,
   DUNGEON_RUN_METADATA_VARIABLES,
@@ -66,7 +66,8 @@ type GetReportPageOptions = {
 export function makeFellowshipLogsGatewayFromQuery(query: Query) {
   return E.gen(function* () {
     const responseCache = yield* FellowshipLogsGatewayResponseCache;
-    const rateLimitTracker = yield* makeFellowshipLogsRateLimitDataTracker();
+    const rateLimitTracker =
+      yield* makeFellowshipLogsGatewayRateLimitDataTracker();
     const trackedQuery = makeTrackedQuery(query, rateLimitTracker);
 
     const getDungeonRunMetadata: FellowshipLogsGatewayShape["getDungeonRunMetadata"] =
@@ -80,7 +81,7 @@ export function makeFellowshipLogsGatewayFromQuery(query: Query) {
             getExpiresAt: (data, now) => {
               return getFightResponseExpiresAt({ data, fightId, now });
             },
-            key: makeFellowshipLogsResponseKey("DUNGEON_RUN_METADATA", [
+            key: makeFellowshipLogsGatewayResponseKey("DUNGEON_RUN_METADATA", [
               reportCode,
               fightId,
             ]),
@@ -151,7 +152,10 @@ export function makeFellowshipLogsGatewayFromQuery(query: Query) {
           getExpiresAt: (data, now) => {
             return getFightResponseExpiresAt({ data, fightId, now });
           },
-          key: makeFellowshipLogsResponseKey("FIGHT", [reportCode, fightId]),
+          key: makeFellowshipLogsGatewayResponseKey("FIGHT", [
+            reportCode,
+            fightId,
+          ]),
           operation: "FIGHT",
           reportCode,
           schema: FellowshipLogsGatewayFightResponseDataSchema,
@@ -212,7 +216,7 @@ export function makeFellowshipLogsGatewayFromQuery(query: Query) {
                 getReportRevision: (data) => {
                   return data.reportData.report?.revision ?? null;
                 },
-                key: makeFellowshipLogsResponseKey("REPORT_PAGE", [
+                key: makeFellowshipLogsGatewayResponseKey("REPORT_PAGE", [
                   reportCode,
                   startTime,
                   endTime,

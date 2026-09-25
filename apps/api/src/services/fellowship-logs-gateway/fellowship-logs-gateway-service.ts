@@ -26,7 +26,7 @@ import { type FellowshipLogsFightId } from "@frt/shared/fellowship-logs/fellowsh
 import { type FellowshipLogsRateLimitSnapshot } from "@frt/shared/fellowship-logs/fellowship-logs-rate-limit-schema.ts";
 import { type FellowshipLogsReportCode } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
-import { FELLOWSHIP_LOGS_FIXTURE_DIRECTORY } from "./fellowship-logs-fixture-paths.ts";
+import { FELLOWSHIP_LOGS_FIXTURE_DIRECTORY } from "./fellowship-logs-gateway-fixture-paths.ts";
 import { makeFellowshipLogsGatewayFixture } from "./make-fellowship-logs-gateway-fixture.ts";
 import { makeFellowshipLogsGateway } from "./make-fellowship-logs-gateway-service.ts";
 import {

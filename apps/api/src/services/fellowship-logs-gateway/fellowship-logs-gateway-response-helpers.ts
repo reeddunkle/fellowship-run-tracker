@@ -56,7 +56,7 @@ type TrackResponseOptions = {
   readonly skipCapacityCheck?: boolean;
 };
 
-type FellowshipLogsRateLimitDataTracker = {
+type FellowshipLogsGatewayRateLimitDataTracker = {
   readonly checkCapacity: (
     costKey: string,
   ) => E.Effect<void, FellowshipLogsGatewayRateLimitExceededError>;
@@ -115,14 +115,14 @@ function getRequestCost({
   return rateLimitData.pointsSpentThisHour - previous.pointsSpentThisHour;
 }
 
-export function makeFellowshipLogsRateLimitDataTracker() {
+export function makeFellowshipLogsGatewayRateLimitDataTracker() {
   return E.gen(function* () {
     const stateRef = yield* Ref.make<RateLimitTrackerState>({
       costByKey: {},
       snapshot: null,
     });
 
-    const track: FellowshipLogsRateLimitDataTracker["track"] = (
+    const track: FellowshipLogsGatewayRateLimitDataTracker["track"] = (
       rateLimitData,
       costKey,
     ) => {
@@ -157,7 +157,7 @@ export function makeFellowshipLogsRateLimitDataTracker() {
       });
     };
 
-    const getLastKnown: FellowshipLogsRateLimitDataTracker["getLastKnown"] =
+    const getLastKnown: FellowshipLogsGatewayRateLimitDataTracker["getLastKnown"] =
       () => {
         return Ref.get(stateRef).pipe(
           E.map(({ snapshot }) => {
@@ -166,7 +166,7 @@ export function makeFellowshipLogsRateLimitDataTracker() {
         );
       };
 
-    const checkCapacity: FellowshipLogsRateLimitDataTracker["checkCapacity"] =
+    const checkCapacity: FellowshipLogsGatewayRateLimitDataTracker["checkCapacity"] =
       E.fn("FellowshipLogsGateway.checkCapacity")(function* (costKey) {
         const { costByKey, snapshot } = yield* Ref.get(stateRef);
 
@@ -189,7 +189,7 @@ export function makeFellowshipLogsRateLimitDataTracker() {
         }
       });
 
-    const getRejectedResetsAt: FellowshipLogsRateLimitDataTracker["getRejectedResetsAt"] =
+    const getRejectedResetsAt: FellowshipLogsGatewayRateLimitDataTracker["getRejectedResetsAt"] =
       E.fn("FellowshipLogsGateway.getRejectedResetsAt")(function* () {
         const { snapshot } = yield* Ref.get(stateRef);
         const nowMilliseconds = yield* Clock.currentTimeMillis;
@@ -215,12 +215,12 @@ export function makeFellowshipLogsRateLimitDataTracker() {
       getLastKnown,
       getRejectedResetsAt,
       track,
-    } satisfies FellowshipLogsRateLimitDataTracker;
+    } satisfies FellowshipLogsGatewayRateLimitDataTracker;
   });
 }
 
 export function readAndTrackGraphQLResponse(
-  tracker: FellowshipLogsRateLimitDataTracker,
+  tracker: FellowshipLogsGatewayRateLimitDataTracker,
   { costKey, skipCapacityCheck = false }: TrackResponseOptions,
 ) {
   return function trackResponse<Data extends ResponseDataWithRateLimit>(
@@ -267,7 +267,7 @@ type TrackedQueryOptions = Pick<TrackResponseOptions, "skipCapacityCheck">;
 
 export function makeTrackedQuery(
   query: Query,
-  tracker: FellowshipLogsRateLimitDataTracker,
+  tracker: FellowshipLogsGatewayRateLimitDataTracker,
 ) {
   return function trackedQuery<Data extends ResponseDataWithRateLimit>(
     request: FellowshipLogsGatewayGraphQLRequest,

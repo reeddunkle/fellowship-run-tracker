@@ -11,15 +11,15 @@ import { FellowshipLogsGatewayRequestError } from "@frt/api/errors/fellowship-lo
 import { NodeHttpClientLayer } from "@frt/api/layers/node-platform-layer.ts";
 import {
   FELLOWSHIP_LOGS_FIXTURE_DIRECTORY,
-  getFellowshipLogsReportFixtureDirectory,
-} from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-fixture-paths.ts";
+  getFellowshipLogsGatewayReportFixtureDirectory,
+} from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-fixture-paths.ts";
 import { makeFellowshipLogsGatewayHttpQuery } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-http-query.ts";
-import { type FellowshipLogsGatewayCredentials } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
 import {
   findFightOrFail,
   getGraphQLResponseData,
   getReportOrFail,
-} from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-response-helpers.ts";
+} from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-response-helpers.ts";
+import { type FellowshipLogsGatewayCredentials } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
 import {
   DUNGEON_RUN_METADATA_SELECTION,
   DUNGEON_RUN_METADATA_VARIABLES,
@@ -69,14 +69,15 @@ const captureFellowshipLogsReport = E.fn("cli.capture-fellowship-logs-report")(
       return E.succeed(credentials);
     });
 
-    const defaultOutputDirectory = getFellowshipLogsReportFixtureDirectory({
-      fixtureDirectory: FELLOWSHIP_LOGS_FIXTURE_DIRECTORY,
-      options: {
-        fightId,
-        reportCode,
-      },
-      path,
-    });
+    const defaultOutputDirectory =
+      getFellowshipLogsGatewayReportFixtureDirectory({
+        fixtureDirectory: FELLOWSHIP_LOGS_FIXTURE_DIRECTORY,
+        options: {
+          fightId,
+          reportCode,
+        },
+        path,
+      });
 
     const resolvedOutputDirectory = path.resolve(
       outputFilePath ?? defaultOutputDirectory,

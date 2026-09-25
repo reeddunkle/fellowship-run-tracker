@@ -9,7 +9,7 @@ import * as Schema from "effect/Schema";
 
 import { FellowshipLogsGatewayResponseCacheCompressionError } from "@frt/api/errors/fellowship-logs-gateway-response-cache-error.ts";
 import {
-  type FellowshipLogsCachedRequest,
+  type FellowshipLogsGatewayCachedRequest,
   type FellowshipLogsGatewayResponseCacheShape,
 } from "@frt/api/services/fellowship-logs-gateway/cache/fellowship-logs-gateway-response-cache-service.ts";
 import { FellowshipLogsResponseDAO } from "@frt/db/daos/fellowship-logs-response/fellowship-logs-response-dao.ts";
@@ -56,7 +56,7 @@ export const makeFellowshipLogsGatewayResponseCache = E.gen(function* () {
 
   const read = E.fn("FellowshipLogsGatewayResponseCache.read")(function* <
     ResponseSchema extends Schema.Codec<unknown, unknown>,
-  >(request: FellowshipLogsCachedRequest<ResponseSchema>) {
+  >(request: FellowshipLogsGatewayCachedRequest<ResponseSchema>) {
     const { key } = request;
 
     const cachedResponse = yield* responseDAO.get({ key }).pipe(
@@ -104,7 +104,7 @@ export const makeFellowshipLogsGatewayResponseCache = E.gen(function* () {
   const write = E.fn("FellowshipLogsGatewayResponseCache.write")(function* <
     ResponseSchema extends Schema.Codec<unknown, unknown>,
   >(
-    request: FellowshipLogsCachedRequest<ResponseSchema>,
+    request: FellowshipLogsGatewayCachedRequest<ResponseSchema>,
     data: ResponseSchema["Type"],
   ) {
     const now = yield* DateTime.now;

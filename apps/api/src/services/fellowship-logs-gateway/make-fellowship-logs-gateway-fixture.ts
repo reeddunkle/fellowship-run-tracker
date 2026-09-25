@@ -11,18 +11,18 @@ import * as Stream from "effect/Stream";
 
 import { FellowshipLogsGatewayRequestError } from "@frt/api/errors/fellowship-logs-gateway-error.ts";
 import { streamFellowshipLogsGatewayEvents } from "@frt/api/services/fellowship-logs-gateway/events/stream-fellowship-logs-gateway-events.ts";
-import { getFellowshipLogsReportFixtureDirectory } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-fixture-paths.ts";
+import { getFellowshipLogsGatewayReportFixtureDirectory } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-fixture-paths.ts";
+import {
+  deriveDungeonRunMetadata,
+  getReportOrFail,
+  makeFellowshipLogsGatewayRateLimitDataTracker,
+  readAndTrackGraphQLResponse,
+} from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-response-helpers.ts";
 import {
   type FellowshipLogsGatewayDungeonRunMetadata,
   type FellowshipLogsGatewayShape,
   type GetFellowshipLogsGatewayReportOptions,
 } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
-import {
-  deriveDungeonRunMetadata,
-  getReportOrFail,
-  makeFellowshipLogsRateLimitDataTracker,
-  readAndTrackGraphQLResponse,
-} from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-response-helpers.ts";
 import { FellowshipLogsGatewayDungeonRunMetadataResponseDataSchema } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-dungeon-run-metadata-schema.ts";
 import { makeFellowshipLogsGatewayGraphQLResponseSchema } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-graphql-schema.ts";
 import { FellowshipLogsGatewayReportResponseDataSchema } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-report-schema.ts";
@@ -34,19 +34,19 @@ type MakeFellowshipLogsFixtureLiveOptions = {
   readonly fixtureDirectory: string;
 };
 
-const FellowshipLogsMetadataResponseJsonSchema =
+const FellowshipLogsGatewayMetadataResponseJsonSchema =
   FellowshipLogsGatewayDungeonRunMetadataResponseDataSchema.pipe(
     makeFellowshipLogsGatewayGraphQLResponseSchema,
     Schema.fromJsonString,
   );
 
-const FellowshipLogsReportPageResponseJsonSchema =
+const FellowshipLogsGatewayReportPageResponseJsonSchema =
   FellowshipLogsGatewayReportResponseDataSchema.pipe(
     makeFellowshipLogsGatewayGraphQLResponseSchema,
     Schema.fromJsonString,
   );
 
-const FellowshipLogsRateLimitResponseJsonSchema =
+const FellowshipLogsGatewayRateLimitResponseJsonSchema =
   FellowshipLogsRateLimitResponseDataSchema.pipe(
     makeFellowshipLogsGatewayGraphQLResponseSchema,
     Schema.fromJsonString,
@@ -88,12 +88,13 @@ export function makeFellowshipLogsGatewayFixture({
   return E.gen(function* () {
     const fileSystem = yield* FileSystem.FileSystem;
     const path = yield* Path.Path;
-    const rateLimitTracker = yield* makeFellowshipLogsRateLimitDataTracker();
+    const rateLimitTracker =
+      yield* makeFellowshipLogsGatewayRateLimitDataTracker();
 
     function getReportFixtureDirectory(
       options: GetFellowshipLogsGatewayReportOptions,
     ) {
-      return getFellowshipLogsReportFixtureDirectory({
+      return getFellowshipLogsGatewayReportFixtureDirectory({
         fixtureDirectory,
         options,
         path,
@@ -105,14 +106,14 @@ export function makeFellowshipLogsGatewayFixture({
         const contents = yield* fileSystem.readFileString(filePath);
 
         return yield* Schema.decodeEffect(
-          FellowshipLogsReportPageResponseJsonSchema,
+          FellowshipLogsGatewayReportPageResponseJsonSchema,
         )(contents);
       }).pipe(E.mapError(mapFixtureError));
     };
 
     const fetchReportPage = E.fn("FellowshipLogsFixture.fetchReportPage")(
       function* (
-        response: typeof FellowshipLogsReportPageResponseJsonSchema.Type,
+        response: typeof FellowshipLogsGatewayReportPageResponseJsonSchema.Type,
         reportCode: FellowshipLogsReportCode,
       ) {
         const responseData = yield* E.succeed(response).pipe(
@@ -174,7 +175,7 @@ export function makeFellowshipLogsGatewayFixture({
           const contents = yield* fileSystem.readFileString(metadataPath);
 
           return yield* Schema.decodeEffect(
-            FellowshipLogsMetadataResponseJsonSchema,
+            FellowshipLogsGatewayMetadataResponseJsonSchema,
           )(contents);
         }).pipe(
           E.mapError(mapFixtureError),
@@ -283,7 +284,7 @@ export function makeFellowshipLogsGatewayFixture({
         const contents = yield* fileSystem.readFileString(fixturePath);
 
         return yield* Schema.decodeEffect(
-          FellowshipLogsRateLimitResponseJsonSchema,
+          FellowshipLogsGatewayRateLimitResponseJsonSchema,
         )(contents);
       }).pipe(
         E.mapError(mapFixtureError),

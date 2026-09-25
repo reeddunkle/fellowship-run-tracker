@@ -18,7 +18,7 @@ type FellowshipLogsGatewayReportActor = NonNullable<
   FellowshipLogsGatewayReport["masterData"]["actors"]
 >[number];
 
-type FellowshipLogsEventContext = {
+type FellowshipLogsGatewayEventContext = {
   readonly actors: ReadonlyArray<FellowshipLogsGatewayReportActor>;
   readonly event: FellowshipLogsGatewayConvertibleEvent;
   readonly reportStartTime: number;
@@ -79,7 +79,7 @@ function decodeEvent({
       actors,
       event: convertibleEvent,
       reportStartTime,
-    } satisfies FellowshipLogsEventContext;
+    } satisfies FellowshipLogsGatewayEventContext;
   });
 }
 

@@ -14,8 +14,8 @@ import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
 import { FellowshipLogsGatewayResponseCache } from "@frt/api/services/fellowship-logs-gateway/cache/fellowship-logs-gateway-response-cache-service.ts";
 import {
   FELLOWSHIP_LOGS_FIXTURE_DIRECTORY,
-  getFellowshipLogsReportFixtureDirectory,
-} from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-fixture-paths.ts";
+  getFellowshipLogsGatewayReportFixtureDirectory,
+} from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-fixture-paths.ts";
 import {
   FellowshipLogsGateway,
   type FellowshipLogsGatewayShape,
@@ -83,7 +83,7 @@ const makeRecordedFightQuery = E.fn("test.makeRecordedFightQuery")(function* (
   const fileSystem = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
 
-  const directory = getFellowshipLogsReportFixtureDirectory({
+  const directory = getFellowshipLogsGatewayReportFixtureDirectory({
     fixtureDirectory: FELLOWSHIP_LOGS_FIXTURE_DIRECTORY,
     options: RECORDED_FIGHT,
     path,

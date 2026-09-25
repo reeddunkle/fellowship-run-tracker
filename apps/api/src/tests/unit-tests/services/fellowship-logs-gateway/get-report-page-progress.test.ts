@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { getReportPageProgress } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-response-helpers.ts";
+import { getReportPageProgress } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-response-helpers.ts";
 
 describe("getReportPageProgress", () => {
   test("is the share of the fight covered up to the next page", () => {

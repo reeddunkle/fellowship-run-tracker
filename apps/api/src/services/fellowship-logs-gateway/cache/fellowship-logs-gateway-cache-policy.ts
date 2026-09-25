@@ -4,13 +4,13 @@ import * as Option from "effect/Option";
 
 import { type FellowshipLogsResponseOperation } from "@frt/db/validation/fellowship-logs-response/fellowship-logs-response-operation-schema.ts";
 
-export const FELLOWSHIP_LOGS_CACHE_MAX_BYTES = 1024 ** 3;
+export const FELLOWSHIP_LOGS_GATEWAY_CACHE_MAX_BYTES = 1024 ** 3;
 
 const RECENT_REPORT_AGE = Duration.hours(2);
 
 const RECENT_REPORT_TIME_TO_LIVE = Duration.minutes(5);
 
-export function makeFellowshipLogsResponseKey(
+export function makeFellowshipLogsGatewayResponseKey(
   operation: FellowshipLogsResponseOperation,
   parts: ReadonlyArray<number | string>,
 ): string {
