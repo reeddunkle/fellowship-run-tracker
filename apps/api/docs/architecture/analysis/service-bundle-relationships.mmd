@@ -1,22 +1,22 @@
 flowchart LR
   LiveSplit_layer["LiveSplit.layer"]
-  Layer_provideMerge_BackgroundJobService_layer_["Layer.provideMerge(BackgroundJobService.layer)"]
+  Layer_provideMerge_BackgroundJobQueue_layer_["Layer.provideMerge(BackgroundJobQueue.layer)"]
   ApiServicesLayer["ApiServicesLayer"]
-  ApiServicesWithBackgroundJobsLayer["ApiServicesWithBackgroundJobsLayer"]
+  ApiServicesWithBackgroundJobQueueLayer["ApiServicesWithBackgroundJobQueueLayer"]
   ApiRuntimeLayer["ApiRuntimeLayer"]
   FellowshipTracker_layer["FellowshipTracker.layer"]
-  BackgroundJobService_layer["BackgroundJobService.layer"]
-  LiveSplit_layer -->|"strict subset · 1 shared"| Layer_provideMerge_BackgroundJobService_layer_
+  BackgroundJobQueue_layer["BackgroundJobQueue.layer"]
+  LiveSplit_layer -->|"strict subset · 1 shared"| Layer_provideMerge_BackgroundJobQueue_layer_
   LiveSplit_layer -->|"strict subset · 1 shared"| ApiServicesLayer
-  LiveSplit_layer -->|"strict subset · 1 shared"| ApiServicesWithBackgroundJobsLayer
+  LiveSplit_layer -->|"strict subset · 1 shared"| ApiServicesWithBackgroundJobQueueLayer
   LiveSplit_layer -->|"strict subset · 1 shared"| ApiRuntimeLayer
   FellowshipTracker_layer -->|"strict subset · 1 shared"| ApiRuntimeLayer
-  BackgroundJobService_layer -->|"strict subset · 1 shared"| Layer_provideMerge_BackgroundJobService_layer_
-  BackgroundJobService_layer -->|"strict subset · 1 shared"| ApiServicesWithBackgroundJobsLayer
-  BackgroundJobService_layer -->|"strict subset · 1 shared"| ApiRuntimeLayer
-  ApiServicesLayer -->|"strict subset · 10 shared"| Layer_provideMerge_BackgroundJobService_layer_
-  Layer_provideMerge_BackgroundJobService_layer_ ---|"equal · 11 services"| ApiServicesWithBackgroundJobsLayer
-  Layer_provideMerge_BackgroundJobService_layer_ -->|"strict subset · 11 shared"| ApiRuntimeLayer
-  ApiServicesLayer -->|"strict subset · 10 shared"| ApiServicesWithBackgroundJobsLayer
+  BackgroundJobQueue_layer -->|"strict subset · 1 shared"| Layer_provideMerge_BackgroundJobQueue_layer_
+  BackgroundJobQueue_layer -->|"strict subset · 1 shared"| ApiServicesWithBackgroundJobQueueLayer
+  BackgroundJobQueue_layer -->|"strict subset · 1 shared"| ApiRuntimeLayer
+  ApiServicesLayer -->|"strict subset · 10 shared"| Layer_provideMerge_BackgroundJobQueue_layer_
+  Layer_provideMerge_BackgroundJobQueue_layer_ ---|"equal · 11 services"| ApiServicesWithBackgroundJobQueueLayer
+  Layer_provideMerge_BackgroundJobQueue_layer_ -->|"strict subset · 11 shared"| ApiRuntimeLayer
+  ApiServicesLayer -->|"strict subset · 10 shared"| ApiServicesWithBackgroundJobQueueLayer
   ApiServicesLayer -->|"strict subset · 10 shared"| ApiRuntimeLayer
-  ApiServicesWithBackgroundJobsLayer -->|"strict subset · 11 shared"| ApiRuntimeLayer
+  ApiServicesWithBackgroundJobQueueLayer -->|"strict subset · 11 shared"| ApiRuntimeLayer

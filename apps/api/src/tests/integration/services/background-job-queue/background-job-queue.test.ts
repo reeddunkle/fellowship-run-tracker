@@ -16,7 +16,8 @@ import {
 } from "@frt/api/application/fellowship-logs-dungeon-run-importer/fellowship-logs-dungeon-run-importer-service.ts";
 import { FellowshipLogsDungeonRunImportRunNotFoundError } from "@frt/api/errors/fellowship-logs-dungeon-run-import-error.ts";
 import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
-import { BackgroundJobService } from "@frt/api/services/background-job/background-job-service.ts";
+import { BackgroundJobQueue } from "@frt/api/services/background-job-queue/background-job-queue-service.ts";
+import { BackgroundJobRunner } from "@frt/api/services/background-job-runner/background-job-runner-service.ts";
 import { DungeonRunRepository } from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
 import { makeFellowshipLogsDungeonRunImporterIntegrationTestHarness } from "@frt/api/tests/common/harnesses/fellowship-logs-dungeon-run-importer-integration-test-harness.ts";
 import { makePersistenceTestLayer } from "@frt/api/tests/common/layers/persistence-test-layer.ts";
@@ -36,6 +37,10 @@ import { type BackgroundJobId } from "@frt/shared/background-job/background-job-
 import { DungeonRunIdSchema } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 import { FellowshipLogsFightIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
 import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
+
+const BackgroundJobRunnerTestLive = BackgroundJobRunner.layerNoDeps.pipe(
+  Layer.provide(NodePlatformLayer),
+);
 
 const REPORT_CODE = Schema.decodeSync(FellowshipLogsReportCodeSchema)(
   "XdfFZzgHBJNr6m3v",
@@ -66,7 +71,7 @@ function makeStubImporterLayer(
   return Layer.succeed(FellowshipLogsDungeonRunImporter, { importReport });
 }
 
-function makeBackgroundJobServiceTestLayer({
+function makeBackgroundJobQueueTestLayer({
   databaseFilename,
   importReport,
 }: {
@@ -83,7 +88,8 @@ function makeBackgroundJobServiceTestLayer({
           makeStubImporterLayer(importReport),
         );
 
-  return BackgroundJobService.layerNoDeps.pipe(
+  return BackgroundJobQueue.layerNoDeps.pipe(
+    Layer.provide(BackgroundJobRunnerTestLive),
     Layer.provideMerge(DependenciesTestLive),
     Layer.provide(NodePlatformLayer),
   );
@@ -132,11 +138,11 @@ const blockForever: FellowshipLogsDungeonRunImporterServiceShape["importReport"]
     return E.never;
   };
 
-describe("BackgroundJobService", () => {
+describe("BackgroundJobQueue", () => {
   test("runs a maintenance job and marks it succeeded", async () => {
     const { finalJob, status } = await withTempDatabase((databaseFilename) => {
       return E.gen(function* () {
-        const backgroundJobService = yield* BackgroundJobService;
+        const backgroundJobQueue = yield* BackgroundJobQueue;
         const dungeonRunRepository = yield* DungeonRunRepository;
 
         const dungeonRun = yield* dungeonRunRepository.createLocal({
@@ -146,7 +152,7 @@ describe("BackgroundJobService", () => {
 
         yield* E.sleep("5 millis");
 
-        const { job } = yield* backgroundJobService.offer({
+        const { job } = yield* backgroundJobQueue.offer({
           _tag: "InterruptUnfinishedDungeonRuns",
           createdBefore: yield* DateTime.now,
         });
@@ -161,9 +167,7 @@ describe("BackgroundJobService", () => {
           finalJob: Option.getOrThrow(settled),
           status: Option.getOrThrow(localRun).status,
         };
-      }).pipe(
-        E.provide(makeBackgroundJobServiceTestLayer({ databaseFilename })),
-      );
+      }).pipe(E.provide(makeBackgroundJobQueueTestLayer({ databaseFilename })));
     });
 
     expect(status).toBe("INTERRUPTED");
@@ -174,9 +178,9 @@ describe("BackgroundJobService", () => {
   test("imports a Fellowship Logs run and records its result", async () => {
     const { job, visible } = await withTempDatabase((databaseFilename) => {
       return E.gen(function* () {
-        const backgroundJobService = yield* BackgroundJobService;
+        const backgroundJobQueue = yield* BackgroundJobQueue;
 
-        const offered = yield* backgroundJobService.offer(makeImportJob());
+        const offered = yield* backgroundJobQueue.offer(makeImportJob());
 
         const settled = yield* waitForJob(
           offered.job.id,
@@ -185,11 +189,9 @@ describe("BackgroundJobService", () => {
 
         return {
           job: Option.getOrThrow(settled),
-          visible: yield* backgroundJobService.listVisible(),
+          visible: yield* backgroundJobQueue.listVisible(),
         };
-      }).pipe(
-        E.provide(makeBackgroundJobServiceTestLayer({ databaseFilename })),
-      );
+      }).pipe(E.provide(makeBackgroundJobQueueTestLayer({ databaseFilename })));
     });
 
     expect(job.result).toMatchObject({ dungeonRunId: expect.any(String) });
@@ -199,15 +201,15 @@ describe("BackgroundJobService", () => {
   test("returns the existing job when the same import is offered twice", async () => {
     const { first, second } = await withTempDatabase((databaseFilename) => {
       return E.gen(function* () {
-        const backgroundJobService = yield* BackgroundJobService;
+        const backgroundJobQueue = yield* BackgroundJobQueue;
 
         return {
-          first: yield* backgroundJobService.offer(makeImportJob()),
-          second: yield* backgroundJobService.offer(makeImportJob()),
+          first: yield* backgroundJobQueue.offer(makeImportJob()),
+          second: yield* backgroundJobQueue.offer(makeImportJob()),
         };
       }).pipe(
         E.provide(
-          makeBackgroundJobServiceTestLayer({
+          makeBackgroundJobQueueTestLayer({
             databaseFilename,
             importReport: blockForever,
           }),
@@ -238,10 +240,10 @@ describe("BackgroundJobService", () => {
             };
 
           return yield* E.gen(function* () {
-            const backgroundJobService = yield* BackgroundJobService;
+            const backgroundJobQueue = yield* BackgroundJobQueue;
 
-            const running = yield* backgroundJobService.offer(makeImportJob());
-            const queued = yield* backgroundJobService.offer(
+            const running = yield* backgroundJobQueue.offer(makeImportJob());
+            const queued = yield* backgroundJobQueue.offer(
               makeImportJob(OTHER_FIGHT_ID),
             );
 
@@ -249,8 +251,8 @@ describe("BackgroundJobService", () => {
             // fiber to interrupt.
             yield* Deferred.await(started).pipe(E.timeout("5 seconds"));
 
-            yield* backgroundJobService.cancel({ id: queued.job.id });
-            yield* backgroundJobService.cancel({ id: running.job.id });
+            yield* backgroundJobQueue.cancel({ id: queued.job.id });
+            yield* backgroundJobQueue.cancel({ id: running.job.id });
 
             yield* Deferred.await(interrupted).pipe(E.timeout("5 seconds"));
 
@@ -261,7 +263,7 @@ describe("BackgroundJobService", () => {
             };
           }).pipe(
             E.provide(
-              makeBackgroundJobServiceTestLayer({
+              makeBackgroundJobQueueTestLayer({
                 databaseFilename,
                 importReport,
               }),
@@ -279,16 +281,16 @@ describe("BackgroundJobService", () => {
   test("fails with NotFound when cancelling a finished job", async () => {
     const error = await withTempDatabase((databaseFilename) => {
       return E.gen(function* () {
-        const backgroundJobService = yield* BackgroundJobService;
+        const backgroundJobQueue = yield* BackgroundJobQueue;
 
-        const { job } = yield* backgroundJobService.offer(makeImportJob());
+        const { job } = yield* backgroundJobQueue.offer(makeImportJob());
 
         yield* waitForJob(job.id, hasStatus("SUCCEEDED"));
 
-        return yield* backgroundJobService.cancel({ id: job.id }).pipe(E.flip);
+        return yield* backgroundJobQueue.cancel({ id: job.id }).pipe(E.flip);
       }).pipe(
         E.provide(
-          makeBackgroundJobServiceTestLayer({
+          makeBackgroundJobQueueTestLayer({
             databaseFilename,
             importReport: () => {
               return E.succeed({ dungeonRunId: STUB_DUNGEON_RUN_ID });
@@ -298,7 +300,7 @@ describe("BackgroundJobService", () => {
       );
     });
 
-    expect(error._tag).toBe("BackgroundJobNotFoundError");
+    expect(error._tag).toBe("BackgroundJobQueueNotFoundError");
   });
 
   test("records a failure, then runs the job again on retry", async () => {
@@ -321,13 +323,13 @@ describe("BackgroundJobService", () => {
           };
 
         return E.gen(function* () {
-          const backgroundJobService = yield* BackgroundJobService;
+          const backgroundJobQueue = yield* BackgroundJobQueue;
 
-          const { job } = yield* backgroundJobService.offer(makeImportJob());
+          const { job } = yield* backgroundJobQueue.offer(makeImportJob());
 
           const failed = yield* waitForJob(job.id, hasStatus("FAILED"));
 
-          yield* backgroundJobService.retry({ id: job.id });
+          yield* backgroundJobQueue.retry({ id: job.id });
 
           const retried = yield* waitForJob(job.id, hasStatus("SUCCEEDED"));
 
@@ -337,7 +339,7 @@ describe("BackgroundJobService", () => {
           };
         }).pipe(
           E.provide(
-            makeBackgroundJobServiceTestLayer({
+            makeBackgroundJobQueueTestLayer({
               databaseFilename,
               importReport,
             }),
@@ -359,9 +361,9 @@ describe("BackgroundJobService", () => {
       (databaseFilename) => {
         return E.gen(function* () {
           const firstSession = yield* E.gen(function* () {
-            const backgroundJobService = yield* BackgroundJobService;
+            const backgroundJobQueue = yield* BackgroundJobQueue;
 
-            const { job } = yield* backgroundJobService.offer(makeImportJob());
+            const { job } = yield* backgroundJobQueue.offer(makeImportJob());
 
             const running = yield* waitForJob(job.id, hasStatus("RUNNING"));
 
@@ -371,7 +373,7 @@ describe("BackgroundJobService", () => {
             };
           }).pipe(
             E.provide(
-              makeBackgroundJobServiceTestLayer({
+              makeBackgroundJobQueueTestLayer({
                 databaseFilename,
                 importReport: blockForever,
               }),
@@ -383,7 +385,7 @@ describe("BackgroundJobService", () => {
             hasStatus("SUCCEEDED"),
           ).pipe(
             E.provide(
-              makeBackgroundJobServiceTestLayer({
+              makeBackgroundJobQueueTestLayer({
                 databaseFilename,
                 importReport: () => {
                   return E.succeed({ dungeonRunId: STUB_DUNGEON_RUN_ID });
@@ -423,24 +425,24 @@ describe("BackgroundJobService", () => {
             };
 
           return yield* E.gen(function* () {
-            const backgroundJobService = yield* BackgroundJobService;
+            const backgroundJobQueue = yield* BackgroundJobQueue;
 
-            const { job } = yield* backgroundJobService.offer(makeImportJob());
+            const { job } = yield* backgroundJobQueue.offer(makeImportJob());
 
             yield* Deferred.await(reported).pipe(E.timeout("5 seconds"));
 
-            const running = yield* backgroundJobService.listVisible();
+            const running = yield* backgroundJobQueue.listVisible();
 
             yield* Deferred.succeed(release, undefined);
             yield* waitForJob(job.id, hasStatus("SUCCEEDED"));
 
             return {
-              afterSuccess: yield* backgroundJobService.listVisible(),
+              afterSuccess: yield* backgroundJobQueue.listVisible(),
               whileRunning: running,
             };
           }).pipe(
             E.provide(
-              makeBackgroundJobServiceTestLayer({
+              makeBackgroundJobQueueTestLayer({
                 databaseFilename,
                 importReport,
               }),
@@ -474,24 +476,24 @@ describe("BackgroundJobService", () => {
             };
 
           return yield* E.gen(function* () {
-            const backgroundJobService = yield* BackgroundJobService;
+            const backgroundJobQueue = yield* BackgroundJobQueue;
 
-            const { job } = yield* backgroundJobService.offer(makeImportJob());
+            const { job } = yield* backgroundJobQueue.offer(makeImportJob());
 
             yield* Deferred.await(reported).pipe(E.timeout("5 seconds"));
 
-            const beforeCancel = yield* backgroundJobService.listVisible();
+            const beforeCancel = yield* backgroundJobQueue.listVisible();
 
-            yield* backgroundJobService.cancel({ id: job.id });
+            yield* backgroundJobQueue.cancel({ id: job.id });
             yield* waitForJob(job.id, Option.isNone);
 
             return {
               progressAfterReport: beforeCancel[0]?.progress,
-              visibleAfterCancel: yield* backgroundJobService.listVisible(),
+              visibleAfterCancel: yield* backgroundJobQueue.listVisible(),
             };
           }).pipe(
             E.provide(
-              makeBackgroundJobServiceTestLayer({
+              makeBackgroundJobQueueTestLayer({
                 databaseFilename,
                 importReport,
               }),
@@ -525,19 +527,19 @@ describe("BackgroundJobService", () => {
           };
 
         return E.gen(function* () {
-          const backgroundJobService = yield* BackgroundJobService;
+          const backgroundJobQueue = yield* BackgroundJobQueue;
 
-          const { job } = yield* backgroundJobService.offer(makeImportJob());
+          const { job } = yield* backgroundJobQueue.offer(makeImportJob());
 
           yield* waitForJob(job.id, hasStatus("FAILED"));
 
-          const error = yield* backgroundJobService
+          const error = yield* backgroundJobQueue
             .cancel({ id: job.id })
             .pipe(E.flip);
 
           // A cancel that arrives after the job finished must not linger and
           // then delete the retried job, which reuses the same id.
-          yield* backgroundJobService.retry({ id: job.id });
+          yield* backgroundJobQueue.retry({ id: job.id });
 
           const retried = yield* waitForJob(job.id, hasStatus("SUCCEEDED"));
 
@@ -547,7 +549,7 @@ describe("BackgroundJobService", () => {
           };
         }).pipe(
           E.provide(
-            makeBackgroundJobServiceTestLayer({
+            makeBackgroundJobQueueTestLayer({
               databaseFilename,
               importReport,
             }),
@@ -556,7 +558,7 @@ describe("BackgroundJobService", () => {
       },
     );
 
-    expect(cancelError._tag).toBe("BackgroundJobNotFoundError");
+    expect(cancelError._tag).toBe("BackgroundJobQueueNotFoundError");
     expect(retriedJob.result).toEqual({ dungeonRunId: STUB_DUNGEON_RUN_ID });
   });
 
@@ -564,7 +566,7 @@ describe("BackgroundJobService", () => {
     const { existingDungeonRunId, job } = await withTempDatabase(
       (databaseFilename) => {
         return E.gen(function* () {
-          const backgroundJobService = yield* BackgroundJobService;
+          const backgroundJobQueue = yield* BackgroundJobQueue;
           const importer = yield* FellowshipLogsDungeonRunImporter;
 
           // As if the app stopped after the import committed but before the
@@ -575,7 +577,7 @@ describe("BackgroundJobService", () => {
             reportCode: REPORT_CODE,
           });
 
-          const offered = yield* backgroundJobService.offer(makeImportJob());
+          const offered = yield* backgroundJobQueue.offer(makeImportJob());
 
           const settled = yield* waitForJob(
             offered.job.id,
@@ -587,7 +589,7 @@ describe("BackgroundJobService", () => {
             job: Option.getOrThrow(settled),
           };
         }).pipe(
-          E.provide(makeBackgroundJobServiceTestLayer({ databaseFilename })),
+          E.provide(makeBackgroundJobQueueTestLayer({ databaseFilename })),
         );
       },
     );
@@ -619,31 +621,31 @@ describe("BackgroundJobService", () => {
 
       const PersistenceTestLive = makePersistenceTestLayer(databaseFilename);
 
-      const BackgroundJobServiceTestLive =
-        BackgroundJobService.layerNoDeps.pipe(
-          Layer.provide(FlakyBackgroundJobDAOLive),
-          Layer.provideMerge(
-            Layer.merge(
-              PersistenceTestLive,
-              makeStubImporterLayer(() => {
-                return E.succeed({ dungeonRunId: STUB_DUNGEON_RUN_ID });
-              }),
-            ),
+      const BackgroundJobQueueTestLive = BackgroundJobQueue.layerNoDeps.pipe(
+        Layer.provide(BackgroundJobRunnerTestLive),
+        Layer.provide(FlakyBackgroundJobDAOLive),
+        Layer.provideMerge(
+          Layer.merge(
+            PersistenceTestLive,
+            makeStubImporterLayer(() => {
+              return E.succeed({ dungeonRunId: STUB_DUNGEON_RUN_ID });
+            }),
           ),
-          Layer.provide(NodePlatformLayer),
-        );
+        ),
+        Layer.provide(NodePlatformLayer),
+      );
 
       return E.gen(function* () {
-        const backgroundJobService = yield* BackgroundJobService;
+        const backgroundJobQueue = yield* BackgroundJobQueue;
 
-        const { job: offered } = yield* backgroundJobService.offer(
+        const { job: offered } = yield* backgroundJobQueue.offer(
           makeImportJob(),
         );
 
         const settled = yield* waitForJob(offered.id, hasStatus("SUCCEEDED"));
 
         return Option.getOrThrow(settled);
-      }).pipe(E.provide(BackgroundJobServiceTestLive));
+      }).pipe(E.provide(BackgroundJobQueueTestLive));
     });
 
     expect(job.status).toBe("SUCCEEDED");
@@ -652,13 +654,13 @@ describe("BackgroundJobService", () => {
   test("emits a new revision when a job changes", async () => {
     const revisions = await withTempDatabase((databaseFilename) => {
       return E.gen(function* () {
-        const backgroundJobService = yield* BackgroundJobService;
+        const backgroundJobQueue = yield* BackgroundJobQueue;
 
-        const initial = yield* backgroundJobService.revision;
+        const initial = yield* backgroundJobQueue.revision;
 
-        yield* backgroundJobService.offer(makeImportJob());
+        yield* backgroundJobQueue.offer(makeImportJob());
 
-        return yield* backgroundJobService.changes.pipe(
+        return yield* backgroundJobQueue.changes.pipe(
           Stream.filter((revision) => {
             return revision > initial;
           }),
@@ -668,7 +670,7 @@ describe("BackgroundJobService", () => {
         );
       }).pipe(
         E.provide(
-          makeBackgroundJobServiceTestLayer({
+          makeBackgroundJobQueueTestLayer({
             databaseFilename,
             importReport: blockForever,
           }),

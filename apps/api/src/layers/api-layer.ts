@@ -11,14 +11,14 @@ import {
 import { FellowshipTracker } from "@frt/api/application/fellowship-tracker/fellowship-tracker-service.ts";
 import { ApiLifecycleLayer } from "@frt/api/layers/api-lifecycle-layer.ts";
 import { ApiServicesLayer } from "@frt/api/layers/api-services-layer.ts";
-import { BackgroundJobService } from "@frt/api/services/background-job/background-job-service.ts";
+import { BackgroundJobQueue } from "@frt/api/services/background-job-queue/background-job-queue-service.ts";
 
-const ApiServicesWithBackgroundJobsLayer = ApiServicesLayer.pipe(
-  Layer.provideMerge(BackgroundJobService.layer),
+const ApiServicesWithBackgroundJobQueueLayer = ApiServicesLayer.pipe(
+  Layer.provideMerge(BackgroundJobQueue.layer),
 );
 
 const ApiRuntimeLayer = Layer.mergeAll(
-  ApiServicesWithBackgroundJobsLayer,
+  ApiServicesWithBackgroundJobQueueLayer,
   BackgroundJobWebSocketBroadcaster.layer,
   FellowshipTracker.layer,
   DungeonRunWebSocketBroadcaster.layer,

@@ -2,7 +2,7 @@ import * as DateTime from "effect/DateTime";
 import * as Schema from "effect/Schema";
 import { describe, expect, test } from "vitest";
 
-import { getBackgroundJobIdempotencyKey } from "@frt/api/services/background-job/get-background-job-idempotency-key.ts";
+import { getBackgroundJobIdempotencyKey } from "@frt/api/services/background-job-queue/get-background-job-idempotency-key.ts";
 import { MOCK_DUNGEON_ID } from "@frt/db/tests/common/fixtures/configuration-fixtures.ts";
 import { FellowshipLogsFightIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
 import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";

@@ -6,7 +6,8 @@ import { describe, expect, test } from "vitest";
 
 import { FellowshipLogsDungeonRunImporter } from "@frt/api/application/fellowship-logs-dungeon-run-importer/fellowship-logs-dungeon-run-importer-service.ts";
 import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
-import { runBackgroundJob } from "@frt/api/services/background-job/run-background-job.ts";
+import { type BackgroundJobPayload } from "@frt/api/services/background-job-queue/background-job-payload-schema.ts";
+import { BackgroundJobRunner } from "@frt/api/services/background-job-runner/background-job-runner-service.ts";
 import { makePersistenceTestLayer } from "@frt/api/tests/common/layers/persistence-test-layer.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { BackgroundJobDAO } from "@frt/db/daos/background-job/background-job-dao.ts";
@@ -19,6 +20,18 @@ const UnusedFellowshipLogsDungeonRunImporter = Layer.succeed(
     },
   },
 );
+
+const BackgroundJobRunnerTestLayer = BackgroundJobRunner.layerNoDeps.pipe(
+  Layer.provide(
+    Layer.merge(UnusedFellowshipLogsDungeonRunImporter, NodePlatformLayer),
+  ),
+);
+
+function runJob(job: BackgroundJobPayload) {
+  return BackgroundJobRunner.use((backgroundJobRunner) => {
+    return backgroundJobRunner.run(job, { reportProgress: () => E.void });
+  }).pipe(E.provide(BackgroundJobRunnerTestLayer));
+}
 
 const finishJob = E.fn("test.finish-background-job")(function* ({
   queue,
@@ -66,20 +79,10 @@ describe("PruneFinishedBackgroundJobs job", () => {
         status: "FAILED",
       });
 
-      yield* runBackgroundJob(
-        {
-          _tag: "PruneFinishedBackgroundJobs",
-          finishedBefore: DateTime.add(yield* DateTime.now, { minutes: 1 }),
-        },
-        { reportProgress: () => E.void },
-      ).pipe(
-        E.provide(
-          Layer.merge(
-            UnusedFellowshipLogsDungeonRunImporter,
-            NodePlatformLayer,
-          ),
-        ),
-      );
+      yield* runJob({
+        _tag: "PruneFinishedBackgroundJobs",
+        finishedBefore: DateTime.add(yield* DateTime.now, { minutes: 1 }),
+      });
 
       return {
         failedImport: yield* backgroundJobDAO.getById({ id: failedImport }),

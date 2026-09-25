@@ -3,7 +3,7 @@ import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { describe, expect, test } from "vitest";
 
-import { createBackgroundJobApiItem } from "@frt/api/services/api/background-job/create-background-job-api-response.ts";
+import { createBackgroundJobApiItem } from "@frt/api/services/background-job/create-background-job-api-response.ts";
 import { BackgroundJobModel } from "@frt/db/models/background-job-model.ts";
 import { BackgroundJobIdSchema } from "@frt/shared/background-job/background-job-id-schema.ts";
 

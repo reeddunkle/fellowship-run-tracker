@@ -28,7 +28,7 @@ const PruneFellowshipLogsCacheJobSchema = Schema.TaggedStruct(
 
 const PruneLogFilesJobSchema = Schema.TaggedStruct("PruneLogFiles", {});
 
-export const BackgroundJobSchema = Schema.Union([
+export const BackgroundJobPayloadSchema = Schema.Union([
   ImportFellowshipLogsDungeonRunJobSchema,
   InterruptUnfinishedDungeonRunsJobSchema,
   PruneFellowshipLogsCacheJobSchema,
@@ -36,6 +36,6 @@ export const BackgroundJobSchema = Schema.Union([
   PruneLogFilesJobSchema,
 ]);
 
-export type BackgroundJob = typeof BackgroundJobSchema.Type;
+export type BackgroundJobPayload = typeof BackgroundJobPayloadSchema.Type;
 
-export type BackgroundJobKind = BackgroundJob["_tag"];
+export type BackgroundJobKind = BackgroundJobPayload["_tag"];

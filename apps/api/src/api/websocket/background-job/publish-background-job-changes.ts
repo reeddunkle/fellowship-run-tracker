@@ -2,17 +2,15 @@ import * as E from "effect/Effect";
 import * as Stream from "effect/Stream";
 
 import { BackgroundJobWebSocketBroadcaster } from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
-import { BackgroundJobApiService } from "@frt/api/services/api/background-job/background-job-api-service.ts";
-import { BackgroundJobService } from "@frt/api/services/background-job/background-job-service.ts";
+import { BackgroundJob } from "@frt/api/services/background-job/background-job-service.ts";
 import { type BackgroundJobApiMessage } from "@frt/api-contract/websocket/background-job/background-job-api-message-schema.ts";
 
 export const publishBackgroundJobChanges = E.gen(function* () {
-  const backgroundJobApiService = yield* BackgroundJobApiService;
-  const backgroundJobService = yield* BackgroundJobService;
+  const backgroundJob = yield* BackgroundJob;
   const backgroundJobWebSocketBroadcaster =
     yield* BackgroundJobWebSocketBroadcaster;
 
-  const publishSnapshot = backgroundJobApiService.getSnapshot().pipe(
+  const publishSnapshot = backgroundJob.getSnapshot().pipe(
     E.flatMap((snapshot) => {
       const message = {
         snapshot,
@@ -28,7 +26,7 @@ export const publishBackgroundJobChanges = E.gen(function* () {
     }),
   );
 
-  yield* backgroundJobService.changes.pipe(
+  yield* backgroundJob.changes.pipe(
     Stream.buffer({ capacity: 1, strategy: "sliding" }),
     Stream.runForEach(() => {
       return publishSnapshot;

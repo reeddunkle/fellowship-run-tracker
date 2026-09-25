@@ -10,7 +10,7 @@ import { describe, expect, test } from "vitest";
 
 import { ApiServicesLayer } from "@frt/api/layers/api-services-layer.ts";
 import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
-import { BackgroundJobService } from "@frt/api/services/background-job/background-job-service.ts";
+import { BackgroundJobQueue } from "@frt/api/services/background-job-queue/background-job-queue-service.ts";
 import { EncryptionKeyDirectory } from "@frt/api/services/encryption/encryption-key-directory.ts";
 import { FellowshipLogs } from "@frt/api/services/fellowship-logs/fellowship-logs-service.ts";
 import { makePersistenceTestLayer } from "@frt/api/tests/common/layers/persistence-test-layer.ts";
@@ -36,7 +36,7 @@ describe("API services layer", () => {
 
       const directory = yield* fileSystem.makeTempDirectoryScoped();
       const ApiServicesTestLayer = ApiServicesLayer.pipe(
-        Layer.provideMerge(BackgroundJobService.layer),
+        Layer.provideMerge(BackgroundJobQueue.layer),
         Layer.provideMerge(
           makePersistenceTestLayer(path.join(directory, "database.db")),
         ),
@@ -50,10 +50,10 @@ describe("API services layer", () => {
       );
 
       return yield* E.gen(function* () {
-        const backgroundJobService = yield* BackgroundJobService;
+        const backgroundJobQueue = yield* BackgroundJobQueue;
         const fellowshipLogs = yield* FellowshipLogs;
 
-        const { job } = yield* backgroundJobService.offer({
+        const { job } = yield* backgroundJobQueue.offer({
           _tag: "ImportFellowshipLogsDungeonRun",
           dungeonId: MOCK_DUNGEON_ID,
           dungeonLevel: 10,

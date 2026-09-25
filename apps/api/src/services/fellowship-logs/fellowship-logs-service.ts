@@ -3,10 +3,10 @@ import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { BackgroundJobError } from "@frt/api/errors/background-job-error.ts";
+import { BackgroundJobQueueError } from "@frt/api/errors/background-job-queue-error.ts";
 import { FellowshipLogsDungeonRunImportAlreadyImportedError } from "@frt/api/errors/fellowship-logs-dungeon-run-import-error.ts";
-import { createImportFellowshipLogsDungeonRunBackgroundJobApiItem } from "@frt/api/services/api/background-job/create-background-job-api-response.ts";
-import { BackgroundJobService } from "@frt/api/services/background-job/background-job-service.ts";
+import { createImportFellowshipLogsDungeonRunBackgroundJobApiItem } from "@frt/api/services/background-job/create-background-job-api-response.ts";
+import { BackgroundJobQueue } from "@frt/api/services/background-job-queue/background-job-queue-service.ts";
 import {
   DungeonRunRepository,
   type DungeonRunRepositoryError,
@@ -33,7 +33,7 @@ import {
 } from "@frt/shared/fellowship-logs/fellowship-logs-api-schema.ts";
 
 export type QueueFellowshipLogsDungeonRunImportError =
-  | BackgroundJobError
+  | BackgroundJobQueueError
   | FellowshipLogsDungeonRunDAOError
   | FellowshipLogsDungeonRunImportAlreadyImportedError;
 
@@ -77,7 +77,7 @@ export type FellowshipLogsShape = {
 };
 
 const makeFellowshipLogs = E.gen(function* () {
-  const backgroundJobService = yield* BackgroundJobService;
+  const backgroundJobQueue = yield* BackgroundJobQueue;
   const dungeonRunRepository = yield* DungeonRunRepository;
   const fellowshipLogsGateway = yield* FellowshipLogsGateway;
 
@@ -133,7 +133,7 @@ const makeFellowshipLogs = E.gen(function* () {
         });
       }
 
-      const { job, wasAlreadyQueued } = yield* backgroundJobService.offer({
+      const { job, wasAlreadyQueued } = yield* backgroundJobQueue.offer({
         _tag: "ImportFellowshipLogsDungeonRun",
         ...options,
       });
@@ -144,7 +144,7 @@ const makeFellowshipLogs = E.gen(function* () {
       });
 
       if (Option.isNone(item)) {
-        return yield* new BackgroundJobError({
+        return yield* new BackgroundJobQueueError({
           cause: job,
           operation: "Offer",
         });
@@ -173,7 +173,7 @@ export class FellowshipLogs extends Context.Service<
   static readonly layerNoDeps = Layer.effect(this, makeFellowshipLogs);
 
   /** [KEEP]
-   * Leaves `BackgroundJobService` for the application root to provide, since
+   * Leaves `BackgroundJobQueue` for the application root to provide, since
    * it's the single instance that runs the queue workers.
    */
   static readonly layer = this.layerNoDeps.pipe(

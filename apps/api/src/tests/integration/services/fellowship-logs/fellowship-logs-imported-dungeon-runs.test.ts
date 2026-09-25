@@ -5,12 +5,12 @@ import * as Stream from "effect/Stream";
 import { describe, expect, test } from "vitest";
 
 import { FellowshipLogsDungeonRunImporter } from "@frt/api/application/fellowship-logs-dungeon-run-importer/fellowship-logs-dungeon-run-importer-service.ts";
-import { BackgroundJobSchema } from "@frt/api/services/background-job/background-job-schema.ts";
+import { BackgroundJobPayloadSchema } from "@frt/api/services/background-job-queue/background-job-payload-schema.ts";
 import {
-  BackgroundJobService,
-  type BackgroundJobServiceShape,
-} from "@frt/api/services/background-job/background-job-service.ts";
-import { getBackgroundJobIdempotencyKey } from "@frt/api/services/background-job/get-background-job-idempotency-key.ts";
+  BackgroundJobQueue,
+  type BackgroundJobQueueShape,
+} from "@frt/api/services/background-job-queue/background-job-queue-service.ts";
+import { getBackgroundJobIdempotencyKey } from "@frt/api/services/background-job-queue/get-background-job-idempotency-key.ts";
 import { FellowshipLogs } from "@frt/api/services/fellowship-logs/fellowship-logs-service.ts";
 import { makeFellowshipLogsDungeonRunImporterIntegrationTestHarness } from "@frt/api/tests/common/harnesses/fellowship-logs-dungeon-run-importer-integration-test-harness.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
@@ -40,7 +40,7 @@ function unexpectedCall(name: string) {
 }
 
 const BackgroundJobServiceTestLive = Layer.effect(
-  BackgroundJobService,
+  BackgroundJobQueue,
   E.gen(function* () {
     const backgroundJobDAO = yield* BackgroundJobDAO;
 
@@ -54,7 +54,9 @@ const BackgroundJobServiceTestLive = Layer.effect(
           const { job: row, wasInserted } = yield* backgroundJobDAO.insert({
             idempotencyKey: getBackgroundJobIdempotencyKey(job),
             kind: job._tag,
-            payload: yield* Schema.encodeEffect(BackgroundJobSchema)(job),
+            payload: yield* Schema.encodeEffect(BackgroundJobPayloadSchema)(
+              job,
+            ),
             queue: "test",
           });
 
@@ -64,7 +66,7 @@ const BackgroundJobServiceTestLive = Layer.effect(
       retry: unexpectedCall("retry"),
       revision: E.succeed(0),
       sessionId: "test",
-    } satisfies BackgroundJobServiceShape;
+    } satisfies BackgroundJobQueueShape;
   }),
 );
 

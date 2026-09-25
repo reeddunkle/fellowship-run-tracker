@@ -3,8 +3,8 @@ import * as Match from "effect/Match";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { BackgroundJobSchema } from "@frt/api/services/background-job/background-job-schema.ts";
-import { type VisibleBackgroundJob } from "@frt/api/services/background-job/background-job-service.ts";
+import { BackgroundJobPayloadSchema } from "@frt/api/services/background-job-queue/background-job-payload-schema.ts";
+import { type VisibleBackgroundJob } from "@frt/api/services/background-job-queue/background-job-queue-service.ts";
 import {
   type BackgroundJobApiItem,
   type ImportFellowshipLogsDungeonRunBackgroundJobApiItem,
@@ -12,7 +12,9 @@ import {
   ImportFellowshipLogsDungeonRunJobResultSchema,
 } from "@frt/shared/background-job/background-job-api-schema.ts";
 
-const decodeBackgroundJob = Schema.decodeUnknownOption(BackgroundJobSchema);
+const decodeBackgroundJobPayload = Schema.decodeUnknownOption(
+  BackgroundJobPayloadSchema,
+);
 
 const decodeImportPayload = Schema.decodeUnknownOption(
   ImportFellowshipLogsDungeonRunJobPayloadSchema,
@@ -70,7 +72,7 @@ export function createImportFellowshipLogsDungeonRunBackgroundJobApiItem(
 export function createBackgroundJobApiItem(
   visibleJob: VisibleBackgroundJob,
 ): Option.Option<BackgroundJobApiItem> {
-  return decodeBackgroundJob(visibleJob.job.payload).pipe(
+  return decodeBackgroundJobPayload(visibleJob.job.payload).pipe(
     Option.flatMap((job) => {
       return Match.value(job).pipe(
         Match.tagsExhaustive({

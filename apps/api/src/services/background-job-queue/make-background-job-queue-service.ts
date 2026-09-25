@@ -19,21 +19,23 @@ import * as SubscriptionRef from "effect/SubscriptionRef";
 import {
   BackgroundJobAttemptsExhaustedError,
   BackgroundJobDeferredError,
-  BackgroundJobError,
   BackgroundJobInvalidPayloadError,
-  BackgroundJobNotFoundError,
   BackgroundJobUnexpectedError,
 } from "@frt/api/errors/background-job-error.ts";
+import {
+  BackgroundJobQueueError,
+  BackgroundJobQueueNotFoundError,
+} from "@frt/api/errors/background-job-queue-error.ts";
 import { SESSION_STARTED_AT } from "@frt/api/helpers/session-started-at.ts";
+import { BackgroundJobPayloadSchema } from "@frt/api/services/background-job-queue/background-job-payload-schema.ts";
+import { type BackgroundJobQueueShape } from "@frt/api/services/background-job-queue/background-job-queue-service.ts";
 import {
   BACKGROUND_JOB_QUEUE_BY_KIND,
   BACKGROUND_JOB_QUEUES,
   type BackgroundJobQueueName,
-} from "@frt/api/services/background-job/background-job-queues.ts";
-import { BackgroundJobSchema } from "@frt/api/services/background-job/background-job-schema.ts";
-import { type BackgroundJobServiceShape } from "@frt/api/services/background-job/background-job-service.ts";
-import { getBackgroundJobIdempotencyKey } from "@frt/api/services/background-job/get-background-job-idempotency-key.ts";
-import { runBackgroundJob } from "@frt/api/services/background-job/run-background-job.ts";
+} from "@frt/api/services/background-job-queue/background-job-queues.ts";
+import { getBackgroundJobIdempotencyKey } from "@frt/api/services/background-job-queue/get-background-job-idempotency-key.ts";
+import { BackgroundJobRunner } from "@frt/api/services/background-job-runner/background-job-runner-service.ts";
 import { BackgroundJobDAO } from "@frt/db/daos/background-job/background-job-dao.ts";
 import { type BackgroundJobDAOError } from "@frt/db/errors/background-job-dao-error.ts";
 import { type BackgroundJobModel } from "@frt/db/models/background-job-model.ts";
@@ -41,7 +43,7 @@ import { type BackgroundJobFailure } from "@frt/shared/background-job/background
 import { type BackgroundJobId } from "@frt/shared/background-job/background-job-id-schema.ts";
 import { type BackgroundJobStatus } from "@frt/shared/background-job/background-job-status-schema.ts";
 
-type BackgroundJobOperation = BackgroundJobError["operation"];
+type BackgroundJobOperation = BackgroundJobQueueError["operation"];
 
 const QUEUE_NAMES = R.keys(BACKGROUND_JOB_QUEUES);
 
@@ -110,20 +112,21 @@ function mapCommandError(
         "BackgroundJobDAOError",
         "BackgroundJobNotFoundError",
         () => {
-          return E.fail(new BackgroundJobNotFoundError({ id, operation }));
+          return E.fail(new BackgroundJobQueueNotFoundError({ id, operation }));
         },
       ),
       E.mapError((cause) => {
-        return cause instanceof BackgroundJobNotFoundError
+        return cause instanceof BackgroundJobQueueNotFoundError
           ? cause
-          : new BackgroundJobError({ cause, operation });
+          : new BackgroundJobQueueError({ cause, operation });
       }),
     );
   };
 }
 
-export const makeBackgroundJobService = E.gen(function* () {
+export const makeBackgroundJobQueue = E.gen(function* () {
   const backgroundJobDAO = yield* BackgroundJobDAO;
+  const backgroundJobRunner = yield* BackgroundJobRunner;
 
   const sessionId = String(DateTime.toEpochMillis(SESSION_STARTED_AT));
   const revisionRef = yield* SubscriptionRef.make(0);
@@ -150,7 +153,7 @@ export const makeBackgroundJobService = E.gen(function* () {
     return isQueueName(queue) ? latches[queue].open : E.void;
   };
 
-  const settle = E.fn("BackgroundJobService.settle")(function* ({
+  const settle = E.fn("BackgroundJobQueue.settle")(function* ({
     exit,
     job,
   }: {
@@ -215,11 +218,11 @@ export const makeBackgroundJobService = E.gen(function* () {
     );
   };
 
-  const runClaimedJob = E.fn("BackgroundJobService.runClaimedJob")(
+  const runClaimedJob = E.fn("BackgroundJobQueue.runClaimedJob")(
     function* (claimed: BackgroundJobModel) {
-      const decoded = yield* Schema.decodeUnknownEffect(BackgroundJobSchema)(
-        claimed.payload,
-      ).pipe(E.result);
+      const decoded = yield* Schema.decodeUnknownEffect(
+        BackgroundJobPayloadSchema,
+      )(claimed.payload).pipe(E.result);
 
       if (Result.isFailure(decoded)) {
         return yield* backgroundJobDAO.markFailed({
@@ -242,9 +245,11 @@ export const makeBackgroundJobService = E.gen(function* () {
             return undefined;
           }
 
-          const forked = yield* runBackgroundJob(decoded.success, {
-            reportProgress,
-          }).pipe(E.forkChild);
+          const forked = yield* backgroundJobRunner
+            .run(decoded.success, {
+              reportProgress,
+            })
+            .pipe(E.forkChild);
 
           runningFibers.set(claimed.id, forked);
 
@@ -270,7 +275,7 @@ export const makeBackgroundJobService = E.gen(function* () {
     },
   );
 
-  const awaitWork = E.fn("BackgroundJobService.awaitWork")(function* (
+  const awaitWork = E.fn("BackgroundJobQueue.awaitWork")(function* (
     queue: BackgroundJobQueueName,
   ) {
     const { holdWhileWaiting } = BACKGROUND_JOB_QUEUES[queue];
@@ -365,10 +370,12 @@ export const makeBackgroundJobService = E.gen(function* () {
     { discard: true },
   );
 
-  const offer: BackgroundJobServiceShape["offer"] = (job) => {
+  const offer: BackgroundJobQueueShape["offer"] = (job) => {
     return E.gen(function* () {
       const queue = BACKGROUND_JOB_QUEUE_BY_KIND[job._tag];
-      const payload = yield* Schema.encodeEffect(BackgroundJobSchema)(job);
+      const payload = yield* Schema.encodeEffect(BackgroundJobPayloadSchema)(
+        job,
+      );
 
       const { job: row, wasInserted } = yield* backgroundJobDAO.insert({
         idempotencyKey: getBackgroundJobIdempotencyKey(job),
@@ -385,12 +392,12 @@ export const makeBackgroundJobService = E.gen(function* () {
       return { job: row, wasAlreadyQueued: !wasInserted };
     }).pipe(
       E.mapError((cause) => {
-        return new BackgroundJobError({ cause, operation: "Offer" });
+        return new BackgroundJobQueueError({ cause, operation: "Offer" });
       }),
     );
   };
 
-  const cancel: BackgroundJobServiceShape["cancel"] = ({ id }) => {
+  const cancel: BackgroundJobQueueShape["cancel"] = ({ id }) => {
     return E.gen(function* () {
       const fiberToInterrupt = yield* stateLock.withPermit(
         E.gen(function* () {
@@ -400,7 +407,7 @@ export const makeBackgroundJobService = E.gen(function* () {
             Option.isNone(job) ||
             !CANCELLABLE_STATUSES.includes(job.value.status)
           ) {
-            return yield* new BackgroundJobNotFoundError({
+            return yield* new BackgroundJobQueueNotFoundError({
               id,
               operation: "Cancel",
             });
@@ -432,7 +439,7 @@ export const makeBackgroundJobService = E.gen(function* () {
               Option.isNone(claimedJob) ||
               claimedJob.value.status !== "RUNNING"
             ) {
-              return yield* new BackgroundJobNotFoundError({
+              return yield* new BackgroundJobQueueNotFoundError({
                 id,
                 operation: "Cancel",
               });
@@ -450,20 +457,20 @@ export const makeBackgroundJobService = E.gen(function* () {
       }
     }).pipe(
       E.mapError((cause) => {
-        return cause instanceof BackgroundJobNotFoundError
+        return cause instanceof BackgroundJobQueueNotFoundError
           ? cause
-          : new BackgroundJobError({ cause, operation: "Cancel" });
+          : new BackgroundJobQueueError({ cause, operation: "Cancel" });
       }),
     );
   };
 
-  const dismiss: BackgroundJobServiceShape["dismiss"] = ({ id }) => {
+  const dismiss: BackgroundJobQueueShape["dismiss"] = ({ id }) => {
     return backgroundJobDAO
       .delete({ id, statuses: ["FAILED", "SUCCEEDED"] })
       .pipe(E.andThen(bumpRevision), mapCommandError("Dismiss", id));
   };
 
-  const retry: BackgroundJobServiceShape["retry"] = ({ id }) => {
+  const retry: BackgroundJobQueueShape["retry"] = ({ id }) => {
     return backgroundJobDAO.retry({ id }).pipe(
       E.tap((job) => {
         return wakeQueue(job.queue).pipe(E.andThen(bumpRevision));
@@ -472,7 +479,7 @@ export const makeBackgroundJobService = E.gen(function* () {
     );
   };
 
-  const listVisible: BackgroundJobServiceShape["listVisible"] = () => {
+  const listVisible: BackgroundJobQueueShape["listVisible"] = () => {
     if (!A.isReadonlyArrayNonEmpty(VISIBLE_QUEUE_NAMES)) {
       return E.succeed([]);
     }
@@ -490,7 +497,7 @@ export const makeBackgroundJobService = E.gen(function* () {
         });
       }),
       E.mapError((cause) => {
-        return new BackgroundJobError({ cause, operation: "List" });
+        return new BackgroundJobQueueError({ cause, operation: "List" });
       }),
     );
   };
@@ -504,5 +511,5 @@ export const makeBackgroundJobService = E.gen(function* () {
     retry,
     revision: SubscriptionRef.get(revisionRef),
     sessionId,
-  } satisfies BackgroundJobServiceShape;
+  } satisfies BackgroundJobQueueShape;
 });

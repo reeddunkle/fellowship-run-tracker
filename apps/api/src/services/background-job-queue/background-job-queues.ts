@@ -1,6 +1,6 @@
 import * as R from "effect/Record";
 
-import { type BackgroundJobKind } from "@frt/api/services/background-job/background-job-schema.ts";
+import { type BackgroundJobKind } from "@frt/api/services/background-job-queue/background-job-payload-schema.ts";
 
 type BackgroundJobQueueOptions = {
   readonly holdWhileWaiting: boolean;

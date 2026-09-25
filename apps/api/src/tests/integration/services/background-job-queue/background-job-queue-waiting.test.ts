@@ -14,7 +14,8 @@ import {
 } from "@frt/api/application/fellowship-logs-dungeon-run-importer/fellowship-logs-dungeon-run-importer-service.ts";
 import { FellowshipLogsGatewayRateLimitExceededError } from "@frt/api/errors/fellowship-logs-gateway-error.ts";
 import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
-import { BackgroundJobService } from "@frt/api/services/background-job/background-job-service.ts";
+import { BackgroundJobQueue } from "@frt/api/services/background-job-queue/background-job-queue-service.ts";
+import { BackgroundJobRunner } from "@frt/api/services/background-job-runner/background-job-runner-service.ts";
 import {
   type FellowshipLogsFetchControl,
   makeControlledFellowshipLogsFixtureLayer,
@@ -32,6 +33,10 @@ import { type BackgroundJobId } from "@frt/shared/background-job/background-job-
 import { DungeonRunIdSchema } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 import { FellowshipLogsFightIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
 import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
+
+const BackgroundJobRunnerTestLive = BackgroundJobRunner.layerNoDeps.pipe(
+  Layer.provide(NodePlatformLayer),
+);
 
 const REPORT_CODE = Schema.decodeSync(FellowshipLogsReportCodeSchema)(
   "XdfFZzgHBJNr6m3v",
@@ -56,14 +61,15 @@ function makeImportJob(fightId = FIGHT_ID) {
   } as const;
 }
 
-function makeBackgroundJobServiceTestLayer({
+function makeBackgroundJobQueueTestLayer({
   databaseFilename,
   importReport,
 }: {
   readonly databaseFilename: string;
   readonly importReport: FellowshipLogsDungeonRunImporterServiceShape["importReport"];
 }) {
-  return BackgroundJobService.layerNoDeps.pipe(
+  return BackgroundJobQueue.layerNoDeps.pipe(
+    Layer.provide(BackgroundJobRunnerTestLive),
     Layer.provideMerge(
       Layer.merge(
         makePersistenceTestLayer(databaseFilename),
@@ -92,7 +98,8 @@ function makeFixtureImportTestLayer({
     Layer.provide(Layer.merge(PersistenceTestLive, FellowshipLogsTestLive)),
   );
 
-  return BackgroundJobService.layerNoDeps.pipe(
+  return BackgroundJobQueue.layerNoDeps.pipe(
+    Layer.provide(BackgroundJobRunnerTestLive),
     Layer.provideMerge(Layer.merge(PersistenceTestLive, ImporterTestLive)),
     Layer.provide(NodePlatformLayer),
   );
@@ -178,7 +185,7 @@ function makeRateLimitedImporter(delay: { readonly milliseconds: number }) {
   return { calls, importReport };
 }
 
-describe("BackgroundJobService waiting jobs", () => {
+describe("BackgroundJobQueue waiting jobs", () => {
   test("parks an import that runs out of points and holds the queue until they reset", async () => {
     const { calls, importReport } = makeRateLimitedImporter({
       milliseconds: 400,
@@ -187,12 +194,10 @@ describe("BackgroundJobService waiting jobs", () => {
     const { callsWhileWaiting, first, second, waiting, waitingSecond } =
       await withTempDatabase((databaseFilename) => {
         return E.gen(function* () {
-          const backgroundJobService = yield* BackgroundJobService;
+          const backgroundJobQueue = yield* BackgroundJobQueue;
 
-          const offeredFirst = yield* backgroundJobService.offer(
-            makeImportJob(),
-          );
-          const offeredSecond = yield* backgroundJobService.offer(
+          const offeredFirst = yield* backgroundJobQueue.offer(makeImportJob());
+          const offeredSecond = yield* backgroundJobQueue.offer(
             makeImportJob(OTHER_FIGHT_ID),
           );
 
@@ -222,7 +227,7 @@ describe("BackgroundJobService waiting jobs", () => {
           };
         }).pipe(
           E.provide(
-            makeBackgroundJobServiceTestLayer({
+            makeBackgroundJobQueueTestLayer({
               databaseFilename,
               importReport,
             }),
@@ -252,16 +257,16 @@ describe("BackgroundJobService waiting jobs", () => {
 
     const visible = await withTempDatabase((databaseFilename) => {
       return E.gen(function* () {
-        const backgroundJobService = yield* BackgroundJobService;
+        const backgroundJobQueue = yield* BackgroundJobQueue;
 
-        const { job } = yield* backgroundJobService.offer(makeImportJob());
+        const { job } = yield* backgroundJobQueue.offer(makeImportJob());
 
         yield* waitForJob(job.id, hasStatus("WAITING"));
 
-        return yield* backgroundJobService.listVisible();
+        return yield* backgroundJobQueue.listVisible();
       }).pipe(
         E.provide(
-          makeBackgroundJobServiceTestLayer({ databaseFilename, importReport }),
+          makeBackgroundJobQueueTestLayer({ databaseFilename, importReport }),
         ),
       );
     });
@@ -277,17 +282,17 @@ describe("BackgroundJobService waiting jobs", () => {
 
     const job = await withTempDatabase((databaseFilename) => {
       return E.gen(function* () {
-        const backgroundJobService = yield* BackgroundJobService;
+        const backgroundJobQueue = yield* BackgroundJobQueue;
 
-        const offered = yield* backgroundJobService.offer(makeImportJob());
+        const offered = yield* backgroundJobQueue.offer(makeImportJob());
 
         yield* waitForJob(offered.job.id, hasStatus("WAITING"));
-        yield* backgroundJobService.cancel({ id: offered.job.id });
+        yield* backgroundJobQueue.cancel({ id: offered.job.id });
 
         return yield* getJob(offered.job.id);
       }).pipe(
         E.provide(
-          makeBackgroundJobServiceTestLayer({ databaseFilename, importReport }),
+          makeBackgroundJobQueueTestLayer({ databaseFilename, importReport }),
         ),
       );
     });
@@ -302,16 +307,16 @@ describe("BackgroundJobService waiting jobs", () => {
       (databaseFilename) => {
         return E.gen(function* () {
           const jobId = yield* E.gen(function* () {
-            const backgroundJobService = yield* BackgroundJobService;
+            const backgroundJobQueue = yield* BackgroundJobQueue;
 
-            const { job } = yield* backgroundJobService.offer(makeImportJob());
+            const { job } = yield* backgroundJobQueue.offer(makeImportJob());
 
             yield* waitForJob(job.id, hasStatus("WAITING"));
 
             return job.id;
           }).pipe(
             E.provide(
-              makeBackgroundJobServiceTestLayer({
+              makeBackgroundJobQueueTestLayer({
                 databaseFilename,
                 importReport,
               }),
@@ -328,7 +333,7 @@ describe("BackgroundJobService waiting jobs", () => {
             };
           }).pipe(
             E.provide(
-              makeBackgroundJobServiceTestLayer({
+              makeBackgroundJobQueueTestLayer({
                 databaseFilename,
                 importReport: succeed,
               }),
@@ -350,9 +355,9 @@ describe("BackgroundJobService waiting jobs", () => {
 
     const finished = await withTempDatabase((databaseFilename) => {
       return E.gen(function* () {
-        const backgroundJobService = yield* BackgroundJobService;
+        const backgroundJobQueue = yield* BackgroundJobQueue;
 
-        const { job } = yield* backgroundJobService.offer(makeImportJob());
+        const { job } = yield* backgroundJobQueue.offer(makeImportJob());
 
         yield* waitForJob(job.id, hasStatus("WAITING"));
 

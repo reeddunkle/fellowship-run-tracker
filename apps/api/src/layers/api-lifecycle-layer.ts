@@ -6,21 +6,21 @@ import { publishBackgroundJobChanges } from "@frt/api/api/websocket/background-j
 import { publishLiveSplitStatusChanges } from "@frt/api/api/websocket/live-split/publish-live-split-status-changes.ts";
 import { publishTrackingStatusChanges } from "@frt/api/api/websocket/tracking/publish-tracking-status-changes.ts";
 import { SESSION_STARTED_AT } from "@frt/api/helpers/session-started-at.ts";
-import { BackgroundJobService } from "@frt/api/services/background-job/background-job-service.ts";
+import { BackgroundJobQueue } from "@frt/api/services/background-job-queue/background-job-queue-service.ts";
 
 const queueStartupJobs = E.gen(function* () {
-  const backgroundJobService = yield* BackgroundJobService;
+  const backgroundJobQueue = yield* BackgroundJobQueue;
 
-  yield* backgroundJobService.offer({
+  yield* backgroundJobQueue.offer({
     _tag: "InterruptUnfinishedDungeonRuns",
     createdBefore: SESSION_STARTED_AT,
   });
 
-  yield* backgroundJobService.offer({ _tag: "PruneLogFiles" });
+  yield* backgroundJobQueue.offer({ _tag: "PruneLogFiles" });
 
-  yield* backgroundJobService.offer({ _tag: "PruneFellowshipLogsCache" });
+  yield* backgroundJobQueue.offer({ _tag: "PruneFellowshipLogsCache" });
 
-  yield* backgroundJobService.offer({
+  yield* backgroundJobQueue.offer({
     _tag: "PruneFinishedBackgroundJobs",
     finishedBefore: SESSION_STARTED_AT,
   });

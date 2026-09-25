@@ -9,7 +9,8 @@ import { describe, expect, test } from "vitest";
 
 import { FellowshipLogsDungeonRunImporter } from "@frt/api/application/fellowship-logs-dungeon-run-importer/fellowship-logs-dungeon-run-importer-service.ts";
 import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
-import { runBackgroundJob } from "@frt/api/services/background-job/run-background-job.ts";
+import { type BackgroundJobPayload } from "@frt/api/services/background-job-queue/background-job-payload-schema.ts";
+import { BackgroundJobRunner } from "@frt/api/services/background-job-runner/background-job-runner-service.ts";
 import { DungeonRunRepository } from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
 import { makePersistenceTestLayer } from "@frt/api/tests/common/layers/persistence-test-layer.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
@@ -32,6 +33,18 @@ const UnusedFellowshipLogsDungeonRunImporter = Layer.succeed(
     },
   },
 );
+
+const BackgroundJobRunnerTestLayer = BackgroundJobRunner.layerNoDeps.pipe(
+  Layer.provide(
+    Layer.merge(UnusedFellowshipLogsDungeonRunImporter, NodePlatformLayer),
+  ),
+);
+
+function runJob(job: BackgroundJobPayload) {
+  return BackgroundJobRunner.use((backgroundJobRunner) => {
+    return backgroundJobRunner.run(job, { reportProgress: () => E.void });
+  }).pipe(E.provide(BackgroundJobRunnerTestLayer));
+}
 
 const STARTED_AT = DateTime.makeUnsafe("2026-09-05T16:00:00.000Z");
 const EARLIER_OBSERVED_AT = DateTime.makeUnsafe("2026-09-05T16:05:00.000Z");
@@ -130,20 +143,10 @@ function runJobAfterRestart({
         const createdBefore = yield* DateTime.now;
         const nextSessionIds = yield* duringNextSession;
 
-        yield* runBackgroundJob(
-          {
-            _tag: "InterruptUnfinishedDungeonRuns",
-            createdBefore,
-          },
-          { reportProgress: () => E.void },
-        ).pipe(
-          E.provide(
-            Layer.merge(
-              UnusedFellowshipLogsDungeonRunImporter,
-              NodePlatformLayer,
-            ),
-          ),
-        );
+        yield* runJob({
+          _tag: "InterruptUnfinishedDungeonRuns",
+          createdBefore,
+        });
 
         return yield* E.forEach([...seededIds, ...nextSessionIds], getLocalRun);
       }),

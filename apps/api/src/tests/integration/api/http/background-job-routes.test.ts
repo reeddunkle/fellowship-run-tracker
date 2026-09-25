@@ -7,12 +7,12 @@ import * as HttpServer from "effect/unstable/http/HttpServer";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { describe, expect, test } from "vitest";
 
-import { BackgroundJobNotFoundError } from "@frt/api/errors/background-job-error.ts";
+import { BackgroundJobQueueNotFoundError } from "@frt/api/errors/background-job-queue-error.ts";
 import { makeApiServerTestLayerWith } from "@frt/api/tests/common/layers/api-server-test-layer.ts";
 import {
-  type MakeBackgroundJobApiServiceMockOptions,
-  makeBackgroundJobApiServiceMock,
-} from "@frt/api/tests/common/mocks/background-job-api-service-mock.ts";
+  type MakeBackgroundJobMockOptions,
+  makeBackgroundJobMock,
+} from "@frt/api/tests/common/mocks/background-job-mock.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { BackgroundJobApiNotFoundError } from "@frt/api-contract/errors/background-job-api-error.ts";
 import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
@@ -33,8 +33,8 @@ function getBaseUrl(address: HttpServer.Address) {
   return `http://${hostname}:${address.port}`;
 }
 
-function runWithBackgroundJobApiService<A, Error>(
-  serviceOptions: MakeBackgroundJobApiServiceMockOptions,
+function runWithBackgroundJob<A, Error>(
+  serviceOptions: MakeBackgroundJobMockOptions,
   program: (
     client: HttpApiClient.ForApi<typeof AppHttpApi>,
   ) => E.Effect<A, Error, HttpClient.HttpClient>,
@@ -51,9 +51,7 @@ function runWithBackgroundJobApiService<A, Error>(
     E.scoped,
     E.provide(
       Layer.mergeAll(
-        makeApiServerTestLayerWith(
-          makeBackgroundJobApiServiceMock(serviceOptions),
-        ),
+        makeApiServerTestLayerWith(makeBackgroundJobMock(serviceOptions)),
         FetchHttpClient.layer,
       ),
     ),
@@ -63,7 +61,7 @@ function runWithBackgroundJobApiService<A, Error>(
 
 describe("background job routes", () => {
   test("GET /background-jobs returns the snapshot", async () => {
-    const snapshot = await runWithBackgroundJobApiService({}, (client) => {
+    const snapshot = await runWithBackgroundJob({}, (client) => {
       return client.backgroundJob.getBackgroundJobs();
     });
 
@@ -71,11 +69,11 @@ describe("background job routes", () => {
   });
 
   test("POST /background-jobs/:jobId/cancel responds 404 for an unknown job", async () => {
-    const error = await runWithBackgroundJobApiService(
+    const error = await runWithBackgroundJob(
       {
         cancel: ({ id }) => {
           return E.fail(
-            new BackgroundJobNotFoundError({ id, operation: "Cancel" }),
+            new BackgroundJobQueueNotFoundError({ id, operation: "Cancel" }),
           );
         },
       },

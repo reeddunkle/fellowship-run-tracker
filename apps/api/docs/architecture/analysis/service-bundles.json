@@ -2,13 +2,13 @@
   "bundleRelationships": [
     {
       "bundle": "LiveSplit.layer",
-      "comparedBundle": "Layer.provideMerge(BackgroundJobService.layer)",
+      "comparedBundle": "Layer.provideMerge(BackgroundJobQueue.layer)",
       "onlyInBundle": [],
       "onlyInComparedBundle": [
         "AbilityCatalog",
         "AppSettingsApiService",
-        "BackgroundJobApiService",
-        "BackgroundJobService",
+        "BackgroundJob",
+        "BackgroundJobQueue",
         "ConfigurationLibrary",
         "DungeonCatalog",
         "DungeonRunHistory",
@@ -26,7 +26,7 @@
       "onlyInComparedBundle": [
         "AbilityCatalog",
         "AppSettingsApiService",
-        "BackgroundJobApiService",
+        "BackgroundJob",
         "ConfigurationLibrary",
         "DungeonCatalog",
         "DungeonRunHistory",
@@ -39,13 +39,13 @@
     },
     {
       "bundle": "LiveSplit.layer",
-      "comparedBundle": "ApiServicesWithBackgroundJobsLayer",
+      "comparedBundle": "ApiServicesWithBackgroundJobQueueLayer",
       "onlyInBundle": [],
       "onlyInComparedBundle": [
         "AbilityCatalog",
         "AppSettingsApiService",
-        "BackgroundJobApiService",
-        "BackgroundJobService",
+        "BackgroundJob",
+        "BackgroundJobQueue",
         "ConfigurationLibrary",
         "DungeonCatalog",
         "DungeonRunHistory",
@@ -63,8 +63,8 @@
       "onlyInComparedBundle": [
         "AbilityCatalog",
         "AppSettingsApiService",
-        "BackgroundJobApiService",
-        "BackgroundJobService",
+        "BackgroundJob",
+        "BackgroundJobQueue",
         "BackgroundJobWebSocketBroadcaster",
         "ConfigurationLibrary",
         "DungeonCatalog",
@@ -87,8 +87,8 @@
       "onlyInComparedBundle": [
         "AbilityCatalog",
         "AppSettingsApiService",
-        "BackgroundJobApiService",
-        "BackgroundJobService",
+        "BackgroundJob",
+        "BackgroundJobQueue",
         "BackgroundJobWebSocketBroadcaster",
         "ConfigurationLibrary",
         "DungeonCatalog",
@@ -105,13 +105,13 @@
       "sharedServices": ["FellowshipTracker"]
     },
     {
-      "bundle": "BackgroundJobService.layer",
-      "comparedBundle": "Layer.provideMerge(BackgroundJobService.layer)",
+      "bundle": "BackgroundJobQueue.layer",
+      "comparedBundle": "Layer.provideMerge(BackgroundJobQueue.layer)",
       "onlyInBundle": [],
       "onlyInComparedBundle": [
         "AbilityCatalog",
         "AppSettingsApiService",
-        "BackgroundJobApiService",
+        "BackgroundJob",
         "ConfigurationLibrary",
         "DungeonCatalog",
         "DungeonRunHistory",
@@ -121,16 +121,16 @@
         "UnitCatalog"
       ],
       "relationship": "strict-subset",
-      "sharedServices": ["BackgroundJobService"]
+      "sharedServices": ["BackgroundJobQueue"]
     },
     {
-      "bundle": "BackgroundJobService.layer",
-      "comparedBundle": "ApiServicesWithBackgroundJobsLayer",
+      "bundle": "BackgroundJobQueue.layer",
+      "comparedBundle": "ApiServicesWithBackgroundJobQueueLayer",
       "onlyInBundle": [],
       "onlyInComparedBundle": [
         "AbilityCatalog",
         "AppSettingsApiService",
-        "BackgroundJobApiService",
+        "BackgroundJob",
         "ConfigurationLibrary",
         "DungeonCatalog",
         "DungeonRunHistory",
@@ -140,16 +140,16 @@
         "UnitCatalog"
       ],
       "relationship": "strict-subset",
-      "sharedServices": ["BackgroundJobService"]
+      "sharedServices": ["BackgroundJobQueue"]
     },
     {
-      "bundle": "BackgroundJobService.layer",
+      "bundle": "BackgroundJobQueue.layer",
       "comparedBundle": "ApiRuntimeLayer",
       "onlyInBundle": [],
       "onlyInComparedBundle": [
         "AbilityCatalog",
         "AppSettingsApiService",
-        "BackgroundJobApiService",
+        "BackgroundJob",
         "BackgroundJobWebSocketBroadcaster",
         "ConfigurationLibrary",
         "DungeonCatalog",
@@ -164,18 +164,18 @@
         "UnitCatalog"
       ],
       "relationship": "strict-subset",
-      "sharedServices": ["BackgroundJobService"]
+      "sharedServices": ["BackgroundJobQueue"]
     },
     {
-      "bundle": "Layer.provideMerge(BackgroundJobService.layer)",
+      "bundle": "Layer.provideMerge(BackgroundJobQueue.layer)",
       "comparedBundle": "ApiServicesLayer",
-      "onlyInBundle": ["BackgroundJobService"],
+      "onlyInBundle": ["BackgroundJobQueue"],
       "onlyInComparedBundle": [],
       "relationship": "strict-superset",
       "sharedServices": [
         "AbilityCatalog",
         "AppSettingsApiService",
-        "BackgroundJobApiService",
+        "BackgroundJob",
         "ConfigurationLibrary",
         "DungeonCatalog",
         "DungeonRunHistory",
@@ -186,16 +186,16 @@
       ]
     },
     {
-      "bundle": "Layer.provideMerge(BackgroundJobService.layer)",
-      "comparedBundle": "ApiServicesWithBackgroundJobsLayer",
+      "bundle": "Layer.provideMerge(BackgroundJobQueue.layer)",
+      "comparedBundle": "ApiServicesWithBackgroundJobQueueLayer",
       "onlyInBundle": [],
       "onlyInComparedBundle": [],
       "relationship": "equal",
       "sharedServices": [
         "AbilityCatalog",
         "AppSettingsApiService",
-        "BackgroundJobApiService",
-        "BackgroundJobService",
+        "BackgroundJob",
+        "BackgroundJobQueue",
         "ConfigurationLibrary",
         "DungeonCatalog",
         "DungeonRunHistory",
@@ -206,7 +206,7 @@
       ]
     },
     {
-      "bundle": "Layer.provideMerge(BackgroundJobService.layer)",
+      "bundle": "Layer.provideMerge(BackgroundJobQueue.layer)",
       "comparedBundle": "ApiRuntimeLayer",
       "onlyInBundle": [],
       "onlyInComparedBundle": [
@@ -220,8 +220,8 @@
       "sharedServices": [
         "AbilityCatalog",
         "AppSettingsApiService",
-        "BackgroundJobApiService",
-        "BackgroundJobService",
+        "BackgroundJob",
+        "BackgroundJobQueue",
         "ConfigurationLibrary",
         "DungeonCatalog",
         "DungeonRunHistory",
@@ -233,14 +233,14 @@
     },
     {
       "bundle": "ApiServicesLayer",
-      "comparedBundle": "ApiServicesWithBackgroundJobsLayer",
+      "comparedBundle": "ApiServicesWithBackgroundJobQueueLayer",
       "onlyInBundle": [],
-      "onlyInComparedBundle": ["BackgroundJobService"],
+      "onlyInComparedBundle": ["BackgroundJobQueue"],
       "relationship": "strict-subset",
       "sharedServices": [
         "AbilityCatalog",
         "AppSettingsApiService",
-        "BackgroundJobApiService",
+        "BackgroundJob",
         "ConfigurationLibrary",
         "DungeonCatalog",
         "DungeonRunHistory",
@@ -255,7 +255,7 @@
       "comparedBundle": "ApiRuntimeLayer",
       "onlyInBundle": [],
       "onlyInComparedBundle": [
-        "BackgroundJobService",
+        "BackgroundJobQueue",
         "BackgroundJobWebSocketBroadcaster",
         "DungeonRunWebSocketBroadcaster",
         "FellowshipTracker",
@@ -266,7 +266,7 @@
       "sharedServices": [
         "AbilityCatalog",
         "AppSettingsApiService",
-        "BackgroundJobApiService",
+        "BackgroundJob",
         "ConfigurationLibrary",
         "DungeonCatalog",
         "DungeonRunHistory",
@@ -277,7 +277,7 @@
       ]
     },
     {
-      "bundle": "ApiServicesWithBackgroundJobsLayer",
+      "bundle": "ApiServicesWithBackgroundJobQueueLayer",
       "comparedBundle": "ApiRuntimeLayer",
       "onlyInBundle": [],
       "onlyInComparedBundle": [
@@ -291,8 +291,8 @@
       "sharedServices": [
         "AbilityCatalog",
         "AppSettingsApiService",
-        "BackgroundJobApiService",
-        "BackgroundJobService",
+        "BackgroundJob",
+        "BackgroundJobQueue",
         "ConfigurationLibrary",
         "DungeonCatalog",
         "DungeonRunHistory",
@@ -325,17 +325,17 @@
       "services": ["FellowshipTracker"]
     },
     {
-      "name": "BackgroundJobService.layer",
+      "name": "BackgroundJobQueue.layer",
       "requires": [
         "FellowshipLogsCacheDatabase",
         "FellowshipLogsResponseDAO",
         "MainDatabase",
         "StateDatabase"
       ],
-      "services": ["BackgroundJobService"]
+      "services": ["BackgroundJobQueue"]
     },
     {
-      "name": "Layer.provideMerge(BackgroundJobService.layer)",
+      "name": "Layer.provideMerge(BackgroundJobQueue.layer)",
       "requires": [
         "FellowshipLogsCacheDatabase",
         "FellowshipLogsResponseDAO",
@@ -345,8 +345,8 @@
       "services": [
         "AbilityCatalog",
         "AppSettingsApiService",
-        "BackgroundJobApiService",
-        "BackgroundJobService",
+        "BackgroundJob",
+        "BackgroundJobQueue",
         "ConfigurationLibrary",
         "DungeonCatalog",
         "DungeonRunHistory",
@@ -359,14 +359,14 @@
     {
       "name": "ApiServicesLayer",
       "requires": [
-        "BackgroundJobService",
+        "BackgroundJobQueue",
         "FellowshipLogsCacheDatabase",
         "MainDatabase"
       ],
       "services": [
         "AbilityCatalog",
         "AppSettingsApiService",
-        "BackgroundJobApiService",
+        "BackgroundJob",
         "ConfigurationLibrary",
         "DungeonCatalog",
         "DungeonRunHistory",
@@ -377,7 +377,7 @@
       ]
     },
     {
-      "name": "ApiServicesWithBackgroundJobsLayer",
+      "name": "ApiServicesWithBackgroundJobQueueLayer",
       "requires": [
         "FellowshipLogsCacheDatabase",
         "FellowshipLogsResponseDAO",
@@ -387,8 +387,8 @@
       "services": [
         "AbilityCatalog",
         "AppSettingsApiService",
-        "BackgroundJobApiService",
-        "BackgroundJobService",
+        "BackgroundJob",
+        "BackgroundJobQueue",
         "ConfigurationLibrary",
         "DungeonCatalog",
         "DungeonRunHistory",
@@ -409,8 +409,8 @@
       "services": [
         "AbilityCatalog",
         "AppSettingsApiService",
-        "BackgroundJobApiService",
-        "BackgroundJobService",
+        "BackgroundJob",
+        "BackgroundJobQueue",
         "BackgroundJobWebSocketBroadcaster",
         "ConfigurationLibrary",
         "DungeonCatalog",
@@ -431,9 +431,9 @@
     {
       "bundles": [
         "LiveSplit.layer",
-        "Layer.provideMerge(BackgroundJobService.layer)",
+        "Layer.provideMerge(BackgroundJobQueue.layer)",
         "ApiServicesLayer",
-        "ApiServicesWithBackgroundJobsLayer",
+        "ApiServicesWithBackgroundJobQueueLayer",
         "ApiRuntimeLayer"
       ],
       "service": "LiveSplit"
@@ -444,90 +444,90 @@
     },
     {
       "bundles": [
-        "BackgroundJobService.layer",
-        "Layer.provideMerge(BackgroundJobService.layer)",
-        "ApiServicesWithBackgroundJobsLayer",
+        "BackgroundJobQueue.layer",
+        "Layer.provideMerge(BackgroundJobQueue.layer)",
+        "ApiServicesWithBackgroundJobQueueLayer",
         "ApiRuntimeLayer"
       ],
-      "service": "BackgroundJobService"
+      "service": "BackgroundJobQueue"
     },
     {
       "bundles": [
-        "Layer.provideMerge(BackgroundJobService.layer)",
+        "Layer.provideMerge(BackgroundJobQueue.layer)",
         "ApiServicesLayer",
-        "ApiServicesWithBackgroundJobsLayer",
+        "ApiServicesWithBackgroundJobQueueLayer",
         "ApiRuntimeLayer"
       ],
       "service": "AbilityCatalog"
     },
     {
       "bundles": [
-        "Layer.provideMerge(BackgroundJobService.layer)",
+        "Layer.provideMerge(BackgroundJobQueue.layer)",
         "ApiServicesLayer",
-        "ApiServicesWithBackgroundJobsLayer",
+        "ApiServicesWithBackgroundJobQueueLayer",
         "ApiRuntimeLayer"
       ],
       "service": "AppSettingsApiService"
     },
     {
       "bundles": [
-        "Layer.provideMerge(BackgroundJobService.layer)",
+        "Layer.provideMerge(BackgroundJobQueue.layer)",
         "ApiServicesLayer",
-        "ApiServicesWithBackgroundJobsLayer",
+        "ApiServicesWithBackgroundJobQueueLayer",
         "ApiRuntimeLayer"
       ],
-      "service": "BackgroundJobApiService"
+      "service": "BackgroundJob"
     },
     {
       "bundles": [
-        "Layer.provideMerge(BackgroundJobService.layer)",
+        "Layer.provideMerge(BackgroundJobQueue.layer)",
         "ApiServicesLayer",
-        "ApiServicesWithBackgroundJobsLayer",
+        "ApiServicesWithBackgroundJobQueueLayer",
         "ApiRuntimeLayer"
       ],
       "service": "ConfigurationLibrary"
     },
     {
       "bundles": [
-        "Layer.provideMerge(BackgroundJobService.layer)",
+        "Layer.provideMerge(BackgroundJobQueue.layer)",
         "ApiServicesLayer",
-        "ApiServicesWithBackgroundJobsLayer",
+        "ApiServicesWithBackgroundJobQueueLayer",
         "ApiRuntimeLayer"
       ],
       "service": "DungeonCatalog"
     },
     {
       "bundles": [
-        "Layer.provideMerge(BackgroundJobService.layer)",
+        "Layer.provideMerge(BackgroundJobQueue.layer)",
         "ApiServicesLayer",
-        "ApiServicesWithBackgroundJobsLayer",
+        "ApiServicesWithBackgroundJobQueueLayer",
         "ApiRuntimeLayer"
       ],
       "service": "DungeonRunHistory"
     },
     {
       "bundles": [
-        "Layer.provideMerge(BackgroundJobService.layer)",
+        "Layer.provideMerge(BackgroundJobQueue.layer)",
         "ApiServicesLayer",
-        "ApiServicesWithBackgroundJobsLayer",
+        "ApiServicesWithBackgroundJobQueueLayer",
         "ApiRuntimeLayer"
       ],
       "service": "EncounterCatalog"
     },
     {
       "bundles": [
-        "Layer.provideMerge(BackgroundJobService.layer)",
+        "Layer.provideMerge(BackgroundJobQueue.layer)",
         "ApiServicesLayer",
-        "ApiServicesWithBackgroundJobsLayer",
+        "ApiServicesWithBackgroundJobQueueLayer",
         "ApiRuntimeLayer"
       ],
       "service": "FellowshipLogs"
     },
     {
       "bundles": [
-        "Layer.provideMerge(BackgroundJobService.layer)",
+        "Layer.provideMerge(BackgroundJobQueue.layer)",
         "ApiServicesLayer",
-        "ApiServicesWithBackgroundJobsLayer",
+        "ApiServicesWithBackgroundJobQueueLayer",
         "ApiRuntimeLayer"
       ],
       "service": "UnitCatalog"

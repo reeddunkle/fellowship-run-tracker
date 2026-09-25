@@ -1,10 +1,10 @@
 import * as DateTime from "effect/DateTime";
 import * as Match from "effect/Match";
 
-import { type BackgroundJob } from "@frt/api/services/background-job/background-job-schema.ts";
+import { type BackgroundJobPayload } from "@frt/api/services/background-job-queue/background-job-payload-schema.ts";
 
 export function getBackgroundJobIdempotencyKey(
-  job: BackgroundJob,
+  job: BackgroundJobPayload,
 ): string | null {
   return Match.value(job).pipe(
     Match.tag("ImportFellowshipLogsDungeonRun", ({ fightId, reportCode }) => {
