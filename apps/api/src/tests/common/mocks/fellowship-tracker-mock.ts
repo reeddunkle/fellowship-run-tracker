@@ -4,11 +4,10 @@ import * as Stream from "effect/Stream";
 
 import {
   FellowshipTracker,
-  type FellowshipTrackerServiceShape,
+  type FellowshipTrackerShape,
 } from "@frt/api/application/fellowship-tracker/fellowship-tracker-service.ts";
 
-export type MakeFellowshipTrackerMockOptions =
-  Partial<FellowshipTrackerServiceShape>;
+export type MakeFellowshipTrackerMockOptions = Partial<FellowshipTrackerShape>;
 
 export function makeFellowshipTrackerMock({
   replayLog = () => {
@@ -37,7 +36,7 @@ export function makeFellowshipTrackerMock({
     status,
     statusChanges,
     stop,
-  } satisfies FellowshipTrackerServiceShape);
+  } satisfies FellowshipTrackerShape);
 }
 
 export const FellowshipTrackerMock = makeFellowshipTrackerMock();

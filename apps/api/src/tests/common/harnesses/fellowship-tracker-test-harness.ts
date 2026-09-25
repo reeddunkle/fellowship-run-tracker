@@ -13,7 +13,7 @@ import {
 } from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
 import {
   Fellowship,
-  type FellowshipService,
+  type FellowshipShape,
 } from "@frt/api/services/fellowship/fellowship-service.ts";
 import {
   LiveSplit,
@@ -44,8 +44,8 @@ import { type FellowshipMilestoneConfiguration } from "@frt/shared/fellowship/co
 import { makeFellowshipTestHarness } from "./fellowship-test-harness.ts";
 import { makeWebSocketBroadcasterTestHarness } from "./websocket-broadcaster-test-harness.ts";
 
-type FellowshipLiveEvents = ReturnType<FellowshipService["liveEvents"]>;
-type FellowshipLiveStatus = ReturnType<FellowshipService["liveStatus"]>;
+type FellowshipLiveEvents = ReturnType<FellowshipShape["liveEvents"]>;
+type FellowshipLiveStatus = ReturnType<FellowshipShape["liveStatus"]>;
 
 type MakeFellowshipTrackerTestHarnessOptions = {
   readonly configuration?: FellowshipMilestoneConfiguration;

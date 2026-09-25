@@ -6,14 +6,14 @@ import { DungeonRunRepository } from "@frt/api/services/dungeon-run-repository/d
 import { streamFellowshipLogsGatewayEvents } from "@frt/api/services/fellowship-logs-gateway/events/stream-fellowship-logs-gateway-events.ts";
 import { FellowshipLogsGateway } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
 
-import { type FellowshipLogsDungeonRunImporterServiceShape } from "./fellowship-logs-dungeon-run-importer-service.ts";
+import { type FellowshipLogsDungeonRunImporterShape } from "./fellowship-logs-dungeon-run-importer-service.ts";
 import { processFellowshipLogsDungeonRun } from "./process-fellowship-logs-dungeon-run.ts";
 
 export const makeFellowshipLogsDungeonRunImporter = E.gen(function* () {
   const dungeonRunRepository = yield* DungeonRunRepository;
   const fellowshipLogsGateway = yield* FellowshipLogsGateway;
 
-  const importReport: FellowshipLogsDungeonRunImporterServiceShape["importReport"] =
+  const importReport: FellowshipLogsDungeonRunImporterShape["importReport"] =
     E.fn("FellowshipLogsDungeonRunImporter.importReport")(function* ({
       fightId,
       isOwnRun,
@@ -79,5 +79,5 @@ export const makeFellowshipLogsDungeonRunImporter = E.gen(function* () {
 
   return {
     importReport,
-  } satisfies FellowshipLogsDungeonRunImporterServiceShape;
+  } satisfies FellowshipLogsDungeonRunImporterShape;
 });

@@ -44,7 +44,7 @@ type StreamLatestFileOptions = FindLatestFileOptions;
 
 type StreamStatusOptions = FindLatestFileOptions;
 
-export type FileMonitorSourceService = {
+export type FileMonitorSourceShape = {
   readonly findLatestFile: (
     options: FindLatestFileOptions,
   ) => E.Effect<FileData, FileNotFoundError | PlatformError.PlatformError>;
@@ -62,7 +62,7 @@ const makeFileMonitorSource = E.gen(function* () {
   const fileSystem = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
 
-  const findLatestFile: FileMonitorSourceService["findLatestFile"] = ({
+  const findLatestFile: FileMonitorSourceShape["findLatestFile"] = ({
     directoryPath,
     matches,
   }) => {
@@ -133,7 +133,7 @@ const makeFileMonitorSource = E.gen(function* () {
     );
   };
 
-  const streamLatestFile: FileMonitorSourceService["streamLatestFile"] = (
+  const streamLatestFile: FileMonitorSourceShape["streamLatestFile"] = (
     options,
   ) => {
     return E.gen(function* () {
@@ -174,7 +174,7 @@ const makeFileMonitorSource = E.gen(function* () {
     }).pipe(Stream.unwrap, Stream.scoped);
   };
 
-  const streamStatus: FileMonitorSourceService["streamStatus"] = (options) => {
+  const streamStatus: FileMonitorSourceShape["streamStatus"] = (options) => {
     return streamLatestFile(options).pipe(
       Stream.map((latestFile) => {
         return Option.match(latestFile, {
@@ -208,12 +208,12 @@ const makeFileMonitorSource = E.gen(function* () {
     findLatestFile,
     streamLatestFile,
     streamStatus,
-  } satisfies FileMonitorSourceService;
+  } satisfies FileMonitorSourceShape;
 });
 
 export class FileMonitorSource extends Context.Service<
   FileMonitorSource,
-  FileMonitorSourceService
+  FileMonitorSourceShape
 >()(
   "@frt/api/services/filesystem/file-monitor-source-service/FileMonitorSource",
 ) {

@@ -6,7 +6,7 @@ import { describe, expect, test } from "vitest";
 
 import {
   DungeonRunWebSocketBroadcaster,
-  type WebSocketBroadcasterService,
+  type WebSocketBroadcasterShape,
 } from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
 import {
   ApiServicesTest,
@@ -136,7 +136,7 @@ function waitForClientCount({
   webSocketBroadcaster,
 }: {
   readonly clientCount: number;
-  readonly webSocketBroadcaster: WebSocketBroadcasterService;
+  readonly webSocketBroadcaster: WebSocketBroadcasterShape;
 }): E.Effect<void> {
   return E.gen(function* () {
     while ((yield* webSocketBroadcaster.clientCount) !== clientCount) {

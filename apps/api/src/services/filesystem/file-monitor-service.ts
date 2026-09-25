@@ -43,7 +43,7 @@ type StreamLatestFileLinesOptions = {
   readonly startFrom: "end" | "start";
 };
 
-export type FileMonitorService = {
+export type FileMonitorShape = {
   readonly findLatestFile: (
     options: FindLatestFileOptions,
   ) => E.Effect<FileData, FileMonitorError>;
@@ -76,7 +76,7 @@ const makeFileMonitor = E.gen(function* () {
   const fileSystem = yield* FileSystem.FileSystem;
   const fileMonitorSource = yield* FileMonitorSource;
 
-  const findLatestFile: FileMonitorService["findLatestFile"] = (options) => {
+  const findLatestFile: FileMonitorShape["findLatestFile"] = (options) => {
     return fileMonitorSource.findLatestFile(options);
   };
 
@@ -196,7 +196,7 @@ const makeFileMonitor = E.gen(function* () {
     }).pipe(Stream.runCollect);
   };
 
-  const streamLatestFileLines: FileMonitorService["streamLatestFileLines"] = ({
+  const streamLatestFileLines: FileMonitorShape["streamLatestFileLines"] = ({
     directoryPath,
     matches,
     startFrom,
@@ -268,12 +268,12 @@ const makeFileMonitor = E.gen(function* () {
     readLines,
     streamLatestFileLines,
     streamLines,
-  } satisfies FileMonitorService;
+  } satisfies FileMonitorShape;
 });
 
 export class FileMonitor extends Context.Service<
   FileMonitor,
-  FileMonitorService
+  FileMonitorShape
 >()("@frt/api/services/filesystem/file-monitor-service/FileMonitor") {
   static readonly layerNoDeps = Layer.effect(this, makeFileMonitor);
 

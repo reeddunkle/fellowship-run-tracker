@@ -3,7 +3,7 @@ import * as Stream from "effect/Stream";
 
 import {
   TrackingWebSocketBroadcaster,
-  type WebSocketBroadcasterService,
+  type WebSocketBroadcasterShape,
 } from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
 import { createTrackingApiStatus } from "@frt/api/application/fellowship-tracker/create-tracking-api-status.ts";
 import {
@@ -14,7 +14,7 @@ import { type TrackingApiMessage } from "@frt/api-contract/websocket/tracking/tr
 
 type PublishTrackingApiStatusOptions = {
   readonly status: FellowshipTrackerStatus;
-  readonly webSocketBroadcaster: WebSocketBroadcasterService;
+  readonly webSocketBroadcaster: WebSocketBroadcasterShape;
 };
 
 function publishTrackingApiStatus({

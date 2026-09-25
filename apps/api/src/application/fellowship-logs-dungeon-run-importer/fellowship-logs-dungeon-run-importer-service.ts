@@ -55,7 +55,7 @@ type ImportFellowshipLogsDungeonRunError =
   | FellowshipLogsGatewayReportChangedError
   | FellowshipLogsGatewayRequestError;
 
-export type FellowshipLogsDungeonRunImporterServiceShape = {
+export type FellowshipLogsDungeonRunImporterShape = {
   readonly importReport: (
     options: ImportFellowshipLogsDungeonRunOptions,
   ) => E.Effect<
@@ -66,7 +66,7 @@ export type FellowshipLogsDungeonRunImporterServiceShape = {
 
 export class FellowshipLogsDungeonRunImporter extends Context.Service<
   FellowshipLogsDungeonRunImporter,
-  FellowshipLogsDungeonRunImporterServiceShape
+  FellowshipLogsDungeonRunImporterShape
 >()(
   "@frt/api/application/fellowship-logs-dungeon-run-importer/fellowship-logs-dungeon-run-importer-service/FellowshipLogsDungeonRunImporter",
 ) {

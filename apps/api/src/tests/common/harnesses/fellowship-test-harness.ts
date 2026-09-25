@@ -1,10 +1,10 @@
 import * as E from "effect/Effect";
 import * as Stream from "effect/Stream";
 
-import { type FellowshipService } from "@frt/api/services/fellowship/fellowship-service.ts";
+import { type FellowshipShape } from "@frt/api/services/fellowship/fellowship-service.ts";
 
-type FellowshipLiveEvents = ReturnType<FellowshipService["liveEvents"]>;
-type FellowshipLiveStatus = ReturnType<FellowshipService["liveStatus"]>;
+type FellowshipLiveEvents = ReturnType<FellowshipShape["liveEvents"]>;
+type FellowshipLiveStatus = ReturnType<FellowshipShape["liveStatus"]>;
 
 export type MakeFellowshipTestHarnessOptions = {
   readonly liveEvents?: FellowshipLiveEvents;
@@ -31,7 +31,7 @@ export function makeFellowshipTestHarness({
     streamEvents: () => {
       return Stream.empty;
     },
-  } satisfies FellowshipService;
+  } satisfies FellowshipShape;
 
   return {
     fellowship,

@@ -2,7 +2,7 @@ import * as E from "effect/Effect";
 import * as Ref from "effect/Ref";
 
 import {
-  type WebSocketBroadcasterService,
+  type WebSocketBroadcasterShape,
   type WebSocketWriter,
 } from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
 
@@ -49,7 +49,7 @@ export function makeWebSocketBroadcasterTestHarness() {
           yield* writer(message).pipe(E.ignore);
         });
       },
-    } satisfies WebSocketBroadcasterService;
+    } satisfies WebSocketBroadcasterShape;
 
     const getMessages = () => {
       return Ref.get(messages);

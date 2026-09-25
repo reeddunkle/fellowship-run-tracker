@@ -27,7 +27,7 @@ import { DungeonRunObservationDAO } from "@frt/db/daos/dungeon-run-observation/d
 
 import { makeFellowshipTrackerEventProcessor } from "./fellowship-tracker-event-processor.ts";
 import {
-  type FellowshipTrackerServiceShape,
+  type FellowshipTrackerShape,
   type StartTrackingOptions,
 } from "./fellowship-tracker-service.ts";
 import { makeFellowshipTrackerState } from "./fellowship-tracker-state.ts";
@@ -191,7 +191,7 @@ export const makeFellowshipTracker = E.gen(function* () {
     );
   });
 
-  const start: FellowshipTrackerServiceShape["start"] = E.fn(
+  const start: FellowshipTrackerShape["start"] = E.fn(
     "fellowship.tracker.start",
   )(function* ({ configurationId }) {
     yield* E.annotateCurrentSpan("fellowship.configurationId", configurationId);
@@ -217,97 +217,99 @@ export const makeFellowshipTracker = E.gen(function* () {
     });
   });
 
-  const startConfiguration: FellowshipTrackerServiceShape["startConfiguration"] =
-    E.fn("fellowship.tracker.start-configuration")(function* ({
+  const startConfiguration: FellowshipTrackerShape["startConfiguration"] = E.fn(
+    "fellowship.tracker.start-configuration",
+  )(function* ({ configuration }) {
+    yield* startTracking({
       configuration,
-    }) {
-      yield* startTracking({
-        configuration,
-        events: fellowship.liveEvents(),
-        liveStatus: fellowship.liveStatus(),
-        source: {
-          _tag: "External",
-        },
-      });
+      events: fellowship.liveEvents(),
+      liveStatus: fellowship.liveStatus(),
+      source: {
+        _tag: "External",
+      },
     });
-
-  const stop: FellowshipTrackerServiceShape["stop"] = E.fn(
-    "fellowship.tracker.stop",
-  )(function* () {
-    yield* semaphore.withPermit(
-      E.gen(function* () {
-        const activeTracker = yield* trackerState.getActiveTracker;
-
-        if (Option.isNone(activeTracker)) {
-          return;
-        }
-
-        const tracker = activeTracker.value;
-
-        yield* E.annotateCurrentSpan("fellowship.dungeonId", tracker.dungeonId);
-
-        yield* E.annotateCurrentSpan(
-          "fellowship.tracker.source",
-          tracker.source._tag,
-        );
-
-        yield* Fiber.interrupt(tracker.fiber);
-        yield* trackerState.setIdle;
-
-        const currentState = yield* Ref.get(tracker.stateRef);
-
-        if (currentState.configuredRun.dungeonRun?.status === "ACTIVE") {
-          const endedAt = yield* DateTime.now;
-
-          const interruptedState = interruptDungeonRunProcessingState({
-            endedAt,
-            state: currentState,
-          });
-
-          yield* Ref.set(tracker.stateRef, interruptedState);
-
-          if (tracker.localLogDungeonRunPersistence !== undefined) {
-            yield* tracker.localLogDungeonRunPersistence
-              .interrupt(endedAt)
-              .pipe(
-                E.catch((error) => {
-                  return E.logError(
-                    "Failed to interrupt persisted local log dungeon run.",
-                    {
-                      error,
-                    },
-                  );
-                }),
-              );
-          }
-
-          yield* publishDungeonRunState({
-            state: interruptedState,
-          }).pipe(
-            E.provideService(
-              DungeonRunWebSocketBroadcaster,
-              dungeonRunWebSocketBroadcaster,
-            ),
-            E.catch((error) => {
-              return E.logError(
-                "Failed to publish interrupted dungeon run state.",
-                {
-                  error,
-                },
-              );
-            }),
-          );
-        }
-
-        yield* E.logInfo("Stopped Fellowship tracker.", {
-          dungeonId: tracker.dungeonId,
-          source: tracker.source,
-        });
-      }),
-    );
   });
 
-  const replayLog: FellowshipTrackerServiceShape["replayLog"] = E.fn(
+  const stop: FellowshipTrackerShape["stop"] = E.fn("fellowship.tracker.stop")(
+    function* () {
+      yield* semaphore.withPermit(
+        E.gen(function* () {
+          const activeTracker = yield* trackerState.getActiveTracker;
+
+          if (Option.isNone(activeTracker)) {
+            return;
+          }
+
+          const tracker = activeTracker.value;
+
+          yield* E.annotateCurrentSpan(
+            "fellowship.dungeonId",
+            tracker.dungeonId,
+          );
+
+          yield* E.annotateCurrentSpan(
+            "fellowship.tracker.source",
+            tracker.source._tag,
+          );
+
+          yield* Fiber.interrupt(tracker.fiber);
+          yield* trackerState.setIdle;
+
+          const currentState = yield* Ref.get(tracker.stateRef);
+
+          if (currentState.configuredRun.dungeonRun?.status === "ACTIVE") {
+            const endedAt = yield* DateTime.now;
+
+            const interruptedState = interruptDungeonRunProcessingState({
+              endedAt,
+              state: currentState,
+            });
+
+            yield* Ref.set(tracker.stateRef, interruptedState);
+
+            if (tracker.localLogDungeonRunPersistence !== undefined) {
+              yield* tracker.localLogDungeonRunPersistence
+                .interrupt(endedAt)
+                .pipe(
+                  E.catch((error) => {
+                    return E.logError(
+                      "Failed to interrupt persisted local log dungeon run.",
+                      {
+                        error,
+                      },
+                    );
+                  }),
+                );
+            }
+
+            yield* publishDungeonRunState({
+              state: interruptedState,
+            }).pipe(
+              E.provideService(
+                DungeonRunWebSocketBroadcaster,
+                dungeonRunWebSocketBroadcaster,
+              ),
+              E.catch((error) => {
+                return E.logError(
+                  "Failed to publish interrupted dungeon run state.",
+                  {
+                    error,
+                  },
+                );
+              }),
+            );
+          }
+
+          yield* E.logInfo("Stopped Fellowship tracker.", {
+            dungeonId: tracker.dungeonId,
+            source: tracker.source,
+          });
+        }),
+      );
+    },
+  );
+
+  const replayLog: FellowshipTrackerShape["replayLog"] = E.fn(
     "fellowship.tracker.replay-log",
   )(function* ({ configuration, logFilePath }) {
     yield* E.annotateCurrentSpan("fellowship.log-file-path", logFilePath);
@@ -330,5 +332,5 @@ export const makeFellowshipTracker = E.gen(function* () {
     status: trackerState.status,
     statusChanges: trackerState.statusChanges,
     stop,
-  } satisfies FellowshipTrackerServiceShape;
+  } satisfies FellowshipTrackerShape;
 });

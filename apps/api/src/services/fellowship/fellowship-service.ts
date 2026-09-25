@@ -30,7 +30,7 @@ export type FellowshipLiveStatus =
       readonly filePath: string;
     };
 
-export type FellowshipService = {
+export type FellowshipShape = {
   readonly liveEvents: () => Stream.Stream<FellowshipEvent, FileMonitorError>;
 
   readonly liveStatus: () => Stream.Stream<
@@ -52,9 +52,7 @@ const makeFellowship = E.gen(function* () {
   const fileMonitor = yield* FileMonitor;
   const fileMonitorSource = yield* FileMonitorSource;
 
-  const streamEvents: FellowshipService["streamEvents"] = (
-    filePath: string,
-  ) => {
+  const streamEvents: FellowshipShape["streamEvents"] = (filePath: string) => {
     return parseFellowshipEventStream(
       fileMonitor.streamLines({
         filePath,
@@ -62,11 +60,11 @@ const makeFellowship = E.gen(function* () {
     );
   };
 
-  const readEvents: FellowshipService["readEvents"] = (filePath: string) => {
+  const readEvents: FellowshipShape["readEvents"] = (filePath: string) => {
     return streamEvents(filePath).pipe(Stream.runCollect);
   };
 
-  const liveEvents: FellowshipService["liveEvents"] = () => {
+  const liveEvents: FellowshipShape["liveEvents"] = () => {
     return Stream.unwrap(
       E.gen(function* () {
         const settings = yield* appSettingsStore.get();
@@ -82,7 +80,7 @@ const makeFellowship = E.gen(function* () {
     );
   };
 
-  const liveStatus: FellowshipService["liveStatus"] = () => {
+  const liveStatus: FellowshipShape["liveStatus"] = () => {
     return Stream.unwrap(
       E.gen(function* () {
         const settings = yield* appSettingsStore.get();
@@ -119,13 +117,12 @@ const makeFellowship = E.gen(function* () {
     liveStatus,
     readEvents,
     streamEvents,
-  } satisfies FellowshipService;
+  } satisfies FellowshipShape;
 });
 
-export class Fellowship extends Context.Service<
-  Fellowship,
-  FellowshipService
->()("@frt/api/services/fellowship/fellowship-service/Fellowship") {
+export class Fellowship extends Context.Service<Fellowship, FellowshipShape>()(
+  "@frt/api/services/fellowship/fellowship-service/Fellowship",
+) {
   static readonly layerNoDeps = Layer.effect(this, makeFellowship);
 
   static readonly layer = this.layerNoDeps.pipe(

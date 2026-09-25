@@ -13,7 +13,7 @@ import {
   type SimulatedImport,
 } from "@frt/shared/fellowship-logs/simulated-import-report-code.ts";
 
-import { type FellowshipLogsDungeonRunImporterServiceShape } from "./fellowship-logs-dungeon-run-importer-service.ts";
+import { type FellowshipLogsDungeonRunImporterShape } from "./fellowship-logs-dungeon-run-importer-service.ts";
 
 const PROGRESS_STEPS = 10;
 const FAILURE_STEP = 6;
@@ -21,12 +21,12 @@ const RATE_LIMITED_STEP = 3;
 const RATE_LIMIT_RESET_DURATION = Duration.seconds(15);
 
 type ImportReportOptions = Parameters<
-  FellowshipLogsDungeonRunImporterServiceShape["importReport"]
+  FellowshipLogsDungeonRunImporterShape["importReport"]
 >[0];
 
 export function makeSimulatedFellowshipLogsDungeonRunImporter(
-  realImporter: FellowshipLogsDungeonRunImporterServiceShape,
-): FellowshipLogsDungeonRunImporterServiceShape {
+  realImporter: FellowshipLogsDungeonRunImporterShape,
+): FellowshipLogsDungeonRunImporterShape {
   const deferredReportCodes = new Set<FellowshipLogsReportCode>();
 
   const runSteps = E.fn("SimulatedFellowshipLogsDungeonRunImporter.runSteps")(
@@ -104,7 +104,7 @@ export function makeSimulatedFellowshipLogsDungeonRunImporter(
     );
   });
 
-  const importReport: FellowshipLogsDungeonRunImporterServiceShape["importReport"] =
+  const importReport: FellowshipLogsDungeonRunImporterShape["importReport"] =
     E.fn("SimulatedFellowshipLogsDungeonRunImporter.importReport")(
       function* (options) {
         const simulated = yield* parseSimulatedImportReportCode(

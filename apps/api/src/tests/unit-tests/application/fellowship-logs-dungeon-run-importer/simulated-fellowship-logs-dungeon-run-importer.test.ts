@@ -5,7 +5,7 @@ import * as Schema from "effect/Schema";
 import * as TestClock from "effect/testing/TestClock";
 import { describe, expect, test, vi } from "vitest";
 
-import { type FellowshipLogsDungeonRunImporterServiceShape } from "@frt/api/application/fellowship-logs-dungeon-run-importer/fellowship-logs-dungeon-run-importer-service.ts";
+import { type FellowshipLogsDungeonRunImporterShape } from "@frt/api/application/fellowship-logs-dungeon-run-importer/fellowship-logs-dungeon-run-importer-service.ts";
 import { makeSimulatedFellowshipLogsDungeonRunImporter } from "@frt/api/application/fellowship-logs-dungeon-run-importer/make-simulated-fellowship-logs-dungeon-run-importer.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { DungeonRunIdSchema } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
@@ -23,7 +23,7 @@ const REAL_DUNGEON_RUN_ID = DungeonRunIdSchema.make("real-run");
 
 function makeRealImporter() {
   const importReport = vi.fn<
-    FellowshipLogsDungeonRunImporterServiceShape["importReport"]
+    FellowshipLogsDungeonRunImporterShape["importReport"]
   >(() => {
     return E.succeed({ dungeonRunId: REAL_DUNGEON_RUN_ID });
   });
@@ -42,7 +42,7 @@ function simulatedReportCode(outcome: SimulatedImportOutcome) {
 }
 
 function runImport(
-  importer: FellowshipLogsDungeonRunImporterServiceShape,
+  importer: FellowshipLogsDungeonRunImporterShape,
   reportCode: ReturnType<typeof toReportCode>,
 ) {
   return E.gen(function* () {

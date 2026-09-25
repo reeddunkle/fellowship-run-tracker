@@ -10,7 +10,7 @@ export type WebSocketWriter = (
   message: string,
 ) => E.Effect<void, Socket.SocketError>;
 
-export type WebSocketBroadcasterService = {
+export type WebSocketBroadcasterShape = {
   readonly clientCount: E.Effect<number>;
 
   readonly publish: (message: string) => E.Effect<void>;
@@ -26,7 +26,7 @@ const makeWebSocketBroadcaster = E.gen(function* () {
   const clients = yield* Ref.make(HashSet.empty<WebSocketWriter>());
   const latestMessage = yield* Ref.make<string | undefined>(undefined);
 
-  const clientCount: WebSocketBroadcasterService["clientCount"] = Ref.get(
+  const clientCount: WebSocketBroadcasterShape["clientCount"] = Ref.get(
     clients,
   ).pipe(
     E.map((currentClients) => {
@@ -60,7 +60,7 @@ const makeWebSocketBroadcaster = E.gen(function* () {
     );
   };
 
-  const registerClient: WebSocketBroadcasterService["registerClient"] = (
+  const registerClient: WebSocketBroadcasterShape["registerClient"] = (
     writer: WebSocketWriter,
   ) => {
     return E.acquireRelease(
@@ -73,23 +73,24 @@ const makeWebSocketBroadcaster = E.gen(function* () {
     );
   };
 
-  const sendLatestToClient: WebSocketBroadcasterService["sendLatestToClient"] =
-    (writer: WebSocketWriter) => {
-      return E.gen(function* () {
-        const message = yield* Ref.get(latestMessage);
+  const sendLatestToClient: WebSocketBroadcasterShape["sendLatestToClient"] = (
+    writer: WebSocketWriter,
+  ) => {
+    return E.gen(function* () {
+      const message = yield* Ref.get(latestMessage);
 
-        if (message === undefined) {
-          return;
-        }
+      if (message === undefined) {
+        return;
+      }
 
-        yield* writeToClient({
-          message,
-          writer,
-        });
+      yield* writeToClient({
+        message,
+        writer,
       });
-    };
+    });
+  };
 
-  const publish: WebSocketBroadcasterService["publish"] = (message: string) => {
+  const publish: WebSocketBroadcasterShape["publish"] = (message: string) => {
     return E.gen(function* () {
       yield* Ref.set(latestMessage, message);
 
@@ -116,12 +117,12 @@ const makeWebSocketBroadcaster = E.gen(function* () {
     publish,
     registerClient,
     sendLatestToClient,
-  } satisfies WebSocketBroadcasterService;
+  } satisfies WebSocketBroadcasterShape;
 });
 
 export class BackgroundJobWebSocketBroadcaster extends Context.Service<
   BackgroundJobWebSocketBroadcaster,
-  WebSocketBroadcasterService
+  WebSocketBroadcasterShape
 >()(
   "@frt/api/api/websocket/websocket-broadcaster-service/BackgroundJobWebSocketBroadcaster",
 ) {
@@ -130,7 +131,7 @@ export class BackgroundJobWebSocketBroadcaster extends Context.Service<
 
 export class DungeonRunWebSocketBroadcaster extends Context.Service<
   DungeonRunWebSocketBroadcaster,
-  WebSocketBroadcasterService
+  WebSocketBroadcasterShape
 >()(
   "@frt/api/api/websocket/websocket-broadcaster-service/DungeonRunWebSocketBroadcaster",
 ) {
@@ -139,7 +140,7 @@ export class DungeonRunWebSocketBroadcaster extends Context.Service<
 
 export class TrackingWebSocketBroadcaster extends Context.Service<
   TrackingWebSocketBroadcaster,
-  WebSocketBroadcasterService
+  WebSocketBroadcasterShape
 >()(
   "@frt/api/api/websocket/websocket-broadcaster-service/TrackingWebSocketBroadcaster",
 ) {
@@ -148,7 +149,7 @@ export class TrackingWebSocketBroadcaster extends Context.Service<
 
 export class LiveSplitWebSocketBroadcaster extends Context.Service<
   LiveSplitWebSocketBroadcaster,
-  WebSocketBroadcasterService
+  WebSocketBroadcasterShape
 >()(
   "@frt/api/api/websocket/websocket-broadcaster-service/LiveSplitWebSocketBroadcaster",
 ) {

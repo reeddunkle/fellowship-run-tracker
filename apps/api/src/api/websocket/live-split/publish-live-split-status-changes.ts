@@ -4,7 +4,7 @@ import * as Stream from "effect/Stream";
 
 import {
   LiveSplitWebSocketBroadcaster,
-  type WebSocketBroadcasterService,
+  type WebSocketBroadcasterShape,
 } from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
 import { LiveSplit } from "@frt/api/services/live-split/live-split-service.ts";
 import {
@@ -19,7 +19,7 @@ const encodeLiveSplitApiMessage = Schema.encodeEffect(
 
 type PublishLiveSplitApiStatusOptions = {
   readonly status: LiveSplitApiStatus;
-  readonly webSocketBroadcaster: WebSocketBroadcasterService;
+  readonly webSocketBroadcaster: WebSocketBroadcasterShape;
 };
 
 function publishLiveSplitApiStatus({

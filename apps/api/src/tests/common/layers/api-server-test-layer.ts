@@ -27,7 +27,7 @@ import { DungeonCatalogMock } from "@frt/api/tests/common/mocks/dungeon-catalog-
 import { DungeonRunHistoryMock } from "@frt/api/tests/common/mocks/dungeon-run-history-mock.ts";
 import { EncounterCatalogMock } from "@frt/api/tests/common/mocks/encounter-catalog-mock.ts";
 import { FellowshipLogsMock } from "@frt/api/tests/common/mocks/fellowship-logs-mock.ts";
-import { FellowshipTrackerMock } from "@frt/api/tests/common/mocks/fellowship-tracker-service-mock.ts";
+import { FellowshipTrackerMock } from "@frt/api/tests/common/mocks/fellowship-tracker-mock.ts";
 import { LiveSplitMock } from "@frt/api/tests/common/mocks/live-split-mock.ts";
 import { UnitCatalogMock } from "@frt/api/tests/common/mocks/unit-catalog-mock.ts";
 

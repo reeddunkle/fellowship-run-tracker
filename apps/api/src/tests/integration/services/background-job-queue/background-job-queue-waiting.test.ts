@@ -10,7 +10,7 @@ import { describe, expect, test } from "vitest";
 
 import {
   FellowshipLogsDungeonRunImporter,
-  type FellowshipLogsDungeonRunImporterServiceShape,
+  type FellowshipLogsDungeonRunImporterShape,
 } from "@frt/api/application/fellowship-logs-dungeon-run-importer/fellowship-logs-dungeon-run-importer-service.ts";
 import { FellowshipLogsGatewayRateLimitExceededError } from "@frt/api/errors/fellowship-logs-gateway-error.ts";
 import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
@@ -66,7 +66,7 @@ function makeBackgroundJobQueueTestLayer({
   importReport,
 }: {
   readonly databaseFilename: string;
-  readonly importReport: FellowshipLogsDungeonRunImporterServiceShape["importReport"];
+  readonly importReport: FellowshipLogsDungeonRunImporterShape["importReport"];
 }) {
   return BackgroundJobQueue.layerNoDeps.pipe(
     Layer.provide(BackgroundJobRunnerTestLive),
@@ -144,10 +144,9 @@ function withTempDatabase<A, Error>(
   }).pipe(E.scoped, E.provide(NodePlatformLayer), runTest);
 }
 
-const succeed: FellowshipLogsDungeonRunImporterServiceShape["importReport"] =
-  () => {
-    return E.succeed({ dungeonRunId: STUB_DUNGEON_RUN_ID });
-  };
+const succeed: FellowshipLogsDungeonRunImporterShape["importReport"] = () => {
+  return E.succeed({ dungeonRunId: STUB_DUNGEON_RUN_ID });
+};
 
 /**
  * An importer whose first import of `FIGHT_ID` runs out of points until
@@ -156,31 +155,32 @@ const succeed: FellowshipLogsDungeonRunImporterServiceShape["importReport"] =
 function makeRateLimitedImporter(delay: { readonly milliseconds: number }) {
   const calls: Array<number> = [];
 
-  const importReport: FellowshipLogsDungeonRunImporterServiceShape["importReport"] =
-    ({ fightId }) => {
-      calls.push(fightId);
+  const importReport: FellowshipLogsDungeonRunImporterShape["importReport"] = ({
+    fightId,
+  }) => {
+    calls.push(fightId);
 
-      const isFirstCall =
-        fightId === FIGHT_ID &&
-        calls.filter((call) => {
-          return call === FIGHT_ID;
-        }).length === 1;
+    const isFirstCall =
+      fightId === FIGHT_ID &&
+      calls.filter((call) => {
+        return call === FIGHT_ID;
+      }).length === 1;
 
-      if (!isFirstCall) {
-        return succeed({ fightId, isOwnRun: true, reportCode: REPORT_CODE });
-      }
+    if (!isFirstCall) {
+      return succeed({ fightId, isOwnRun: true, reportCode: REPORT_CODE });
+    }
 
-      return DateTime.now.pipe(
-        E.flatMap((now) => {
-          return E.fail(
-            new FellowshipLogsGatewayRateLimitExceededError({
-              reason: "RejectedByApi",
-              resetsAt: DateTime.add(now, delay),
-            }),
-          );
-        }),
-      );
-    };
+    return DateTime.now.pipe(
+      E.flatMap((now) => {
+        return E.fail(
+          new FellowshipLogsGatewayRateLimitExceededError({
+            reason: "RejectedByApi",
+            resetsAt: DateTime.add(now, delay),
+          }),
+        );
+      }),
+    );
+  };
 
   return { calls, importReport };
 }

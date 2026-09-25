@@ -98,7 +98,7 @@ export type StartTrackingOptions = {
   readonly source: FellowshipTrackerConfigurationSource;
 };
 
-export type FellowshipTrackerServiceShape = {
+export type FellowshipTrackerShape = {
   readonly replayLog: (
     options: ReplayFellowshipTrackerLogOptions,
   ) => E.Effect<void, unknown>;
@@ -120,7 +120,7 @@ export type FellowshipTrackerServiceShape = {
 
 export class FellowshipTracker extends Context.Service<
   FellowshipTracker,
-  FellowshipTrackerServiceShape
+  FellowshipTrackerShape
 >()(
   "@frt/api/application/fellowship-tracker/fellowship-tracker-service/FellowshipTracker",
 ) {

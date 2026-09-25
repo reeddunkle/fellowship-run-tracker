@@ -13,7 +13,7 @@ import {
   FellowshipTrackerConfigurationNotFoundError,
 } from "@frt/api/errors/fellowship-tracker-error.ts";
 import { makeApiServerTestLayerWith } from "@frt/api/tests/common/layers/api-server-test-layer.ts";
-import { makeFellowshipTrackerMock } from "@frt/api/tests/common/mocks/fellowship-tracker-service-mock.ts";
+import { makeFellowshipTrackerMock } from "@frt/api/tests/common/mocks/fellowship-tracker-mock.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import {
   TrackingApiAlreadyRunningError,

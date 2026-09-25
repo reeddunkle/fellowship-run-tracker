@@ -13,7 +13,7 @@ import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
 import { FileMonitor } from "@frt/api/services/filesystem/file-monitor-service.ts";
 import {
   FileMonitorSource,
-  type FileMonitorSourceService,
+  type FileMonitorSourceShape,
 } from "@frt/api/services/filesystem/file-monitor-source-service.ts";
 import {
   type FileData,
@@ -169,7 +169,7 @@ export function makeFileMonitorTestHarness() {
       streamStatus: () => {
         return Stream.empty;
       },
-    } satisfies FileMonitorSourceService;
+    } satisfies FileMonitorSourceShape;
 
     const FileMonitorSourceMock = Layer.succeed(
       FileMonitorSource,

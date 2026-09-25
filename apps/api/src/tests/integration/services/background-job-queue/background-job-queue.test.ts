@@ -12,7 +12,7 @@ import { describe, expect, test } from "vitest";
 
 import {
   FellowshipLogsDungeonRunImporter,
-  type FellowshipLogsDungeonRunImporterServiceShape,
+  type FellowshipLogsDungeonRunImporterShape,
 } from "@frt/api/application/fellowship-logs-dungeon-run-importer/fellowship-logs-dungeon-run-importer-service.ts";
 import { FellowshipLogsDungeonRunImportRunNotFoundError } from "@frt/api/errors/fellowship-logs-dungeon-run-import-error.ts";
 import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
@@ -66,7 +66,7 @@ function makeImportJob(fightId = FIGHT_ID) {
 const OTHER_FIGHT_ID = Schema.decodeSync(FellowshipLogsFightIdSchema)(16);
 
 function makeStubImporterLayer(
-  importReport: FellowshipLogsDungeonRunImporterServiceShape["importReport"],
+  importReport: FellowshipLogsDungeonRunImporterShape["importReport"],
 ) {
   return Layer.succeed(FellowshipLogsDungeonRunImporter, { importReport });
 }
@@ -76,7 +76,7 @@ function makeBackgroundJobQueueTestLayer({
   importReport,
 }: {
   readonly databaseFilename: string;
-  readonly importReport?: FellowshipLogsDungeonRunImporterServiceShape["importReport"];
+  readonly importReport?: FellowshipLogsDungeonRunImporterShape["importReport"];
 }) {
   const DependenciesTestLive =
     importReport === undefined
@@ -133,7 +133,7 @@ function withTempDatabase<A, Error>(
   }).pipe(E.scoped, E.provide(NodePlatformLayer), runTest);
 }
 
-const blockForever: FellowshipLogsDungeonRunImporterServiceShape["importReport"] =
+const blockForever: FellowshipLogsDungeonRunImporterShape["importReport"] =
   () => {
     return E.never;
   };
@@ -229,7 +229,7 @@ describe("BackgroundJobQueue", () => {
           const started = yield* Deferred.make<void>();
           const interrupted = yield* Deferred.make<void>();
 
-          const importReport: FellowshipLogsDungeonRunImporterServiceShape["importReport"] =
+          const importReport: FellowshipLogsDungeonRunImporterShape["importReport"] =
             () => {
               return Deferred.succeed(started, undefined).pipe(
                 E.andThen(E.never),
@@ -308,7 +308,7 @@ describe("BackgroundJobQueue", () => {
       (databaseFilename) => {
         let calls = 0;
 
-        const importReport: FellowshipLogsDungeonRunImporterServiceShape["importReport"] =
+        const importReport: FellowshipLogsDungeonRunImporterShape["importReport"] =
           ({ fightId, reportCode }) => {
             calls += 1;
 
@@ -413,7 +413,7 @@ describe("BackgroundJobQueue", () => {
           const reported = yield* Deferred.make<void>();
           const release = yield* Deferred.make<void>();
 
-          const importReport: FellowshipLogsDungeonRunImporterServiceShape["importReport"] =
+          const importReport: FellowshipLogsDungeonRunImporterShape["importReport"] =
             ({ onProgress }) => {
               return E.gen(function* () {
                 yield* onProgress?.(0.5) ?? E.void;
@@ -465,7 +465,7 @@ describe("BackgroundJobQueue", () => {
         return E.gen(function* () {
           const reported = yield* Deferred.make<void>();
 
-          const importReport: FellowshipLogsDungeonRunImporterServiceShape["importReport"] =
+          const importReport: FellowshipLogsDungeonRunImporterShape["importReport"] =
             ({ onProgress }) => {
               return E.gen(function* () {
                 yield* onProgress?.(0.25) ?? E.void;
@@ -512,7 +512,7 @@ describe("BackgroundJobQueue", () => {
       (databaseFilename) => {
         let calls = 0;
 
-        const importReport: FellowshipLogsDungeonRunImporterServiceShape["importReport"] =
+        const importReport: FellowshipLogsDungeonRunImporterShape["importReport"] =
           ({ fightId, reportCode }) => {
             calls += 1;
 
