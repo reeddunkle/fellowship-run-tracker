@@ -1,7 +1,7 @@
 import * as Data from "effect/Data";
 import type * as DateTime from "effect/DateTime";
 
-import { type FellowshipLogsRateLimitExceededError } from "@frt/api/errors/fellowship-logs-error.ts";
+import { type FellowshipLogsGatewayRateLimitExceededError } from "@frt/api/errors/fellowship-logs-gateway-error.ts";
 import { type BackgroundJobId } from "@frt/shared/background-job/background-job-id-schema.ts";
 
 const BACKGROUND_JOB_OPERATION_DESCRIPTIONS = {
@@ -33,7 +33,7 @@ export class BackgroundJobNotFoundError extends Data.TaggedError(
 }
 
 export type BackgroundJobDeferredErrorReason =
-  FellowshipLogsRateLimitExceededError;
+  FellowshipLogsGatewayRateLimitExceededError;
 
 export class BackgroundJobDeferredError extends Data.TaggedError(
   "BackgroundJobDeferredError",

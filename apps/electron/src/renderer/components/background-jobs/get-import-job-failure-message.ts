@@ -11,9 +11,9 @@ const FAILURE_MESSAGE_BY_TAG: Partial<Record<string, string>> = {
     "This run hadn't finished in Fellowship Logs.",
   FellowshipLogsDungeonRunImportRunNotFoundError:
     "We couldn't find a dungeon run in that report and fight.",
-  FellowshipLogsRateLimitExceededError:
+  FellowshipLogsGatewayRateLimitExceededError:
     "Ran out of Fellowship Logs points before the import finished.",
-  FellowshipLogsRequestError:
+  FellowshipLogsGatewayRequestError:
     "Something went wrong contacting Fellowship Logs.",
 };
 

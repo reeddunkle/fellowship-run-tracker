@@ -5,7 +5,7 @@ import * as Match from "effect/Match";
 import * as Option from "effect/Option";
 
 import { FellowshipLogsDungeonRunImportRunNotFoundError } from "@frt/api/errors/fellowship-logs-dungeon-run-import-error.ts";
-import { FellowshipLogsRateLimitExceededError } from "@frt/api/errors/fellowship-logs-error.ts";
+import { FellowshipLogsGatewayRateLimitExceededError } from "@frt/api/errors/fellowship-logs-gateway-error.ts";
 import { DungeonRunIdSchema } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 import { type FellowshipLogsReportCode } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 import {
@@ -92,7 +92,7 @@ export function makeSimulatedFellowshipLogsDungeonRunImporter(
             deferredReportCodes.add(reportCode);
 
             return E.fail(
-              new FellowshipLogsRateLimitExceededError({
+              new FellowshipLogsGatewayRateLimitExceededError({
                 reason: "PreflightExhausted",
                 resetsAt: DateTime.addDuration(now, RATE_LIMIT_RESET_DURATION),
               }),

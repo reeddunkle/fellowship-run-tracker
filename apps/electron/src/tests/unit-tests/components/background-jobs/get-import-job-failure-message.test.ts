@@ -7,7 +7,7 @@ describe("getImportJobFailureMessage", () => {
     expect(
       getImportJobFailureMessage({
         message: "Out of points.",
-        tag: "FellowshipLogsRateLimitExceededError",
+        tag: "FellowshipLogsGatewayRateLimitExceededError",
       }),
     ).toBe("Ran out of Fellowship Logs points before the import finished.");
   });

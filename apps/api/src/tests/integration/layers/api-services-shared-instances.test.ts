@@ -10,9 +10,9 @@ import { describe, expect, test } from "vitest";
 
 import { ApiServicesLayer } from "@frt/api/layers/api-services-layer.ts";
 import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
-import { FellowshipLogsApiService } from "@frt/api/services/api/fellowship-logs/fellowship-logs-api-service.ts";
 import { BackgroundJobService } from "@frt/api/services/background-job/background-job-service.ts";
 import { EncryptionKeyDirectory } from "@frt/api/services/encryption/encryption-key-directory.ts";
+import { FellowshipLogs } from "@frt/api/services/fellowship-logs/fellowship-logs-service.ts";
 import { makePersistenceTestLayer } from "@frt/api/tests/common/layers/persistence-test-layer.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { BackgroundJobDAO } from "@frt/db/daos/background-job/background-job-dao.ts";
@@ -51,7 +51,7 @@ describe("API services layer", () => {
 
       return yield* E.gen(function* () {
         const backgroundJobService = yield* BackgroundJobService;
-        const fellowshipLogsApiService = yield* FellowshipLogsApiService;
+        const fellowshipLogs = yield* FellowshipLogs;
 
         const { job } = yield* backgroundJobService.offer({
           _tag: "ImportFellowshipLogsDungeonRun",
@@ -76,7 +76,7 @@ describe("API services layer", () => {
           E.timeout("10 seconds"),
         );
 
-        return yield* fellowshipLogsApiService.getLastKnownRateLimitData();
+        return yield* fellowshipLogs.getLastKnownRateLimitData();
       }).pipe(E.provide(ApiServicesTestLayer));
     }).pipe(E.scoped, E.provide(NodePlatformLayer), runTest);
 

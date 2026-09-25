@@ -4,12 +4,12 @@ import type * as Layer from "effect/Layer";
 import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 import * as HttpApiError from "effect/unstable/httpapi/HttpApiError";
 
-import {
-  FellowshipLogsApiService,
-  type QueueFellowshipLogsDungeonRunImportError,
-} from "@frt/api/services/api/fellowship-logs/fellowship-logs-api-service.ts";
 import { type DungeonRunRepositoryError } from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
-import { type FellowshipLogsRequestOperationError } from "@frt/api/services/fellowship-logs/fellowship-logs-service.ts";
+import {
+  FellowshipLogs,
+  type QueueFellowshipLogsDungeonRunImportError,
+} from "@frt/api/services/fellowship-logs/fellowship-logs-service.ts";
+import { type FellowshipLogsGatewayRequestOperationError } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
 import {
   FellowshipLogsApiAlreadyImportedError,
   FellowshipLogsApiDungeonLevelNotFoundError,
@@ -24,7 +24,7 @@ function mapFellowshipLogsMetadataApiError({
   reportCode,
 }: FellowshipLogsApiDungeonRunReference) {
   return (
-    error: FellowshipLogsRequestOperationError,
+    error: FellowshipLogsGatewayRequestOperationError,
   ): E.Effect<
     never,
     | FellowshipLogsApiDungeonLevelNotFoundError
@@ -34,7 +34,7 @@ function mapFellowshipLogsMetadataApiError({
     const run = { fightId, reportCode };
 
     if (
-      error._tag === "FellowshipLogsGraphQLResponseError" &&
+      error._tag === "FellowshipLogsGatewayGraphQLResponseError" &&
       error.reason === "FightMissingDifficultyLevel"
     ) {
       return E.fail(new FellowshipLogsApiDungeonLevelNotFoundError(run));
@@ -76,12 +76,12 @@ function logInternalServerError(
 }
 
 function mapFellowshipLogsRateLimitApiError(
-  error: FellowshipLogsRequestOperationError,
+  error: FellowshipLogsGatewayRequestOperationError,
 ): E.Effect<
   never,
   FellowshipLogsApiRateLimitExceededError | HttpApiError.InternalServerError
 > {
-  if (error._tag === "FellowshipLogsRateLimitExceededError") {
+  if (error._tag === "FellowshipLogsGatewayRateLimitExceededError") {
     return E.fail(
       new FellowshipLogsApiRateLimitExceededError({
         resetsAtMilliseconds: DateTime.toEpochMillis(error.resetsAt),
@@ -124,36 +124,36 @@ const FellowshipLogsApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "fellowshipLogs",
   E.fn(function* (handlers) {
-    const fellowshipLogsApiService = yield* FellowshipLogsApiService;
+    const fellowshipLogs = yield* FellowshipLogs;
 
     return handlers
       .handle("getFellowshipLogsDungeonRunMetadata", ({ payload }) => {
-        return fellowshipLogsApiService
+        return fellowshipLogs
           .getDungeonRunMetadata(payload)
           .pipe(E.catch(mapFellowshipLogsMetadataApiError(payload)));
       })
       .handle("getFellowshipLogsRateLimitData", () => {
-        return fellowshipLogsApiService
+        return fellowshipLogs
           .getRateLimitData()
           .pipe(E.catch(mapFellowshipLogsRateLimitApiError));
       })
       .handle("getFellowshipLogsLastKnownRateLimitData", () => {
-        return fellowshipLogsApiService
+        return fellowshipLogs
           .getLastKnownRateLimitData()
           .pipe(E.catch(logInternalServerError));
       })
       .handle("queueFellowshipLogsDungeonRunImport", ({ payload }) => {
-        return fellowshipLogsApiService
+        return fellowshipLogs
           .queueDungeonRunImport(payload)
           .pipe(E.catch(mapQueueFellowshipLogsDungeonRunImportError));
       })
       .handle("getFellowshipLogsDungeonRuns", () => {
-        return fellowshipLogsApiService
+        return fellowshipLogs
           .getImportedDungeonRuns()
           .pipe(E.catch(mapGetFellowshipLogsDungeonRunsError));
       })
       .handle("deleteFellowshipLogsDungeonRun", ({ params }) => {
-        return fellowshipLogsApiService
+        return fellowshipLogs
           .deleteImportedDungeonRun({
             dungeonRunId: params.dungeonRunId,
           })
@@ -165,5 +165,5 @@ const FellowshipLogsApiHandlersInferred = HttpApiBuilder.group(
 export const FellowshipLogsApiLayer: Layer.Layer<
   Layer.Success<typeof FellowshipLogsApiHandlersInferred>,
   Layer.Error<typeof FellowshipLogsApiHandlersInferred>,
-  FellowshipLogsApiService
+  FellowshipLogs
 > = FellowshipLogsApiHandlersInferred;

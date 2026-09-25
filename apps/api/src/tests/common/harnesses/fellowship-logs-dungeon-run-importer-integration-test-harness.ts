@@ -1,7 +1,7 @@
 import * as Layer from "effect/Layer";
 
 import { FellowshipLogsDungeonRunImporter } from "@frt/api/application/fellowship-logs-dungeon-run-importer/fellowship-logs-dungeon-run-importer-service.ts";
-import { FellowshipLogs } from "@frt/api/services/fellowship-logs/fellowship-logs-service.ts";
+import { FellowshipLogsGateway } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
 import { makePersistenceTestLayer } from "@frt/api/tests/common/layers/persistence-test-layer.ts";
 
 export type MakeFellowshipLogsDungeonRunImporterIntegrationTestHarnessOptions =
@@ -14,7 +14,7 @@ export function makeFellowshipLogsDungeonRunImporterIntegrationTestHarness({
 }: MakeFellowshipLogsDungeonRunImporterIntegrationTestHarnessOptions = {}) {
   const PersistenceTestLive = makePersistenceTestLayer(databaseFilename);
 
-  const FellowshipLogsFixtureTestLive = FellowshipLogs.fixtureLayer;
+  const FellowshipLogsFixtureTestLive = FellowshipLogsGateway.fixtureLayer;
 
   const FellowshipLogsDungeonRunImporterTestLive =
     FellowshipLogsDungeonRunImporter.layerNoDeps.pipe(

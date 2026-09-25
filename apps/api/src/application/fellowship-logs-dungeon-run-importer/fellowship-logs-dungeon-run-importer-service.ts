@@ -10,17 +10,17 @@ import {
   type FellowshipLogsDungeonRunImportRunNotFoundError,
 } from "@frt/api/errors/fellowship-logs-dungeon-run-import-error.ts";
 import {
-  type FellowshipLogsEventDecodeError,
-  type FellowshipLogsGraphQLResponseError,
-  type FellowshipLogsRateLimitExceededError,
-  type FellowshipLogsReportChangedError,
-  type FellowshipLogsRequestError,
-} from "@frt/api/errors/fellowship-logs-error.ts";
+  type FellowshipLogsGatewayEventDecodeError,
+  type FellowshipLogsGatewayGraphQLResponseError,
+  type FellowshipLogsGatewayRateLimitExceededError,
+  type FellowshipLogsGatewayReportChangedError,
+  type FellowshipLogsGatewayRequestError,
+} from "@frt/api/errors/fellowship-logs-gateway-error.ts";
 import {
   DungeonRunRepository,
   type DungeonRunRepositoryError,
 } from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
-import { FellowshipLogs } from "@frt/api/services/fellowship-logs/fellowship-logs-service.ts";
+import { FellowshipLogsGateway } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
 import { type DungeonRunId } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 import { type FellowshipLogsFightId } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
 import { type FellowshipLogsReportCode } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
@@ -49,11 +49,11 @@ type ImportFellowshipLogsDungeonRunError =
   | FellowshipLogsDungeonRunImportDungeonLevelNotFoundError
   | FellowshipLogsDungeonRunImportRunNotFinishedError
   | FellowshipLogsDungeonRunImportRunNotFoundError
-  | FellowshipLogsEventDecodeError
-  | FellowshipLogsGraphQLResponseError
-  | FellowshipLogsRateLimitExceededError
-  | FellowshipLogsReportChangedError
-  | FellowshipLogsRequestError;
+  | FellowshipLogsGatewayEventDecodeError
+  | FellowshipLogsGatewayGraphQLResponseError
+  | FellowshipLogsGatewayRateLimitExceededError
+  | FellowshipLogsGatewayReportChangedError
+  | FellowshipLogsGatewayRequestError;
 
 export type FellowshipLogsDungeonRunImporterServiceShape = {
   readonly importReport: (
@@ -77,7 +77,7 @@ export class FellowshipLogsDungeonRunImporter extends Context.Service<
 
   static readonly liveLayer = this.layerNoDeps.pipe(
     Layer.provide(DungeonRunRepository.layer),
-    Layer.provide(FellowshipLogs.layer),
+    Layer.provide(FellowshipLogsGateway.layer),
   );
 
   static readonly simulatedLayer = Layer.effect(
@@ -88,7 +88,7 @@ export class FellowshipLogsDungeonRunImporter extends Context.Service<
     ),
   ).pipe(
     Layer.provide(DungeonRunRepository.layer),
-    Layer.provide(FellowshipLogs.layer),
+    Layer.provide(FellowshipLogsGateway.layer),
   );
 
   static readonly layer = Layer.unwrap(

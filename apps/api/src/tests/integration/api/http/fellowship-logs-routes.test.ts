@@ -11,14 +11,14 @@ import { describe, expect, test } from "vitest";
 
 import { FellowshipLogsDungeonRunImportAlreadyImportedError } from "@frt/api/errors/fellowship-logs-dungeon-run-import-error.ts";
 import {
-  FellowshipLogsGraphQLResponseError,
-  FellowshipLogsRateLimitExceededError,
-} from "@frt/api/errors/fellowship-logs-error.ts";
+  FellowshipLogsGatewayGraphQLResponseError,
+  FellowshipLogsGatewayRateLimitExceededError,
+} from "@frt/api/errors/fellowship-logs-gateway-error.ts";
 import { makeApiServerTestLayerWith } from "@frt/api/tests/common/layers/api-server-test-layer.ts";
 import {
-  type MakeFellowshipLogsApiServiceMockOptions,
-  makeFellowshipLogsApiServiceMock,
-} from "@frt/api/tests/common/mocks/fellowship-logs-api-service-mock.ts";
+  type MakeFellowshipLogsMockOptions,
+  makeFellowshipLogsMock,
+} from "@frt/api/tests/common/mocks/fellowship-logs-mock.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import {
   FellowshipLogsApiAlreadyImportedError,
@@ -68,8 +68,8 @@ function postJson(url: string, body: unknown) {
   });
 }
 
-function runWithFellowshipLogsApiService<A, Error>(
-  serviceOptions: MakeFellowshipLogsApiServiceMockOptions,
+function runWithFellowshipLogs<A, Error>(
+  serviceOptions: MakeFellowshipLogsMockOptions,
   program: (baseUrl: string) => E.Effect<A, Error, HttpClient.HttpClient>,
 ) {
   return E.gen(function* () {
@@ -80,9 +80,7 @@ function runWithFellowshipLogsApiService<A, Error>(
     E.scoped,
     E.provide(
       Layer.mergeAll(
-        makeApiServerTestLayerWith(
-          makeFellowshipLogsApiServiceMock(serviceOptions),
-        ),
+        makeApiServerTestLayerWith(makeFellowshipLogsMock(serviceOptions)),
         FetchHttpClient.layer,
       ),
     ),
@@ -92,11 +90,11 @@ function runWithFellowshipLogsApiService<A, Error>(
 
 describe("fellowship logs routes", () => {
   test("POST /fellowship-logs/dungeon-run-metadata responds 422 when the fight has no dungeon level", async () => {
-    const { decodedError, status } = await runWithFellowshipLogsApiService(
+    const { decodedError, status } = await runWithFellowshipLogs(
       {
         getDungeonRunMetadata: () => {
           return E.fail(
-            new FellowshipLogsGraphQLResponseError({
+            new FellowshipLogsGatewayGraphQLResponseError({
               errors: [],
               fightId: MOCK_RUN.fightId,
               reason: "FightMissingDifficultyLevel",
@@ -133,11 +131,11 @@ describe("fellowship logs routes", () => {
   test("POST /fellowship-logs/dungeon-run-metadata responds 429 with the reset time when out of points", async () => {
     const resetsAt = DateTime.makeUnsafe("2026-09-23T09:00:00.000Z");
 
-    const { decodedError, status } = await runWithFellowshipLogsApiService(
+    const { decodedError, status } = await runWithFellowshipLogs(
       {
         getDungeonRunMetadata: () => {
           return E.fail(
-            new FellowshipLogsRateLimitExceededError({
+            new FellowshipLogsGatewayRateLimitExceededError({
               reason: "PreflightExhausted",
               resetsAt,
             }),
@@ -174,11 +172,11 @@ describe("fellowship logs routes", () => {
   test("GET /fellowship-logs/rate-limit-data responds 429 when Fellowship Logs turns the lookup away", async () => {
     const resetsAt = DateTime.makeUnsafe("2026-09-23T09:00:00.000Z");
 
-    const decodedError = await runWithFellowshipLogsApiService(
+    const decodedError = await runWithFellowshipLogs(
       {
         getRateLimitData: () => {
           return E.fail(
-            new FellowshipLogsRateLimitExceededError({
+            new FellowshipLogsGatewayRateLimitExceededError({
               reason: "RejectedByApi",
               resetsAt,
             }),
@@ -202,26 +200,23 @@ describe("fellowship logs routes", () => {
   });
 
   test("POST /fellowship-logs/import-jobs responds 202 with the queued job", async () => {
-    const { body, status } = await runWithFellowshipLogsApiService(
-      {},
-      (baseUrl) => {
-        return E.gen(function* () {
-          const response = yield* postJson(
-            `${baseUrl}/fellowship-logs/import-jobs`,
-            QUEUE_PAYLOAD,
-          );
+    const { body, status } = await runWithFellowshipLogs({}, (baseUrl) => {
+      return E.gen(function* () {
+        const response = yield* postJson(
+          `${baseUrl}/fellowship-logs/import-jobs`,
+          QUEUE_PAYLOAD,
+        );
 
-          const client = yield* HttpApiClient.make(AppHttpApi, { baseUrl });
+        const client = yield* HttpApiClient.make(AppHttpApi, { baseUrl });
 
-          const decoded =
-            yield* client.fellowshipLogs.queueFellowshipLogsDungeonRunImport({
-              payload: QUEUE_PAYLOAD,
-            });
+        const decoded =
+          yield* client.fellowshipLogs.queueFellowshipLogsDungeonRunImport({
+            payload: QUEUE_PAYLOAD,
+          });
 
-          return { body: decoded, status: response.status };
-        });
-      },
-    );
+        return { body: decoded, status: response.status };
+      });
+    });
 
     expect(status).toBe(202);
     expect(body.wasAlreadyQueued).toBe(false);
@@ -230,7 +225,7 @@ describe("fellowship logs routes", () => {
   });
 
   test("POST /fellowship-logs/import-jobs responds 409 when the run was already imported", async () => {
-    const { decodedError, status } = await runWithFellowshipLogsApiService(
+    const { decodedError, status } = await runWithFellowshipLogs(
       {
         queueDungeonRunImport: () => {
           return E.fail(

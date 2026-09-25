@@ -12,7 +12,7 @@ import { pruneLogFiles } from "@frt/api/logging/prune-log-files.ts";
 import { HIDDEN_BACKGROUND_JOB_QUEUE_NAMES } from "@frt/api/services/background-job/background-job-queues.ts";
 import { type BackgroundJob } from "@frt/api/services/background-job/background-job-schema.ts";
 import { DungeonRunRepository } from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
-import { pruneFellowshipLogsCache } from "@frt/api/services/fellowship-logs/cache/prune-fellowship-logs-cache.ts";
+import { pruneFellowshipLogsGatewayCache } from "@frt/api/services/fellowship-logs-gateway/cache/prune-fellowship-logs-gateway-cache.ts";
 import { BackgroundJobDAO } from "@frt/db/daos/background-job/background-job-dao.ts";
 
 const IMPORT_RETRY_SCHEDULE = Schedule.exponential("1 second");
@@ -46,19 +46,22 @@ export const runBackgroundJob = E.fn("BackgroundJobService.runBackgroundJob")(
                 times: IMPORT_RETRY_TIMES,
                 while: (error) => {
                   return (
-                    error._tag === "FellowshipLogsRequestError" ||
-                    error._tag === "FellowshipLogsReportChangedError"
+                    error._tag === "FellowshipLogsGatewayRequestError" ||
+                    error._tag === "FellowshipLogsGatewayReportChangedError"
                   );
                 },
               }),
-              E.catchTag("FellowshipLogsRateLimitExceededError", (error) => {
-                return E.fail(
-                  new BackgroundJobDeferredError({
-                    availableAt: error.resetsAt,
-                    reason: error,
-                  }),
-                );
-              }),
+              E.catchTag(
+                "FellowshipLogsGatewayRateLimitExceededError",
+                (error) => {
+                  return E.fail(
+                    new BackgroundJobDeferredError({
+                      availableAt: error.resetsAt,
+                      reason: error,
+                    }),
+                  );
+                },
+              ),
               E.catchTag(
                 "FellowshipLogsDungeonRunImportAlreadyImportedError",
                 ({ dungeonRunId }) => {
@@ -110,7 +113,7 @@ export const runBackgroundJob = E.fn("BackgroundJobService.runBackgroundJob")(
         });
       }),
       Match.tag("PruneFellowshipLogsCache", () => {
-        return pruneFellowshipLogsCache.pipe(E.as(null));
+        return pruneFellowshipLogsGatewayCache.pipe(E.as(null));
       }),
       Match.tag("PruneLogFiles", () => {
         return pruneLogFiles({

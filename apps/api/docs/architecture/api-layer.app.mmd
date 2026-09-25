@@ -386,7 +386,7 @@ flowchart TB
         61_provides_5["DungeonCatalog"]
         61_provides_6["DungeonRunHistory"]
         61_provides_7["EncounterCatalog"]
-        61_provides_8["FellowshipLogsApiService"]
+        61_provides_8["FellowshipLogs"]
         61_provides_9["LiveSplitApiService"]
         61_provides_10["UnitCatalog"]
       end
@@ -426,7 +426,7 @@ flowchart TB
     style 63_wrap stroke:none
   end
   style 63 fill:transparent
-  subgraph 64 ["`FellowshipLogsApiService.layer`"]
+  subgraph 64 ["`FellowshipLogs.layer`"]
     subgraph 64_wrap[" "]
       subgraph 64_requires [Requires]
         64_requires_0["BackgroundJobService"]
@@ -435,7 +435,7 @@ flowchart TB
       end
       style 64_requires stroke:none
       subgraph 64_provides [Provides]
-        64_provides_0["FellowshipLogsApiService"]
+        64_provides_0["FellowshipLogs"]
       end
       style 64_provides stroke:none
     end
@@ -564,7 +564,7 @@ flowchart TB
         72_provides_4["DungeonCatalog"]
         72_provides_5["DungeonRunHistory"]
         72_provides_6["EncounterCatalog"]
-        72_provides_7["FellowshipLogsApiService"]
+        72_provides_7["FellowshipLogs"]
         72_provides_8["LiveSplitApiService"]
         72_provides_9["UnitCatalog"]
       end
@@ -592,7 +592,7 @@ flowchart TB
         74_provides_5["DungeonCatalog"]
         74_provides_6["DungeonRunHistory"]
         74_provides_7["EncounterCatalog"]
-        74_provides_8["FellowshipLogsApiService"]
+        74_provides_8["FellowshipLogs"]
         74_provides_9["LiveSplitApiService"]
         74_provides_10["UnitCatalog"]
       end
@@ -622,7 +622,7 @@ flowchart TB
         76_provides_9["DungeonRunHistory"]
         76_provides_10["DungeonRunWebSocketBroadcaster"]
         76_provides_11["EncounterCatalog"]
-        76_provides_12["FellowshipLogsApiService"]
+        76_provides_12["FellowshipLogs"]
         76_provides_13["FellowshipTracker"]
         76_provides_18["LiveSplitApiService"]
         76_provides_19["LiveSplitWebSocketBroadcaster"]
@@ -746,7 +746,7 @@ flowchart TB
   subgraph 96 ["`FellowshipLogsApiLayer`"]
     subgraph 96_wrap[" "]
       subgraph 96_requires [Requires]
-        96_requires_0["FellowshipLogsApiService"]
+        96_requires_0["FellowshipLogs"]
       end
       style 96_requires stroke:none
     end
@@ -841,7 +841,7 @@ flowchart TB
         113_requires_4["DungeonCatalog"]
         113_requires_5["DungeonRunHistory"]
         113_requires_6["EncounterCatalog"]
-        113_requires_7["FellowshipLogsApiService"]
+        113_requires_7["FellowshipLogs"]
         113_requires_8["FellowshipTracker"]
         113_requires_13["LiveSplitApiService"]
         113_requires_15["UnitCatalog"]
@@ -862,7 +862,7 @@ flowchart TB
         116_requires_4["DungeonCatalog"]
         116_requires_5["DungeonRunHistory"]
         116_requires_6["EncounterCatalog"]
-        116_requires_7["FellowshipLogsApiService"]
+        116_requires_7["FellowshipLogs"]
         116_requires_8["FellowshipTracker"]
         116_requires_13["LiveSplitApiService"]
         116_requires_17["BackgroundJobWebSocketBroadcas"]
@@ -889,7 +889,7 @@ flowchart TB
         118_requires_6["DungeonRunHistory"]
         118_requires_7["DungeonRunWebSocketBroadcaster"]
         118_requires_8["EncounterCatalog"]
-        118_requires_9["FellowshipLogsApiService"]
+        118_requires_9["FellowshipLogs"]
         118_requires_10["FellowshipTracker"]
         118_requires_15["LiveSplitApiService"]
         118_requires_16["LiveSplitWebSocketBroadcaster"]

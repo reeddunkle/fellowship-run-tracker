@@ -12,12 +12,12 @@ import { type FellowshipTracker } from "@frt/api/application/fellowship-tracker/
 import { type AbilityCatalog } from "@frt/api/services/ability-catalog/ability-catalog-service.ts";
 import { type AppSettingsApiService } from "@frt/api/services/api/app-settings/app-settings-api-service.ts";
 import { type BackgroundJobApiService } from "@frt/api/services/api/background-job/background-job-api-service.ts";
-import { type FellowshipLogsApiService } from "@frt/api/services/api/fellowship-logs/fellowship-logs-api-service.ts";
 import { type LiveSplitApiService } from "@frt/api/services/api/live-split/live-split-api-service.ts";
 import { type ConfigurationLibrary } from "@frt/api/services/configuration-library/configuration-library-service.ts";
 import { type DungeonCatalog } from "@frt/api/services/dungeon-catalog/dungeon-catalog-service.ts";
 import { type DungeonRunHistory } from "@frt/api/services/dungeon-run-history/dungeon-run-history-service.ts";
 import { type EncounterCatalog } from "@frt/api/services/encounter-catalog/encounter-catalog-service.ts";
+import { type FellowshipLogs } from "@frt/api/services/fellowship-logs/fellowship-logs-service.ts";
 import { type UnitCatalog } from "@frt/api/services/unit-catalog/unit-catalog-service.ts";
 import { AbilityCatalogMock } from "@frt/api/tests/common/mocks/ability-catalog-mock.ts";
 import { AppSettingsApiServiceMock } from "@frt/api/tests/common/mocks/app-settings-api-service-mock.ts";
@@ -26,7 +26,7 @@ import { ConfigurationLibraryMock } from "@frt/api/tests/common/mocks/configurat
 import { DungeonCatalogMock } from "@frt/api/tests/common/mocks/dungeon-catalog-mock.ts";
 import { DungeonRunHistoryMock } from "@frt/api/tests/common/mocks/dungeon-run-history-mock.ts";
 import { EncounterCatalogMock } from "@frt/api/tests/common/mocks/encounter-catalog-mock.ts";
-import { FellowshipLogsApiServiceMock } from "@frt/api/tests/common/mocks/fellowship-logs-api-service-mock.ts";
+import { FellowshipLogsMock } from "@frt/api/tests/common/mocks/fellowship-logs-mock.ts";
 import { FellowshipTrackerMock } from "@frt/api/tests/common/mocks/fellowship-tracker-service-mock.ts";
 import { LiveSplitApiServiceMock } from "@frt/api/tests/common/mocks/live-split-api-service-mock.ts";
 import { UnitCatalogMock } from "@frt/api/tests/common/mocks/unit-catalog-mock.ts";
@@ -39,7 +39,7 @@ export type ApiServices =
   | DungeonCatalog
   | DungeonRunHistory
   | EncounterCatalog
-  | FellowshipLogsApiService
+  | FellowshipLogs
   | FellowshipTracker
   | LiveSplitApiService
   | UnitCatalog;
@@ -52,7 +52,7 @@ type ApiServiceTestLayer =
   | Layer.Layer<DungeonCatalog>
   | Layer.Layer<DungeonRunHistory>
   | Layer.Layer<EncounterCatalog>
-  | Layer.Layer<FellowshipLogsApiService>
+  | Layer.Layer<FellowshipLogs>
   | Layer.Layer<FellowshipTracker>
   | Layer.Layer<LiveSplitApiService>
   | Layer.Layer<UnitCatalog>;
@@ -65,7 +65,7 @@ export const ApiServicesTest: Layer.Layer<ApiServices> = Layer.mergeAll(
   DungeonCatalogMock,
   DungeonRunHistoryMock,
   EncounterCatalogMock,
-  FellowshipLogsApiServiceMock,
+  FellowshipLogsMock,
   FellowshipTrackerMock,
   LiveSplitApiServiceMock,
   UnitCatalogMock,

@@ -14,7 +14,7 @@ flowchart LR
   DungeonCatalog["DungeonCatalog"]
   DungeonRunHistory["DungeonRunHistory"]
   EncounterCatalog["EncounterCatalog"]
-  FellowshipLogsApiService["FellowshipLogsApiService"]
+  FellowshipLogs["FellowshipLogs"]
   LiveSplitApiService["LiveSplitApiService"]
   UnitCatalog["UnitCatalog"]
   FellowshipTracker_layer -.-> FellowshipTracker
@@ -51,10 +51,10 @@ flowchart LR
   ApiServicesLayer -.-> EncounterCatalog
   ApiServicesWithBackgroundJobsLayer -.-> EncounterCatalog
   ApiRuntimeLayer -.-> EncounterCatalog
-  Layer_provideMerge_BackgroundJobService_layer_ -.-> FellowshipLogsApiService
-  ApiServicesLayer -.-> FellowshipLogsApiService
-  ApiServicesWithBackgroundJobsLayer -.-> FellowshipLogsApiService
-  ApiRuntimeLayer -.-> FellowshipLogsApiService
+  Layer_provideMerge_BackgroundJobService_layer_ -.-> FellowshipLogs
+  ApiServicesLayer -.-> FellowshipLogs
+  ApiServicesWithBackgroundJobsLayer -.-> FellowshipLogs
+  ApiRuntimeLayer -.-> FellowshipLogs
   Layer_provideMerge_BackgroundJobService_layer_ -.-> LiveSplitApiService
   ApiServicesLayer -.-> LiveSplitApiService
   ApiServicesWithBackgroundJobsLayer -.-> LiveSplitApiService

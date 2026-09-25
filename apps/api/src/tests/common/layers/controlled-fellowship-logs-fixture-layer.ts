@@ -7,24 +7,24 @@ import * as Schema from "effect/Schema";
 import * as Stream from "effect/Stream";
 
 import {
-  FellowshipLogsRateLimitExceededError,
-  FellowshipLogsRequestError,
-} from "@frt/api/errors/fellowship-logs-error.ts";
+  FellowshipLogsGatewayRateLimitExceededError,
+  FellowshipLogsGatewayRequestError,
+} from "@frt/api/errors/fellowship-logs-gateway-error.ts";
 import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
-import { FellowshipLogsResponseCache } from "@frt/api/services/fellowship-logs/cache/fellowship-logs-response-cache-service.ts";
+import { FellowshipLogsGatewayResponseCache } from "@frt/api/services/fellowship-logs-gateway/cache/fellowship-logs-gateway-response-cache-service.ts";
 import {
   FELLOWSHIP_LOGS_FIXTURE_DIRECTORY,
   getFellowshipLogsReportFixtureDirectory,
-} from "@frt/api/services/fellowship-logs/fellowship-logs-fixture-paths.ts";
+} from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-fixture-paths.ts";
 import {
-  FellowshipLogs,
-  type FellowshipLogsService,
+  FellowshipLogsGateway,
+  type FellowshipLogsGatewayShape,
   type Query,
-} from "@frt/api/services/fellowship-logs/fellowship-logs-service.ts";
-import { makeFellowshipLogsServiceFromQuery } from "@frt/api/services/fellowship-logs/make-fellowship-logs.ts";
-import { FellowshipLogsDungeonRunMetadataResponseDataSchema } from "@frt/api/services/fellowship-logs/validation/fellowship-logs-dungeon-run-metadata-schema.ts";
-import { makeFellowshipLogsGraphQLResponseSchema } from "@frt/api/services/fellowship-logs/validation/fellowship-logs-graphql-schema.ts";
-import { FellowshipLogsReportResponseDataSchema } from "@frt/api/services/fellowship-logs/validation/fellowship-logs-report-schema.ts";
+} from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
+import { makeFellowshipLogsGatewayFromQuery } from "@frt/api/services/fellowship-logs-gateway/make-fellowship-logs-gateway-service.ts";
+import { FellowshipLogsGatewayDungeonRunMetadataResponseDataSchema } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-dungeon-run-metadata-schema.ts";
+import { makeFellowshipLogsGatewayGraphQLResponseSchema } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-graphql-schema.ts";
+import { FellowshipLogsGatewayReportResponseDataSchema } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-report-schema.ts";
 import { FellowshipLogsFightIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
 import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
@@ -58,14 +58,14 @@ export function makeFellowshipLogsFetchControl(): FellowshipLogsFetchControl {
 }
 
 const MetadataResponseJsonSchema =
-  FellowshipLogsDungeonRunMetadataResponseDataSchema.pipe(
-    makeFellowshipLogsGraphQLResponseSchema,
+  FellowshipLogsGatewayDungeonRunMetadataResponseDataSchema.pipe(
+    makeFellowshipLogsGatewayGraphQLResponseSchema,
     Schema.fromJsonString,
   );
 
 const ReportPageResponseJsonSchema =
-  FellowshipLogsReportResponseDataSchema.pipe(
-    makeFellowshipLogsGraphQLResponseSchema,
+  FellowshipLogsGatewayReportResponseDataSchema.pipe(
+    makeFellowshipLogsGatewayGraphQLResponseSchema,
     Schema.fromJsonString,
   );
 
@@ -207,10 +207,13 @@ const makeRecordedFightQuery = E.fn("test.makeRecordedFightQuery")(function* (
       const body = yield* getBody(queryName, request.variables);
 
       return yield* Schema.decodeUnknownEffect(
-        makeFellowshipLogsGraphQLResponseSchema(responseSchema),
+        makeFellowshipLogsGatewayGraphQLResponseSchema(responseSchema),
       )(body).pipe(
         E.mapError((cause) => {
-          return new FellowshipLogsRequestError({ cause, operation: "Query" });
+          return new FellowshipLogsGatewayRequestError({
+            cause,
+            operation: "Query",
+          });
         }),
       );
     });
@@ -223,15 +226,16 @@ export function makeControlledFellowshipLogsFixtureLayer(
   control: FellowshipLogsFetchControl,
 ) {
   return Layer.effect(
-    FellowshipLogs,
+    FellowshipLogsGateway,
     E.gen(function* () {
       const query = yield* makeRecordedFightQuery(control);
-      const fellowshipLogs = yield* makeFellowshipLogsServiceFromQuery(query);
+      const fellowshipLogsGateway =
+        yield* makeFellowshipLogsGatewayFromQuery(query);
 
       const runOutOfPoints = DateTime.now.pipe(
         E.flatMap((now) => {
           return E.fail(
-            new FellowshipLogsRateLimitExceededError({
+            new FellowshipLogsGatewayRateLimitExceededError({
               reason: "RejectedByApi",
               resetsAt: DateTime.add(now, {
                 milliseconds: control.failureResetDelayMilliseconds,
@@ -241,27 +245,26 @@ export function makeControlledFellowshipLogsFixtureLayer(
         }),
       );
 
-      const streamReportPages: FellowshipLogsService["streamReportPages"] = (
-        options,
-      ) => {
-        return fellowshipLogs.streamReportPages(options).pipe(
-          Stream.zipWithIndex,
-          Stream.mapEffect(([page, index]) => {
-            return control.failAfterPages !== undefined &&
-              index >= control.failAfterPages
-              ? runOutOfPoints
-              : E.succeed(page);
-          }),
-        );
-      };
+      const streamReportPages: FellowshipLogsGatewayShape["streamReportPages"] =
+        (options) => {
+          return fellowshipLogsGateway.streamReportPages(options).pipe(
+            Stream.zipWithIndex,
+            Stream.mapEffect(([page, index]) => {
+              return control.failAfterPages !== undefined &&
+                index >= control.failAfterPages
+                ? runOutOfPoints
+                : E.succeed(page);
+            }),
+          );
+        };
 
       return {
-        ...fellowshipLogs,
+        ...fellowshipLogsGateway,
         streamReportPages,
-      } satisfies FellowshipLogsService;
+      } satisfies FellowshipLogsGatewayShape;
     }),
   ).pipe(
-    Layer.provide(FellowshipLogsResponseCache.layer),
+    Layer.provide(FellowshipLogsGatewayResponseCache.layer),
     Layer.provide(NodePlatformLayer),
   );
 }

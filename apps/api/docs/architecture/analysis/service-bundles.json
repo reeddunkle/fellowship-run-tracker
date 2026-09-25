@@ -15,7 +15,7 @@
         "DungeonRunHistory",
         "DungeonRunWebSocketBroadcaster",
         "EncounterCatalog",
-        "FellowshipLogsApiService",
+        "FellowshipLogs",
         "LiveSplitApiService",
         "LiveSplitWebSocketBroadcaster",
         "TrackingWebSocketBroadcaster",
@@ -36,7 +36,7 @@
         "DungeonCatalog",
         "DungeonRunHistory",
         "EncounterCatalog",
-        "FellowshipLogsApiService",
+        "FellowshipLogs",
         "LiveSplitApiService",
         "UnitCatalog"
       ],
@@ -55,7 +55,7 @@
         "DungeonCatalog",
         "DungeonRunHistory",
         "EncounterCatalog",
-        "FellowshipLogsApiService",
+        "FellowshipLogs",
         "LiveSplitApiService",
         "UnitCatalog"
       ],
@@ -76,7 +76,7 @@
         "DungeonRunHistory",
         "DungeonRunWebSocketBroadcaster",
         "EncounterCatalog",
-        "FellowshipLogsApiService",
+        "FellowshipLogs",
         "FellowshipTracker",
         "LiveSplitApiService",
         "LiveSplitWebSocketBroadcaster",
@@ -100,7 +100,7 @@
         "DungeonCatalog",
         "DungeonRunHistory",
         "EncounterCatalog",
-        "FellowshipLogsApiService",
+        "FellowshipLogs",
         "LiveSplitApiService",
         "UnitCatalog"
       ]
@@ -120,7 +120,7 @@
         "DungeonCatalog",
         "DungeonRunHistory",
         "EncounterCatalog",
-        "FellowshipLogsApiService",
+        "FellowshipLogs",
         "LiveSplitApiService",
         "UnitCatalog"
       ]
@@ -146,7 +146,7 @@
         "DungeonCatalog",
         "DungeonRunHistory",
         "EncounterCatalog",
-        "FellowshipLogsApiService",
+        "FellowshipLogs",
         "LiveSplitApiService",
         "UnitCatalog"
       ]
@@ -165,7 +165,7 @@
         "DungeonCatalog",
         "DungeonRunHistory",
         "EncounterCatalog",
-        "FellowshipLogsApiService",
+        "FellowshipLogs",
         "LiveSplitApiService",
         "UnitCatalog"
       ]
@@ -191,7 +191,7 @@
         "DungeonCatalog",
         "DungeonRunHistory",
         "EncounterCatalog",
-        "FellowshipLogsApiService",
+        "FellowshipLogs",
         "LiveSplitApiService",
         "UnitCatalog"
       ]
@@ -217,7 +217,7 @@
         "DungeonCatalog",
         "DungeonRunHistory",
         "EncounterCatalog",
-        "FellowshipLogsApiService",
+        "FellowshipLogs",
         "LiveSplitApiService",
         "UnitCatalog"
       ]
@@ -271,7 +271,7 @@
         "DungeonCatalog",
         "DungeonRunHistory",
         "EncounterCatalog",
-        "FellowshipLogsApiService",
+        "FellowshipLogs",
         "LiveSplitApiService",
         "UnitCatalog"
       ]
@@ -291,7 +291,7 @@
         "DungeonCatalog",
         "DungeonRunHistory",
         "EncounterCatalog",
-        "FellowshipLogsApiService",
+        "FellowshipLogs",
         "LiveSplitApiService",
         "UnitCatalog"
       ]
@@ -313,7 +313,7 @@
         "DungeonCatalog",
         "DungeonRunHistory",
         "EncounterCatalog",
-        "FellowshipLogsApiService",
+        "FellowshipLogs",
         "LiveSplitApiService",
         "UnitCatalog"
       ]
@@ -337,7 +337,7 @@
         "DungeonRunHistory",
         "DungeonRunWebSocketBroadcaster",
         "EncounterCatalog",
-        "FellowshipLogsApiService",
+        "FellowshipLogs",
         "FellowshipTracker",
         "LiveSplitApiService",
         "LiveSplitWebSocketBroadcaster",
@@ -431,7 +431,7 @@
         "ApiServicesWithBackgroundJobsLayer",
         "ApiRuntimeLayer"
       ],
-      "service": "FellowshipLogsApiService"
+      "service": "FellowshipLogs"
     },
     {
       "bundles": [

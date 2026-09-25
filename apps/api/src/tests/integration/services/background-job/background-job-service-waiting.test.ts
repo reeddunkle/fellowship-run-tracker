@@ -12,7 +12,7 @@ import {
   FellowshipLogsDungeonRunImporter,
   type FellowshipLogsDungeonRunImporterServiceShape,
 } from "@frt/api/application/fellowship-logs-dungeon-run-importer/fellowship-logs-dungeon-run-importer-service.ts";
-import { FellowshipLogsRateLimitExceededError } from "@frt/api/errors/fellowship-logs-error.ts";
+import { FellowshipLogsGatewayRateLimitExceededError } from "@frt/api/errors/fellowship-logs-gateway-error.ts";
 import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
 import { BackgroundJobService } from "@frt/api/services/background-job/background-job-service.ts";
 import {
@@ -166,7 +166,7 @@ function makeRateLimitedImporter(delay: { readonly milliseconds: number }) {
       return DateTime.now.pipe(
         E.flatMap((now) => {
           return E.fail(
-            new FellowshipLogsRateLimitExceededError({
+            new FellowshipLogsGatewayRateLimitExceededError({
               reason: "RejectedByApi",
               resetsAt: DateTime.add(now, delay),
             }),
@@ -232,7 +232,9 @@ describe("BackgroundJobService waiting jobs", () => {
 
     expect(waiting.availableAt).not.toBeNull();
     expect(waiting.attempts).toBe(0);
-    expect(waiting.error?.tag).toBe("FellowshipLogsRateLimitExceededError");
+    expect(waiting.error?.tag).toBe(
+      "FellowshipLogsGatewayRateLimitExceededError",
+    );
     expect(callsWhileWaiting).toEqual([FIGHT_ID]);
     expect(Option.getOrThrow(waitingSecond).status).toBe("QUEUED");
 

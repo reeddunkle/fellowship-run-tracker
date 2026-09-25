@@ -64,7 +64,7 @@ describe("createBackgroundJobApiItem", () => {
     const availableAt = DateTime.makeUnsafe("2026-09-23T09:00:00.000Z");
     const reason = {
       message: "Out of points.",
-      tag: "FellowshipLogsRateLimitExceededError",
+      tag: "FellowshipLogsGatewayRateLimitExceededError",
     };
 
     const item = Option.getOrThrow(

@@ -7,34 +7,34 @@ import * as Command from "effect/unstable/cli/Command";
 import * as Flag from "effect/unstable/cli/Flag";
 
 import { appConfig } from "@frt/api/app-config.ts";
-import { FellowshipLogsRequestError } from "@frt/api/errors/fellowship-logs-error.ts";
+import { FellowshipLogsGatewayRequestError } from "@frt/api/errors/fellowship-logs-gateway-error.ts";
 import { NodeHttpClientLayer } from "@frt/api/layers/node-platform-layer.ts";
 import {
   FELLOWSHIP_LOGS_FIXTURE_DIRECTORY,
   getFellowshipLogsReportFixtureDirectory,
-} from "@frt/api/services/fellowship-logs/fellowship-logs-fixture-paths.ts";
-import { makeFellowshipLogsHttpQuery } from "@frt/api/services/fellowship-logs/fellowship-logs-http-query.ts";
+} from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-fixture-paths.ts";
+import { makeFellowshipLogsGatewayHttpQuery } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-http-query.ts";
+import { type FellowshipLogsGatewayCredentials } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
 import {
   findFightOrFail,
   getGraphQLResponseData,
   getReportOrFail,
-} from "@frt/api/services/fellowship-logs/fellowship-logs-response-helpers.ts";
-import { type FellowshipLogsCredentials } from "@frt/api/services/fellowship-logs/fellowship-logs-service.ts";
+} from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-response-helpers.ts";
 import {
   DUNGEON_RUN_METADATA_SELECTION,
   DUNGEON_RUN_METADATA_VARIABLES,
-} from "@frt/api/services/fellowship-logs/query/get-dungeon-run-metadata-query.ts";
-import { makeQuery } from "@frt/api/services/fellowship-logs/query/make-query.ts";
+} from "@frt/api/services/fellowship-logs-gateway/query/get-dungeon-run-metadata-query.ts";
+import { makeQuery } from "@frt/api/services/fellowship-logs-gateway/query/make-query.ts";
 import {
   RATE_LIMIT_DATA_QUERY,
   RATE_LIMIT_DATA_SELECTION,
-} from "@frt/api/services/fellowship-logs/query/rate-limit-data-query.ts";
+} from "@frt/api/services/fellowship-logs-gateway/query/rate-limit-data-query.ts";
 import {
   REPORT_SELECTION,
   REPORT_VARIABLES,
-} from "@frt/api/services/fellowship-logs/query/report-query.ts";
-import { FellowshipLogsDungeonRunMetadataResponseDataSchema } from "@frt/api/services/fellowship-logs/validation/fellowship-logs-dungeon-run-metadata-schema.ts";
-import { FellowshipLogsReportResponseDataSchema } from "@frt/api/services/fellowship-logs/validation/fellowship-logs-report-schema.ts";
+} from "@frt/api/services/fellowship-logs-gateway/query/report-query.ts";
+import { FellowshipLogsGatewayDungeonRunMetadataResponseDataSchema } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-dungeon-run-metadata-schema.ts";
+import { FellowshipLogsGatewayReportResponseDataSchema } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-report-schema.ts";
 import { FellowshipLogsFightIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
 import { FellowshipLogsRateLimitResponseDataSchema } from "@frt/shared/fellowship-logs/fellowship-logs-rate-limit-schema.ts";
 import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
@@ -48,7 +48,7 @@ type CaptureFellowshipLogsReportCommandInput = {
 
 type CaptureFellowshipLogsReportOptions =
   CaptureFellowshipLogsReportCommandInput & {
-    readonly credentials: FellowshipLogsCredentials;
+    readonly credentials: FellowshipLogsGatewayCredentials;
   };
 
 function stringifyFixture(value: unknown) {
@@ -65,7 +65,7 @@ const captureFellowshipLogsReport = E.fn("cli.capture-fellowship-logs-report")(
     const fileSystem = yield* FileSystem.FileSystem;
     const path = yield* Path.Path;
 
-    const query = yield* makeFellowshipLogsHttpQuery(() => {
+    const query = yield* makeFellowshipLogsGatewayHttpQuery(() => {
       return E.succeed(credentials);
     });
 
@@ -114,7 +114,7 @@ const captureFellowshipLogsReport = E.fn("cli.capture-fellowship-logs-report")(
           reportCode,
         },
       },
-      FellowshipLogsDungeonRunMetadataResponseDataSchema,
+      FellowshipLogsGatewayDungeonRunMetadataResponseDataSchema,
     );
 
     const metadataOutputPath = path.join(
@@ -183,7 +183,7 @@ const captureFellowshipLogsReport = E.fn("cli.capture-fellowship-logs-report")(
               startTime,
             },
           },
-          FellowshipLogsReportResponseDataSchema,
+          FellowshipLogsGatewayReportResponseDataSchema,
         );
 
         const pageResponseData = yield* getGraphQLResponseData(pageResponse);
@@ -237,7 +237,7 @@ const runCaptureFellowshipLogsReportCommand = E.fn(
   const clientSecretOption = yield* appConfig.fellowshipLogsClientSecret;
 
   if (Option.isNone(clientIdOption) || Option.isNone(clientSecretOption)) {
-    return yield* new FellowshipLogsRequestError({
+    return yield* new FellowshipLogsGatewayRequestError({
       cause: new Error(
         "Fellowship Logs credentials are not configured in the environment.",
       ),

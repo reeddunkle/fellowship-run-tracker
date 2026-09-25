@@ -1,151 +1,183 @@
 import * as Context from "effect/Context";
-import type * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
-import type * as Schema from "effect/Schema";
-import type * as Stream from "effect/Stream";
+import * as Option from "effect/Option";
 
-import { appConfig } from "@frt/api/app-config.ts";
+import { BackgroundJobError } from "@frt/api/errors/background-job-error.ts";
+import { FellowshipLogsDungeonRunImportAlreadyImportedError } from "@frt/api/errors/fellowship-logs-dungeon-run-import-error.ts";
+import { createImportFellowshipLogsDungeonRunBackgroundJobApiItem } from "@frt/api/services/api/background-job/create-background-job-api-response.ts";
+import { BackgroundJobService } from "@frt/api/services/background-job/background-job-service.ts";
 import {
-  type FellowshipLogsEventDecodeError,
-  type FellowshipLogsGraphQLResponseError,
-  type FellowshipLogsRateLimitExceededError,
-  type FellowshipLogsRateLimitRejectedError,
-  type FellowshipLogsReportChangedError,
-  type FellowshipLogsRequestError,
-} from "@frt/api/errors/fellowship-logs-error.ts";
+  DungeonRunRepository,
+  type DungeonRunRepositoryError,
+} from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
 import {
-  NodeHttpClientLayer,
-  NodePlatformLayer,
-} from "@frt/api/layers/node-platform-layer.ts";
-import { AppSettings } from "@frt/api/services/app-settings/app-settings-service.ts";
-import { FellowshipLogsResponseCache } from "@frt/api/services/fellowship-logs/cache/fellowship-logs-response-cache-service.ts";
-import { type DungeonId } from "@frt/shared/fellowship/validation/fellowship-common.ts";
-import { type FellowshipEvent } from "@frt/shared/fellowship/validation/fellowship-event-schema.ts";
-import { type FellowshipLogsFightId } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
-import { type FellowshipLogsRateLimitSnapshot } from "@frt/shared/fellowship-logs/fellowship-logs-rate-limit-schema.ts";
-import { type FellowshipLogsReportCode } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
-
-import { FELLOWSHIP_LOGS_FIXTURE_DIRECTORY } from "./fellowship-logs-fixture-paths.ts";
-import { makeFellowshipLogs } from "./make-fellowship-logs.ts";
-import { makeFellowshipLogsFixture } from "./make-fellowship-logs-fixture.ts";
+  createFellowshipLogsDungeonRunMetadataApiResponse,
+  createFellowshipLogsImportedDungeonRunApiResponse,
+  createFellowshipLogsRateLimitDataApiResponse,
+} from "@frt/api/services/fellowship-logs/create-fellowship-logs-api-response.ts";
 import {
-  type FellowshipLogsGraphQLRequestSchema,
-  type FellowshipLogsGraphQLResponse,
-} from "./validation/fellowship-logs-graphql-schema.ts";
-import { type FellowshipLogsAccessToken } from "./validation/fellowship-logs-oauth-schema.ts";
-import { type FellowshipLogsReport } from "./validation/fellowship-logs-report-schema.ts";
+  FellowshipLogsGateway,
+  type FellowshipLogsGatewayRequestOperationError,
+} from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
+import { type DungeonRunDAOError } from "@frt/db/errors/dungeon-run-dao-error.ts";
+import { type FellowshipLogsDungeonRunDAOError } from "@frt/db/errors/fellowship-logs-dungeon-run-dao-error.ts";
+import { type DungeonRunId } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
+import {
+  type FellowshipLogsApiDungeonRunMetadata,
+  type FellowshipLogsApiDungeonRunReference,
+  type FellowshipLogsApiImportedDungeonRunList,
+  type FellowshipLogsApiLastKnownRateLimitData,
+  type FellowshipLogsApiQueueDungeonRunImportOptions,
+  type FellowshipLogsApiQueueDungeonRunImportResult,
+} from "@frt/shared/fellowship-logs/fellowship-logs-api-schema.ts";
 
-export type FellowshipLogsCredentials = {
-  readonly clientId: string;
-  readonly clientSecret: string;
+export type QueueFellowshipLogsDungeonRunImportError =
+  | BackgroundJobError
+  | FellowshipLogsDungeonRunDAOError
+  | FellowshipLogsDungeonRunImportAlreadyImportedError;
+
+type DeleteImportedDungeonRunOptions = {
+  readonly dungeonRunId: DungeonRunId;
 };
 
-export type CachedAccessToken = FellowshipLogsCredentials & {
-  readonly accessToken: FellowshipLogsAccessToken;
-  readonly expiresAtMilliseconds: number;
-};
+export type FellowshipLogsShape = {
+  readonly deleteImportedDungeonRun: (
+    options: DeleteImportedDungeonRunOptions,
+  ) => E.Effect<void, DungeonRunDAOError>;
 
-export type GetCredentials = () => E.Effect<
-  FellowshipLogsCredentials,
-  FellowshipLogsRequestError
->;
-
-export type Query = <ResponseData>(
-  request: typeof FellowshipLogsGraphQLRequestSchema.Type,
-  responseSchema: Schema.Decoder<ResponseData, never>,
-) => E.Effect<
-  FellowshipLogsGraphQLResponse<ResponseData>,
-  FellowshipLogsRateLimitRejectedError | FellowshipLogsRequestError
->;
-
-export type GetFellowshipLogsReportOptions = {
-  readonly fightId: FellowshipLogsFightId;
-  readonly reportCode: FellowshipLogsReportCode;
-};
-
-type StreamFellowshipLogsReportOptions = GetFellowshipLogsReportOptions & {
-  readonly onProgress?: (fraction: number) => E.Effect<void>;
-};
-
-export type FellowshipLogsDungeonRunMetadata = {
-  readonly dungeonId: DungeonId;
-  readonly dungeonLevel: number;
-  readonly endedAt: DateTime.Utc;
-  readonly isInProgress: boolean;
-  readonly startedAt: DateTime.Utc;
-};
-
-export type FellowshipLogsRequestOperationError =
-  | FellowshipLogsGraphQLResponseError
-  | FellowshipLogsRateLimitExceededError
-  | FellowshipLogsReportChangedError
-  | FellowshipLogsRequestError;
-
-type FellowshipLogsError =
-  | FellowshipLogsEventDecodeError
-  | FellowshipLogsRequestOperationError;
-
-type GetRateLimitDataOptions = {
-  readonly force?: boolean;
-};
-
-export type FellowshipLogsService = {
   readonly getDungeonRunMetadata: (
-    options: GetFellowshipLogsReportOptions,
+    options: FellowshipLogsApiDungeonRunReference,
   ) => E.Effect<
-    FellowshipLogsDungeonRunMetadata,
-    FellowshipLogsRequestOperationError
+    FellowshipLogsApiDungeonRunMetadata,
+    FellowshipLogsGatewayRequestOperationError
   >;
 
-  readonly getRateLimitData: (
-    options?: GetRateLimitDataOptions,
-  ) => E.Effect<
-    FellowshipLogsRateLimitSnapshot | null,
-    FellowshipLogsRequestOperationError
+  readonly getImportedDungeonRuns: () => E.Effect<
+    FellowshipLogsApiImportedDungeonRunList,
+    DungeonRunRepositoryError
   >;
 
-  readonly getReport: (
-    options: GetFellowshipLogsReportOptions,
-  ) => E.Effect<FellowshipLogsReport, FellowshipLogsRequestOperationError>;
+  readonly getLastKnownRateLimitData: () => E.Effect<
+    FellowshipLogsApiLastKnownRateLimitData,
+    FellowshipLogsGatewayRequestOperationError
+  >;
 
-  readonly streamReportPages: (
-    options: StreamFellowshipLogsReportOptions,
-  ) => Stream.Stream<FellowshipLogsReport, FellowshipLogsRequestOperationError>;
+  readonly getRateLimitData: () => E.Effect<
+    FellowshipLogsApiLastKnownRateLimitData,
+    FellowshipLogsGatewayRequestOperationError
+  >;
 
-  readonly streamEvents: (
-    options: StreamFellowshipLogsReportOptions,
-  ) => Stream.Stream<FellowshipEvent, FellowshipLogsError>;
+  readonly queueDungeonRunImport: (
+    options: FellowshipLogsApiQueueDungeonRunImportOptions,
+  ) => E.Effect<
+    FellowshipLogsApiQueueDungeonRunImportResult,
+    QueueFellowshipLogsDungeonRunImportError
+  >;
 };
+
+const makeFellowshipLogs = E.gen(function* () {
+  const backgroundJobService = yield* BackgroundJobService;
+  const dungeonRunRepository = yield* DungeonRunRepository;
+  const fellowshipLogsGateway = yield* FellowshipLogsGateway;
+
+  const deleteImportedDungeonRun: FellowshipLogsShape["deleteImportedDungeonRun"] =
+    (options) => {
+      return dungeonRunRepository.delete(options);
+    };
+
+  const getDungeonRunMetadata: FellowshipLogsShape["getDungeonRunMetadata"] = (
+    options,
+  ) => {
+    return fellowshipLogsGateway
+      .getDungeonRunMetadata(options)
+      .pipe(E.map(createFellowshipLogsDungeonRunMetadataApiResponse));
+  };
+
+  const getImportedDungeonRuns: FellowshipLogsShape["getImportedDungeonRuns"] =
+    () => {
+      return dungeonRunRepository.listFellowshipLogsDungeonRuns().pipe(
+        E.map((rows) => {
+          return rows.map(createFellowshipLogsImportedDungeonRunApiResponse);
+        }),
+      );
+    };
+
+  const getRateLimitData: FellowshipLogsShape["getRateLimitData"] = () => {
+    return fellowshipLogsGateway
+      .getRateLimitData({ force: true })
+      .pipe(E.map(createFellowshipLogsRateLimitDataApiResponse));
+  };
+
+  const getLastKnownRateLimitData: FellowshipLogsShape["getLastKnownRateLimitData"] =
+    () => {
+      return fellowshipLogsGateway
+        .getRateLimitData()
+        .pipe(E.map(createFellowshipLogsRateLimitDataApiResponse));
+    };
+
+  const queueDungeonRunImport: FellowshipLogsShape["queueDungeonRunImport"] = (
+    options,
+  ) => {
+    return E.gen(function* () {
+      const existing = yield* dungeonRunRepository.getFellowshipLogsDungeonRun({
+        fightId: options.fightId,
+        reportCode: options.reportCode,
+      });
+
+      if (Option.isSome(existing)) {
+        return yield* new FellowshipLogsDungeonRunImportAlreadyImportedError({
+          dungeonRunId: existing.value.dungeonRunId,
+          fightId: options.fightId,
+          reportCode: options.reportCode,
+        });
+      }
+
+      const { job, wasAlreadyQueued } = yield* backgroundJobService.offer({
+        _tag: "ImportFellowshipLogsDungeonRun",
+        ...options,
+      });
+
+      const item = createImportFellowshipLogsDungeonRunBackgroundJobApiItem({
+        job,
+        progress: null,
+      });
+
+      if (Option.isNone(item)) {
+        return yield* new BackgroundJobError({
+          cause: job,
+          operation: "Offer",
+        });
+      }
+
+      return { job: item.value, wasAlreadyQueued };
+    });
+  };
+
+  return {
+    deleteImportedDungeonRun,
+    getDungeonRunMetadata,
+    getImportedDungeonRuns,
+    getLastKnownRateLimitData,
+    getRateLimitData,
+    queueDungeonRunImport,
+  } satisfies FellowshipLogsShape;
+});
 
 export class FellowshipLogs extends Context.Service<
   FellowshipLogs,
-  FellowshipLogsService
+  FellowshipLogsShape
 >()(
   "@frt/api/services/fellowship-logs/fellowship-logs-service/FellowshipLogs",
 ) {
   static readonly layerNoDeps = Layer.effect(this, makeFellowshipLogs);
 
-  static readonly liveLayer = this.layerNoDeps.pipe(
-    Layer.provide(AppSettings.layer),
-    Layer.provide(FellowshipLogsResponseCache.layer),
-    Layer.provide(NodeHttpClientLayer),
-  );
-
-  static readonly fixtureLayer = Layer.effect(
-    this,
-    makeFellowshipLogsFixture({
-      fixtureDirectory: FELLOWSHIP_LOGS_FIXTURE_DIRECTORY,
-    }),
-  ).pipe(Layer.provide(NodePlatformLayer));
-
-  static readonly layer = Layer.unwrap(
-    E.gen(function* () {
-      const useFixtures = yield* appConfig.fellowshipLogsUseFixtures;
-
-      return useFixtures
-        ? FellowshipLogs.fixtureLayer
-        : FellowshipLogs.liveLayer;
-    }),
+  /** [KEEP]
+   * Leaves `BackgroundJobService` for the application root to provide, since
+   * it's the single instance that runs the queue workers.
+   */
+  static readonly layer = this.layerNoDeps.pipe(
+    Layer.provide(DungeonRunRepository.layer),
+    Layer.provide(FellowshipLogsGateway.layer),
   );
 }

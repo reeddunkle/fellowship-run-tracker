@@ -4,7 +4,7 @@ import * as Stream from "effect/Stream";
 import { describe, expect, test } from "vitest";
 
 import { FellowshipLogsDungeonRunImporter } from "@frt/api/application/fellowship-logs-dungeon-run-importer/fellowship-logs-dungeon-run-importer-service.ts";
-import { FellowshipLogs } from "@frt/api/services/fellowship-logs/fellowship-logs-service.ts";
+import { FellowshipLogsGateway } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
 import {
   type FellowshipLogsFetchControl,
   makeControlledFellowshipLogsFixtureLayer,
@@ -138,7 +138,9 @@ describe("FellowshipLogsDungeonRunImporter with the Fellowship Logs cache", () =
       };
     }).pipe(E.provide(makeTestLayer(control)), runTest);
 
-    expect(firstAttemptError._tag).toBe("FellowshipLogsRateLimitExceededError");
+    expect(firstAttemptError._tag).toBe(
+      "FellowshipLogsGatewayRateLimitExceededError",
+    );
 
     // Every page was fetched exactly once across both attempts.
     expect(control.pagesFetched).toBe(RECORDED_FIGHT_PAGE_COUNT);
@@ -197,9 +199,9 @@ describe("FellowshipLogsDungeonRunImporter with the Fellowship Logs cache", () =
 
     control.isInProgress = true;
 
-    const error = await FellowshipLogs.use((fellowshipLogs) => {
+    const error = await FellowshipLogsGateway.use((fellowshipLogsGateway) => {
       return Stream.runDrain(
-        fellowshipLogs.streamReportPages({
+        fellowshipLogsGateway.streamReportPages({
           ...RECORDED_FIGHT,
           // A live log uploads more of the report after the first page.
           onProgress: () => {
@@ -211,7 +213,7 @@ describe("FellowshipLogsDungeonRunImporter with the Fellowship Logs cache", () =
       );
     }).pipe(E.flip, E.provide(makeTestLayer(control)), runTest);
 
-    expect(error._tag).toBe("FellowshipLogsReportChangedError");
+    expect(error._tag).toBe("FellowshipLogsGatewayReportChangedError");
   });
 
   test("keeps using a finished fight's cached pages after its report's revision moves on", async () => {
