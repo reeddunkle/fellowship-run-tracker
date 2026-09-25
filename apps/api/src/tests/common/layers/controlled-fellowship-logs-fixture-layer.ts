@@ -71,7 +71,7 @@ const ReportPageResponseJsonSchema =
   );
 
 const RequestVariablesSchema = Schema.Struct({
-  startTime: Schema.optional(Schema.Number),
+  startTime: Schema.optional(Schema.Finite),
 });
 
 function getQueryName(query: string) {
@@ -207,7 +207,7 @@ const makeRecordedFightQuery = E.fn("test.makeRecordedFightQuery")(function* (
 
       const body = yield* getBody(queryName, request.variables);
 
-      return yield* Schema.decodeUnknownEffect(
+      return yield* Schema.decodeEffect(
         makeFellowshipLogsGatewayGraphQLResponseSchema(responseSchema),
       )(body).pipe(
         E.mapError((cause) => {

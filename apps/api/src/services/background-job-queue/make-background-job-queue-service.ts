@@ -328,13 +328,16 @@ export const makeBackgroundJobQueue = E.gen(function* () {
 
       yield* bumpRevision;
     }).pipe(
-      E.catchCause((cause) => {
-        return Cause.hasInterruptsOnly(cause)
-          ? E.failCause(cause)
-          : E.logError("Background job worker failed.", { cause }).pipe(
-              E.andThen(E.sleep(WORKER_ERROR_DELAY)),
-            );
-      }),
+      E.catchCauseIf(
+        (cause) => {
+          return !Cause.hasInterruptsOnly(cause);
+        },
+        (cause) => {
+          return E.logError("Background job worker failed.", { cause }).pipe(
+            E.andThen(E.sleep(WORKER_ERROR_DELAY)),
+          );
+        },
+      ),
       E.forever,
       E.annotateLogs({ queue }),
     );

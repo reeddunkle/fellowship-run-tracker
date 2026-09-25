@@ -11,15 +11,15 @@ import { runTest } from "@frt/db/tests/common/run-test.ts";
 import { FellowshipLogsFightIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
 import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
-const REPORT_CODE = Schema.decodeUnknownSync(FellowshipLogsReportCodeSchema)(
+const REPORT_CODE = Schema.decodeSync(FellowshipLogsReportCodeSchema)(
   "report-a",
 );
 
-const OTHER_REPORT_CODE = Schema.decodeUnknownSync(
-  FellowshipLogsReportCodeSchema,
-)("report-b");
+const OTHER_REPORT_CODE = Schema.decodeSync(FellowshipLogsReportCodeSchema)(
+  "report-b",
+);
 
-const FIGHT_ID = Schema.decodeUnknownSync(FellowshipLogsFightIdSchema)(15);
+const FIGHT_ID = Schema.decodeSync(FellowshipLogsFightIdSchema)(15);
 
 const putResponse = E.fn("test.put-fellowship-logs-response")(function* (
   key: string,

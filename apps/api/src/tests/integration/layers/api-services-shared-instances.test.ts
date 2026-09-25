@@ -53,15 +53,21 @@ describe("API services layer", () => {
         const backgroundJobQueue = yield* BackgroundJobQueue;
         const fellowshipLogs = yield* FellowshipLogs;
 
+        const fightId = yield* Schema.decodeEffect(FellowshipLogsFightIdSchema)(
+          15,
+        );
+
+        const reportCode = yield* Schema.decodeEffect(
+          FellowshipLogsReportCodeSchema,
+        )("XdfFZzgHBJNr6m3v");
+
         const { job } = yield* backgroundJobQueue.offer({
           _tag: "ImportFellowshipLogsDungeonRun",
           dungeonId: MOCK_DUNGEON_ID,
           dungeonLevel: 10,
-          fightId: Schema.decodeSync(FellowshipLogsFightIdSchema)(15),
+          fightId,
           isOwnRun: true,
-          reportCode: Schema.decodeSync(FellowshipLogsReportCodeSchema)(
-            "XdfFZzgHBJNr6m3v",
-          ),
+          reportCode,
         });
 
         yield* BackgroundJobDAO.use((dao) => {

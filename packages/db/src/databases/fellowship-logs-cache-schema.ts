@@ -5,7 +5,7 @@ import type * as SqlClient from "effect/unstable/sql/SqlClient";
 export const FELLOWSHIP_LOGS_CACHE_SCHEMA_VERSION = 1;
 
 const UserVersionRowsSchema = Schema.Array(
-  Schema.Struct({ userVersion: Schema.Number }),
+  Schema.Struct({ userVersion: Schema.Finite }),
 );
 
 const TableNameRowsSchema = Schema.Array(

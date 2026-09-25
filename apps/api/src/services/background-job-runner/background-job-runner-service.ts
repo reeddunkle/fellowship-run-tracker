@@ -64,9 +64,16 @@ const makeBackgroundJobRunner = E.gen(function* () {
                   );
                 },
               }),
-              E.catchTag(
-                "FellowshipLogsGatewayRateLimitExceededError",
-                (error) => {
+              E.catchTags({
+                FellowshipLogsDungeonRunImportAlreadyImportedError: ({
+                  dungeonRunId,
+                }) => {
+                  return E.logInfo(
+                    "Fellowship Logs run was already imported; marking the job succeeded.",
+                    { dungeonRunId },
+                  ).pipe(E.as({ dungeonRunId }));
+                },
+                FellowshipLogsGatewayRateLimitExceededError: (error) => {
                   return E.fail(
                     new BackgroundJobDeferredError({
                       availableAt: error.resetsAt,
@@ -74,16 +81,7 @@ const makeBackgroundJobRunner = E.gen(function* () {
                     }),
                   );
                 },
-              ),
-              E.catchTag(
-                "FellowshipLogsDungeonRunImportAlreadyImportedError",
-                ({ dungeonRunId }) => {
-                  return E.logInfo(
-                    "Fellowship Logs run was already imported; marking the job succeeded.",
-                    { dungeonRunId },
-                  ).pipe(E.as({ dungeonRunId }));
-                },
-              ),
+              }),
               withFellowshipLogsGatewayPointsSpent,
               E.map(([{ dungeonRunId }, pointsSpent]): Schema.Json => {
                 return {

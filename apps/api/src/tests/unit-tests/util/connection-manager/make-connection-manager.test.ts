@@ -36,7 +36,7 @@ function makeTestConnectionManager() {
         } satisfies TestConnection;
       }),
       getUnavailability: (connection) => {
-        return Stream.fromEffect(Deferred.await(connection.unavailable));
+        return connection.unavailable.pipe(Deferred.await, Stream.fromEffect);
       },
       name: "Test",
     });

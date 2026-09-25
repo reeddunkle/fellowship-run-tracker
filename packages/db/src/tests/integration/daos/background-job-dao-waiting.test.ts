@@ -68,7 +68,7 @@ function fromNow(minutes: number) {
 
 // Millisecond precision, like the stored value.
 function toStored(dateTime: DateTime.Utc) {
-  return DateTime.makeUnsafe(DateTime.toEpochMillis(dateTime));
+  return dateTime.pipe(DateTime.toEpochMillis, DateTime.makeUnsafe);
 }
 
 describe("BackgroundJobDAO waiting jobs", () => {
