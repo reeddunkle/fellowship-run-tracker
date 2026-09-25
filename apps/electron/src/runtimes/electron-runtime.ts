@@ -1,38 +1,34 @@
+import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
+import { app } from "electron";
 
+import { appPaths } from "@frt/api/helpers/app-paths.ts";
+import { getDatabaseOptions } from "@frt/api/helpers/get-database-options.ts";
 import { ApiLayer } from "@frt/api/layers/api-layer.ts";
 import { NodePathLayer } from "@frt/api/layers/node-platform-layer.ts";
 import { makePersistenceLayer } from "@frt/api/layers/persistence-layer.ts";
+import { logCause } from "@frt/api/logging/log-cause.ts";
 import { AppLoggerLayer } from "@frt/api/services/logging/app-logger-service.ts";
-import { type DatabaseOptions } from "@frt/db/types/database-options.ts";
 
-import { runtimeMemoMap } from "@/runtimes/startup-runtime.ts";
 import { makeAppStateLayer } from "@/services/app-state/app-state-service-layer.ts";
 
-export type MakeElectronRuntimeOptions = DatabaseOptions & {
-  readonly appStateStorageDirectory: string;
-};
+const ElectronApplicationLayer = Layer.unwrap(
+  E.gen(function* () {
+    yield* E.promise(() => app.whenReady());
 
-export function makeElectronRuntime({
-  appStateStorageDirectory,
-  ...databaseOptions
-}: MakeElectronRuntimeOptions) {
-  const PersistenceLayer = makePersistenceLayer(databaseOptions);
+    const databaseOptions = yield* getDatabaseOptions();
 
-  const ApiWithPersistenceLayer = ApiLayer.pipe(
-    Layer.provide(PersistenceLayer),
-  );
+    return Layer.mergeAll(
+      ApiLayer.pipe(Layer.provide(makePersistenceLayer(databaseOptions))),
+      makeAppStateLayer(appPaths.appState),
+    );
+  }),
+);
 
-  const AppStateLayer = makeAppStateLayer(appStateStorageDirectory);
+const ElectronLayer = ElectronApplicationLayer.pipe(
+  Layer.tapCause(logCause),
+  Layer.provideMerge(Layer.mergeAll(AppLoggerLayer, NodePathLayer)),
+);
 
-  const ElectronLayer = Layer.mergeAll(
-    ApiWithPersistenceLayer,
-    AppStateLayer,
-    NodePathLayer,
-  ).pipe(Layer.provideMerge(AppLoggerLayer));
-
-  return ManagedRuntime.make(ElectronLayer, {
-    memoMap: runtimeMemoMap,
-  });
-}
+export const electronRuntime = ManagedRuntime.make(ElectronLayer);

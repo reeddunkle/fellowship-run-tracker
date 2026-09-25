@@ -9,20 +9,17 @@ import { app, BrowserWindow } from "electron";
 
 import { appConfig } from "@frt/api/app-config.ts";
 import { appPaths } from "@frt/api/helpers/app-paths.ts";
-import { getDatabaseOptions } from "@frt/api/helpers/get-database-options.ts";
 import { logCause } from "@frt/api/logging/log-cause.ts";
 
 import { configureErrorLogging } from "@/application/configure-error-logging.ts";
 import { configureWebContentsSecurity } from "@/application/configure-web-contents-security.ts";
 import { configureWindowIpc } from "@/application/configure-window-ipc.ts";
 import { exitOnStartupFailure } from "@/application/exit-on-startup-failure.ts";
-import { makeElectronRuntime } from "@/runtimes/electron-runtime.ts";
-import { startupRuntime } from "@/runtimes/startup-runtime.ts";
+import { electronRuntime } from "@/runtimes/electron-runtime.ts";
 import { type AppState } from "@/services/app-state/app-state-service.ts";
 
 import { createWindow } from "./application/create-window.ts";
 import { runElectronApplication } from "./application/run-electron-application.ts";
-import { shutdownElectronApplication } from "./application/shutdown-electron-application.ts";
 
 const currentDirectoryPath = path.dirname(fileURLToPath(import.meta.url));
 
@@ -30,43 +27,26 @@ app.setPath("userData", appPaths.electronUserData);
 
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
 
-let electronRuntime: ReturnType<typeof makeElectronRuntime> | undefined;
-
-function flushLogs() {
-  return Promise.allSettled([
-    electronRuntime?.dispose(),
-    startupRuntime.dispose(),
-  ]).then(() => {
+function disposeElectronRuntime() {
+  return electronRuntime.dispose().catch(() => {
     return undefined;
   });
 }
 
 function exitOnFailure<A, Error>(exit: Exit.Exit<A, Error>) {
-  return exitOnStartupFailure(exit, { flushLogs });
+  return exitOnStartupFailure(exit, { flushLogs: disposeElectronRuntime });
+}
+
+function runProgram<A, ProgramError>(
+  effect: E.Effect<A, ProgramError, Path.Path | AppState>,
+) {
+  return electronRuntime.runPromiseExit(effect.pipe(E.tapCause(logCause)));
 }
 
 function runElectronMain() {
   return E.gen(function* () {
     const electronRendererHost = yield* appConfig.electronRendererHost;
     const electronRendererPort = yield* appConfig.electronRendererPort;
-
-    yield* E.promise(() => app.whenReady());
-
-    const databaseOptions = yield* getDatabaseOptions();
-    const appStateStorageDirectory = appPaths.appState;
-
-    const runtime = makeElectronRuntime({
-      ...databaseOptions,
-      appStateStorageDirectory,
-    });
-
-    electronRuntime = runtime;
-
-    // [TODO] Research patterns
-    // Build the runtime's layers up front so a failure (database, API server,
-    // etc.) fails startup and is logged, rather than failing the first
-    // `runProgram` call before its `logCause` can run.
-    yield* runtime.contextEffect;
 
     const useRendererDevServer =
       !app.isPackaged && process.argv.includes("--renderer-dev-server");
@@ -84,18 +64,12 @@ function runElectronMain() {
       rendererDevServerUrl ??
       `${pathToFileURL(path.join(currentDirectoryPath, "renderer")).href}/`;
 
-    function runProgram<A, ProgramError>(
-      effect: E.Effect<A, ProgramError, Path.Path | AppState>,
-    ) {
-      return runtime.runPromiseExit(effect.pipe(E.tapCause(logCause)));
-    }
-
-    configureErrorLogging(runtime);
+    configureErrorLogging(electronRuntime);
     configureWebContentsSecurity({
       appBaseUrl,
       preloadPath: path.join(currentDirectoryPath, "preload.cjs"),
     });
-    configureWindowIpc(runtime);
+    configureWindowIpc(electronRuntime);
 
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) {
@@ -106,18 +80,9 @@ function runElectronMain() {
     app.once("before-quit", (event) => {
       event.preventDefault();
 
-      void runProgram(
-        shutdownElectronApplication({
-          runtime,
-        }).pipe(
-          E.ensuring(E.promise(() => startupRuntime.dispose())),
-          E.ensuring(
-            E.sync(() => {
-              app.quit();
-            }),
-          ),
-        ),
-      );
+      void disposeElectronRuntime().finally(() => {
+        app.quit();
+      });
     });
 
     app.on("window-all-closed", () => {
@@ -131,9 +96,7 @@ function runElectronMain() {
 }
 
 if (hasSingleInstanceLock) {
-  void startupRuntime
-    .runPromiseExit(runElectronMain().pipe(E.tapCause(logCause)))
-    .then(exitOnFailure);
+  void runProgram(runElectronMain()).then(exitOnFailure);
 } else {
   app.quit();
 }
