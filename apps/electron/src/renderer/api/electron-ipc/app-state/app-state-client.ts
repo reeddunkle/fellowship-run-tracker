@@ -3,7 +3,7 @@ import * as Schema from "effect/Schema";
 
 import { type AppStateRpcRequest } from "@frt/shared/app-state/app-state-rpc.ts";
 import {
-  type AppState,
+  type AppStateValue,
   DungeonRunTimeColumnStateSchema,
   ThemeSchema,
 } from "@frt/shared/app-state/app-state-schema.ts";
@@ -76,7 +76,7 @@ export function setDungeonRunComparisonGroup(
 }
 
 export function setDungeonRunTimeColumns(
-  timeColumns: AppState["dungeonRun"]["timeColumns"],
+  timeColumns: AppStateValue["dungeonRun"]["timeColumns"],
 ) {
   return command(
     { _tag: "SetDungeonRunTimeColumns", timeColumns },
@@ -97,6 +97,6 @@ export function setSidebarOpen(sidebarOpen: boolean) {
   return command({ _tag: "SetSidebarOpen", sidebarOpen }, "SetSidebarOpen");
 }
 
-export function setTheme(theme: AppState["theme"]) {
+export function setTheme(theme: AppStateValue["theme"]) {
   return command({ _tag: "SetTheme", theme }, "SetTheme");
 }

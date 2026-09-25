@@ -6,8 +6,8 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { DEFAULT_APP_STATE } from "@frt/shared/app-state/app-state-schema.ts";
 
-import { AppStateApiService } from "@/services/app-state/app-state-api-service.ts";
-import { AppStateApiServiceLayerNoDeps } from "@/services/app-state/app-state-api-service-layer.ts";
+import { AppState } from "@/services/app-state/app-state-service.ts";
+import { AppStateLayerNoDeps } from "@/services/app-state/app-state-service-layer.ts";
 import {
   AppStateStorage,
   type AppStateStorageShape,
@@ -46,17 +46,15 @@ function runWithStorage(
   setTheme: AppStateStorageShape["setTheme"],
 ): Promise<void> {
   const StorageLive = Layer.succeed(AppStateStorage, makeStorage(setTheme));
-  const ApiLive = AppStateApiServiceLayerNoDeps.pipe(
-    Layer.provide(StorageLive),
-  );
-  const program = AppStateApiService.use((service) => {
+  const ApiLive = AppStateLayerNoDeps.pipe(Layer.provide(StorageLive));
+  const program = AppState.use((service) => {
     return service.setTheme("light");
   }).pipe(E.provide(ApiLive));
 
   return runTest(program);
 }
 
-describe("AppStateApiService", () => {
+describe("AppState", () => {
   beforeEach(() => {
     electron.nativeTheme.themeSource = "dark";
   });

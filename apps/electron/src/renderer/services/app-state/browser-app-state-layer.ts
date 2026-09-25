@@ -1,9 +1,9 @@
 import * as Layer from "effect/Layer";
 
 import * as appStateClient from "@/renderer/api/electron-ipc/app-state/app-state-client.ts";
-import { AppStateApiService } from "@/services/app-state/app-state-api-service.ts";
+import { AppState } from "@/services/app-state/app-state-service.ts";
 
-export const BrowserAppStateLayer = Layer.succeed(AppStateApiService, {
+export const BrowserAppStateLayer = Layer.succeed(AppState, {
   getDungeonRunComparisonGroup: appStateClient.getDungeonRunComparisonGroup,
   getDungeonRunTimeColumns: appStateClient.getDungeonRunTimeColumns,
   getSelectedConfigurationId: appStateClient.getSelectedConfigurationId,

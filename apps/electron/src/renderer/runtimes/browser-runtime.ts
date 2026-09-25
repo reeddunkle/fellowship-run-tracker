@@ -5,23 +5,22 @@ import * as Socket from "effect/unstable/socket/Socket";
 
 import { AppApiClientLayer } from "@/renderer/services/app-api-client/app-api-client.ts";
 import { BrowserAppStateLayer } from "@/renderer/services/app-state/browser-app-state-layer.ts";
-import { FellowshipCatalogDataServiceLayer } from "@/renderer/services/fellowship-catalog-data/fellowship-catalog-data-service";
+import { FellowshipCatalogDataLayer } from "@/renderer/services/fellowship-catalog-data/fellowship-catalog-data-service";
 
 const AppApiClientWithDependencies = AppApiClientLayer.pipe(
   Layer.provide(FetchHttpClient.layer),
 );
 
-const FellowshipCatalogDataServiceWithDependencies =
-  FellowshipCatalogDataServiceLayer.pipe(
-    Layer.provide(AppApiClientWithDependencies),
-  );
+const FellowshipCatalogDataWithDependencies = FellowshipCatalogDataLayer.pipe(
+  Layer.provide(AppApiClientWithDependencies),
+);
 
 const BrowserLayer = Layer.mergeAll(
   FetchHttpClient.layer,
   Socket.layerWebSocketConstructorGlobal,
   BrowserAppStateLayer,
   AppApiClientWithDependencies,
-  FellowshipCatalogDataServiceWithDependencies,
+  FellowshipCatalogDataWithDependencies,
 );
 
 export const browserRuntime = ManagedRuntime.make(BrowserLayer);

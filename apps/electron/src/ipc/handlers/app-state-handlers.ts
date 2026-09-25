@@ -4,11 +4,11 @@ import * as Schema from "effect/Schema";
 
 import { AppStateRpcRequestSchema } from "@frt/shared/app-state/app-state-rpc.ts";
 
-import { AppStateApiService } from "@/services/app-state/app-state-api-service.ts";
+import { AppState } from "@/services/app-state/app-state-service.ts";
 
 export function handleAppStateRequest(input: unknown) {
   return E.gen(function* () {
-    const service = yield* AppStateApiService;
+    const service = yield* AppState;
     const request = yield* Schema.decodeUnknownEffect(AppStateRpcRequestSchema)(
       input,
     );

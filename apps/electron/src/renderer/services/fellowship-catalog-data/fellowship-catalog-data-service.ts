@@ -15,23 +15,23 @@ const getFellowshipCatalogData = E.all({
   units: getUnits(),
 });
 
-type FellowshipCatalogData = E.Success<typeof getFellowshipCatalogData>;
+type FellowshipCatalogDataValue = E.Success<typeof getFellowshipCatalogData>;
 
 export type FellowshipCatalogDataShape = {
   readonly get: E.Effect<
-    FellowshipCatalogData,
+    FellowshipCatalogDataValue,
     E.Error<typeof getFellowshipCatalogData>
   >;
 };
 
-export class FellowshipCatalogDataService extends Context.Service<
-  FellowshipCatalogDataService,
+export class FellowshipCatalogData extends Context.Service<
+  FellowshipCatalogData,
   FellowshipCatalogDataShape
 >()(
-  "@frt/electron/renderer/services/fellowship-catalog-data/fellowship-catalog-data-service/FellowshipCatalogDataService",
+  "@frt/electron/renderer/services/fellowship-catalog-data/fellowship-catalog-data-service/FellowshipCatalogData",
 ) {}
 
-const makeFellowshipCatalogDataService = E.gen(function* () {
+const makeFellowshipCatalogData = E.gen(function* () {
   const appApiClient = yield* AppApiClient;
 
   const get = yield* E.cached(
@@ -43,7 +43,7 @@ const makeFellowshipCatalogDataService = E.gen(function* () {
   } satisfies FellowshipCatalogDataShape;
 });
 
-export const FellowshipCatalogDataServiceLayer = Layer.effect(
-  FellowshipCatalogDataService,
-  makeFellowshipCatalogDataService,
+export const FellowshipCatalogDataLayer = Layer.effect(
+  FellowshipCatalogData,
+  makeFellowshipCatalogData,
 );

@@ -9,7 +9,7 @@ import type * as Schema from "effect/Schema";
 import * as KeyValueStore from "effect/unstable/persistence/KeyValueStore";
 
 import {
-  type AppState,
+  type AppStateValue,
   DEFAULT_APP_STATE,
 } from "@frt/shared/app-state/app-state-schema.ts";
 import { type ConfigurationId } from "@frt/shared/configuration/configuration-id-schema.ts";
@@ -35,7 +35,7 @@ export type AppStateStorageShape = {
   >;
 
   readonly getDungeonRunTimeColumns: E.Effect<
-    AppState["dungeonRun"]["timeColumns"],
+    AppStateValue["dungeonRun"]["timeColumns"],
     AppStateStorageError
   >;
 
@@ -45,18 +45,18 @@ export type AppStateStorageShape = {
   >;
 
   readonly getSidebarOpen: E.Effect<
-    AppState["sidebarOpen"],
+    AppStateValue["sidebarOpen"],
     AppStateStorageError
   >;
 
-  readonly getTheme: E.Effect<AppState["theme"], AppStateStorageError>;
+  readonly getTheme: E.Effect<AppStateValue["theme"], AppStateStorageError>;
 
   readonly setDungeonRunComparisonGroup: (
     comparisonGroup: typeof DungeonRunComparisonGroupSchema.Type,
   ) => E.Effect<void, AppStateStorageError>;
 
   readonly setDungeonRunTimeColumns: (
-    timeColumns: AppState["dungeonRun"]["timeColumns"],
+    timeColumns: AppStateValue["dungeonRun"]["timeColumns"],
   ) => E.Effect<void, AppStateStorageError>;
 
   readonly setSelectedConfigurationId: (
@@ -64,11 +64,11 @@ export type AppStateStorageShape = {
   ) => E.Effect<void, AppStateStorageError>;
 
   readonly setSidebarOpen: (
-    sidebarOpen: AppState["sidebarOpen"],
+    sidebarOpen: AppStateValue["sidebarOpen"],
   ) => E.Effect<void, AppStateStorageError>;
 
   readonly setTheme: (
-    theme: AppState["theme"],
+    theme: AppStateValue["theme"],
   ) => E.Effect<void, AppStateStorageError>;
 };
 
@@ -79,14 +79,14 @@ type AppStateUpdate =
     }
   | {
       readonly _tag: "SetDungeonRunTimeColumns";
-      readonly timeColumns: AppState["dungeonRun"]["timeColumns"];
+      readonly timeColumns: AppStateValue["dungeonRun"]["timeColumns"];
     }
   | {
       readonly _tag: "SetSelectedConfigurationId";
       readonly selectedConfigurationId: ConfigurationId | null;
     }
   | { readonly _tag: "SetSidebarOpen"; readonly sidebarOpen: boolean }
-  | { readonly _tag: "SetTheme"; readonly theme: AppState["theme"] };
+  | { readonly _tag: "SetTheme"; readonly theme: AppStateValue["theme"] };
 
 type AppStateUpdateRequest = {
   readonly deferred: Deferred.Deferred<void, AppStateStorageError>;
@@ -94,9 +94,9 @@ type AppStateUpdateRequest = {
 };
 
 function applyAppStateUpdate(
-  state: AppState,
+  state: AppStateValue,
   update: AppStateUpdate,
-): AppState {
+): AppStateValue {
   return Match.value(update).pipe(
     Match.tagsExhaustive({
       SetDungeonRunComparisonGroup: ({ comparisonGroup }) => ({
@@ -221,7 +221,7 @@ export const makeAppStateStorage = E.gen(function* () {
     }),
   );
 
-  const write = (state: AppState) => {
+  const write = (state: AppStateValue) => {
     return appStateStorage.set(APP_STATE_KEY, {
       state,
       version: CURRENT_APP_STATE_VERSION,

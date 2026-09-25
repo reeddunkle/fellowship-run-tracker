@@ -18,7 +18,7 @@ import { configureWindowIpc } from "@/application/configure-window-ipc.ts";
 import { exitOnStartupFailure } from "@/application/exit-on-startup-failure.ts";
 import { makeElectronRuntime } from "@/runtimes/electron-runtime.ts";
 import { startupRuntime } from "@/runtimes/startup-runtime.ts";
-import { type AppStateApiService } from "@/services/app-state/app-state-api-service.ts";
+import { type AppState } from "@/services/app-state/app-state-service.ts";
 
 import { createWindow } from "./application/create-window.ts";
 import { runElectronApplication } from "./application/run-electron-application.ts";
@@ -85,7 +85,7 @@ function runElectronMain() {
       `${pathToFileURL(path.join(currentDirectoryPath, "renderer")).href}/`;
 
     function runProgram<A, ProgramError>(
-      effect: E.Effect<A, ProgramError, Path.Path | AppStateApiService>,
+      effect: E.Effect<A, ProgramError, Path.Path | AppState>,
     ) {
       return runtime.runPromiseExit(effect.pipe(E.tapCause(logCause)));
     }

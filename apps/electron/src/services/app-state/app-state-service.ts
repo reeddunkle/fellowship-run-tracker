@@ -1,50 +1,50 @@
 import * as Context from "effect/Context";
 import type * as E from "effect/Effect";
 
-import { type AppState } from "@frt/shared/app-state/app-state-schema.ts";
+import { type AppStateValue } from "@frt/shared/app-state/app-state-schema.ts";
 import { type ConfigurationId } from "@frt/shared/configuration/configuration-id-schema.ts";
 import { type DungeonRunComparisonGroupSchema } from "@frt/shared/dungeon-run/dungeon-run-comparison-group-schema.ts";
 
 import { type AppStateClientError } from "@/errors/app-state-error.ts";
 import { type AppStateStorageError } from "@/storage/app-state/app-state-storage.ts";
 
-type AppStateApiError = AppStateClientError | AppStateStorageError;
+type AppStateError = AppStateClientError | AppStateStorageError;
 
-export type AppStateApiServiceShape = {
+export type AppStateShape = {
   readonly getDungeonRunComparisonGroup: E.Effect<
     typeof DungeonRunComparisonGroupSchema.Type,
-    AppStateApiError
+    AppStateError
   >;
   readonly getDungeonRunTimeColumns: E.Effect<
-    AppState["dungeonRun"]["timeColumns"],
-    AppStateApiError
+    AppStateValue["dungeonRun"]["timeColumns"],
+    AppStateError
   >;
   readonly getSelectedConfigurationId: E.Effect<
     ConfigurationId | null,
-    AppStateApiError
+    AppStateError
   >;
-  readonly getSidebarOpen: E.Effect<AppState["sidebarOpen"], AppStateApiError>;
-  readonly getTheme: E.Effect<AppState["theme"], AppStateApiError>;
+  readonly getSidebarOpen: E.Effect<
+    AppStateValue["sidebarOpen"],
+    AppStateError
+  >;
+  readonly getTheme: E.Effect<AppStateValue["theme"], AppStateError>;
   readonly setDungeonRunComparisonGroup: (
     comparisonGroup: typeof DungeonRunComparisonGroupSchema.Type,
-  ) => E.Effect<void, AppStateApiError>;
+  ) => E.Effect<void, AppStateError>;
   readonly setDungeonRunTimeColumns: (
-    timeColumns: AppState["dungeonRun"]["timeColumns"],
-  ) => E.Effect<void, AppStateApiError>;
+    timeColumns: AppStateValue["dungeonRun"]["timeColumns"],
+  ) => E.Effect<void, AppStateError>;
   readonly setSelectedConfigurationId: (
     id: ConfigurationId | null,
-  ) => E.Effect<void, AppStateApiError>;
+  ) => E.Effect<void, AppStateError>;
   readonly setSidebarOpen: (
-    sidebarOpen: AppState["sidebarOpen"],
-  ) => E.Effect<void, AppStateApiError>;
+    sidebarOpen: AppStateValue["sidebarOpen"],
+  ) => E.Effect<void, AppStateError>;
   readonly setTheme: (
-    theme: AppState["theme"],
-  ) => E.Effect<void, AppStateApiError>;
+    theme: AppStateValue["theme"],
+  ) => E.Effect<void, AppStateError>;
 };
 
-export class AppStateApiService extends Context.Service<
-  AppStateApiService,
-  AppStateApiServiceShape
->()(
-  "@frt/electron/services/app-state/app-state-api-service/AppStateApiService",
+export class AppState extends Context.Service<AppState, AppStateShape>()(
+  "@frt/electron/services/app-state/app-state-service/AppState",
 ) {}

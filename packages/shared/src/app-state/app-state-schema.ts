@@ -49,9 +49,9 @@ export const AppStateSchema = Schema.Struct({
   theme: ThemeSchema,
 });
 
-export type AppState = typeof AppStateSchema.Type;
+export type AppStateValue = typeof AppStateSchema.Type;
 
-export const DEFAULT_APP_STATE: AppState = {
+export const DEFAULT_APP_STATE: AppStateValue = {
   dungeonRun: {
     comparisonGroup: "OWN",
     timeColumns: [
@@ -90,4 +90,4 @@ export const DEFAULT_APP_STATE: AppState = {
   selectedConfigurationId: null,
   sidebarOpen: true,
   theme: "dark",
-} satisfies AppState;
+} satisfies AppStateValue;

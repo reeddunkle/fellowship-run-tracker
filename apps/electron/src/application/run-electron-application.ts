@@ -3,7 +3,7 @@ import { app, type BrowserWindow, nativeTheme } from "electron";
 
 import { type Theme } from "@frt/shared/app-state/app-state-schema.ts";
 
-import { AppStateApiService } from "@/services/app-state/app-state-api-service.ts";
+import { AppState } from "@/services/app-state/app-state-service.ts";
 
 import { type CreateWindowOptions, createWindow } from "./create-window.ts";
 
@@ -44,8 +44,8 @@ function focusWindowOnSecondInstance(window: BrowserWindow) {
 export function runElectronApplication(options: RunElectronApplicationOptions) {
   return E.scoped(
     E.gen(function* () {
-      const appStateService = yield* AppStateApiService;
-      const theme = yield* appStateService.getTheme;
+      const appState = yield* AppState;
+      const theme = yield* appState.getTheme;
 
       yield* applyNativeTheme(theme);
 

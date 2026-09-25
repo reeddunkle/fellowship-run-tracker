@@ -3,13 +3,13 @@ import * as Layer from "effect/Layer";
 import { nativeTheme } from "electron";
 
 import {
-  AppStateApiService,
-  type AppStateApiServiceShape,
-} from "@/services/app-state/app-state-api-service.ts";
+  AppState,
+  type AppStateShape,
+} from "@/services/app-state/app-state-service.ts";
 import { AppStateStorage } from "@/storage/app-state/app-state-storage.ts";
 import { makeAppStateStorageLayer } from "@/storage/app-state/app-state-storage-layer.ts";
 
-const makeAppStateApiService = E.gen(function* () {
+const makeAppState = E.gen(function* () {
   const storage = yield* AppStateStorage;
 
   return {
@@ -34,16 +34,13 @@ const makeAppStateApiService = E.gen(function* () {
         ),
         E.asVoid,
       ),
-  } satisfies AppStateApiServiceShape;
+  } satisfies AppStateShape;
 });
 
-export const AppStateApiServiceLayerNoDeps = Layer.effect(
-  AppStateApiService,
-  makeAppStateApiService,
-);
+export const AppStateLayerNoDeps = Layer.effect(AppState, makeAppState);
 
-export function makeAppStateApiServiceLayer(directoryPath: string) {
-  return AppStateApiServiceLayerNoDeps.pipe(
+export function makeAppStateLayer(directoryPath: string) {
+  return AppStateLayerNoDeps.pipe(
     Layer.provide(makeAppStateStorageLayer(directoryPath)),
   );
 }

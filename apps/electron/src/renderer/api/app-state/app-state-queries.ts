@@ -5,23 +5,23 @@ import {
 } from "@tanstack/react-query";
 import type * as E from "effect/Effect";
 
-import { type AppState } from "@frt/shared/app-state/app-state-schema.ts";
+import { type AppStateValue } from "@frt/shared/app-state/app-state-schema.ts";
 import { type ConfigurationId } from "@frt/shared/configuration/configuration-id-schema.ts";
 import { type DungeonRunComparisonGroupSchema } from "@frt/shared/dungeon-run/dungeon-run-comparison-group-schema.ts";
 
 import { browserRuntime } from "@/renderer/runtimes/browser-runtime.ts";
 import {
-  AppStateApiService,
-  type AppStateApiServiceShape,
-} from "@/services/app-state/app-state-api-service.ts";
+  AppState,
+  type AppStateShape,
+} from "@/services/app-state/app-state-service.ts";
 
 function makeAppStateFieldQueryOptions<Value>(
   field: string,
-  select: (service: AppStateApiServiceShape) => E.Effect<Value, unknown>,
+  select: (service: AppStateShape) => E.Effect<Value, unknown>,
 ) {
   return queryOptions({
     queryFn: () => {
-      return browserRuntime.runPromise(AppStateApiService.use(select));
+      return browserRuntime.runPromise(AppState.use(select));
     },
     queryKey: ["app-state", field] as const,
     staleTime: Infinity,
@@ -29,7 +29,7 @@ function makeAppStateFieldQueryOptions<Value>(
 }
 
 export function getThemeQueryOptions() {
-  return makeAppStateFieldQueryOptions<AppState["theme"]>(
+  return makeAppStateFieldQueryOptions<AppStateValue["theme"]>(
     "theme",
     (service) => {
       return service.getTheme;
@@ -38,7 +38,7 @@ export function getThemeQueryOptions() {
 }
 
 export function getSidebarOpenQueryOptions() {
-  return makeAppStateFieldQueryOptions<AppState["sidebarOpen"]>(
+  return makeAppStateFieldQueryOptions<AppStateValue["sidebarOpen"]>(
     "sidebar-open",
     (service) => {
       return service.getSidebarOpen;
@@ -56,12 +56,11 @@ export function getSelectedConfigurationIdQueryOptions() {
 }
 
 export function getDungeonRunTimeColumnsQueryOptions() {
-  return makeAppStateFieldQueryOptions<AppState["dungeonRun"]["timeColumns"]>(
-    "dungeon-run-time-columns",
-    (service) => {
-      return service.getDungeonRunTimeColumns;
-    },
-  );
+  return makeAppStateFieldQueryOptions<
+    AppStateValue["dungeonRun"]["timeColumns"]
+  >("dungeon-run-time-columns", (service) => {
+    return service.getDungeonRunTimeColumns;
+  });
 }
 
 export function getDungeonRunComparisonGroupQueryOptions() {

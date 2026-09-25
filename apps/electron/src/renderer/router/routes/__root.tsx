@@ -6,7 +6,7 @@ import { getAppSettings } from "@/renderer/api/app-settings/app-settings-client.
 import { getConfigurationsQueryOptions } from "@/renderer/api/configuration/configuration-queries.ts";
 import { RootLayout } from "@/renderer/components/core/root-layout";
 import { type RouterContext } from "@/renderer/router/router-context";
-import { FellowshipCatalogDataService } from "@/renderer/services/fellowship-catalog-data/fellowship-catalog-data-service.ts";
+import { FellowshipCatalogData } from "@/renderer/services/fellowship-catalog-data/fellowship-catalog-data-service.ts";
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootLayout,
@@ -35,9 +35,8 @@ export const Route = createRootRouteWithContext<RouterContext>()({
         });
 
         const settings = yield* getAppSettings();
-        const fellowshipCatalogDataService =
-          yield* FellowshipCatalogDataService;
-        const catalog = yield* fellowshipCatalogDataService.get;
+        const fellowshipCatalogData = yield* FellowshipCatalogData;
+        const catalog = yield* fellowshipCatalogData.get;
 
         return {
           catalog,

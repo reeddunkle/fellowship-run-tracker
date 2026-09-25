@@ -9,13 +9,10 @@ import {
   resizeWindowToContent,
   showWindow,
 } from "@/ipc/handlers/window-handlers.ts";
-import { type AppStateApiService } from "@/services/app-state/app-state-api-service.ts";
+import { type AppState } from "@/services/app-state/app-state-service.ts";
 
 export function configureWindowIpc<RuntimeError>(
-  runtime: ManagedRuntime.ManagedRuntime<
-    AppStateApiService | Path.Path,
-    RuntimeError
-  >,
+  runtime: ManagedRuntime.ManagedRuntime<AppState | Path.Path, RuntimeError>,
 ) {
   ipcMain.handle(
     ELECTRON_IPC_CHANNEL.RESIZE_WINDOW_TO_CONTENT,

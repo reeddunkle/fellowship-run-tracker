@@ -1,6 +1,6 @@
 import { type QueryClient } from "@tanstack/react-query";
 
-import { type AppState } from "@frt/shared/app-state/app-state-schema.ts";
+import { type AppStateValue } from "@frt/shared/app-state/app-state-schema.ts";
 
 import {
   getDungeonRunComparisonGroupQueryOptions,
@@ -12,7 +12,7 @@ import {
 
 export function seedAppStateQueries(
   queryClient: QueryClient,
-  appState: AppState,
+  appState: AppStateValue,
 ): void {
   queryClient.setQueryData(getThemeQueryOptions().queryKey, appState.theme);
   queryClient.setQueryData(

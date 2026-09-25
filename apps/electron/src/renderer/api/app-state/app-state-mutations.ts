@@ -7,7 +7,7 @@ import {
 } from "@tanstack/react-query";
 import * as E from "effect/Effect";
 
-import { type AppState } from "@frt/shared/app-state/app-state-schema.ts";
+import { type AppStateValue } from "@frt/shared/app-state/app-state-schema.ts";
 import { type ConfigurationId } from "@frt/shared/configuration/configuration-id-schema.ts";
 import { type DungeonRunComparisonGroupSchema } from "@frt/shared/dungeon-run/dungeon-run-comparison-group-schema.ts";
 
@@ -20,7 +20,7 @@ import {
   getThemeQueryOptions,
 } from "@/renderer/api/app-state/app-state-queries.ts";
 import { browserRuntime } from "@/renderer/runtimes/browser-runtime.ts";
-import { AppStateApiService } from "@/services/app-state/app-state-api-service.ts";
+import { AppState } from "@/services/app-state/app-state-service.ts";
 
 type FieldMutationContext<Value> = {
   readonly previousValue: Value | undefined;
@@ -102,10 +102,10 @@ function makeFieldMutationOptions<Value>({
 }
 
 export function setThemeMutationOptions(queryClient: QueryClient) {
-  return makeFieldMutationOptions<AppState["theme"]>({
+  return makeFieldMutationOptions<AppStateValue["theme"]>({
     mutationFn: (theme) => {
       return browserRuntime.runPromise(
-        AppStateApiService.use((service) => {
+        AppState.use((service) => {
           return service.setTheme(theme);
         }),
       );
@@ -117,10 +117,10 @@ export function setThemeMutationOptions(queryClient: QueryClient) {
 }
 
 export function setSidebarOpenMutationOptions(queryClient: QueryClient) {
-  return makeFieldMutationOptions<AppState["sidebarOpen"]>({
+  return makeFieldMutationOptions<AppStateValue["sidebarOpen"]>({
     mutationFn: (sidebarOpen) => {
       return browserRuntime.runPromise(
-        AppStateApiService.use((service) => {
+        AppState.use((service) => {
           return service.setSidebarOpen(sidebarOpen);
         }),
       );
@@ -135,7 +135,7 @@ function setSelectedConfigurationIdMutationOptions(queryClient: QueryClient) {
   return makeFieldMutationOptions<ConfigurationId | null>({
     mutationFn: (selectedConfigurationId) => {
       return browserRuntime.runPromise(
-        AppStateApiService.use((service) => {
+        AppState.use((service) => {
           return service.setSelectedConfigurationId(selectedConfigurationId);
         }),
       );
@@ -147,10 +147,10 @@ function setSelectedConfigurationIdMutationOptions(queryClient: QueryClient) {
 }
 
 function setDungeonRunTimeColumnsMutationOptions(queryClient: QueryClient) {
-  return makeFieldMutationOptions<AppState["dungeonRun"]["timeColumns"]>({
+  return makeFieldMutationOptions<AppStateValue["dungeonRun"]["timeColumns"]>({
     mutationFn: (timeColumns) => {
       return browserRuntime.runPromise(
-        AppStateApiService.use((service) => {
+        AppState.use((service) => {
           return service.setDungeonRunTimeColumns(timeColumns);
         }),
       );
@@ -165,7 +165,7 @@ function setDungeonRunComparisonGroupMutationOptions(queryClient: QueryClient) {
   return makeFieldMutationOptions<typeof DungeonRunComparisonGroupSchema.Type>({
     mutationFn: (comparisonGroup) => {
       return browserRuntime.runPromise(
-        AppStateApiService.use((service) => {
+        AppState.use((service) => {
           return service.setDungeonRunComparisonGroup(comparisonGroup);
         }),
       );
