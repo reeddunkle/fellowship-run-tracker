@@ -6,7 +6,6 @@ import * as Match from "effect/Match";
 import * as Option from "effect/Option";
 import * as Queue from "effect/Queue";
 import * as Result from "effect/Result";
-import type * as Schema from "effect/Schema";
 import * as KeyValueStore from "effect/unstable/persistence/KeyValueStore";
 
 import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
@@ -17,6 +16,8 @@ import {
 import { type ConfigurationId } from "@frt/shared/configuration/configuration-id-schema.ts";
 import { type DungeonRunComparisonGroupSchema } from "@frt/shared/dungeon-run/dungeon-run-comparison-group-schema.ts";
 
+import { type AppStateStoreError } from "@/errors/app-state-error.ts";
+
 import { migratePersistedAppState } from "./persistence/app-state-migrations.ts";
 import {
   CURRENT_APP_STATE_VERSION,
@@ -25,10 +26,6 @@ import {
 
 const APP_STATE_KEY = "app-state";
 const CORRUPT_APP_STATE_BACKUP_KEY = "app-state-corrupt-backup";
-
-export type AppStateStoreError =
-  | KeyValueStore.KeyValueStoreError
-  | Schema.SchemaError;
 
 export type AppStateStoreShape = {
   readonly getDungeonRunComparisonGroup: E.Effect<

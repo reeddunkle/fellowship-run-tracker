@@ -5,8 +5,10 @@ import { type AppStateValue } from "@frt/shared/app-state/app-state-schema.ts";
 import { type ConfigurationId } from "@frt/shared/configuration/configuration-id-schema.ts";
 import { type DungeonRunComparisonGroupSchema } from "@frt/shared/dungeon-run/dungeon-run-comparison-group-schema.ts";
 
-import { type AppStateClientError } from "@/errors/app-state-error.ts";
-import { type AppStateStoreError } from "@/services/app-state-store/app-state-store-service.ts";
+import {
+  type AppStateClientError,
+  type AppStateStoreError,
+} from "@/errors/app-state-error.ts";
 
 type AppStateError = AppStateClientError | AppStateStoreError;
 

@@ -1,4 +1,6 @@
 import * as Data from "effect/Data";
+import type * as Schema from "effect/Schema";
+import type * as KeyValueStore from "effect/unstable/persistence/KeyValueStore";
 
 import { type AppStateRpcRequest } from "@frt/shared/app-state/app-state-rpc.ts";
 
@@ -22,3 +24,7 @@ export class AppStateClientError extends Data.TaggedError(
     return `App state request "${this.operation}" failed.`;
   }
 }
+
+export type AppStateStoreError =
+  | KeyValueStore.KeyValueStoreError
+  | Schema.SchemaError;
