@@ -1,6 +1,86 @@
 {
   "bundleRelationships": [
     {
+      "bundle": "LiveSplit.layer",
+      "comparedBundle": "Layer.provideMerge(BackgroundJobService.layer)",
+      "onlyInBundle": [],
+      "onlyInComparedBundle": [
+        "AbilityCatalog",
+        "AppSettingsApiService",
+        "BackgroundJobApiService",
+        "BackgroundJobService",
+        "ConfigurationLibrary",
+        "DungeonCatalog",
+        "DungeonRunHistory",
+        "EncounterCatalog",
+        "FellowshipLogs",
+        "UnitCatalog"
+      ],
+      "relationship": "strict-subset",
+      "sharedServices": ["LiveSplit"]
+    },
+    {
+      "bundle": "LiveSplit.layer",
+      "comparedBundle": "ApiServicesLayer",
+      "onlyInBundle": [],
+      "onlyInComparedBundle": [
+        "AbilityCatalog",
+        "AppSettingsApiService",
+        "BackgroundJobApiService",
+        "ConfigurationLibrary",
+        "DungeonCatalog",
+        "DungeonRunHistory",
+        "EncounterCatalog",
+        "FellowshipLogs",
+        "UnitCatalog"
+      ],
+      "relationship": "strict-subset",
+      "sharedServices": ["LiveSplit"]
+    },
+    {
+      "bundle": "LiveSplit.layer",
+      "comparedBundle": "ApiServicesWithBackgroundJobsLayer",
+      "onlyInBundle": [],
+      "onlyInComparedBundle": [
+        "AbilityCatalog",
+        "AppSettingsApiService",
+        "BackgroundJobApiService",
+        "BackgroundJobService",
+        "ConfigurationLibrary",
+        "DungeonCatalog",
+        "DungeonRunHistory",
+        "EncounterCatalog",
+        "FellowshipLogs",
+        "UnitCatalog"
+      ],
+      "relationship": "strict-subset",
+      "sharedServices": ["LiveSplit"]
+    },
+    {
+      "bundle": "LiveSplit.layer",
+      "comparedBundle": "ApiRuntimeLayer",
+      "onlyInBundle": [],
+      "onlyInComparedBundle": [
+        "AbilityCatalog",
+        "AppSettingsApiService",
+        "BackgroundJobApiService",
+        "BackgroundJobService",
+        "BackgroundJobWebSocketBroadcaster",
+        "ConfigurationLibrary",
+        "DungeonCatalog",
+        "DungeonRunHistory",
+        "DungeonRunWebSocketBroadcaster",
+        "EncounterCatalog",
+        "FellowshipLogs",
+        "FellowshipTracker",
+        "LiveSplitWebSocketBroadcaster",
+        "TrackingWebSocketBroadcaster",
+        "UnitCatalog"
+      ],
+      "relationship": "strict-subset",
+      "sharedServices": ["LiveSplit"]
+    },
+    {
       "bundle": "FellowshipTracker.layer",
       "comparedBundle": "ApiRuntimeLayer",
       "onlyInBundle": [],
@@ -16,7 +96,7 @@
         "DungeonRunWebSocketBroadcaster",
         "EncounterCatalog",
         "FellowshipLogs",
-        "LiveSplitApiService",
+        "LiveSplit",
         "LiveSplitWebSocketBroadcaster",
         "TrackingWebSocketBroadcaster",
         "UnitCatalog"
@@ -37,7 +117,7 @@
         "DungeonRunHistory",
         "EncounterCatalog",
         "FellowshipLogs",
-        "LiveSplitApiService",
+        "LiveSplit",
         "UnitCatalog"
       ],
       "relationship": "strict-subset",
@@ -56,7 +136,7 @@
         "DungeonRunHistory",
         "EncounterCatalog",
         "FellowshipLogs",
-        "LiveSplitApiService",
+        "LiveSplit",
         "UnitCatalog"
       ],
       "relationship": "strict-subset",
@@ -78,7 +158,7 @@
         "EncounterCatalog",
         "FellowshipLogs",
         "FellowshipTracker",
-        "LiveSplitApiService",
+        "LiveSplit",
         "LiveSplitWebSocketBroadcaster",
         "TrackingWebSocketBroadcaster",
         "UnitCatalog"
@@ -101,7 +181,7 @@
         "DungeonRunHistory",
         "EncounterCatalog",
         "FellowshipLogs",
-        "LiveSplitApiService",
+        "LiveSplit",
         "UnitCatalog"
       ]
     },
@@ -121,7 +201,7 @@
         "DungeonRunHistory",
         "EncounterCatalog",
         "FellowshipLogs",
-        "LiveSplitApiService",
+        "LiveSplit",
         "UnitCatalog"
       ]
     },
@@ -147,7 +227,7 @@
         "DungeonRunHistory",
         "EncounterCatalog",
         "FellowshipLogs",
-        "LiveSplitApiService",
+        "LiveSplit",
         "UnitCatalog"
       ]
     },
@@ -166,7 +246,7 @@
         "DungeonRunHistory",
         "EncounterCatalog",
         "FellowshipLogs",
-        "LiveSplitApiService",
+        "LiveSplit",
         "UnitCatalog"
       ]
     },
@@ -192,7 +272,7 @@
         "DungeonRunHistory",
         "EncounterCatalog",
         "FellowshipLogs",
-        "LiveSplitApiService",
+        "LiveSplit",
         "UnitCatalog"
       ]
     },
@@ -218,7 +298,7 @@
         "DungeonRunHistory",
         "EncounterCatalog",
         "FellowshipLogs",
-        "LiveSplitApiService",
+        "LiveSplit",
         "UnitCatalog"
       ]
     }
@@ -272,7 +352,7 @@
         "DungeonRunHistory",
         "EncounterCatalog",
         "FellowshipLogs",
-        "LiveSplitApiService",
+        "LiveSplit",
         "UnitCatalog"
       ]
     },
@@ -292,7 +372,7 @@
         "DungeonRunHistory",
         "EncounterCatalog",
         "FellowshipLogs",
-        "LiveSplitApiService",
+        "LiveSplit",
         "UnitCatalog"
       ]
     },
@@ -314,7 +394,7 @@
         "DungeonRunHistory",
         "EncounterCatalog",
         "FellowshipLogs",
-        "LiveSplitApiService",
+        "LiveSplit",
         "UnitCatalog"
       ]
     },
@@ -339,7 +419,7 @@
         "EncounterCatalog",
         "FellowshipLogs",
         "FellowshipTracker",
-        "LiveSplitApiService",
+        "LiveSplit",
         "LiveSplitWebSocketBroadcaster",
         "TrackingWebSocketBroadcaster",
         "UnitCatalog"
@@ -348,6 +428,16 @@
   ],
   "requirementReductions": [],
   "serviceMemberships": [
+    {
+      "bundles": [
+        "LiveSplit.layer",
+        "Layer.provideMerge(BackgroundJobService.layer)",
+        "ApiServicesLayer",
+        "ApiServicesWithBackgroundJobsLayer",
+        "ApiRuntimeLayer"
+      ],
+      "service": "LiveSplit"
+    },
     {
       "bundles": ["FellowshipTracker.layer", "ApiRuntimeLayer"],
       "service": "FellowshipTracker"
@@ -432,15 +522,6 @@
         "ApiRuntimeLayer"
       ],
       "service": "FellowshipLogs"
-    },
-    {
-      "bundles": [
-        "Layer.provideMerge(BackgroundJobService.layer)",
-        "ApiServicesLayer",
-        "ApiServicesWithBackgroundJobsLayer",
-        "ApiRuntimeLayer"
-      ],
-      "service": "LiveSplitApiService"
     },
     {
       "bundles": [

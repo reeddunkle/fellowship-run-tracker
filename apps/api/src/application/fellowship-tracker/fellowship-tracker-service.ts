@@ -17,7 +17,7 @@ import {
   Fellowship,
   type FellowshipLiveStatus,
 } from "@frt/api/services/fellowship/fellowship-service.ts";
-import { LiveSplit } from "@frt/api/services/live-split/core/live-split-service.ts";
+import { LiveSplit } from "@frt/api/services/live-split/live-split-service.ts";
 import { ConfigurationDAO } from "@frt/db/daos/configuration/configuration-dao.ts";
 import { DungeonRunObservationDAO } from "@frt/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
 import { type ConfigurationDAOError } from "@frt/db/errors/configuration-dao-error.ts";

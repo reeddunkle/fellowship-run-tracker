@@ -1,6 +1,5 @@
 import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Stream from "effect/Stream";
 
 import { DungeonRunWebSocketBroadcaster } from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
 import { FellowshipTracker } from "@frt/api/application/fellowship-tracker/fellowship-tracker-service.ts";
@@ -9,15 +8,12 @@ import { Encryption } from "@frt/api/services/encryption/encryption-service.ts";
 import { Fellowship } from "@frt/api/services/fellowship/fellowship-service.ts";
 import { FileMonitor } from "@frt/api/services/filesystem/file-monitor-service.ts";
 import { FileMonitorSource } from "@frt/api/services/filesystem/file-monitor-source-service.ts";
-import {
-  LiveSplitConnectionManager,
-  type LiveSplitConnectionManagerService,
-} from "@frt/api/services/live-split/core/live-split-connection-manager-service.ts";
-import { LiveSplit } from "@frt/api/services/live-split/core/live-split-service.ts";
+import { LiveSplit } from "@frt/api/services/live-split/live-split-service.ts";
+import { LiveSplitGateway } from "@frt/api/services/live-split-gateway/live-split-gateway-service.ts";
 import { makeEncryptionHarness } from "@frt/api/tests/common/harnesses/encryption-harness.ts";
 import { makePersistenceTestLayer } from "@frt/api/tests/common/layers/persistence-test-layer.ts";
 
-import { makeLiveSplitTestHarness } from "./live-split-test-harness.ts";
+import { makeLiveSplitGatewayTransportTestHarness } from "./live-split-gateway-test-harness.ts";
 import { makeWebSocketBroadcasterTestHarness } from "./websocket-broadcaster-test-harness.ts";
 
 export type MakeFellowshipTrackerIntegrationTestHarnessOptions = {
@@ -30,7 +26,7 @@ export function makeFellowshipTrackerIntegrationTestHarness({
   return E.gen(function* () {
     const encryptionHarness = yield* makeEncryptionHarness();
 
-    const liveSplitHarness = yield* makeLiveSplitTestHarness();
+    const liveSplitHarness = yield* makeLiveSplitGatewayTransportTestHarness();
 
     const dungeonRunWebSocketBroadcasterHarness =
       yield* makeWebSocketBroadcasterTestHarness();
@@ -51,27 +47,17 @@ export function makeFellowshipTrackerIntegrationTestHarness({
       Layer.provide(AppSettingsTestLive),
     );
 
-    const LiveSplitConnectionManagerTestLive = Layer.succeed(
-      LiveSplitConnectionManager,
-      {
-        client: E.succeedSome(liveSplitHarness.client),
-        connect: () => {
-          return E.void;
-        },
-        disconnect: () => {
-          return E.void;
-        },
-        status: E.succeed({
-          _tag: "Connected",
-        }),
-        statusChanges: Stream.make({
-          _tag: "Connected",
-        }),
-      } satisfies LiveSplitConnectionManagerService,
+    const LiveSplitGatewayTestLive = LiveSplitGateway.layerNoDeps.pipe(
+      Layer.provide(
+        Layer.mergeAll(
+          AppSettingsTestLive,
+          liveSplitHarness.transportFactoryLayer,
+        ),
+      ),
     );
 
     const LiveSplitTestLive = LiveSplit.layerNoDeps.pipe(
-      Layer.provide(LiveSplitConnectionManagerTestLive),
+      Layer.provide(LiveSplitGatewayTestLive),
     );
 
     const DungeonRunWebSocketBroadcasterTestLive = Layer.succeed(
@@ -95,7 +81,7 @@ export function makeFellowshipTrackerIntegrationTestHarness({
       EncryptionTestLive,
       AppSettingsTestLive,
       FellowshipTestLive,
-      LiveSplitConnectionManagerTestLive,
+      LiveSplitGatewayTestLive,
       LiveSplitTestLive,
       DungeonRunWebSocketBroadcasterTestLive,
       FellowshipTrackerTestLive,

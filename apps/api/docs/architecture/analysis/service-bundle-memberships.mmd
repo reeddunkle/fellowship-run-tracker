@@ -1,10 +1,12 @@
 flowchart LR
-  FellowshipTracker_layer["FellowshipTracker.layer"]
-  ApiRuntimeLayer["ApiRuntimeLayer"]
-  BackgroundJobService_layer["BackgroundJobService.layer"]
+  LiveSplit_layer["LiveSplit.layer"]
   Layer_provideMerge_BackgroundJobService_layer_["Layer.provideMerge(BackgroundJobService.layer)"]
-  ApiServicesWithBackgroundJobsLayer["ApiServicesWithBackgroundJobsLayer"]
   ApiServicesLayer["ApiServicesLayer"]
+  ApiServicesWithBackgroundJobsLayer["ApiServicesWithBackgroundJobsLayer"]
+  ApiRuntimeLayer["ApiRuntimeLayer"]
+  FellowshipTracker_layer["FellowshipTracker.layer"]
+  BackgroundJobService_layer["BackgroundJobService.layer"]
+  LiveSplit["LiveSplit"]
   FellowshipTracker["FellowshipTracker"]
   BackgroundJobService["BackgroundJobService"]
   AbilityCatalog["AbilityCatalog"]
@@ -15,8 +17,12 @@ flowchart LR
   DungeonRunHistory["DungeonRunHistory"]
   EncounterCatalog["EncounterCatalog"]
   FellowshipLogs["FellowshipLogs"]
-  LiveSplitApiService["LiveSplitApiService"]
   UnitCatalog["UnitCatalog"]
+  LiveSplit_layer -.-> LiveSplit
+  Layer_provideMerge_BackgroundJobService_layer_ -.-> LiveSplit
+  ApiServicesLayer -.-> LiveSplit
+  ApiServicesWithBackgroundJobsLayer -.-> LiveSplit
+  ApiRuntimeLayer -.-> LiveSplit
   FellowshipTracker_layer -.-> FellowshipTracker
   ApiRuntimeLayer -.-> FellowshipTracker
   BackgroundJobService_layer -.-> BackgroundJobService
@@ -55,10 +61,6 @@ flowchart LR
   ApiServicesLayer -.-> FellowshipLogs
   ApiServicesWithBackgroundJobsLayer -.-> FellowshipLogs
   ApiRuntimeLayer -.-> FellowshipLogs
-  Layer_provideMerge_BackgroundJobService_layer_ -.-> LiveSplitApiService
-  ApiServicesLayer -.-> LiveSplitApiService
-  ApiServicesWithBackgroundJobsLayer -.-> LiveSplitApiService
-  ApiRuntimeLayer -.-> LiveSplitApiService
   Layer_provideMerge_BackgroundJobService_layer_ -.-> UnitCatalog
   ApiServicesLayer -.-> UnitCatalog
   ApiServicesWithBackgroundJobsLayer -.-> UnitCatalog

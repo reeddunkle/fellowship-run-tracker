@@ -11,7 +11,7 @@ import {
   type ProcessDungeonRunEventStreamResult,
   processDungeonRunEventStream,
 } from "@frt/api/services/fellowship/dungeon-runs/process-dungeon-run-event-stream.ts";
-import { LiveSplit } from "@frt/api/services/live-split/core/live-split-service.ts";
+import { LiveSplit } from "@frt/api/services/live-split/live-split-service.ts";
 import { type FellowshipMilestoneConfiguration } from "@frt/shared/fellowship/configurations/configuration-types.ts";
 import { type FellowshipEvent } from "@frt/shared/fellowship/validation/fellowship-event-schema.ts";
 

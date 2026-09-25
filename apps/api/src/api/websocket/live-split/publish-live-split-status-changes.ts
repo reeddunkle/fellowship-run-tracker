@@ -6,7 +6,7 @@ import {
   LiveSplitWebSocketBroadcaster,
   type WebSocketBroadcasterService,
 } from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
-import { LiveSplitApiService } from "@frt/api/services/api/live-split/live-split-api-service.ts";
+import { LiveSplit } from "@frt/api/services/live-split/live-split-service.ts";
 import {
   type LiveSplitApiMessage,
   LiveSplitApiMessageSchema,
@@ -39,10 +39,10 @@ function publishLiveSplitApiStatus({
 }
 
 export const publishLiveSplitStatusChanges = E.gen(function* () {
-  const liveSplitApiService = yield* LiveSplitApiService;
+  const liveSplit = yield* LiveSplit;
   const liveSplitWebSocketBroadcaster = yield* LiveSplitWebSocketBroadcaster;
 
-  yield* liveSplitApiService.statusChanges.pipe(
+  yield* liveSplit.statusChanges.pipe(
     Stream.runForEach((status) => {
       return publishLiveSplitApiStatus({
         status,

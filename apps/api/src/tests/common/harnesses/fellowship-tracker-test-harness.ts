@@ -17,8 +17,8 @@ import {
 } from "@frt/api/services/fellowship/fellowship-service.ts";
 import {
   LiveSplit,
-  type LiveSplitService,
-} from "@frt/api/services/live-split/core/live-split-service.ts";
+  type LiveSplitShape,
+} from "@frt/api/services/live-split/live-split-service.ts";
 import {
   ConfigurationDAO,
   type ConfigurationDAOShape,
@@ -52,7 +52,7 @@ type MakeFellowshipTrackerTestHarnessOptions = {
   readonly configurationDefinitionId?: ConfigurationDefinitionId;
   readonly configurationId?: ConfigurationId;
   readonly configurationLabel?: ConfigurationLabel;
-  readonly handleRunEvent?: LiveSplitService["handleRunEvent"];
+  readonly handleRunEvent?: LiveSplitShape["handleRunEvent"];
   readonly liveEvents?: FellowshipLiveEvents;
   readonly liveStatus?: FellowshipLiveStatus;
 };
@@ -212,25 +212,27 @@ export function makeFellowshipTrackerTestHarness(
       },
     } satisfies DungeonRunObservationDAOShape;
 
+    const liveSplitStatus = {
+      status: "Disconnected",
+    } as const;
+
     const liveSplit = {
       connect: () => {
-        return E.void;
+        return E.succeed(liveSplitStatus);
       },
       disconnect: () => {
-        return E.void;
+        return E.succeed(liveSplitStatus);
+      },
+      getStatus: () => {
+        return E.succeed(liveSplitStatus);
       },
       handleRunEvent:
         options.handleRunEvent ??
         (() => {
           return E.void;
         }),
-      status: E.succeed({
-        _tag: "Disconnected",
-      }),
-      statusChanges: Stream.make({
-        _tag: "Disconnected",
-      }),
-    } satisfies LiveSplitService;
+      statusChanges: Stream.make(liveSplitStatus),
+    } satisfies LiveSplitShape;
 
     const FellowshipTrackerDependenciesTestLive = Layer.mergeAll(
       Layer.succeed(ConfigurationDAO, configurationDAO),

@@ -3,22 +3,24 @@ import { describe, expect, test } from "vitest";
 
 import {
   appendEOL,
-  LiveSplitRequestCommand,
-} from "@frt/api/services/live-split/core/live-split-command.ts";
-import { makeLiveSplitTestHarness } from "@frt/api/tests/common/harnesses/live-split-test-harness.ts";
+  LiveSplitGatewayRequestCommand,
+} from "@frt/api/services/live-split-gateway/live-split-gateway-command.ts";
+import { makeLiveSplitGatewayClientTestHarness } from "@frt/api/tests/common/harnesses/live-split-gateway-test-harness.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 
-describe("LiveSplitClient", () => {
+describe("LiveSplitGatewayClient", () => {
   test("gets the current time", async () => {
     const program = E.scoped(
       E.gen(function* () {
-        const harness = yield* makeLiveSplitTestHarness();
+        const harness = yield* makeLiveSplitGatewayClientTestHarness();
 
         const request = yield* harness.start(harness.client.getCurrentTime());
 
         const command = yield* harness.takeCommand();
 
-        expect(command).toBe(appendEOL(LiveSplitRequestCommand.getCurrentTime));
+        expect(command).toBe(
+          appendEOL(LiveSplitGatewayRequestCommand.getCurrentTime),
+        );
 
         yield* harness.sendResponse("00:01:23");
 
@@ -32,7 +34,7 @@ describe("LiveSplitClient", () => {
   test("assembles a response split across multiple chunks", async () => {
     const program = E.scoped(
       E.gen(function* () {
-        const harness = yield* makeLiveSplitTestHarness();
+        const harness = yield* makeLiveSplitGatewayClientTestHarness();
 
         const request = yield* harness.start(harness.client.getCurrentTime());
 
@@ -52,7 +54,7 @@ describe("LiveSplitClient", () => {
   test("handles multiple responses in one chunk", async () => {
     const program = E.scoped(
       E.gen(function* () {
-        const harness = yield* makeLiveSplitTestHarness();
+        const harness = yield* makeLiveSplitGatewayClientTestHarness();
 
         const currentTimeRequest = yield* harness.start(
           harness.client.getCurrentTime(),
@@ -82,7 +84,7 @@ describe("LiveSplitClient", () => {
   test("serializes concurrent response-producing requests", async () => {
     const program = E.scoped(
       E.gen(function* () {
-        const harness = yield* makeLiveSplitTestHarness();
+        const harness = yield* makeLiveSplitGatewayClientTestHarness();
 
         const currentTimeRequest = yield* harness.start(
           harness.client.getCurrentTime(),
@@ -95,7 +97,7 @@ describe("LiveSplitClient", () => {
         const firstCommand = yield* harness.takeCommand();
 
         expect(firstCommand).toBe(
-          appendEOL(LiveSplitRequestCommand.getCurrentTime),
+          appendEOL(LiveSplitGatewayRequestCommand.getCurrentTime),
         );
 
         yield* harness.sendResponse("00:01:23");
@@ -103,7 +105,7 @@ describe("LiveSplitClient", () => {
         const secondCommand = yield* harness.takeCommand();
 
         expect(secondCommand).toBe(
-          appendEOL(LiveSplitRequestCommand.getSplitIndex),
+          appendEOL(LiveSplitGatewayRequestCommand.getSplitIndex),
         );
 
         yield* harness.sendResponse("4");

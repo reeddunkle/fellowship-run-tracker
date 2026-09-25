@@ -7,7 +7,7 @@ import * as Queue from "effect/Queue";
 import * as Stream from "effect/Stream";
 import type * as Socket from "effect/unstable/socket/Socket";
 
-type LiveSplitTransportChunk =
+type LiveSplitGatewayTransportChunk =
   | {
       readonly data: string;
       readonly type: "CHUNK";
@@ -17,23 +17,22 @@ type LiveSplitTransportChunk =
       readonly type: "END";
     };
 
-export type LiveSplitTransport = {
+export type LiveSplitGatewayTransport = {
   readonly chunks: Stream.Stream<string, Socket.SocketError>;
   readonly connected: E.Effect<void, Socket.SocketError>;
   readonly write: (data: string) => E.Effect<void, Socket.SocketError>;
 };
 
-export type MakeNodeLiveSplitTransportOptions = {
+export type MakeNodeLiveSplitGatewayTransportOptions = {
   readonly host: string;
   readonly port: number;
 };
 
 const SOCKET_OPEN_TIMEOUT = "5 seconds";
 
-export const makeNodeLiveSplitTransport = E.fn("livesplit.connect")(function* ({
-  host,
-  port,
-}: MakeNodeLiveSplitTransportOptions) {
+export const makeNodeLiveSplitGatewayTransport = E.fn(
+  "LiveSplitGateway.openTransport",
+)(function* ({ host, port }: MakeNodeLiveSplitGatewayTransportOptions) {
   yield* E.annotateCurrentSpan("livesplit.host", host);
   yield* E.annotateCurrentSpan("livesplit.port", port);
 
@@ -66,7 +65,7 @@ export const makeNodeLiveSplitTransport = E.fn("livesplit.connect")(function* ({
 
   const connectedDeferred = yield* Deferred.make<void, Socket.SocketError>();
 
-  const chunksQueue = yield* Queue.unbounded<LiveSplitTransportChunk>();
+  const chunksQueue = yield* Queue.unbounded<LiveSplitGatewayTransportChunk>();
 
   const socketEffect = socket
     .runString(
@@ -120,14 +119,14 @@ export const makeNodeLiveSplitTransport = E.fn("livesplit.connect")(function* ({
 
   yield* socketEffect.pipe(E.forkScoped);
 
-  const chunks: LiveSplitTransport["chunks"] = Stream.fromQueue(
+  const chunks: LiveSplitGatewayTransport["chunks"] = Stream.fromQueue(
     chunksQueue,
   ).pipe(
     Stream.takeUntilEffect((item) => {
       return E.succeed(item.type === "END");
     }),
     Stream.mapEffect(
-      Match.type<LiveSplitTransportChunk>().pipe(
+      Match.type<LiveSplitGatewayTransportChunk>().pipe(
         Match.when({ type: "CHUNK" }, ({ data }) => {
           return E.succeed(data);
         }),
@@ -146,7 +145,7 @@ export const makeNodeLiveSplitTransport = E.fn("livesplit.connect")(function* ({
     ),
   );
 
-  const connected: LiveSplitTransport["connected"] =
+  const connected: LiveSplitGatewayTransport["connected"] =
     Deferred.await(connectedDeferred);
 
   return {
@@ -164,5 +163,5 @@ export const makeNodeLiveSplitTransport = E.fn("livesplit.connect")(function* ({
         }),
       );
     },
-  } satisfies LiveSplitTransport;
+  } satisfies LiveSplitGatewayTransport;
 });

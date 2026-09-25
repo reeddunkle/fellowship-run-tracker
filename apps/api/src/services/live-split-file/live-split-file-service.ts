@@ -20,7 +20,7 @@ type WriteLSSFileOptions = {
   readonly filePath: string;
 };
 
-export type LiveSplitFileService = {
+export type LiveSplitFileShape = {
   readonly createLSS: (options: CreateLSSOptions) => string;
 
   readonly writeLSSFile: (
@@ -32,7 +32,7 @@ export type LiveSplitFileService = {
   >;
 };
 
-function makeLiveSplitFile(): LiveSplitFileService {
+function makeLiveSplitFile(): LiveSplitFileShape {
   const createLSS = ({
     configuration,
     dungeonName,
@@ -73,9 +73,7 @@ function makeLiveSplitFile(): LiveSplitFileService {
 
 export class LiveSplitFile extends Context.Service<
   LiveSplitFile,
-  LiveSplitFileService
->()(
-  "@frt/api/services/live-split/files/live-split-file-service/LiveSplitFile",
-) {
+  LiveSplitFileShape
+>()("@frt/api/services/live-split-file/live-split-file-service/LiveSplitFile") {
   static readonly layer = Layer.succeed(this, makeLiveSplitFile());
 }

@@ -1,7 +1,7 @@
 import * as Data from "effect/Data";
 
-export class LiveSplitClientInvalidResponseError extends Data.TaggedError(
-  "LiveSplitClientInvalidResponseError",
+export class LiveSplitGatewayInvalidResponseError extends Data.TaggedError(
+  "LiveSplitGatewayInvalidResponseError",
 )<{
   readonly command: string;
   readonly response: string;
@@ -17,8 +17,8 @@ const UNAVAILABLE_REASON_DESCRIPTIONS = {
   ResponseStreamEnded: "the LiveSplit response stream ended",
 } as const;
 
-export class LiveSplitClientUnavailableError extends Data.TaggedError(
-  "LiveSplitClientUnavailableError",
+export class LiveSplitGatewayUnavailableError extends Data.TaggedError(
+  "LiveSplitGatewayUnavailableError",
 )<{
   readonly reason: keyof typeof UNAVAILABLE_REASON_DESCRIPTIONS;
 }> {
@@ -27,12 +27,20 @@ export class LiveSplitClientUnavailableError extends Data.TaggedError(
   }
 }
 
-export class LiveSplitClientConnectionError extends Data.TaggedError(
-  "LiveSplitClientConnectionError",
+export class LiveSplitGatewayConnectionError extends Data.TaggedError(
+  "LiveSplitGatewayConnectionError",
 )<{
   readonly cause: unknown;
 }> {
   override get message() {
     return "Failed to connect to LiveSplit.";
+  }
+}
+
+export class LiveSplitGatewayNotConnectedError extends Data.TaggedError(
+  "LiveSplitGatewayNotConnectedError",
+) {
+  override get message() {
+    return "LiveSplit is not connected.";
   }
 }

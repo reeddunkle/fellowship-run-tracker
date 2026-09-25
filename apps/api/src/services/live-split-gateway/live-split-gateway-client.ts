@@ -9,50 +9,53 @@ import * as Stream from "effect/Stream";
 import type * as Socket from "effect/unstable/socket/Socket";
 
 import {
-  LiveSplitClientInvalidResponseError,
-  LiveSplitClientUnavailableError,
-} from "@frt/api/errors/live-split-client-error.ts";
+  LiveSplitGatewayInvalidResponseError,
+  LiveSplitGatewayUnavailableError,
+} from "@frt/api/errors/live-split-gateway-error.ts";
 
 import {
-  formatLiveSplitCommand,
-  LIVE_SPLIT_EOL,
-  type LiveSplitCommandInput,
-  LiveSplitRequestCommand,
-  type LiveSplitRequestCommandInput,
-  LiveSplitSendCommand,
-  type LiveSplitSendCommandInput,
-} from "./live-split-command.ts";
-import { type LiveSplitTransport } from "./node-live-split-transport.ts";
+  formatLiveSplitGatewayCommand,
+  LIVE_SPLIT_GATEWAY_EOL,
+  type LiveSplitGatewayCommandInput,
+  LiveSplitGatewayRequestCommand,
+  type LiveSplitGatewayRequestCommandInput,
+  LiveSplitGatewaySendCommand,
+  type LiveSplitGatewaySendCommandInput,
+} from "./live-split-gateway-command.ts";
+import { type LiveSplitGatewayTransport } from "./node-live-split-gateway-transport.ts";
 
 const RESPONSE_TIMEOUT = "5 seconds";
 
-export type LiveSplitRequestError =
+export type LiveSplitGatewayRequestError =
   | Cause.TimeoutError
-  | LiveSplitClientUnavailableError
+  | LiveSplitGatewayUnavailableError
   | Socket.SocketError;
 
-export type LiveSplitClientUnavailabilityCause =
-  Cause.Cause<LiveSplitRequestError>;
+export type LiveSplitGatewayClientUnavailabilityCause =
+  Cause.Cause<LiveSplitGatewayRequestError>;
 
-type PendingLiveSplitRequest = {
-  readonly command: LiveSplitRequestCommandInput;
-  readonly responseDeferred: Deferred.Deferred<string, LiveSplitRequestError>;
+type PendingLiveSplitGatewayRequest = {
+  readonly command: LiveSplitGatewayRequestCommandInput;
+  readonly responseDeferred: Deferred.Deferred<
+    string,
+    LiveSplitGatewayRequestError
+  >;
 };
 
-type LiveSplitResponseQueueItem = Result.Result<
+type LiveSplitGatewayResponseQueueItem = Result.Result<
   string,
-  LiveSplitClientUnavailabilityCause
+  LiveSplitGatewayClientUnavailabilityCause
 >;
 
-export type LiveSplitClientService = {
-  readonly getCurrentTime: () => E.Effect<string, LiveSplitRequestError>;
+export type LiveSplitGatewayClient = {
+  readonly getCurrentTime: () => E.Effect<string, LiveSplitGatewayRequestError>;
 
   readonly getSplitIndex: () => E.Effect<
     number,
-    LiveSplitClientInvalidResponseError | LiveSplitRequestError
+    LiveSplitGatewayInvalidResponseError | LiveSplitGatewayRequestError
   >;
 
-  readonly getTimerPhase: () => E.Effect<string, LiveSplitRequestError>;
+  readonly getTimerPhase: () => E.Effect<string, LiveSplitGatewayRequestError>;
 
   readonly pause: () => E.Effect<void, Socket.SocketError>;
 
@@ -74,34 +77,36 @@ export type LiveSplitClientService = {
     filePath: string,
   ) => E.Effect<
     void,
-    LiveSplitClientInvalidResponseError | LiveSplitRequestError
+    LiveSplitGatewayInvalidResponseError | LiveSplitGatewayRequestError
   >;
 
-  readonly unavailability: Stream.Stream<LiveSplitClientUnavailabilityCause>;
+  readonly unavailability: Stream.Stream<LiveSplitGatewayClientUnavailabilityCause>;
 };
 
-export function makeLiveSplitClient({
+export function makeLiveSplitGatewayClient({
   transport,
 }: {
-  readonly transport: LiveSplitTransport;
+  readonly transport: LiveSplitGatewayTransport;
 }) {
   return E.gen(function* () {
-    const responseQueue = yield* Queue.unbounded<LiveSplitResponseQueueItem>();
+    const responseQueue =
+      yield* Queue.unbounded<LiveSplitGatewayResponseQueueItem>();
 
-    const requestQueue = yield* Queue.unbounded<PendingLiveSplitRequest>();
+    const requestQueue =
+      yield* Queue.unbounded<PendingLiveSplitGatewayRequest>();
 
     const responseChannelFailure = yield* Ref.make<
-      LiveSplitClientUnavailabilityCause | undefined
+      LiveSplitGatewayClientUnavailabilityCause | undefined
     >(undefined);
 
     const unavailabilityDeferred =
-      yield* Deferred.make<LiveSplitClientUnavailabilityCause>();
+      yield* Deferred.make<LiveSplitGatewayClientUnavailabilityCause>();
 
-    const unavailability: LiveSplitClientService["unavailability"] =
+    const unavailability: LiveSplitGatewayClient["unavailability"] =
       unavailabilityDeferred.pipe(Deferred.await, Stream.fromEffect);
 
     const markUnavailable = (
-      cause: LiveSplitClientUnavailabilityCause,
+      cause: LiveSplitGatewayClientUnavailabilityCause,
     ): E.Effect<void> => {
       return E.gen(function* () {
         const existingFailure = yield* Ref.get(responseChannelFailure);
@@ -120,7 +125,7 @@ export function makeLiveSplitClient({
         () => "",
         (responseBuffer, socketChunk) => {
           const responseParts = `${responseBuffer}${socketChunk}`.split(
-            LIVE_SPLIT_EOL,
+            LIVE_SPLIT_GATEWAY_EOL,
           );
 
           const remainingBuffer = responseParts.pop() ?? "";
@@ -139,13 +144,13 @@ export function makeLiveSplitClient({
         ),
       );
 
-      let failureCause: LiveSplitClientUnavailabilityCause;
+      let failureCause: LiveSplitGatewayClientUnavailabilityCause;
 
       if (Exit.isFailure(exit)) {
         failureCause = exit.cause;
       } else {
         failureCause = Cause.fail(
-          new LiveSplitClientUnavailableError({
+          new LiveSplitGatewayUnavailableError({
             reason: "ResponseStreamEnded",
           }),
         );
@@ -156,16 +161,16 @@ export function makeLiveSplitClient({
       yield* Queue.offer(responseQueue, Result.fail(failureCause));
     }).pipe(E.forkScoped);
 
-    const writeCommand = E.fn("livesplit.send")(function* (
-      input: LiveSplitCommandInput,
+    const writeCommand = E.fn("LiveSplitGateway.send")(function* (
+      input: LiveSplitGatewayCommandInput,
     ): E.fn.Return<void, Socket.SocketError> {
       yield* E.annotateCurrentSpan("livesplit.command", input.command);
 
-      yield* transport.write(formatLiveSplitCommand(input));
+      yield* transport.write(formatLiveSplitGatewayCommand(input));
     });
 
     const send = (
-      input: LiveSplitSendCommandInput,
+      input: LiveSplitGatewaySendCommandInput,
     ): E.Effect<void, Socket.SocketError> => {
       return writeCommand(input).pipe(E.tapCause(markUnavailable));
     };
@@ -186,7 +191,7 @@ export function makeLiveSplitClient({
               E.timeout(RESPONSE_TIMEOUT),
               E.tapError(() => {
                 const failureCause = Cause.fail(
-                  new LiveSplitClientUnavailableError({
+                  new LiveSplitGatewayUnavailableError({
                     reason: "ResponseStreamDesynchronized",
                   }),
                 );
@@ -220,14 +225,14 @@ export function makeLiveSplitClient({
       E.forkScoped,
     );
 
-    const request = E.fn("livesplit.request")(function* (
-      command: LiveSplitRequestCommandInput,
-    ): E.fn.Return<string, LiveSplitRequestError> {
+    const request = E.fn("LiveSplitGateway.request")(function* (
+      command: LiveSplitGatewayRequestCommandInput,
+    ): E.fn.Return<string, LiveSplitGatewayRequestError> {
       yield* E.annotateCurrentSpan("livesplit.command", command.command);
 
       const responseDeferred = yield* Deferred.make<
         string,
-        LiveSplitRequestError
+        LiveSplitGatewayRequestError
       >();
 
       yield* Queue.offer(requestQueue, {
@@ -240,13 +245,13 @@ export function makeLiveSplitClient({
 
     const parseSplitIndex = (
       response: string,
-    ): E.Effect<number, LiveSplitClientInvalidResponseError> => {
+    ): E.Effect<number, LiveSplitGatewayInvalidResponseError> => {
       const splitIndex = Number.parseInt(response, 10);
 
       if (Number.isNaN(splitIndex)) {
         return E.fail(
-          new LiveSplitClientInvalidResponseError({
-            command: LiveSplitRequestCommand.getSplitIndex,
+          new LiveSplitGatewayInvalidResponseError({
+            command: LiveSplitGatewayRequestCommand.getSplitIndex,
             response,
           }),
         );
@@ -259,15 +264,15 @@ export function makeLiveSplitClient({
       command,
       response,
     }: {
-      readonly command: LiveSplitRequestCommand;
+      readonly command: LiveSplitGatewayRequestCommand;
       readonly response: string;
-    }): E.Effect<void, LiveSplitClientInvalidResponseError> => {
+    }): E.Effect<void, LiveSplitGatewayInvalidResponseError> => {
       if (response.trim().toLowerCase() === "true") {
         return E.void;
       }
 
       return E.fail(
-        new LiveSplitClientInvalidResponseError({
+        new LiveSplitGatewayInvalidResponseError({
           command,
           response,
         }),
@@ -277,65 +282,65 @@ export function makeLiveSplitClient({
     return {
       getCurrentTime: () => {
         return request({
-          command: LiveSplitRequestCommand.getCurrentTime,
+          command: LiveSplitGatewayRequestCommand.getCurrentTime,
         });
       },
 
       getSplitIndex: () => {
         return request({
-          command: LiveSplitRequestCommand.getSplitIndex,
+          command: LiveSplitGatewayRequestCommand.getSplitIndex,
         }).pipe(E.flatMap(parseSplitIndex));
       },
 
       getTimerPhase: () => {
         return request({
-          command: LiveSplitRequestCommand.getTimerPhase,
+          command: LiveSplitGatewayRequestCommand.getTimerPhase,
         });
       },
 
       pause: () => {
         return send({
-          command: LiveSplitSendCommand.pause,
+          command: LiveSplitGatewaySendCommand.pause,
         });
       },
 
       reset: () => {
         return send({
-          command: LiveSplitSendCommand.reset,
+          command: LiveSplitGatewaySendCommand.reset,
         });
       },
 
       setComparison: (comparisonName) => {
         return send({
           argument: comparisonName,
-          command: LiveSplitSendCommand.setComparison,
+          command: LiveSplitGatewaySendCommand.setComparison,
         });
       },
 
       setCurrentSplitName: (splitName) => {
         return send({
           argument: splitName,
-          command: LiveSplitSendCommand.setCurrentSplitName,
+          command: LiveSplitGatewaySendCommand.setCurrentSplitName,
         });
       },
 
       split: () => {
         return send({
-          command: LiveSplitSendCommand.split,
+          command: LiveSplitGatewaySendCommand.split,
         });
       },
 
       startTimer: () => {
         return send({
-          command: LiveSplitSendCommand.startTimer,
+          command: LiveSplitGatewaySendCommand.startTimer,
         });
       },
 
       switchSplits: (filePath) => {
         const command = {
           argument: filePath,
-          command: LiveSplitRequestCommand.switchSplits,
-        } satisfies LiveSplitRequestCommandInput;
+          command: LiveSplitGatewayRequestCommand.switchSplits,
+        } satisfies LiveSplitGatewayRequestCommandInput;
 
         return request(command).pipe(
           E.flatMap((response) => {
@@ -348,6 +353,6 @@ export function makeLiveSplitClient({
       },
 
       unavailability,
-    } satisfies LiveSplitClientService;
+    } satisfies LiveSplitGatewayClient;
   });
 }

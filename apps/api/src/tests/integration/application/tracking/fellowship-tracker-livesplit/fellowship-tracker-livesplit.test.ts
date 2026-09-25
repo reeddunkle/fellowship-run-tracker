@@ -4,15 +4,16 @@ import * as Path from "effect/Path";
 import { describe, expect, test } from "vitest";
 
 import { FellowshipTracker } from "@frt/api/application/fellowship-tracker/fellowship-tracker-service.ts";
+import { LiveSplit } from "@frt/api/services/live-split/live-split-service.ts";
 import {
   appendEOL,
-  LiveSplitSendCommand,
-} from "@frt/api/services/live-split/core/live-split-command.ts";
+  LiveSplitGatewaySendCommand,
+} from "@frt/api/services/live-split-gateway/live-split-gateway-command.ts";
 import { makeFellowshipTrackerIntegrationTestHarness } from "@frt/api/tests/common/harnesses/fellowship-tracker-integration-test-harness.ts";
 import {
   dungeonEndCommands,
   dungeonStartCommands,
-} from "@frt/api/tests/common/live-split-test-commands.ts";
+} from "@frt/api/tests/common/live-split-gateway-test-commands.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 
 import { configuration } from "./configuration.ts";
@@ -28,7 +29,10 @@ describe("FellowshipTracker LiveSplit", () => {
         const logFilePath = path.join(import.meta.dirname, "log.txt");
 
         yield* E.gen(function* () {
+          const liveSplit = yield* LiveSplit;
           const fellowshipTracker = yield* FellowshipTracker;
+
+          yield* liveSplit.connect();
 
           yield* fellowshipTracker.replayLog({
             configuration,
@@ -38,7 +42,7 @@ describe("FellowshipTracker LiveSplit", () => {
 
         const commands = yield* liveSplitHarness.getCommands();
 
-        const splitCommand = appendEOL(LiveSplitSendCommand.split);
+        const splitCommand = appendEOL(LiveSplitGatewaySendCommand.split);
 
         const configuredMilestoneCommands = configuration.milestones.map(() => {
           return splitCommand;

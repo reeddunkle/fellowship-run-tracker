@@ -1,6 +1,6 @@
 import * as E from "effect/Effect";
 
-import { LiveSplitFile } from "@frt/api/services/live-split/files/live-split-file-service.ts";
+import { LiveSplitFile } from "@frt/api/services/live-split-file/live-split-file-service.ts";
 import { type FellowshipMilestoneConfiguration } from "@frt/shared/fellowship/configurations/configuration-types.ts";
 
 export type GenerateLSSFileOptions = {

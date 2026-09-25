@@ -2,13 +2,13 @@ import * as E from "effect/Effect";
 import type * as Layer from "effect/Layer";
 import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 
-import { type LiveSplitClientConnectionError } from "@frt/api/errors/live-split-client-error.ts";
-import { LiveSplitApiService } from "@frt/api/services/api/live-split/live-split-api-service.ts";
+import { type LiveSplitGatewayConnectionError } from "@frt/api/errors/live-split-gateway-error.ts";
+import { LiveSplit } from "@frt/api/services/live-split/live-split-service.ts";
 import { LiveSplitApiConnectionError } from "@frt/api-contract/errors/live-split-api-error.ts";
 import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
 
 function mapLiveSplitConnectionError(
-  error: LiveSplitClientConnectionError,
+  error: LiveSplitGatewayConnectionError,
 ): E.Effect<never, LiveSplitApiConnectionError> {
   return E.gen(function* () {
     yield* E.logError("LiveSplit connection failed.", {
@@ -23,19 +23,17 @@ const LiveSplitApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "liveSplit",
   E.fn(function* (handlers) {
-    const liveSplitApiService = yield* LiveSplitApiService;
+    const liveSplit = yield* LiveSplit;
 
     return handlers
       .handle("getLiveSplitConnection", () => {
-        return liveSplitApiService.getStatus();
+        return liveSplit.getStatus();
       })
       .handle("connectLiveSplit", () => {
-        return liveSplitApiService
-          .connect()
-          .pipe(E.catch(mapLiveSplitConnectionError));
+        return liveSplit.connect().pipe(E.catch(mapLiveSplitConnectionError));
       })
       .handle("disconnectLiveSplit", () => {
-        return liveSplitApiService.disconnect();
+        return liveSplit.disconnect();
       });
   }),
 );
@@ -43,5 +41,5 @@ const LiveSplitApiHandlersInferred = HttpApiBuilder.group(
 export const LiveSplitApiLayer: Layer.Layer<
   Layer.Success<typeof LiveSplitApiHandlersInferred>,
   Layer.Error<typeof LiveSplitApiHandlersInferred>,
-  LiveSplitApiService
+  LiveSplit
 > = LiveSplitApiHandlersInferred;
