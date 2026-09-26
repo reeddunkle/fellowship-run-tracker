@@ -1,3 +1,4 @@
+import * as Cause from "effect/Cause";
 import * as E from "effect/Effect";
 import * as Option from "effect/Option";
 import type * as Scope from "effect/Scope";
@@ -73,7 +74,7 @@ export function makeConnectionManager<Connection, AcquireError>({
         Stream.runForEach((cause) => {
           return E.gen(function* () {
             yield* E.logWarning(`${name} connection became unavailable.`, {
-              cause,
+              cause: Cause.isCause(cause) ? Cause.pretty(cause) : cause,
             });
 
             yield* setDisconnected;
@@ -87,8 +88,8 @@ export function makeConnectionManager<Connection, AcquireError>({
       return Option.some(connection);
     }).pipe(
       E.tapCause((cause) => {
-        return E.logError(`Failed to acquire ${name} connection.`, {
-          cause,
+        return E.logDebug(`${name} is unavailable.`, {
+          cause: Cause.pretty(cause),
         });
       }),
     );
@@ -113,7 +114,7 @@ export function makeConnectionManager<Connection, AcquireError>({
       AcquireError
     >["disconnect"] = () => {
       return E.gen(function* () {
-        yield* E.logInfo(`Disconnecting from ${name}.`);
+        yield* E.logDebug(`Disconnecting from ${name}.`);
 
         yield* ScopedRef.set(connectionRef, E.succeedNone);
 

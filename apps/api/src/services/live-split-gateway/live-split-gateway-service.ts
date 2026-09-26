@@ -8,6 +8,7 @@ import {
   LiveSplitGatewayConnectionError,
   LiveSplitGatewayNotConnectedError,
 } from "@frt/api/errors/live-split-gateway-error.ts";
+import { withLinkedRootSpan } from "@frt/api/logging/with-linked-root-span.ts";
 import { AppSettingsStore } from "@frt/api/services/app-settings-store/app-settings-store-service.ts";
 import {
   type LiveSplitGatewayClient,
@@ -54,7 +55,7 @@ const makeLiveSplitGateway = E.gen(function* () {
     const host = settings.liveSplitHost;
     const port = settings.liveSplitPort;
 
-    yield* E.logInfo("Connecting to LiveSplit.", {
+    yield* E.logDebug("Connecting to LiveSplit.", {
       host,
       port,
     });
@@ -92,6 +93,7 @@ const makeLiveSplitGateway = E.gen(function* () {
         cause,
       });
     }),
+    withLinkedRootSpan("LiveSplitGateway.connection"),
   );
 
   const connectionManager = yield* makeConnectionManager({

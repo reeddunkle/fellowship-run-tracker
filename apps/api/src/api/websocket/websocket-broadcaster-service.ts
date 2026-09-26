@@ -52,9 +52,12 @@ const makeWebSocketBroadcaster = E.gen(function* () {
         return E.gen(function* () {
           yield* removeClient(writer);
 
-          yield* E.logWarning("WebSocket client write failed.", {
-            error,
-          });
+          yield* E.logDebug(
+            "WebSocket client write failed; removed the client.",
+            {
+              error,
+            },
+          );
         });
       }),
     );

@@ -16,6 +16,7 @@ import { configureWebContentsSecurity } from "@/application/configure-web-conten
 import { configureWindowIpc } from "@/application/configure-window-ipc.ts";
 import { configureDetachedWindowPlacement } from "@/application/detached-window/configure-detached-window-placement.ts";
 import { exitOnStartupFailure } from "@/application/exit-on-startup-failure.ts";
+import { registerFatalExitFlush } from "@/application/fatal-exit-flush.ts";
 import { flushWindowStateSavesForQuit } from "@/application/window-state-tracking.ts";
 import { electronRuntime } from "@/runtimes/electron-runtime.ts";
 import { type AppState } from "@/services/app-state/app-state-service.ts";
@@ -35,6 +36,8 @@ function disposeElectronRuntime() {
     return undefined;
   });
 }
+
+registerFatalExitFlush(disposeElectronRuntime);
 
 function exitOnFailure<A, Error>(exit: Exit.Exit<A, Error>) {
   return exitOnStartupFailure(exit, { flushLogs: disposeElectronRuntime });

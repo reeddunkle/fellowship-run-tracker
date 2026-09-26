@@ -1,5 +1,6 @@
 import { AppLayout } from "@/renderer/components/core/app-layout.tsx";
 import { AppearanceSettings } from "@/renderer/components/settings/appearance-settings.tsx";
+import { DiagnosticsSettings } from "@/renderer/components/settings/diagnostics-settings.tsx";
 import { SettingsEditor } from "@/renderer/components/settings/settings-editor.tsx";
 
 export function SettingsPage() {
@@ -14,6 +15,7 @@ export function SettingsPage() {
         </div>
         <SettingsEditor />
         <AppearanceSettings />
+        <DiagnosticsSettings />
       </main>
     </AppLayout>
   );

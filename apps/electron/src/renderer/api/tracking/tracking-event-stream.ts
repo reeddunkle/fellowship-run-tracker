@@ -1,3 +1,4 @@
+import * as Cause from "effect/Cause";
 import type * as Duration from "effect/Duration";
 import * as E from "effect/Effect";
 import * as Queue from "effect/Queue";
@@ -11,6 +12,7 @@ import {
   type TrackingApiMessage,
   TrackingApiMessageSchema,
 } from "@frt/api-contract/websocket/tracking/tracking-api-message-schema.ts";
+import { makeRepeatedFailureLogger } from "@frt/shared/util/make-repeated-failure-logger.ts";
 
 import { TrackingEventMessageDecodeError } from "@/errors/tracking-event-message-error.ts";
 import {
@@ -38,6 +40,8 @@ type MakeTrackingEventStreamOptions = {
 };
 
 const DEFAULT_RECONNECT_DELAY = "1 second";
+
+const RECONNECT_WARNING_THRESHOLD = 3;
 
 function offerConnectionState(
   queue: Queue.Enqueue<TrackingEventStreamEvent>,
@@ -82,54 +86,70 @@ function makeTrackingEventStreamForUrl(
     TrackingEventStreamError,
     Socket.WebSocketConstructor
   >((queue) => {
-    const connect = E.gen(function* () {
-      yield* offerConnectionState(queue, API_EVENT_CONNECTION_STATE.CONNECTING);
-
-      const socket = yield* Socket.makeWebSocket(url, {
-        closeCodeIsError: (code) => {
-          return code !== 1000;
-        },
-        openTimeout: "5 seconds",
+    return E.gen(function* () {
+      const connectionFailures = yield* makeRepeatedFailureLogger({
+        level: "Warn",
+        message: "Lost connection to the tracking event stream; retrying.",
+        threshold: RECONNECT_WARNING_THRESHOLD,
       });
 
-      yield* socket.runString(
-        (data) => {
-          return E.gen(function* () {
-            const message = yield* decodeMessage(data);
+      const connect = E.gen(function* () {
+        yield* offerConnectionState(
+          queue,
+          API_EVENT_CONNECTION_STATE.CONNECTING,
+        );
 
-            yield* Queue.offer(queue, {
-              message,
-              type: "MESSAGE_RECEIVED",
-            });
-          });
-        },
-        {
-          onOpen: offerConnectionState(
-            queue,
-            API_EVENT_CONNECTION_STATE.CONNECTED,
-          ),
-        },
-      );
-    }).pipe(
-      E.ensuring(
-        offerConnectionState(queue, API_EVENT_CONNECTION_STATE.DISCONNECTED),
-      ),
-    );
-
-    return connect.pipe(
-      E.retry({
-        schedule: Schedule.spaced(reconnectDelay),
-        while: (error) => {
-          return !(error instanceof TrackingEventMessageDecodeError);
-        },
-      }),
-      E.repeat(Schedule.spaced(reconnectDelay)),
-      E.catchCause((cause) => {
-        return E.sync(() => {
-          Queue.failCauseUnsafe(queue, cause);
+        const socket = yield* Socket.makeWebSocket(url, {
+          closeCodeIsError: (code) => {
+            return code !== 1000;
+          },
+          openTimeout: "5 seconds",
         });
-      }),
-    );
+
+        yield* socket.runString(
+          (data) => {
+            return E.gen(function* () {
+              const message = yield* decodeMessage(data);
+
+              yield* Queue.offer(queue, {
+                message,
+                type: "MESSAGE_RECEIVED",
+              });
+            });
+          },
+          {
+            onOpen: offerConnectionState(
+              queue,
+              API_EVENT_CONNECTION_STATE.CONNECTED,
+            ).pipe(E.andThen(connectionFailures.onSuccess)),
+          },
+        );
+      }).pipe(
+        E.ensuring(
+          offerConnectionState(queue, API_EVENT_CONNECTION_STATE.DISCONNECTED),
+        ),
+      );
+
+      return yield* connect.pipe(
+        E.tapError((error) => {
+          return error instanceof TrackingEventMessageDecodeError
+            ? E.void
+            : connectionFailures.onFailure(Cause.fail(error)).pipe(E.asVoid);
+        }),
+        E.retry({
+          schedule: Schedule.spaced(reconnectDelay),
+          while: (error) => {
+            return !(error instanceof TrackingEventMessageDecodeError);
+          },
+        }),
+        E.repeat(Schedule.spaced(reconnectDelay)),
+        E.catchCause((cause) => {
+          return E.sync(() => {
+            Queue.failCauseUnsafe(queue, cause);
+          });
+        }),
+      );
+    });
   });
 }
 

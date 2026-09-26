@@ -10,40 +10,40 @@ type LoadMilestoneConfigurationOptions = {
   readonly filePath: string;
 };
 
-export const loadMilestoneConfiguration = E.fn(
-  "fellowship.load-milestone-configuration",
-)(function* ({ filePath }: LoadMilestoneConfigurationOptions) {
-  const fileSystem = yield* FileSystem.FileSystem;
-  const contents = yield* fileSystem.readFileString(filePath);
+export const loadMilestoneConfiguration = E.fn("loadMilestoneConfiguration")(
+  function* ({ filePath }: LoadMilestoneConfigurationOptions) {
+    const fileSystem = yield* FileSystem.FileSystem;
+    const contents = yield* fileSystem.readFileString(filePath);
 
-  const json = yield* parseJson({
-    contents,
-    onError: (cause) => {
-      return new MilestoneConfigurationJsonError({
-        cause,
-        filePath,
-      });
-    },
-  });
+    const json = yield* parseJson({
+      contents,
+      onError: (cause) => {
+        return new MilestoneConfigurationJsonError({
+          cause,
+          filePath,
+        });
+      },
+    });
 
-  const configuration = yield* Schema.decodeUnknownEffect(
-    FellowshipConfigurationFileSchema,
-  )(json);
+    const configuration = yield* Schema.decodeUnknownEffect(
+      FellowshipConfigurationFileSchema,
+    )(json);
 
-  yield* E.annotateCurrentSpan(
-    "fellowship.dungeon-id",
-    configuration.dungeonId,
-  );
+    yield* E.annotateCurrentSpan(
+      "fellowship.dungeon_id",
+      configuration.dungeonId,
+    );
 
-  yield* E.annotateCurrentSpan(
-    "fellowship.dungeon-level",
-    configuration.dungeonLevel,
-  );
+    yield* E.annotateCurrentSpan(
+      "fellowship.dungeon_level",
+      configuration.dungeonLevel,
+    );
 
-  yield* E.annotateCurrentSpan(
-    "fellowship.milestone-count",
-    configuration.milestones.length,
-  );
+    yield* E.annotateCurrentSpan(
+      "fellowship.milestone_count",
+      configuration.milestones.length,
+    );
 
-  return configuration;
-});
+    return configuration;
+  },
+);

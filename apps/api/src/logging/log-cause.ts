@@ -1,6 +1,13 @@
 import * as Cause from "effect/Cause";
 import * as E from "effect/Effect";
+import * as Predicate from "effect/Predicate";
 import * as Result from "effect/Result";
+
+function getErrorTag(error: unknown) {
+  return Predicate.hasProperty(error, "_tag") && Predicate.isString(error._tag)
+    ? error._tag
+    : null;
+}
 
 export function logCause(cause: Cause.Cause<unknown>): E.Effect<void> {
   if (Cause.hasInterruptsOnly(cause)) {
@@ -24,7 +31,7 @@ export function logCause(cause: Cause.Cause<unknown>): E.Effect<void> {
     onSuccess: (error) => {
       return E.logError("[ERROR] Application failed with a known cause.", {
         cause: prettyCause,
-        error,
+        errorTag: getErrorTag(error),
       });
     },
   });

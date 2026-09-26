@@ -1,3 +1,4 @@
+import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Duration from "effect/Duration";
 import * as E from "effect/Effect";
@@ -8,6 +9,7 @@ import {
   FellowshipLogsRequestDAO,
   type FellowshipLogsRequestEvent,
 } from "@frt/db/daos/fellowship-logs-request/fellowship-logs-request-dao.ts";
+import { makeRepeatedFailureLogger } from "@frt/shared/util/make-repeated-failure-logger.ts";
 
 const MAX_BUFFERED_EVENTS = 10_000;
 const MAX_BATCH_SIZE = 100;
@@ -18,13 +20,18 @@ export const makeFellowshipLogsAnalytics = E.gen(function* () {
   const events =
     yield* Queue.sliding<FellowshipLogsRequestEvent>(MAX_BUFFERED_EVENTS);
 
+  const saveFailures = yield* makeRepeatedFailureLogger({
+    level: "Warn",
+    message: "Couldn't save Fellowship Logs analytics.",
+  });
+
   const writeBatch = (batch: ReadonlyArray<FellowshipLogsRequestEvent>) => {
     return requestDAO.insertMany(batch).pipe(
-      E.catch((cause) => {
-        return E.logWarning("Couldn't save Fellowship Logs analytics.", {
-          cause,
-          eventCount: batch.length,
-        });
+      E.andThen(saveFailures.onSuccess),
+      E.catch((error) => {
+        return saveFailures
+          .onFailure(Cause.fail(error), { eventCount: batch.length })
+          .pipe(E.asVoid);
       }),
       E.uninterruptible,
     );

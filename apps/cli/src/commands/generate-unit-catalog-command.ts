@@ -5,7 +5,7 @@ import * as Flag from "effect/unstable/cli/Flag";
 import { generateFellowshipUnitCatalog } from "@frt/cli/catalogs/generate-fellowship-unit-catalog.ts";
 import { NonEmptyStringSchema } from "@frt/shared/util/common-schemas.ts";
 
-const runGenerateUnitCatalogCommand = E.fn("cli.generate-unit-catalog")(
+const runGenerateUnitCatalogCommand = E.fn("runGenerateUnitCatalogCommand")(
   function* ({ inputFilePath }: { readonly inputFilePath: string }) {
     yield* generateFellowshipUnitCatalog(inputFilePath);
 

@@ -16,6 +16,7 @@ import {
   FellowshipTrackerAlreadyRunningError,
   FellowshipTrackerConfigurationNotFoundError,
 } from "@frt/api/errors/fellowship-tracker-error.ts";
+import { withLinkedRootSpan } from "@frt/api/logging/with-linked-root-span.ts";
 import { DungeonRunRepository } from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
 import {
   createInitialDungeonRunProcessingState,
@@ -44,14 +45,14 @@ export const makeFellowshipTracker = E.gen(function* () {
   const trackerState = yield* makeFellowshipTrackerState();
   const semaphore = yield* Semaphore.make(1);
 
-  const startTracking = E.fn("fellowship.tracker.start-tracking")(function* ({
+  const startTracking = E.fn("FellowshipTracker.startTracking")(function* ({
     configuration,
     events,
     liveStatus,
     source,
   }: StartTrackingOptions) {
     yield* E.annotateCurrentSpan(
-      "fellowship.dungeonId",
+      "fellowship.dungeon_id",
       configuration.dungeonId,
     );
 
@@ -138,10 +139,10 @@ export const makeFellowshipTracker = E.gen(function* () {
               .pipe(
                 E.andThen(
                   E.logError("Fellowship tracker failed.", {
-                    cause,
+                    cause: Cause.pretty(cause),
                     dungeonId: configuration.dungeonId,
                     failure,
-                    source,
+                    source: source._tag,
                   }),
                 ),
                 E.andThen(E.failCause(cause)),
@@ -150,7 +151,15 @@ export const makeFellowshipTracker = E.gen(function* () {
           E.ensuring(trackerState.clearActiveTracker),
         );
 
-        const fiber = yield* E.forkIn(trackingEffect, scope);
+        const fiber = yield* E.forkIn(
+          trackingEffect.pipe(
+            withLinkedRootSpan("FellowshipTracker.session", {
+              "fellowship.dungeon_id": configuration.dungeonId,
+              "fellowship.tracker.source": source._tag,
+            }),
+          ),
+          scope,
+        );
 
         yield* trackerState.setActiveTracker({
           dungeonId: configuration.dungeonId,
@@ -183,7 +192,7 @@ export const makeFellowshipTracker = E.gen(function* () {
         yield* E.logInfo("Started Fellowship tracker.", {
           dungeonId: configuration.dungeonId,
           milestoneCount: configuration.milestones.length,
-          source,
+          source: source._tag,
         });
 
         return fiber;
@@ -192,9 +201,12 @@ export const makeFellowshipTracker = E.gen(function* () {
   });
 
   const start: FellowshipTrackerShape["start"] = E.fn(
-    "fellowship.tracker.start",
+    "FellowshipTracker.start",
   )(function* ({ configurationId }) {
-    yield* E.annotateCurrentSpan("fellowship.configurationId", configurationId);
+    yield* E.annotateCurrentSpan(
+      "fellowship.configuration_id",
+      configurationId,
+    );
 
     const persistedConfiguration = yield* configurationDAO.getById({
       id: configurationId,
@@ -218,7 +230,7 @@ export const makeFellowshipTracker = E.gen(function* () {
   });
 
   const startConfiguration: FellowshipTrackerShape["startConfiguration"] = E.fn(
-    "fellowship.tracker.start-configuration",
+    "FellowshipTracker.startConfiguration",
   )(function* ({ configuration }) {
     yield* startTracking({
       configuration,
@@ -230,7 +242,7 @@ export const makeFellowshipTracker = E.gen(function* () {
     });
   });
 
-  const stop: FellowshipTrackerShape["stop"] = E.fn("fellowship.tracker.stop")(
+  const stop: FellowshipTrackerShape["stop"] = E.fn("FellowshipTracker.stop")(
     function* () {
       yield* semaphore.withPermit(
         E.gen(function* () {
@@ -243,7 +255,7 @@ export const makeFellowshipTracker = E.gen(function* () {
           const tracker = activeTracker.value;
 
           yield* E.annotateCurrentSpan(
-            "fellowship.dungeonId",
+            "fellowship.dungeon_id",
             tracker.dungeonId,
           );
 
@@ -302,7 +314,7 @@ export const makeFellowshipTracker = E.gen(function* () {
 
           yield* E.logInfo("Stopped Fellowship tracker.", {
             dungeonId: tracker.dungeonId,
-            source: tracker.source,
+            source: tracker.source._tag,
           });
         }),
       );
@@ -310,9 +322,9 @@ export const makeFellowshipTracker = E.gen(function* () {
   );
 
   const replayLog: FellowshipTrackerShape["replayLog"] = E.fn(
-    "fellowship.tracker.replay-log",
+    "FellowshipTracker.replayLog",
   )(function* ({ configuration, logFilePath }) {
-    yield* E.annotateCurrentSpan("fellowship.log-file-path", logFilePath);
+    yield* E.annotateCurrentSpan("fellowship.log_file_path", logFilePath);
 
     const fiber = yield* startTracking({
       configuration,

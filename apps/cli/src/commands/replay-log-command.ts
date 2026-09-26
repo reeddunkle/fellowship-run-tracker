@@ -82,7 +82,7 @@ function getReplayDelay({
   return Math.min(originalDelay / speed, maxDelayMilliseconds);
 }
 
-const runReplayLogCommand = E.fn("cli.replay-log")(function* ({
+const runReplayLogCommand = E.fn("runReplayLogCommand")(function* ({
   initialDelayMilliseconds,
   inputFilePath,
   maxDelayMilliseconds,

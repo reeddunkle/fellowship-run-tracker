@@ -66,11 +66,11 @@ function decodeEvent({
       convertibleEvent.type === "death" &&
       convertibleEvent.targetInstance === undefined
     ) {
-      yield* E.logWarning(
+      yield* E.logDebug(
         "Fellowship Logs death event is missing targetInstance.",
         {
-          event: convertibleEvent,
-          reportStartTime,
+          targetId: convertibleEvent.targetID,
+          timestamp: convertibleEvent.timestamp,
         },
       );
     }

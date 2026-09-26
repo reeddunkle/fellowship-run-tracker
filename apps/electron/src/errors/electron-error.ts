@@ -9,3 +9,13 @@ export class ElectronWindowCreationError extends Data.TaggedError(
     return "Failed to create the application window.";
   }
 }
+
+export class ElectronOpenLogsFolderError extends Data.TaggedError(
+  "ElectronOpenLogsFolderError",
+)<{
+  readonly reason: string;
+}> {
+  override get message() {
+    return `Failed to open the logs folder: ${this.reason}`;
+  }
+}

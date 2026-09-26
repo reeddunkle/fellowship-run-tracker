@@ -21,7 +21,7 @@ const DatabasesLayer = Layer.unwrap(
   }),
 );
 
-const runSetupDatabaseCommand = E.fn("cli.setup-database")(function* () {
+const runSetupDatabaseCommand = E.fn("runSetupDatabaseCommand")(function* () {
   yield* E.logInfo("Databases are ready.");
 });
 

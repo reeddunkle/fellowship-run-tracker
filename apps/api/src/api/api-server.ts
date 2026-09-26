@@ -1,5 +1,6 @@
 import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as HttpMiddleware from "effect/unstable/http/HttpMiddleware";
 import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 
@@ -19,6 +20,7 @@ import { DungeonRunEventsRoutes } from "@frt/api/api/websocket/dungeon-run/dunge
 import { LiveSplitRoutes } from "@frt/api/api/websocket/live-split/live-split-route.ts";
 import { TrackingRoutes } from "@frt/api/api/websocket/tracking/tracking-route.ts";
 import { appConfig } from "@frt/api/app-config.ts";
+import { ROUTES } from "@frt/api-contract/constants/routes.ts";
 import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
 
 const CorsLayer = Layer.unwrap(
@@ -59,4 +61,18 @@ const ApiRoutes = Layer.mergeAll(HttpApiRoutes, WebsocketRoutes).pipe(
   Layer.provide(CorsLayer),
 );
 
-export const ApiServer = HttpRouter.serve(ApiRoutes);
+const WEBSOCKET_ROUTE_PATHS: ReadonlySet<string> = new Set(
+  Object.values(ROUTES),
+);
+
+const WebsocketTracingDisabledLayer = Layer.succeed(
+  HttpMiddleware.TracerDisabledWhen,
+)((request) => {
+  const [pathname = request.url] = request.url.split("?");
+
+  return WEBSOCKET_ROUTE_PATHS.has(pathname);
+});
+
+export const ApiServer = HttpRouter.serve(ApiRoutes, {
+  disableLogger: true,
+}).pipe(Layer.provide(WebsocketTracingDisabledLayer));

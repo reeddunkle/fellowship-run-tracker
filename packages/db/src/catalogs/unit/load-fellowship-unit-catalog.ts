@@ -9,7 +9,7 @@ import fellowshipUnitCatalogJson from "./fellowship-unit-catalog.json" with {
   type: "json",
 };
 
-export const loadFellowshipUnitCatalog = E.fn("load-fellowship-unit-catalog")(
+export const loadFellowshipUnitCatalog = E.fn("loadFellowshipUnitCatalog")(
   function* () {
     return yield* Schema.decodeUnknownEffect(FellowshipUnitCatalogSchema)(
       fellowshipUnitCatalogJson,

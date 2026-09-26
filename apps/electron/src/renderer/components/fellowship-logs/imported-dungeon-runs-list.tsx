@@ -15,6 +15,7 @@ import { Skeleton } from "@frt/ui/skeleton.tsx";
 
 import { useDeleteImportedDungeonRun } from "@/renderer/api/fellowship-logs/fellowship-logs-mutations.ts";
 import { useImportedDungeonRunsSuspense } from "@/renderer/api/fellowship-logs/fellowship-logs-queries.ts";
+import { logBoundaryError } from "@/renderer/logging/renderer-error-logging.ts";
 import { formatRelativeDateTimeFromMilliseconds } from "@/util/format-date-time.ts";
 
 function ImportedDungeonRunsLoadError() {
@@ -132,6 +133,7 @@ export function ImportedDungeonRunsList() {
     <CatchBoundary
       errorComponent={ImportedDungeonRunsLoadError}
       getResetKey={() => "imported-dungeon-runs"}
+      onCatch={logBoundaryError}
     >
       <Suspense fallback={<ImportedDungeonRunsListSkeleton />}>
         <ImportedDungeonRunsListContent />

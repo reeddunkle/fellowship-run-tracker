@@ -17,6 +17,7 @@ import {
   HistorySummaryMessage,
   HistorySummaryMessageSkeleton,
 } from "@/renderer/components/history/history-summary-message.tsx";
+import { logBoundaryError } from "@/renderer/logging/renderer-error-logging.ts";
 import { useSelectedConfiguration } from "@/renderer/stores/configuration/configuration-provider.tsx";
 import {
   getComparisonDungeonRunHistorySummary,
@@ -57,6 +58,7 @@ export function HistoryPageContent() {
         getResetKey={() =>
           `${selectedConfiguration.dungeonId}:${selectedConfiguration.dungeonLevel}`
         }
+        onCatch={logBoundaryError}
       >
         <Suspense
           fallback={

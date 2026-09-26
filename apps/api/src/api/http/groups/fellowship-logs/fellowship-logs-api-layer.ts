@@ -75,6 +75,19 @@ function logInternalServerError(
   });
 }
 
+function logGatewayFailure(
+  error: FellowshipLogsGatewayRequestOperationError,
+): E.Effect<never, HttpApiError.InternalServerError> {
+  return E.gen(function* () {
+    yield* E.logWarning("Fellowship Logs request failed.", {
+      errorTag: error._tag,
+      message: error.message,
+    });
+
+    return yield* new HttpApiError.InternalServerError();
+  });
+}
+
 function mapFellowshipLogsRateLimitApiError(
   error: FellowshipLogsGatewayRequestOperationError,
 ): E.Effect<
@@ -89,7 +102,7 @@ function mapFellowshipLogsRateLimitApiError(
     );
   }
 
-  return logInternalServerError(error);
+  return logGatewayFailure(error);
 }
 
 function mapGetFellowshipLogsDungeonRunsError(

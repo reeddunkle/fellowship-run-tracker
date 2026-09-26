@@ -1,8 +1,8 @@
 import * as Cause from "effect/Cause";
 import * as Exit from "effect/Exit";
-import { app, dialog } from "electron";
+import { app } from "electron";
 
-import { appPaths } from "@frt/api/helpers/app-paths.ts";
+import { showFatalErrorDialog } from "@/application/show-fatal-error-dialog.ts";
 
 const DIALOG_TITLE = "Fellowship Run Tracker failed to start";
 
@@ -53,12 +53,14 @@ export function exitOnStartupFailure<A, Error>(
 
   const { cause } = exit;
 
-  return flushLogs().then(() => {
-    dialog.showErrorBox(
-      DIALOG_TITLE,
-      `${getFailureMessage(cause)}\n\nLogs: ${appPaths.logs}`,
-    );
-
-    app.exit(1);
-  });
+  return flushLogs()
+    .then(() => {
+      return showFatalErrorDialog({
+        detail: getFailureMessage(cause),
+        title: DIALOG_TITLE,
+      });
+    })
+    .finally(() => {
+      app.exit(1);
+    });
 }

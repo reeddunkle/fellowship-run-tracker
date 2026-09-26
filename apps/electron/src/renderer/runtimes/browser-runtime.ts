@@ -1,8 +1,10 @@
 import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 import * as FetchHttpClient from "effect/unstable/http/FetchHttpClient";
+import * as HttpClient from "effect/unstable/http/HttpClient";
 import * as Socket from "effect/unstable/socket/Socket";
 
+import { RendererLoggerLayer } from "@/renderer/logging/renderer-logger-layer.ts";
 import { AppApiClientLayer } from "@/renderer/services/app-api-client/app-api-client.ts";
 import { BrowserAppStateLayer } from "@/renderer/services/app-state/browser-app-state-layer.ts";
 import { FellowshipCatalogDataLayer } from "@/renderer/services/fellowship-catalog-data/fellowship-catalog-data-service";
@@ -15,7 +17,13 @@ const FellowshipCatalogDataWithDependencies = FellowshipCatalogDataLayer.pipe(
   Layer.provide(AppApiClientWithDependencies),
 );
 
+const TracerPropagationDisabledLayer = Layer.succeed(
+  HttpClient.TracerPropagationEnabled,
+)(false);
+
 const BrowserLayer = Layer.mergeAll(
+  RendererLoggerLayer,
+  TracerPropagationDisabledLayer,
   FetchHttpClient.layer,
   Socket.layerWebSocketConstructorGlobal,
   BrowserAppStateLayer,

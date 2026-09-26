@@ -1,3 +1,4 @@
+import * as Cause from "effect/Cause";
 import * as E from "effect/Effect";
 import * as Match from "effect/Match";
 import * as Stream from "effect/Stream";
@@ -36,9 +37,9 @@ export function observeFellowshipLiveStatus({
     }),
     E.tapCause((cause) => {
       return E.logError("Fellowship live status stream failed.", {
-        cause,
+        cause: Cause.pretty(cause),
         dungeonId,
-        source,
+        source: source._tag,
       });
     }),
   );

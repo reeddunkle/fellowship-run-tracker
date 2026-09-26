@@ -55,7 +55,7 @@ function stringifyFixture(value: unknown) {
   return `${JSON.stringify(value, null, 2)}\n`;
 }
 
-const captureFellowshipLogsReport = E.fn("cli.capture-fellowship-logs-report")(
+const captureFellowshipLogsReport = E.fn("captureFellowshipLogsReport")(
   function* ({
     credentials,
     fightId,

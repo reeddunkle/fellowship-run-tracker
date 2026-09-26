@@ -10,6 +10,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@frt/ui/tooltip.tsx";
 
 import { getAnalyticsItems } from "@/renderer/api/fellowship-logs/fellowship-logs-analytics-items.ts";
 import { useFellowshipLogsAnalyticsSuspense } from "@/renderer/api/fellowship-logs/fellowship-logs-queries.ts";
+import { logBoundaryError } from "@/renderer/logging/renderer-error-logging.ts";
 import { formatRelativeDateTimeFromMilliseconds } from "@/util/format-date-time.ts";
 
 const ANALYTICS_LABELS = [
@@ -26,6 +27,7 @@ export function FellowshipLogsAnalyticsSection() {
         <CatchBoundary
           errorComponent={AnalyticsLoadError}
           getResetKey={() => "fellowship-logs-analytics"}
+          onCatch={logBoundaryError}
         >
           <Suspense fallback={<AnalyticsSkeleton />}>
             <AnalyticsContent />

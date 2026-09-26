@@ -59,6 +59,7 @@ const BackgroundJobServiceTestLive = Layer.effect(
               job,
             ),
             queue: "test",
+            traceparent: null,
           });
 
           return { job: row, wasAlreadyQueued: !wasInserted };

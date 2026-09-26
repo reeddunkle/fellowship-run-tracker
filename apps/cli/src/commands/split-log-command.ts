@@ -10,7 +10,7 @@ type SplitLogCommandInput = {
   readonly outputDirectoryPath: string;
 };
 
-const runSplitLogCommand = E.fn("cli.split-log")(function* (
+const runSplitLogCommand = E.fn("runSplitLogCommand")(function* (
   input: SplitLogCommandInput,
 ) {
   const result = yield* splitFellowshipLogFile({

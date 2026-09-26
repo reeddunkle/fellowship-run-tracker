@@ -10,9 +10,9 @@ type LogDungeonRunProcessingEventOptions = {
   readonly processingEvent: DungeonRunProcessingEvent;
 };
 
-export const logDungeonRunProcessingEvent = E.fn(
-  "fellowship.dungeon-run.log-processing-event",
-)(function* ({ processingEvent }: LogDungeonRunProcessingEventOptions) {
+export const logDungeonRunProcessingEvent = E.fn(function* ({
+  processingEvent,
+}: LogDungeonRunProcessingEventOptions) {
   yield* Match.value(processingEvent).pipe(
     Match.when(
       {
@@ -29,7 +29,7 @@ export const logDungeonRunProcessingEvent = E.fn(
         type: DUNGEON_RUN_PROCESSING_EVENT.REQUIREMENT_SATISFIED,
       },
       (requirementSatisfiedEvent) => {
-        return E.logInfo("Requirement satisfied.", {
+        return E.logDebug("Requirement satisfied.", {
           milestoneId: requirementSatisfiedEvent.requirement.milestoneId,
           runEvent: DUNGEON_RUN_PROCESSING_EVENT.REQUIREMENT_SATISFIED,
         });

@@ -7,6 +7,7 @@ import * as References from "effect/References";
 import { appPaths } from "@frt/api/helpers/app-paths.ts";
 import { isPackagedElectronApp } from "@frt/api/helpers/is-packaged-electron-app.ts";
 import { NodeFileSystemLayer } from "@frt/api/layers/node-platform-layer.ts";
+import { formatLogEntry } from "@frt/api/logging/format-log-entry.ts";
 import { SESSION_LOG_FILE_PATH } from "@frt/api/logging/log-file-path.ts";
 import { resolveProcessLogLevel } from "@frt/api/logging/log-level.ts";
 
@@ -17,7 +18,7 @@ const FileLogger = E.gen(function* () {
     recursive: true,
   });
 
-  return yield* Logger.toFile(Logger.formatJson, SESSION_LOG_FILE_PATH);
+  return yield* Logger.toFile(formatLogEntry, SESSION_LOG_FILE_PATH);
 });
 
 const LoggersLayer = Logger.layer(

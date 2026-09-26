@@ -10,7 +10,7 @@ type FilterLogCommandInput = {
   readonly outputFilePath: string;
 };
 
-const runFilterLogCommand = E.fn("cli.filter-log")(function* (
+const runFilterLogCommand = E.fn("runFilterLogCommand")(function* (
   input: FilterLogCommandInput,
 ) {
   const result = yield* filterFellowshipLogFile({

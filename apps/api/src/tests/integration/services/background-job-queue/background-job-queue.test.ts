@@ -8,6 +8,7 @@ import * as Path from "effect/Path";
 import * as Schedule from "effect/Schedule";
 import * as Schema from "effect/Schema";
 import * as Stream from "effect/Stream";
+import type * as Tracer from "effect/Tracer";
 import { describe, expect, test } from "vitest";
 
 import {
@@ -196,6 +197,100 @@ describe("BackgroundJobQueue", () => {
 
     expect(job.result).toMatchObject({ dungeonRunId: expect.any(String) });
     expect(visible.map((visibleJob) => visibleJob.job.id)).toEqual([job.id]);
+  });
+
+  test("runs a job in the trace of the span that offered it", async () => {
+    const { jobTraceId, offerTraceId, row } = await withTempDatabase(
+      (databaseFilename) => {
+        return E.gen(function* () {
+          const jobSpan = yield* Deferred.make<Tracer.AnySpan>();
+
+          const importReport: FellowshipLogsDungeonRunImporterShape["importReport"] =
+            () => {
+              return E.currentSpan.pipe(
+                E.orDie,
+                E.flatMap((span) => Deferred.succeed(jobSpan, span)),
+                E.as({ dungeonRunId: STUB_DUNGEON_RUN_ID }),
+              );
+            };
+
+          return yield* E.gen(function* () {
+            const backgroundJobQueue = yield* BackgroundJobQueue;
+
+            const request = yield* E.gen(function* () {
+              return {
+                offered: yield* backgroundJobQueue.offer(makeImportJob()),
+                traceId: (yield* E.currentSpan).traceId,
+              };
+            }).pipe(E.withSpan("test-request"));
+
+            const settled = yield* waitForJob(
+              request.offered.job.id,
+              hasStatus("SUCCEEDED"),
+            );
+
+            return {
+              jobTraceId: (yield* Deferred.await(jobSpan)).traceId,
+              offerTraceId: request.traceId,
+              row: Option.getOrThrow(settled),
+            };
+          }).pipe(
+            E.provide(
+              makeBackgroundJobQueueTestLayer({
+                databaseFilename,
+                importReport,
+              }),
+            ),
+          );
+        });
+      },
+    );
+
+    expect(jobTraceId).toBe(offerTraceId);
+    expect(row.traceparent).toMatch(
+      new RegExp(`^00-${offerTraceId}-[0-9a-f]{16}-01$`),
+    );
+  });
+
+  test("records a trace for jobs offered outside any span", async () => {
+    const { jobTraceId, row } = await withTempDatabase((databaseFilename) => {
+      return E.gen(function* () {
+        const jobSpan = yield* Deferred.make<Tracer.AnySpan>();
+
+        const importReport: FellowshipLogsDungeonRunImporterShape["importReport"] =
+          () => {
+            return E.currentSpan.pipe(
+              E.orDie,
+              E.flatMap((span) => Deferred.succeed(jobSpan, span)),
+              E.as({ dungeonRunId: STUB_DUNGEON_RUN_ID }),
+            );
+          };
+
+        return yield* E.gen(function* () {
+          const backgroundJobQueue = yield* BackgroundJobQueue;
+
+          const offered = yield* backgroundJobQueue.offer(makeImportJob());
+
+          const settled = yield* waitForJob(
+            offered.job.id,
+            hasStatus("SUCCEEDED"),
+          );
+
+          return {
+            jobTraceId: (yield* Deferred.await(jobSpan)).traceId,
+            row: Option.getOrThrow(settled),
+          };
+        }).pipe(
+          E.provide(
+            makeBackgroundJobQueueTestLayer({ databaseFilename, importReport }),
+          ),
+        );
+      });
+    });
+
+    expect(row.traceparent).toMatch(
+      new RegExp(`^00-${jobTraceId}-[0-9a-f]{16}-01$`),
+    );
   });
 
   test("returns the existing job when the same import is offered twice", async () => {

@@ -70,6 +70,7 @@ export const makeBackgroundJobDAO = E.gen(function* () {
     result,
     started_at,
     finished_at,
+    traceparent,
     created_at,
     updated_at
   `);
@@ -125,6 +126,7 @@ export const makeBackgroundJobDAO = E.gen(function* () {
     kind,
     payload,
     queue,
+    traceparent,
   }) => {
     return E.gen(function* () {
       const job = yield* BackgroundJobModel.insert.makeEffect({
@@ -139,6 +141,7 @@ export const makeBackgroundJobDAO = E.gen(function* () {
         result: null,
         startedAt: null,
         status: "QUEUED",
+        traceparent,
       });
 
       const encoded = yield* Schema.encodeEffect(BackgroundJobModel.insert)(
@@ -162,6 +165,7 @@ export const makeBackgroundJobDAO = E.gen(function* () {
             result,
             started_at,
             finished_at,
+            traceparent,
             created_at,
             updated_at
           )
@@ -179,6 +183,7 @@ export const makeBackgroundJobDAO = E.gen(function* () {
             ${encoded.result},
             ${encoded.startedAt},
             ${encoded.finishedAt},
+            ${encoded.traceparent},
             ${encoded.createdAt},
             ${encoded.updatedAt}
           )

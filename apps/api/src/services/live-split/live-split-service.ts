@@ -107,9 +107,10 @@ const makeLiveSplit = E.gen(function* () {
       }),
       E.catch((error) => {
         return E.gen(function* () {
-          yield* E.logError("LiveSplit failed to handle dungeon run event.", {
-            error,
-          });
+          yield* E.logWarning(
+            "LiveSplit failed to handle a dungeon run event; disconnecting.",
+            { error },
+          );
 
           yield* liveSplitGateway.disconnect();
         });

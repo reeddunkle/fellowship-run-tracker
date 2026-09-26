@@ -194,48 +194,52 @@ export function makeFellowshipLogsGatewayRateLimitDataTracker() {
       };
 
     const checkCapacity: FellowshipLogsGatewayRateLimitDataTracker["checkCapacity"] =
-      E.fn("FellowshipLogsGateway.checkCapacity")(function* (costKey) {
-        const { costByKey, snapshot } = yield* Ref.get(stateRef);
+      E.fn("FellowshipLogsGatewayRateLimitDataTracker.checkCapacity")(
+        function* (costKey) {
+          const { costByKey, snapshot } = yield* Ref.get(stateRef);
 
-        if (snapshot === null) {
-          return;
-        }
+          if (snapshot === null) {
+            return;
+          }
 
-        const nowMilliseconds = yield* Clock.currentTimeMillis;
-        const status = getFellowshipLogsRateLimitStatus(
-          snapshot,
-          nowMilliseconds,
-        );
-        const estimatedCost = costByKey[costKey] ?? 0;
-
-        if (status.isExhausted || status.pointsRemaining < estimatedCost) {
-          return yield* new FellowshipLogsGatewayRateLimitExceededError({
-            reason: "PreflightExhausted",
-            resetsAt: DateTime.makeUnsafe(status.resetsAtMilliseconds),
-          });
-        }
-      });
-
-    const getRejectedResetsAt: FellowshipLogsGatewayRateLimitDataTracker["getRejectedResetsAt"] =
-      E.fn("FellowshipLogsGateway.getRejectedResetsAt")(function* () {
-        const { snapshot } = yield* Ref.get(stateRef);
-        const nowMilliseconds = yield* Clock.currentTimeMillis;
-
-        if (snapshot !== null) {
+          const nowMilliseconds = yield* Clock.currentTimeMillis;
           const status = getFellowshipLogsRateLimitStatus(
             snapshot,
             nowMilliseconds,
           );
+          const estimatedCost = costByKey[costKey] ?? 0;
 
-          if (!status.isStale) {
-            return DateTime.makeUnsafe(status.resetsAtMilliseconds);
+          if (status.isExhausted || status.pointsRemaining < estimatedCost) {
+            return yield* new FellowshipLogsGatewayRateLimitExceededError({
+              reason: "PreflightExhausted",
+              resetsAt: DateTime.makeUnsafe(status.resetsAtMilliseconds),
+            });
           }
-        }
+        },
+      );
 
-        return DateTime.makeUnsafe(
-          nowMilliseconds + Duration.toMillis(UNKNOWN_RESET_DELAY),
-        );
-      });
+    const getRejectedResetsAt: FellowshipLogsGatewayRateLimitDataTracker["getRejectedResetsAt"] =
+      E.fn("FellowshipLogsGatewayRateLimitDataTracker.getRejectedResetsAt")(
+        function* () {
+          const { snapshot } = yield* Ref.get(stateRef);
+          const nowMilliseconds = yield* Clock.currentTimeMillis;
+
+          if (snapshot !== null) {
+            const status = getFellowshipLogsRateLimitStatus(
+              snapshot,
+              nowMilliseconds,
+            );
+
+            if (!status.isStale) {
+              return DateTime.makeUnsafe(status.resetsAtMilliseconds);
+            }
+          }
+
+          return DateTime.makeUnsafe(
+            nowMilliseconds + Duration.toMillis(UNKNOWN_RESET_DELAY),
+          );
+        },
+      );
 
     return {
       checkCapacity,

@@ -9,27 +9,26 @@ import { MainDatabase } from "@frt/db/databases/main-database.ts";
 
 const CATALOG = "ENCOUNTER" as const;
 
-export const syncEncounterCatalog = E.fn("sync-encounter-catalog")(
-  function* () {
-    const catalogSyncDAO = yield* CatalogSyncDAO;
-    const sql = yield* MainDatabase;
+export const syncEncounterCatalog = E.fn("syncEncounterCatalog")(function* () {
+  const catalogSyncDAO = yield* CatalogSyncDAO;
+  const sql = yield* MainDatabase;
 
-    const catalogSync = yield* catalogSyncDAO.getByCatalog({
-      catalog: CATALOG,
-    });
+  const catalogSync = yield* catalogSyncDAO.getByCatalog({
+    catalog: CATALOG,
+  });
 
-    const checksum = CATALOG_CHECKSUMS.encounter;
+  const checksum = CATALOG_CHECKSUMS.encounter;
 
-    if (Option.isSome(catalogSync) && catalogSync.value.checksum === checksum) {
-      return;
-    }
+  if (Option.isSome(catalogSync) && catalogSync.value.checksum === checksum) {
+    return;
+  }
 
-    yield* sql.withTransaction(
-      E.gen(function* () {
-        const now = DateTime.toEpochMillis(yield* DateTime.now);
+  yield* sql.withTransaction(
+    E.gen(function* () {
+      const now = DateTime.toEpochMillis(yield* DateTime.now);
 
-        for (const encounter of Object.values(FELLOWSHIP_ENCOUNTER)) {
-          yield* sql`
+      for (const encounter of Object.values(FELLOWSHIP_ENCOUNTER)) {
+        yield* sql`
             INSERT INTO
               encounter (dungeon_id, id, name, created_at, updated_at)
             VALUES
@@ -47,13 +46,12 @@ export const syncEncounterCatalog = E.fn("sync-encounter-catalog")(
             WHERE
               encounter.name IS NOT excluded.name
           `;
-        }
+      }
 
-        yield* catalogSyncDAO.setChecksum({
-          catalog: CATALOG,
-          checksum,
-        });
-      }),
-    );
-  },
-);
+      yield* catalogSyncDAO.setChecksum({
+        catalog: CATALOG,
+        checksum,
+      });
+    }),
+  );
+});

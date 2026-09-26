@@ -18,6 +18,14 @@ contextBridge.exposeInMainWorld("electronAPI", {
       });
     },
   },
+  log: (entry: unknown) => {
+    ipcRenderer.send(ELECTRON_IPC_CHANNEL.LOG_WRITE, entry);
+  },
+  logs: {
+    openFolder: () => {
+      return ipcRenderer.invoke(ELECTRON_IPC_CHANNEL.LOGS_OPEN_FOLDER);
+    },
+  },
   resizeWindowToContent: ({
     height,
     width,

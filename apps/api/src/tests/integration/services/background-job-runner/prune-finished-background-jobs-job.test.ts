@@ -47,6 +47,7 @@ const finishJob = E.fn("test.finish-background-job")(function* ({
     kind: "Test",
     payload: {},
     queue,
+    traceparent: null,
   });
 
   yield* backgroundJobDAO.claimNext({ holdWhileWaiting: false, queue });

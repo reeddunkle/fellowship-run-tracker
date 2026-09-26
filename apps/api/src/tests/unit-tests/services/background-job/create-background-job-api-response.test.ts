@@ -34,6 +34,7 @@ function makeJob(
     result: null,
     startedAt: STARTED_AT,
     status: "RUNNING",
+    traceparent: null,
     updatedAt: STARTED_AT,
     ...overrides,
   });

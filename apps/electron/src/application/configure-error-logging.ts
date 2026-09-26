@@ -64,19 +64,5 @@ export function configureErrorLogging<R, ER>(
         );
       },
     );
-
-    webContents.on("console-message", (consoleEvent) => {
-      if (consoleEvent.level !== "error") {
-        return;
-      }
-
-      log(
-        E.logError("[RENDERER] Console error.", {
-          lineNumber: consoleEvent.lineNumber,
-          message: consoleEvent.message,
-          sourceId: consoleEvent.sourceId,
-        }),
-      );
-    });
   });
 }

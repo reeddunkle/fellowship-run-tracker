@@ -72,6 +72,9 @@ export const appConfig = {
       LiveSplitPortSchema.make(APP_CONFIG_DEFAULTS.LIVE_SPLIT_PORT),
     ),
   ),
+  otelExporterOtlpEndpoint: Config.url("OTEL_EXPORTER_OTLP_ENDPOINT").pipe(
+    Config.option,
+  ),
   publicApiHost: Config.schema(PublicApiHostSchema, "PUBLIC_API_HOST").pipe(
     Config.withDefault(
       PublicApiHostSchema.make(APP_CONFIG_DEFAULTS.PUBLIC_API_HOST),

@@ -6,7 +6,9 @@ import { getDatabaseOptions } from "@frt/api/helpers/get-database-options.ts";
 import { ApiLayer } from "@frt/api/layers/api-layer.ts";
 import { makePersistenceLayer } from "@frt/api/layers/persistence-layer.ts";
 import { logCause } from "@frt/api/logging/log-cause.ts";
-import { AppLoggerLayer } from "@frt/api/services/logging/app-logger-service.ts";
+import { makeAppObservabilityLayer } from "@frt/api/services/observability/app-observability-layer.ts";
+
+import packageJson from "../../package.json" with { type: "json" };
 
 const ServeLayer = Layer.unwrap(
   E.map(getDatabaseOptions(), (databaseOptions) => {
@@ -26,5 +28,7 @@ export const serveCommand = Command.make("serve", {}, runServeCommand).pipe(
   Command.withDescription(
     "Run the HTTP/WebSocket API on its own, without the Electron app.",
   ),
-  Command.provide(AppLoggerLayer),
+  Command.provide(
+    makeAppObservabilityLayer({ serviceVersion: packageJson.version }),
+  ),
 );

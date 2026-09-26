@@ -1,4 +1,5 @@
 import * as NodeSocket from "@effect/platform-node/NodeSocket";
+import * as Cause from "effect/Cause";
 import * as Deferred from "effect/Deferred";
 import * as E from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -53,8 +54,8 @@ export const makeNodeLiveSplitGatewayTransport = E.fn(
       });
     }),
     E.tapCause((cause) => {
-      return E.logError("Failed to create LiveSplit TCP socket.", {
-        cause,
+      return E.logDebug("Failed to create LiveSplit TCP socket.", {
+        cause: Cause.pretty(cause),
         host,
         port,
       });
@@ -77,7 +78,7 @@ export const makeNodeLiveSplitGatewayTransport = E.fn(
       },
       {
         onOpen: E.gen(function* () {
-          yield* E.logInfo("LiveSplit TCP connection opened.", {
+          yield* E.logDebug("LiveSplit TCP connection opened.", {
             host,
             port,
           });
@@ -100,8 +101,8 @@ export const makeNodeLiveSplitGatewayTransport = E.fn(
       E.tap((exit) => {
         return Exit.match(exit, {
           onFailure: (cause) => {
-            return E.logError("LiveSplit TCP connection failed.", {
-              cause,
+            return E.logDebug("LiveSplit TCP connection failed.", {
+              cause: Cause.pretty(cause),
               host,
               port,
             });
@@ -155,8 +156,8 @@ export const makeNodeLiveSplitGatewayTransport = E.fn(
     write: (data) => {
       return socketWriter(data).pipe(
         E.tapCause((cause) => {
-          return E.logError("LiveSplit TCP write failed.", {
-            cause,
+          return E.logDebug("LiveSplit TCP write failed.", {
+            cause: Cause.pretty(cause),
             host,
             port,
           });

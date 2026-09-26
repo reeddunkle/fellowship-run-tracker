@@ -15,6 +15,8 @@ import * as Schedule from "effect/Schedule";
 import * as Schema from "effect/Schema";
 import * as Semaphore from "effect/Semaphore";
 import * as SubscriptionRef from "effect/SubscriptionRef";
+import * as Headers from "effect/unstable/http/Headers";
+import * as HttpTraceContext from "effect/unstable/http/HttpTraceContext";
 
 import {
   BackgroundJobAttemptsExhaustedError,
@@ -27,6 +29,7 @@ import {
   BackgroundJobQueueNotFoundError,
 } from "@frt/api/errors/background-job-queue-error.ts";
 import { SESSION_STARTED_AT } from "@frt/api/helpers/session-started-at.ts";
+import { withTelemetryAttributes } from "@frt/api/logging/with-telemetry-attributes.ts";
 import { BackgroundJobPayloadSchema } from "@frt/api/services/background-job-queue/background-job-payload-schema.ts";
 import { type BackgroundJobQueueShape } from "@frt/api/services/background-job-queue/background-job-queue-service.ts";
 import {
@@ -42,6 +45,7 @@ import { type BackgroundJobModel } from "@frt/db/models/background-job-model.ts"
 import { type BackgroundJobFailure } from "@frt/shared/background-job/background-job-failure-schema.ts";
 import { type BackgroundJobId } from "@frt/shared/background-job/background-job-id-schema.ts";
 import { type BackgroundJobStatus } from "@frt/shared/background-job/background-job-status-schema.ts";
+import { makeRepeatedFailureLogger } from "@frt/shared/util/make-repeated-failure-logger.ts";
 
 type BackgroundJobOperation = BackgroundJobQueueError["operation"];
 
@@ -57,7 +61,14 @@ const VISIBLE_QUEUE_NAMES = QUEUE_NAMES.filter((queue) => {
   return BACKGROUND_JOB_QUEUES[queue].isVisible;
 });
 
-const WORKER_ERROR_DELAY = "1 second";
+const WORKER_RETRY_BASE_DELAY_MILLISECONDS = 1_000;
+
+const WORKER_RETRY_MAX_DELAY_MILLISECONDS = 60_000;
+
+const UNEXPECTED_JOB_FAILURE_TAGS: ReadonlySet<string> = new Set([
+  "BackgroundJobInvalidPayloadError",
+  "BackgroundJobUnexpectedError",
+]);
 
 const MIN_WAITING_JOB_DELAY_MILLISECONDS = 100;
 
@@ -98,6 +109,59 @@ function getFailureFromCause(
     : toBackgroundJobFailure(
         new BackgroundJobUnexpectedError({ cause: error }),
       );
+}
+
+function getWorkerRetryDelay(consecutiveFailures: number) {
+  return Duration.millis(
+    Math.min(
+      WORKER_RETRY_BASE_DELAY_MILLISECONDS * 2 ** (consecutiveFailures - 1),
+      WORKER_RETRY_MAX_DELAY_MILLISECONDS,
+    ),
+  );
+}
+
+function getJobTelemetryAttributes(job: BackgroundJobModel) {
+  return {
+    "background_job.attempt": job.attempts,
+    "background_job.id": job.id,
+    "background_job.kind": job.kind,
+    "background_job.queue": job.queue,
+  };
+}
+
+function logJobFailure(error: BackgroundJobFailure) {
+  return UNEXPECTED_JOB_FAILURE_TAGS.has(error.tag)
+    ? E.logError("Background job failed unexpectedly.", { error })
+    : E.logInfo("Background job failed.", { error });
+}
+
+const getCurrentTraceparent = E.currentSpan.pipe(
+  E.option,
+  E.map((span) => {
+    return Option.match(span, {
+      onNone: () => null,
+      onSome: (current) => {
+        return HttpTraceContext.toHeaders(current).traceparent ?? null;
+      },
+    });
+  }),
+);
+
+function withJobParentSpan(job: BackgroundJobModel) {
+  return <Success, Failure, Requirements>(
+    effect: E.Effect<Success, Failure, Requirements>,
+  ) => {
+    const parentSpan = Option.fromNullOr(job.traceparent).pipe(
+      Option.flatMap((traceparent) => {
+        return HttpTraceContext.w3c(Headers.fromInput({ traceparent }));
+      }),
+    );
+
+    return Option.match(parentSpan, {
+      onNone: () => effect,
+      onSome: (span) => effect.pipe(E.withParentSpan(span)),
+    });
+  };
 }
 
 function mapCommandError(
@@ -169,12 +233,12 @@ export const makeBackgroundJobQueue = E.gen(function* () {
 
     if (Cause.hasInterruptsOnly(exit.cause)) {
       if (cancelRequests.has(job.id)) {
-        yield* E.logInfo("Cancelled a running background job.");
-
-        return yield* backgroundJobDAO.delete({
+        yield* backgroundJobDAO.delete({
           id: job.id,
           statuses: ["RUNNING"],
         });
+
+        return yield* E.logInfo("Cancelled a running background job.");
       }
 
       return;
@@ -189,23 +253,26 @@ export const makeBackgroundJobQueue = E.gen(function* () {
     if (Option.isSome(deferred)) {
       const { availableAt, reason } = deferred.value;
 
-      yield* E.logInfo("Background job is waiting before it can continue.", {
-        availableAt: DateTime.formatIso(availableAt),
-        reason: reason._tag,
-      });
-
-      return yield* backgroundJobDAO.markWaiting({
+      yield* backgroundJobDAO.markWaiting({
         availableAt,
         id: job.id,
         reason: toBackgroundJobFailure(reason),
       });
+
+      return yield* E.logInfo(
+        "Background job is waiting before it can continue.",
+        {
+          availableAt: DateTime.formatIso(availableAt),
+          reason: reason._tag,
+        },
+      );
     }
 
     const error = getFailureFromCause(exit.cause);
 
-    yield* E.logWarning("Background job failed.", { error });
+    yield* backgroundJobDAO.markFailed({ error, id: job.id });
 
-    return yield* backgroundJobDAO.markFailed({ error, id: job.id });
+    yield* logJobFailure(error);
   });
 
   const releaseJob = (id: BackgroundJobId) => {
@@ -225,12 +292,13 @@ export const makeBackgroundJobQueue = E.gen(function* () {
       )(claimed.payload).pipe(E.result);
 
       if (Result.isFailure(decoded)) {
-        return yield* backgroundJobDAO.markFailed({
-          error: toBackgroundJobFailure(
-            new BackgroundJobInvalidPayloadError({ cause: decoded.failure }),
-          ),
-          id: claimed.id,
-        });
+        const error = toBackgroundJobFailure(
+          new BackgroundJobInvalidPayloadError({ cause: decoded.failure }),
+        );
+
+        yield* backgroundJobDAO.markFailed({ error, id: claimed.id });
+
+        return yield* logJobFailure(error);
       }
 
       const reportProgress = (fraction: number) => {
@@ -271,13 +339,14 @@ export const makeBackgroundJobQueue = E.gen(function* () {
       );
     },
     (effect, claimed) => {
-      return effect.pipe(E.ensuring(releaseJob(claimed.id)));
+      return effect.pipe(
+        withTelemetryAttributes(getJobTelemetryAttributes(claimed)),
+        E.ensuring(releaseJob(claimed.id)),
+      );
     },
   );
 
-  const awaitWork = E.fn("BackgroundJobQueue.awaitWork")(function* (
-    queue: BackgroundJobQueueName,
-  ) {
+  const awaitWork = E.fn(function* (queue: BackgroundJobQueueName) {
     const { holdWhileWaiting } = BACKGROUND_JOB_QUEUES[queue];
     const nextAvailableAt = yield* backgroundJobDAO.getNextAvailableAt({
       holdWhileWaiting,
@@ -300,11 +369,16 @@ export const makeBackgroundJobQueue = E.gen(function* () {
     );
   });
 
-  const runWorker = (queue: BackgroundJobQueueName) => {
+  const runWorker = E.fn(function* (queue: BackgroundJobQueueName) {
     const latch = latches[queue];
     const { holdWhileWaiting } = BACKGROUND_JOB_QUEUES[queue];
 
-    return E.gen(function* () {
+    const workerFailures = yield* makeRepeatedFailureLogger({
+      level: "Error",
+      message: "Background job worker failed.",
+    });
+
+    const runNextJob = E.gen(function* () {
       yield* latch.close;
 
       const claimed = yield* backgroundJobDAO.claimNext({
@@ -319,29 +393,30 @@ export const makeBackgroundJobQueue = E.gen(function* () {
       yield* bumpRevision;
 
       yield* runClaimedJob(claimed.value).pipe(
-        E.annotateLogs({
-          attempts: claimed.value.attempts,
-          backgroundJobId: claimed.value.id,
-          job: claimed.value.kind,
-        }),
+        withJobParentSpan(claimed.value),
       );
 
       yield* bumpRevision;
-    }).pipe(
+    });
+
+    return yield* runNextJob.pipe(
+      E.andThen(workerFailures.onSuccess),
       E.catchCauseIf(
         (cause) => {
           return !Cause.hasInterruptsOnly(cause);
         },
         (cause) => {
-          return E.logError("Background job worker failed.", { cause }).pipe(
-            E.andThen(E.sleep(WORKER_ERROR_DELAY)),
+          return workerFailures.onFailure(cause).pipe(
+            E.flatMap((consecutiveFailures) => {
+              return E.sleep(getWorkerRetryDelay(consecutiveFailures));
+            }),
           );
         },
       ),
       E.forever,
-      E.annotateLogs({ queue }),
+      E.annotateLogs({ "background_job.queue": queue }),
     );
-  };
+  });
 
   yield* E.forEach(
     QUEUE_NAMES,
@@ -373,8 +448,10 @@ export const makeBackgroundJobQueue = E.gen(function* () {
     { discard: true },
   );
 
-  const offer: BackgroundJobQueueShape["offer"] = (job) => {
-    return E.gen(function* () {
+  const offer: BackgroundJobQueueShape["offer"] = E.fn(
+    "BackgroundJobQueue.offer",
+  )(
+    function* (job) {
       const queue = BACKGROUND_JOB_QUEUE_BY_KIND[job._tag];
       const payload = yield* Schema.encodeEffect(BackgroundJobPayloadSchema)(
         job,
@@ -385,6 +462,7 @@ export const makeBackgroundJobQueue = E.gen(function* () {
         kind: job._tag,
         payload,
         queue,
+        traceparent: yield* getCurrentTraceparent,
       });
 
       if (wasInserted) {
@@ -393,12 +471,11 @@ export const makeBackgroundJobQueue = E.gen(function* () {
       }
 
       return { job: row, wasAlreadyQueued: !wasInserted };
-    }).pipe(
-      E.mapError((cause) => {
-        return new BackgroundJobQueueError({ cause, operation: "Offer" });
-      }),
-    );
-  };
+    },
+    E.mapError((cause) => {
+      return new BackgroundJobQueueError({ cause, operation: "Offer" });
+    }),
+  );
 
   const cancel: BackgroundJobQueueShape["cancel"] = ({ id }) => {
     return E.gen(function* () {

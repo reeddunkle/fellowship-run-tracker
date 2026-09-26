@@ -9,7 +9,7 @@ import { MainDatabase } from "@frt/db/databases/main-database.ts";
 
 const CATALOG = "ABILITY" as const;
 
-export const syncAbilityCatalog = E.fn("sync-ability-catalog")(function* () {
+export const syncAbilityCatalog = E.fn("syncAbilityCatalog")(function* () {
   const catalogSyncDAO = yield* CatalogSyncDAO;
   const sql = yield* MainDatabase;
 

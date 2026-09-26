@@ -7,6 +7,7 @@ import { Skeleton } from "@frt/ui/skeleton.tsx";
 
 import { type BackgroundJobCategoryId } from "@/renderer/api/background-job/background-job-categories.ts";
 import { useBackgroundJobCategorySuspense } from "@/renderer/api/background-job/background-job-queries.ts";
+import { logBoundaryError } from "@/renderer/logging/renderer-error-logging.ts";
 
 import { getBackgroundJobQueueContext } from "./background-job-descriptions.ts";
 import { BackgroundJobRow } from "./background-job-row.tsx";
@@ -78,6 +79,7 @@ export function BackgroundJobCategoryList({
     <CatchBoundary
       errorComponent={BackgroundJobListLoadError}
       getResetKey={() => categoryId}
+      onCatch={logBoundaryError}
     >
       <Suspense fallback={<BackgroundJobListSkeleton />}>
         <BackgroundJobCategoryListContent

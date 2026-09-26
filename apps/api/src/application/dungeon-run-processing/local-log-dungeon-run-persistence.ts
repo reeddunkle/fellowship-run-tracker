@@ -63,7 +63,7 @@ function isLocalLogDungeonRunLifecycleEvent(
 }
 
 export const makeLocalLogDungeonRunPersistence = E.fn(
-  "fellowship.local-log-dungeon-run.make-persistence",
+  "LocalLogDungeonRunPersistence.make",
 )(function* ({ configuration }: MakeLocalLogDungeonRunPersistenceOptions) {
   const dungeonRunObservationDAO = yield* DungeonRunObservationDAO;
   const dungeonRunRepository = yield* DungeonRunRepository;
@@ -74,9 +74,7 @@ export const makeLocalLogDungeonRunPersistence = E.fn(
 
   const dungeonRunIdSemaphore = yield* Semaphore.make(1);
 
-  const getOrCreateDungeonRunId = E.fn(
-    "fellowship.local-log-dungeon-run.get-or-create-id",
-  )(function* () {
+  const getOrCreateDungeonRunId = E.fn(function* () {
     return yield* dungeonRunIdSemaphore.withPermit(
       E.gen(function* () {
         const dungeonRunId = yield* Ref.get(dungeonRunIdRef);
@@ -98,7 +96,7 @@ export const makeLocalLogDungeonRunPersistence = E.fn(
   });
 
   const persistLifecycleEvent = E.fn(
-    "fellowship.local-log-dungeon-run.persist-lifecycle-event",
+    "LocalLogDungeonRunPersistence.persistLifecycleEvent",
   )(function* ({
     dungeonRunId,
     processingEvent,
@@ -152,9 +150,10 @@ export const makeLocalLogDungeonRunPersistence = E.fn(
     );
   });
 
-  const persist: LocalLogDungeonRunPersistence["persist"] = E.fn(
-    "fellowship.local-log-dungeon-run.persist-event-result",
-  )(function* ({ observation, processingEvents }) {
+  const persist: LocalLogDungeonRunPersistence["persist"] = E.fn(function* ({
+    observation,
+    processingEvents,
+  }) {
     const lifecycleEvents = processingEvents.filter(
       isLocalLogDungeonRunLifecycleEvent,
     );
@@ -189,7 +188,7 @@ export const makeLocalLogDungeonRunPersistence = E.fn(
   });
 
   const interrupt: LocalLogDungeonRunPersistence["interrupt"] = E.fn(
-    "fellowship.local-log-dungeon-run.interrupt-persistence",
+    "LocalLogDungeonRunPersistence.interrupt",
   )(function* (endedAt) {
     const dungeonRunId = yield* Ref.get(dungeonRunIdRef);
 

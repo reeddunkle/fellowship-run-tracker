@@ -237,13 +237,21 @@ export function makeFellowshipLogsGatewayFromQuery(query: Query) {
           reportCode,
         });
 
-        yield* E.logDebug("Fetched Fellowship Logs report page.", {
-          endTime,
-          eventCount: report.events.data.length,
-          nextPageTimestamp: report.events.nextPageTimestamp,
-          reportCode,
-          startTime,
-        });
+        const pageAttributes = {
+          "fellowship_logs.event_count": report.events.data.length,
+          "fellowship_logs.next_page_timestamp":
+            report.events.nextPageTimestamp,
+          "fellowship_logs.page_end_time": endTime,
+          "fellowship_logs.page_start_time": startTime,
+          "fellowship_logs.report_code": reportCode,
+        };
+
+        yield* E.annotateCurrentSpan(pageAttributes);
+
+        yield* E.logDebug(
+          "Fetched Fellowship Logs report page.",
+          pageAttributes,
+        );
 
         return report;
       },

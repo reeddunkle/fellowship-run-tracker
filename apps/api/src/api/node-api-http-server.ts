@@ -11,9 +11,6 @@ const makeNodeApiHttpServer = E.gen(function* () {
   const host = yield* appConfig.publicApiHost;
   const port = yield* appConfig.publicApiPort;
 
-  yield* E.annotateCurrentSpan("public.api.host", host);
-  yield* E.annotateCurrentSpan("public.api.port", port);
-
   return NodeHttpServer.layer(Http.createServer, {
     host,
     port,

@@ -58,17 +58,17 @@ const PageFilenameSchema = Schema.TemplateLiteralParser([
   ".json",
 ]);
 
-const getPageNumber = E.fn("FellowshipLogsFixture.getPageNumber")(function* (
-  filename: string,
-) {
-  const parsed = yield* Schema.decodeUnknownEffect(PageFilenameSchema)(
-    filename,
-  ).pipe(E.option);
+const getPageNumber = E.fn("FellowshipLogsGatewayFixture.getPageNumber")(
+  function* (filename: string) {
+    const parsed = yield* Schema.decodeUnknownEffect(PageFilenameSchema)(
+      filename,
+    ).pipe(E.option);
 
-  return Option.map(parsed, ([, pageNumber]) => {
-    return pageNumber;
-  });
-});
+    return Option.map(parsed, ([, pageNumber]) => {
+      return pageNumber;
+    });
+  },
+);
 
 type PagePathEntry = {
   readonly filePath: string;
@@ -111,95 +111,97 @@ export function makeFellowshipLogsGatewayFixture({
       }).pipe(E.mapError(mapFixtureError));
     };
 
-    const fetchReportPage = E.fn("FellowshipLogsFixture.fetchReportPage")(
-      function* (
-        response: typeof FellowshipLogsGatewayReportPageResponseJsonSchema.Type,
-        reportCode: FellowshipLogsReportCode,
-      ) {
-        const responseData = yield* E.succeed(response).pipe(
-          readAndTrackGraphQLResponse(rateLimitTracker, {
-            costKey: "ReportPage",
-            operation: "REPORT_PAGE",
-          }),
+    const fetchReportPage = E.fn(
+      "FellowshipLogsGatewayFixture.fetchReportPage",
+    )(function* (
+      response: typeof FellowshipLogsGatewayReportPageResponseJsonSchema.Type,
+      reportCode: FellowshipLogsReportCode,
+    ) {
+      const responseData = yield* E.succeed(response).pipe(
+        readAndTrackGraphQLResponse(rateLimitTracker, {
+          costKey: "ReportPage",
+          operation: "REPORT_PAGE",
+        }),
+      );
+
+      return yield* getReportOrFail({
+        report: responseData.reportData.report,
+        reportCode,
+      });
+    });
+
+    const getReportPagePaths = E.fn(
+      "FellowshipLogsGatewayFixture.getReportPagePaths",
+    )(function* (options: GetFellowshipLogsGatewayReportOptions) {
+      return yield* E.gen(function* () {
+        const reportFixtureDirectory = getReportFixtureDirectory(options);
+
+        const filenames = yield* fileSystem.readDirectory(
+          reportFixtureDirectory,
         );
 
-        return yield* getReportOrFail({
-          report: responseData.reportData.report,
-          reportCode,
-        });
-      },
-    );
-
-    const getReportPagePaths = E.fn("FellowshipLogsFixture.getReportPagePaths")(
-      function* (options: GetFellowshipLogsGatewayReportOptions) {
-        return yield* E.gen(function* () {
-          const reportFixtureDirectory = getReportFixtureDirectory(options);
-
-          const filenames = yield* fileSystem.readDirectory(
-            reportFixtureDirectory,
-          );
-
-          const pagePathOptions = yield* E.forEach(filenames, (filename) => {
-            return getPageNumber(filename).pipe(
-              E.map(
-                Option.map((pageNumber): PagePathEntry => {
-                  return {
-                    filePath: path.join(reportFixtureDirectory, filename),
-                    pageNumber,
-                  };
-                }),
-              ),
-            );
-          });
-
-          return pipe(
-            pagePathOptions,
-            A.flatMap(Option.toArray),
-            A.sort(
-              Order.mapInput(Order.Number, (pagePath: PagePathEntry) => {
-                return pagePath.pageNumber;
+        const pagePathOptions = yield* E.forEach(filenames, (filename) => {
+          return getPageNumber(filename).pipe(
+            E.map(
+              Option.map((pageNumber): PagePathEntry => {
+                return {
+                  filePath: path.join(reportFixtureDirectory, filename),
+                  pageNumber,
+                };
               }),
             ),
           );
-        }).pipe(E.mapError(mapFixtureError));
-      },
-    );
-
-    const getDungeonRunMetadata: FellowshipLogsGatewayShape["getDungeonRunMetadata"] =
-      E.fn("FellowshipLogsFixture.getDungeonRunMetadata")(function* (options) {
-        const metadataPath = path.join(
-          getReportFixtureDirectory(options),
-          "metadata.json",
-        );
-
-        const responseData = yield* E.gen(function* () {
-          const contents = yield* fileSystem.readFileString(metadataPath);
-
-          return yield* Schema.decodeEffect(
-            FellowshipLogsGatewayMetadataResponseJsonSchema,
-          )(contents);
-        }).pipe(
-          E.mapError(mapFixtureError),
-          readAndTrackGraphQLResponse(rateLimitTracker, {
-            costKey: "DungeonRunMetadata",
-            operation: "DUNGEON_RUN_METADATA",
-          }),
-        );
-
-        const metadata = yield* deriveDungeonRunMetadata({
-          fightId: options.fightId,
-          reportCode: options.reportCode,
-          responseData,
         });
 
-        return {
-          dungeonId: metadata.dungeonId,
-          dungeonLevel: metadata.dungeonLevel,
-          endedAt: DateTime.makeUnsafe(metadata.endedAtMilliseconds),
-          isInProgress: metadata.isInProgress,
-          startedAt: DateTime.makeUnsafe(metadata.startedAtMilliseconds),
-        } satisfies FellowshipLogsGatewayDungeonRunMetadata;
-      });
+        return pipe(
+          pagePathOptions,
+          A.flatMap(Option.toArray),
+          A.sort(
+            Order.mapInput(Order.Number, (pagePath: PagePathEntry) => {
+              return pagePath.pageNumber;
+            }),
+          ),
+        );
+      }).pipe(E.mapError(mapFixtureError));
+    });
+
+    const getDungeonRunMetadata: FellowshipLogsGatewayShape["getDungeonRunMetadata"] =
+      E.fn("FellowshipLogsGatewayFixture.getDungeonRunMetadata")(
+        function* (options) {
+          const metadataPath = path.join(
+            getReportFixtureDirectory(options),
+            "metadata.json",
+          );
+
+          const responseData = yield* E.gen(function* () {
+            const contents = yield* fileSystem.readFileString(metadataPath);
+
+            return yield* Schema.decodeEffect(
+              FellowshipLogsGatewayMetadataResponseJsonSchema,
+            )(contents);
+          }).pipe(
+            E.mapError(mapFixtureError),
+            readAndTrackGraphQLResponse(rateLimitTracker, {
+              costKey: "DungeonRunMetadata",
+              operation: "DUNGEON_RUN_METADATA",
+            }),
+          );
+
+          const metadata = yield* deriveDungeonRunMetadata({
+            fightId: options.fightId,
+            reportCode: options.reportCode,
+            responseData,
+          });
+
+          return {
+            dungeonId: metadata.dungeonId,
+            dungeonLevel: metadata.dungeonLevel,
+            endedAt: DateTime.makeUnsafe(metadata.endedAtMilliseconds),
+            isInProgress: metadata.isInProgress,
+            startedAt: DateTime.makeUnsafe(metadata.startedAtMilliseconds),
+          } satisfies FellowshipLogsGatewayDungeonRunMetadata;
+        },
+      );
 
     const streamReportPages: FellowshipLogsGatewayShape["streamReportPages"] = (
       options,

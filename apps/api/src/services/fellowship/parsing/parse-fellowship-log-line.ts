@@ -11,26 +11,24 @@ import {
   isParsedFellowshipEventType,
 } from "@frt/shared/fellowship/validation/fellowship-event-schema.ts";
 
-export const parseFellowshipLogLine = E.fn("fellowship.parse-log-line")(
-  function* (line: string) {
-    const eventType = getEventType(line);
+export const parseFellowshipLogLine = E.fn(function* (line: string) {
+  const eventType = getEventType(line);
 
-    if (!isParsedFellowshipEventType(eventType)) {
-      return yield* new FellowshipEventUnsupportedTypeError({
-        eventType,
+  if (!isParsedFellowshipEventType(eventType)) {
+    return yield* new FellowshipEventUnsupportedTypeError({
+      eventType,
+      line,
+    });
+  }
+
+  const schema = fellowshipEventSchemas[eventType];
+
+  return yield* Schema.decodeUnknownEffect(schema)(line.split("|")).pipe(
+    E.mapError((cause) => {
+      return new FellowshipEventInvalidError({
+        cause,
         line,
       });
-    }
-
-    const schema = fellowshipEventSchemas[eventType];
-
-    return yield* Schema.decodeUnknownEffect(schema)(line.split("|")).pipe(
-      E.mapError((cause) => {
-        return new FellowshipEventInvalidError({
-          cause,
-          line,
-        });
-      }),
-    );
-  },
-);
+    }),
+  );
+});

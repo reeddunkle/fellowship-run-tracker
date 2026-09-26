@@ -9,17 +9,17 @@ export type GenerateLSSFileOptions = {
   readonly filePath: string;
 };
 
-export const generateLSSFile = E.fn("livesplit.generate-lss-file")(function* ({
+export const generateLSSFile = E.fn("generateLSSFile")(function* ({
   configuration,
   dungeonName,
   filePath,
 }: GenerateLSSFileOptions) {
   const liveSplitFile = yield* LiveSplitFile;
 
-  yield* E.annotateCurrentSpan("fellowship.dungeon", dungeonName);
+  yield* E.annotateCurrentSpan("fellowship.dungeon_name", dungeonName);
 
   yield* E.annotateCurrentSpan(
-    "fellowship.milestone-count",
+    "fellowship.milestone_count",
     configuration.milestones.length,
   );
 

@@ -28,9 +28,9 @@ function createDungeonRunApiMessage({
   };
 }
 
-export const publishDungeonRunState = E.fn(
-  "fellowship.dungeon-run.publish-state",
-)(function* ({ state }: PublishDungeonRunStateOptions) {
+export const publishDungeonRunState = E.fn(function* ({
+  state,
+}: PublishDungeonRunStateOptions) {
   const webSocketBroadcaster = yield* DungeonRunWebSocketBroadcaster;
 
   const message = createDungeonRunApiMessage({

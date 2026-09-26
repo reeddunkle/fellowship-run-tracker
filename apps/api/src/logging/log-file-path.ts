@@ -1,18 +1,21 @@
 // @effect-diagnostics-next-line nodeBuiltinImport:off
 import path from "node:path";
 
+import * as Option from "effect/Option";
+
 import { appPaths } from "@frt/api/helpers/app-paths.ts";
 
-const LOG_FILE_NAME_PREFIX = "fellowship-run-tracker-";
+const SESSION_FILE_NAME_PREFIX = "fellowship-run-tracker-";
 const LOG_FILE_EXTENSION = ".log";
+const TRACE_FILE_EXTENSION = ".otlp.jsonl";
 
-/** [TODO] Shouldn't need the "earlier" pattern at all I want a clean slate
- * Session files (`fellowship-run-tracker-2026-09-22T17-08-21.log`), plus the
- * earlier one-file-per-day naming (`2026-09-22-fellowship-run-tracker.log`) so
- * those age out too.
- */
-const LOG_FILE_NAME_PATTERN =
-  /^(?:fellowship-run-tracker-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}|\d{4}-\d{2}-\d{2}-fellowship-run-tracker)\.log$/;
+const SESSION_FILE_NAME_PATTERN =
+  /^(fellowship-run-tracker-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2})(\.log|\.otlp\.jsonl)$/;
+
+type SessionFileName = {
+  readonly isLog: boolean;
+  readonly sessionName: string;
+};
 
 function padTwoDigits(value: number) {
   return String(value).padStart(2, "0");
@@ -34,14 +37,33 @@ function formatSessionTimestamp(date: Date) {
   return `${datePart}T${timePart}`;
 }
 
-export function isLogFileName(fileName: string) {
-  return LOG_FILE_NAME_PATTERN.test(fileName);
+export function parseSessionFileName(
+  fileName: string,
+): Option.Option<SessionFileName> {
+  const [, sessionName, extension] =
+    SESSION_FILE_NAME_PATTERN.exec(fileName) ?? [];
+
+  if (sessionName === undefined) {
+    return Option.none();
+  }
+
+  return Option.some({
+    isLog: extension === LOG_FILE_EXTENSION,
+    sessionName,
+  });
 }
+
+const SESSION_NAME = `${SESSION_FILE_NAME_PREFIX}${formatSessionTimestamp(
+  // @effect-diagnostics-next-line globalDate:off
+  new Date(performance.timeOrigin),
+)}`;
 
 export const SESSION_LOG_FILE_PATH = path.join(
   appPaths.logs,
-  `${LOG_FILE_NAME_PREFIX}${formatSessionTimestamp(
-    // @effect-diagnostics-next-line globalDate:off
-    new Date(performance.timeOrigin),
-  )}${LOG_FILE_EXTENSION}`,
+  `${SESSION_NAME}${LOG_FILE_EXTENSION}`,
+);
+
+export const SESSION_TRACE_FILE_PATH = path.join(
+  appPaths.logs,
+  `${SESSION_NAME}${TRACE_FILE_EXTENSION}`,
 );

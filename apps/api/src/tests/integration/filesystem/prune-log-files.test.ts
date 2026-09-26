@@ -12,6 +12,7 @@ const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
 const CLEAN_ENTRY = '{"message":["Run started."],"level":"INFO"}\n';
 const ERROR_ENTRY = '{"message":["Failed."],"level":"ERROR"}\n';
+const TRACE_ENTRY = '{"resourceSpans":[]}\n';
 
 type TestLogFile = {
   readonly ageDays: number;
@@ -19,11 +20,19 @@ type TestLogFile = {
   readonly name: string;
 };
 
-function sessionFileName(index: number) {
+function sessionName(index: number) {
   const seconds = String(index % 60).padStart(2, "0");
   const minutes = String(Math.floor(index / 60) % 60).padStart(2, "0");
 
-  return `fellowship-run-tracker-2026-01-01T00-${minutes}-${seconds}.log`;
+  return `fellowship-run-tracker-2026-01-01T00-${minutes}-${seconds}`;
+}
+
+function sessionFileName(index: number) {
+  return `${sessionName(index)}.log`;
+}
+
+function traceFileName(index: number) {
+  return `${sessionName(index)}.otlp.jsonl`;
 }
 
 function pruneFiles({
@@ -90,31 +99,79 @@ describe("pruneLogFiles", () => {
     ]);
   });
 
-  test("also ages out the earlier one-file-per-day logs", async () => {
+  test("keeps or deletes a session's trace file together with its log", async () => {
     const remaining = await pruneFiles({
       currentFileName: sessionFileName(0),
       files: [
+        { ageDays: 45, contents: CLEAN_ENTRY, name: sessionFileName(1) },
+        { ageDays: 45, contents: TRACE_ENTRY, name: traceFileName(1) },
+        { ageDays: 45, contents: ERROR_ENTRY, name: sessionFileName(2) },
+        { ageDays: 45, contents: TRACE_ENTRY, name: traceFileName(2) },
+      ],
+    });
+
+    expect(remaining).toEqual([sessionFileName(2), traceFileName(2)]);
+  });
+
+  test("treats a trace file without a log as a clean session", async () => {
+    const remaining = await pruneFiles({
+      currentFileName: sessionFileName(0),
+      files: [
+        { ageDays: 10, contents: TRACE_ENTRY, name: traceFileName(1) },
+        { ageDays: 45, contents: TRACE_ENTRY, name: traceFileName(2) },
+      ],
+    });
+
+    expect(remaining).toEqual([traceFileName(1)]);
+  });
+
+  test("never deletes the current session or unrelated files", async () => {
+    const remaining = await pruneFiles({
+      currentFileName: sessionFileName(0),
+      files: [
+        { ageDays: 365, contents: CLEAN_ENTRY, name: sessionFileName(0) },
+        { ageDays: 365, contents: TRACE_ENTRY, name: traceFileName(0) },
+        { ageDays: 365, contents: CLEAN_ENTRY, name: "notes.txt" },
         {
-          ageDays: 45,
+          ageDays: 365,
           contents: CLEAN_ENTRY,
           name: "2026-01-01-fellowship-run-tracker.log",
         },
       ],
     });
 
-    expect(remaining).toEqual([]);
+    expect(remaining).toEqual([
+      "2026-01-01-fellowship-run-tracker.log",
+      sessionFileName(0),
+      traceFileName(0),
+      "notes.txt",
+    ]);
   });
 
-  test("never deletes the current session or non-log files", async () => {
+  test("counts the session cap per session, not per file", async () => {
+    const files = Array.from({ length: 205 }, (_, index) => {
+      return [
+        {
+          ageDays: index / 100,
+          contents: CLEAN_ENTRY,
+          name: sessionFileName(index),
+        },
+        {
+          ageDays: index / 100,
+          contents: TRACE_ENTRY,
+          name: traceFileName(index),
+        },
+      ];
+    }).flat();
+
     const remaining = await pruneFiles({
       currentFileName: sessionFileName(0),
-      files: [
-        { ageDays: 365, contents: CLEAN_ENTRY, name: sessionFileName(0) },
-        { ageDays: 365, contents: CLEAN_ENTRY, name: "notes.txt" },
-      ],
+      files,
     });
 
-    expect(remaining).toEqual([sessionFileName(0), "notes.txt"]);
+    expect(remaining).toHaveLength(400);
+    expect(remaining).toContain(traceFileName(199));
+    expect(remaining).not.toContain(traceFileName(200));
   });
 
   test("keeps at most 200 files, deleting the oldest", async () => {

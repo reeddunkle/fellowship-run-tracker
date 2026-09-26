@@ -25,5 +25,6 @@ export class BackgroundJobModel extends Model.Class<BackgroundJobModel>(
   result: Schema.Json.pipe(Schema.fromJsonString, Schema.NullOr),
   startedAt: Schema.NullOr(Schema.DateTimeUtcFromMillis),
   status: BackgroundJobStatusSchema,
+  traceparent: Schema.NullOr(NonEmptyStringSchema),
   updatedAt: Model.DateTimeUpdateFromNumber,
 }) {}

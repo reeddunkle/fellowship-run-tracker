@@ -9,6 +9,7 @@ import { Spinner } from "@frt/ui/spinner.tsx";
 
 import { useRefreshFellowshipLogsRateLimitData } from "@/renderer/api/fellowship-logs/fellowship-logs-mutations.ts";
 import { useFellowshipLogsRateLimitDataSuspense } from "@/renderer/api/fellowship-logs/fellowship-logs-queries.ts";
+import { logBoundaryError } from "@/renderer/logging/renderer-error-logging.ts";
 
 import { FellowshipLogsRateLimitData } from "./fellowship-logs-rate-limit-data.tsx";
 import { FellowshipLogsRateLimitRefreshErrorMessage } from "./fellowship-logs-rate-limit-refresh-error-message.tsx";
@@ -21,6 +22,7 @@ export function FellowshipLogsRateLimitSection() {
         <CatchBoundary
           errorComponent={RateLimitLoadError}
           getResetKey={() => "rate-limit-data"}
+          onCatch={logBoundaryError}
         >
           <Suspense fallback={<RateLimitDataSkeleton />}>
             <RateLimitContent />

@@ -9,7 +9,7 @@ import { MainDatabase } from "@frt/db/databases/main-database.ts";
 
 const CATALOG = "DUNGEON" as const;
 
-export const syncDungeonCatalog = E.fn("sync-dungeon-catalog")(function* () {
+export const syncDungeonCatalog = E.fn("syncDungeonCatalog")(function* () {
   const catalogSyncDAO = yield* CatalogSyncDAO;
   const sql = yield* MainDatabase;
 

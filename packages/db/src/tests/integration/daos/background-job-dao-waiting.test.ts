@@ -29,6 +29,7 @@ const insertJob = E.fn("test.insert-background-job")(function* (options?: {
     kind: "TestJob",
     payload: { value: 1 },
     queue: QUEUE,
+    traceparent: null,
   });
 });
 

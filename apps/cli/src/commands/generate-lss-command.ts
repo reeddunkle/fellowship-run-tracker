@@ -26,7 +26,7 @@ type GenerateLSSCommandInput = {
   readonly outputFilePath: string;
 };
 
-const runGenerateLSSCommand = E.fn("cli.generate-lss")(function* (
+const runGenerateLSSCommand = E.fn("runGenerateLSSCommand")(function* (
   input: GenerateLSSCommandInput,
 ) {
   const dungeonDAO = yield* DungeonDAO;

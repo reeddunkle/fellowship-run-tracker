@@ -18,6 +18,7 @@ type InsertBackgroundJobOptions = {
   readonly kind: string;
   readonly payload: Schema.Json;
   readonly queue: string;
+  readonly traceparent: string | null;
 };
 
 type InsertBackgroundJobResult = {

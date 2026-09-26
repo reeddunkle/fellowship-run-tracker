@@ -100,7 +100,7 @@ const makeBackgroundJobRunner = E.gen(function* () {
               return A.isReadonlyArrayNonEmpty(dungeonRunIds)
                 ? E.logInfo(
                     "Interrupted dungeon runs left unfinished by a previous session.",
-                    { dungeonRunIds },
+                    { dungeonRunCount: dungeonRunIds.length },
                   )
                 : E.void;
             }),
