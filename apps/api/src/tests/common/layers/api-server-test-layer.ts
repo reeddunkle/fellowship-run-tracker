@@ -11,6 +11,7 @@ import {
 import { type FellowshipTracker } from "@frt/api/application/fellowship-tracker/fellowship-tracker-service.ts";
 import { type AbilityCatalog } from "@frt/api/services/ability-catalog/ability-catalog-service.ts";
 import { type AppSettings } from "@frt/api/services/app-settings/app-settings-service.ts";
+import { AppVersion } from "@frt/api/services/app-version/app-version-service.ts";
 import { type BackgroundJob } from "@frt/api/services/background-job/background-job-service.ts";
 import { type ConfigurationLibrary } from "@frt/api/services/configuration-library/configuration-library-service.ts";
 import { type DungeonCatalog } from "@frt/api/services/dungeon-catalog/dungeon-catalog-service.ts";
@@ -57,6 +58,8 @@ type ApiServiceTestLayer =
   | Layer.Layer<LiveSplit>
   | Layer.Layer<UnitCatalog>;
 
+export const TEST_APP_VERSION = "0.0.0-test";
+
 export const ApiServicesTest: Layer.Layer<ApiServices> = Layer.mergeAll(
   AbilityCatalogMock,
   AppSettingsMock,
@@ -82,6 +85,7 @@ export function makeApiServerTestLayer(
 ) {
   const ApiServerDependenciesTest = Layer.mergeAll(
     apiServicesLayer,
+    AppVersion.layerWith(TEST_APP_VERSION),
     BackgroundJobWebSocketBroadcaster.layer,
     DungeonRunWebSocketBroadcaster.layer,
     LiveSplitWebSocketBroadcaster.layer,

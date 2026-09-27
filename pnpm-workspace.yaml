@@ -96,6 +96,7 @@ catalogs:
 
     "vitest-browser-react": "^2.2.0"
   tooling:
+    "@changesets/cli": "^3.0.3"
     "@oxlint/plugins": ^1.83.0
     "@vercel/nft": "1.11.0"
     "jsonc-parser": ^3.3.1

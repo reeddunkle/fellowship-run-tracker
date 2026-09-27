@@ -1,6 +1,5 @@
 {
   "name": "fellowship-run-tracker",
-  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,6 +7,8 @@
     "build": "run-s clean:build generate:catalog-checksums build:package",
     "build:electron": "pnpm -F @frt/electron build",
     "build:package": "pnpm -F @frt/electron make",
+    "changeset": "changeset",
+    "changeset:version": "changeset version",
     "check": "run-s lint test typecheck knip",
     "clean": "pnpm clean:build && pnpm clean:node-modules",
     "clean:build": "pnpm -r run clean",
@@ -52,6 +53,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "catalog:biome",
+    "@changesets/cli": "catalog:tooling",
     "@effect/tsgo": "catalog:effect",
     "@effect/tsgo-win32-x64": "catalog:effect",
     "@mermaid-js/mermaid-cli": "catalog:mermaid",

@@ -6,6 +6,7 @@ import { publishBackgroundJobChanges } from "@frt/api/api/websocket/background-j
 import { publishLiveSplitStatusChanges } from "@frt/api/api/websocket/live-split/publish-live-split-status-changes.ts";
 import { publishTrackingStatusChanges } from "@frt/api/api/websocket/tracking/publish-tracking-status-changes.ts";
 import { SESSION_STARTED_AT } from "@frt/api/helpers/session-started-at.ts";
+import { AppVersion } from "@frt/api/services/app-version/app-version-service.ts";
 import { BackgroundJobQueue } from "@frt/api/services/background-job-queue/background-job-queue-service.ts";
 
 const queueStartupJobs = E.gen(function* () {
@@ -35,8 +36,11 @@ const queueStartupJobs = E.gen(function* () {
 const runApiLifecycle = E.gen(function* () {
   const httpServer = yield* HttpServer.HttpServer;
 
+  const appVersion = yield* AppVersion;
+
   yield* E.logInfo("Fellowship API server running.", {
     address: HttpServer.formatAddress(httpServer.address),
+    appVersion,
   });
 
   yield* publishBackgroundJobChanges.pipe(E.forkScoped);

@@ -13,6 +13,7 @@ import { DungeonsApiLayer } from "@frt/api/api/http/groups/dungeons/dungeons-api
 import { EncountersApiLayer } from "@frt/api/api/http/groups/encounters/encounters-api-layer.ts";
 import { FellowshipLogsApiLayer } from "@frt/api/api/http/groups/fellowship-logs/fellowship-logs-api-layer.ts";
 import { LiveSplitApiLayer } from "@frt/api/api/http/groups/live-split/live-split-api-layer.ts";
+import { MetaApiLayer } from "@frt/api/api/http/groups/meta/meta-api-layer.ts";
 import { TrackingApiLayer } from "@frt/api/api/http/groups/tracking/tracking-api-layer.ts";
 import { UnitsApiLayer } from "@frt/api/api/http/groups/units/units-api-layer.ts";
 import { BackgroundJobRoutes } from "@frt/api/api/websocket/background-job/background-job-events-route.ts";
@@ -46,6 +47,7 @@ const HttpApiRoutes = HttpApiBuilder.layer(AppHttpApi).pipe(
   Layer.provide(EncountersApiLayer),
   Layer.provide(FellowshipLogsApiLayer),
   Layer.provide(LiveSplitApiLayer),
+  Layer.provide(MetaApiLayer),
   Layer.provide(TrackingApiLayer),
   Layer.provide(UnitsApiLayer),
 );

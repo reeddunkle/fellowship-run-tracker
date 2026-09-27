@@ -9,7 +9,8 @@ import { ApiLayer } from "@frt/api/layers/api-layer.ts";
 import { NodePathLayer } from "@frt/api/layers/node-platform-layer.ts";
 import { makePersistenceLayer } from "@frt/api/layers/persistence-layer.ts";
 import { logCause } from "@frt/api/logging/log-cause.ts";
-import { makeAppObservabilityLayer } from "@frt/api/services/observability/app-observability-layer.ts";
+import { AppVersion } from "@frt/api/services/app-version/app-version-service.ts";
+import { AppObservabilityLayer } from "@frt/api/services/observability/app-observability-layer.ts";
 
 import { makeAppStateLayer } from "@/services/app-state/app-state-service-layer.ts";
 import { WindowState } from "@/services/window-state/window-state-service.ts";
@@ -30,12 +31,8 @@ const ElectronApplicationLayer = Layer.unwrap(
 
 const ElectronLayer = ElectronApplicationLayer.pipe(
   Layer.tapCause(logCause),
-  Layer.provideMerge(
-    Layer.mergeAll(
-      makeAppObservabilityLayer({ serviceVersion: app.getVersion() }),
-      NodePathLayer,
-    ),
-  ),
+  Layer.provideMerge(Layer.mergeAll(AppObservabilityLayer, NodePathLayer)),
+  Layer.provideMerge(AppVersion.layerWith(app.getVersion())),
 );
 
 export const electronRuntime = ManagedRuntime.make(ElectronLayer);

@@ -12,8 +12,11 @@ import {
 } from "@frt/ui/card.tsx";
 
 import * as diagnosticsClient from "@/renderer/api/electron-ipc/diagnostics/diagnostics-client.ts";
+import { useMetaSuspense } from "@/renderer/api/meta/meta-queries.ts";
 
 export function DiagnosticsSettings() {
+  const meta = useMetaSuspense();
+
   const openLogsFolderMutation = useMutation({
     mutationFn: () => {
       return E.runPromise(diagnosticsClient.openLogsFolder());
@@ -29,6 +32,9 @@ export function DiagnosticsSettings() {
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-3">
+        <p className="text-sm text-muted-foreground">
+          Version {meta.appVersion}
+        </p>
         <div>
           <Button
             disabled={openLogsFolderMutation.isPending}

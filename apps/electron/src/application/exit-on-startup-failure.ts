@@ -2,6 +2,8 @@ import * as Cause from "effect/Cause";
 import * as Exit from "effect/Exit";
 import { app } from "electron";
 
+import { DatabaseNewerThanAppError } from "@frt/db/errors/database-newer-than-app-error.ts";
+
 import { showFatalErrorDialog } from "@/application/show-fatal-error-dialog.ts";
 
 const DIALOG_TITLE = "Fellowship Run Tracker failed to start";
@@ -28,7 +30,13 @@ function findSystemError(
 }
 
 function getFailureMessage<E>(cause: Cause.Cause<E>) {
-  const addressInUseError = findSystemError(Cause.squash(cause), "EADDRINUSE");
+  const error = Cause.squash(cause);
+
+  if (error instanceof DatabaseNewerThanAppError) {
+    return error.message;
+  }
+
+  const addressInUseError = findSystemError(error, "EADDRINUSE");
 
   if (addressInUseError !== undefined) {
     const address = `${String(addressInUseError.address)}:${String(addressInUseError.port)}`;

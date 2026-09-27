@@ -22,6 +22,7 @@ import {
   makeStateDatabaseLayer,
   StateDatabase,
 } from "@frt/db/databases/state-database.ts";
+import { DatabaseNewerThanAppError } from "@frt/db/errors/database-newer-than-app-error.ts";
 import { runTest } from "@frt/db/tests/common/run-test.ts";
 
 function listTables(sql: SqlClient.SqlClient) {
@@ -246,6 +247,39 @@ describe("Databases", () => {
     });
 
     await runTest(program);
+  });
+
+  test("refuses to open a main database migrated by a newer app version", async () => {
+    const program = withTempDirectory((directory) => {
+      return E.gen(function* () {
+        const path = yield* Path.Path;
+        const filename = path.join(directory, "main.db");
+
+        yield* E.gen(function* () {
+          const sql = yield* MainDatabase;
+
+          yield* sql`
+            INSERT INTO
+              effect_sql_migrations (migration_id, name)
+            VALUES
+              (999, 'from_the_future')
+          `;
+        }).pipe(E.provide(makeMainDatabaseLayer(filename)));
+
+        return yield* E.void.pipe(
+          E.provide(makeMainDatabaseLayer(filename)),
+          E.flip,
+        );
+      });
+    });
+
+    expect(await runTest(program)).toEqual(
+      new DatabaseNewerThanAppError({
+        database: "Main",
+        databaseVersion: 999,
+        supportedDatabaseVersion: 1,
+      }),
+    );
   });
 
   test("creates the database parent directory on first startup", async () => {

@@ -12,6 +12,7 @@ import {
   NodePathLayer,
 } from "@frt/api/layers/node-platform-layer.ts";
 import { SESSION_TRACE_FILE_PATH } from "@frt/api/logging/log-file-path.ts";
+import { AppVersion } from "@frt/api/services/app-version/app-version-service.ts";
 import { AppLoggerLayer } from "@frt/api/services/logging/app-logger-service.ts";
 import { makeFileOtlpHttpClientLayer } from "@frt/api/services/observability/file-otlp-http-client.ts";
 import { FilterNoisySpansLayer } from "@frt/api/services/observability/filter-noisy-spans-layer.ts";
@@ -23,10 +24,6 @@ const SHUTDOWN_TIMEOUT = "3 seconds";
 const TRACE_FILE_MAX_BYTES = 50 * 1024 * 1024;
 
 const FILE_TRACES_URL = "file:///v1/traces";
-
-type AppObservabilityOptions = {
-  readonly serviceVersion: string;
-};
 
 type OtlpResource = {
   readonly serviceName: string;
@@ -62,21 +59,22 @@ function makeCollectorTelemetryLayer(resource: OtlpResource, endpoint: URL) {
   }).pipe(Layer.provide(NodeHttpClientLayer));
 }
 
-export function makeAppObservabilityLayer({
-  serviceVersion,
-}: AppObservabilityOptions) {
-  const resource = { serviceName: SERVICE_NAME, serviceVersion };
+const TelemetryLayer = Layer.unwrap(
+  E.gen(function* () {
+    const resource = {
+      serviceName: SERVICE_NAME,
+      serviceVersion: yield* AppVersion,
+    };
 
-  const TelemetryLayer = Layer.unwrap(
-    E.gen(function* () {
-      const endpoint = yield* appConfig.otelExporterOtlpEndpoint;
+    const endpoint = yield* appConfig.otelExporterOtlpEndpoint;
 
-      return Option.match(endpoint, {
-        onNone: () => makeFileTracingLayer(resource),
-        onSome: (url) => makeCollectorTelemetryLayer(resource, url),
-      });
-    }),
-  );
+    return Option.match(endpoint, {
+      onNone: () => makeFileTracingLayer(resource),
+      onSome: (url) => makeCollectorTelemetryLayer(resource, url),
+    });
+  }),
+);
 
-  return TelemetryLayer.pipe(Layer.provideMerge(AppLoggerLayer));
-}
+export const AppObservabilityLayer = TelemetryLayer.pipe(
+  Layer.provideMerge(AppLoggerLayer),
+);

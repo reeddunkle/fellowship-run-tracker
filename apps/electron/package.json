@@ -1,7 +1,7 @@
 {
   "name": "@frt/electron",
   "productName": "Fellowship Run Tracker",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Track Fellowship runs against configured milestones.",
   "author": "vantra",
   "private": true,
