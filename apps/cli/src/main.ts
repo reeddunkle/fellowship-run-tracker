@@ -1,7 +1,7 @@
 import { NodeServices } from "@effect/platform-node";
 import * as NodeRuntime from "@effect/platform-node/NodeRuntime";
+import * as Command from "effect/cli/Command";
 import * as E from "effect/Effect";
-import * as Command from "effect/unstable/cli/Command";
 
 import { captureFellowshipLogsReportCommand } from "@frt/cli/commands/capture-fellowship-logs-report-command.ts";
 import { filterLogCommand } from "@frt/cli/commands/filter-log-command.ts";

@@ -6,6 +6,8 @@ import * as Duration from "effect/Duration";
 import * as E from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Fiber from "effect/Fiber";
+import * as Headers from "effect/http/Headers";
+import * as HttpTraceContext from "effect/http/HttpTraceContext";
 import * as Latch from "effect/Latch";
 import * as Option from "effect/Option";
 import * as Predicate from "effect/Predicate";
@@ -15,8 +17,6 @@ import * as Schedule from "effect/Schedule";
 import * as Schema from "effect/Schema";
 import * as Semaphore from "effect/Semaphore";
 import * as SubscriptionRef from "effect/SubscriptionRef";
-import * as Headers from "effect/unstable/http/Headers";
-import * as HttpTraceContext from "effect/unstable/http/HttpTraceContext";
 
 import {
   BackgroundJobAttemptsExhaustedError,

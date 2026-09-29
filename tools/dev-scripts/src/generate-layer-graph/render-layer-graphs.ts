@@ -1,6 +1,6 @@
 import { NodeRuntime, NodeServices } from "@effect/platform-node";
 import * as E from "effect/Effect";
-import { ChildProcessSpawner } from "effect/unstable/process";
+import { ChildProcessSpawner } from "effect/process";
 
 import { makePnpmCommand } from "@frt/api/helpers/make-pnpm-command.ts";
 

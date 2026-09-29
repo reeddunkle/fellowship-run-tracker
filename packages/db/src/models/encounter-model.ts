@@ -1,4 +1,4 @@
-import * as Model from "effect/unstable/schema/Model";
+import * as Model from "effect/schema/Model";
 
 import { DungeonIdSchema } from "@frt/shared/fellowship/validation/fellowship-common.ts";
 import { NonEmptyStringSchema } from "@frt/shared/util/common-schemas.ts";

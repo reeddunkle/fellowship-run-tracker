@@ -7,7 +7,7 @@ import * as Redacted from "effect/Redacted";
 import * as Ref from "effect/Ref";
 import * as Schema from "effect/Schema";
 import * as Semaphore from "effect/Semaphore";
-import type * as SqlError from "effect/unstable/sql/SqlError";
+import type * as SqlError from "effect/sql/SqlError";
 
 import { appConfig } from "@frt/api/app-config.ts";
 import { type EncryptionError } from "@frt/api/errors/encryption-error.ts";

@@ -1,6 +1,6 @@
+import * as Command from "effect/cli/Command";
 import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Command from "effect/unstable/cli/Command";
 
 import { getDatabaseOptions } from "@frt/api/helpers/get-database-options.ts";
 import { makeAnalyticsDatabaseLayer } from "@frt/db/databases/analytics-database.ts";

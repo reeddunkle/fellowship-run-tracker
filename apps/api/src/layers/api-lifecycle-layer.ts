@@ -1,6 +1,6 @@
 import * as E from "effect/Effect";
+import * as HttpServer from "effect/http/HttpServer";
 import * as Layer from "effect/Layer";
-import * as HttpServer from "effect/unstable/http/HttpServer";
 
 import { publishBackgroundJobChanges } from "@frt/api/api/websocket/background-job/publish-background-job-changes.ts";
 import { publishLiveSplitStatusChanges } from "@frt/api/api/websocket/live-split/publish-live-split-status-changes.ts";

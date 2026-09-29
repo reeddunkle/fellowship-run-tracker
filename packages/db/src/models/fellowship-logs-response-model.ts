@@ -1,5 +1,5 @@
 import * as Schema from "effect/Schema";
-import * as Model from "effect/unstable/schema/Model";
+import * as Model from "effect/schema/Model";
 
 import { FellowshipLogsResponseOperationSchema } from "@frt/db/validation/fellowship-logs-response/fellowship-logs-response-operation-schema.ts";
 import { FellowshipLogsFightIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";

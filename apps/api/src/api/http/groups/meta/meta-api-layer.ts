@@ -1,6 +1,6 @@
 import * as E from "effect/Effect";
+import * as HttpApiBuilder from "effect/http-api/HttpApiBuilder";
 import type * as Layer from "effect/Layer";
-import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 
 import { AppVersion } from "@frt/api/services/app-version/app-version-service.ts";
 import { API_CONTRACT_VERSION } from "@frt/api-contract/constants/api-contract-version.ts";

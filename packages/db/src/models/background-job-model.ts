@@ -1,5 +1,5 @@
 import * as Schema from "effect/Schema";
-import * as Model from "effect/unstable/schema/Model";
+import * as Model from "effect/schema/Model";
 
 import { BackgroundJobFailureSchema } from "@frt/shared/background-job/background-job-failure-schema.ts";
 import { BackgroundJobIdSchema } from "@frt/shared/background-job/background-job-id-schema.ts";

@@ -1,6 +1,7 @@
 import { TextDecoder } from "node:util";
 
-import * as FileSystem from "effect/FileSystem";
+import * as ByteSize from "effect/ByteSize";
+import type * as FileSystem from "effect/FileSystem";
 import * as Option from "effect/Option";
 
 import { getDateEpochMilliseconds } from "@frt/api/util/get-date-epoch-milliseconds.ts";
@@ -10,11 +11,11 @@ export type FileData = {
   readonly fileId: string;
   readonly filePath: string;
   readonly modifiedAtEpochMilliseconds: number;
-  readonly size: FileSystem.Size;
+  readonly size: ByteSize.ByteSize;
 };
 
 export type FileReadState = {
-  readonly byteOffset: FileSystem.Size;
+  readonly byteOffset: ByteSize.ByteSize;
   readonly decoder: TextDecoder;
   readonly file: FileData;
   readonly incompleteLine: string;
@@ -69,7 +70,7 @@ export function createFileReadState({
   byteOffset,
   file,
 }: {
-  readonly byteOffset: FileSystem.Size;
+  readonly byteOffset: ByteSize.ByteSize;
   readonly file: FileData;
 }): FileReadState {
   return {
@@ -82,7 +83,7 @@ export function createFileReadState({
 
 export function createFileReadStateFromBeginning(file: FileData) {
   return createFileReadState({
-    byteOffset: FileSystem.Size(0),
+    byteOffset: ByteSize.bytes(0),
     file,
   });
 }

@@ -1,8 +1,8 @@
+import * as FetchHttpClient from "effect/http/FetchHttpClient";
+import * as HttpClient from "effect/http/HttpClient";
 import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
-import * as FetchHttpClient from "effect/unstable/http/FetchHttpClient";
-import * as HttpClient from "effect/unstable/http/HttpClient";
-import * as Socket from "effect/unstable/socket/Socket";
+import * as Socket from "effect/socket/Socket";
 
 import { RendererLoggerLayer } from "@/renderer/logging/renderer-logger-layer.ts";
 import { AppApiClientLayer } from "@/renderer/services/app-api-client/app-api-client.ts";

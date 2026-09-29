@@ -1,6 +1,6 @@
 import * as Context from "effect/Context";
+import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Layer from "effect/Layer";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
 

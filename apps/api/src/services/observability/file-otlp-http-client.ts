@@ -1,12 +1,12 @@
 import * as Cause from "effect/Cause";
 import * as E from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
+import * as HttpClient from "effect/http/HttpClient";
+import type * as HttpClientRequest from "effect/http/HttpClientRequest";
+import * as HttpClientResponse from "effect/http/HttpClientResponse";
 import * as Layer from "effect/Layer";
 import * as Path from "effect/Path";
 import * as Semaphore from "effect/Semaphore";
-import * as HttpClient from "effect/unstable/http/HttpClient";
-import type * as HttpClientRequest from "effect/unstable/http/HttpClientRequest";
-import * as HttpClientResponse from "effect/unstable/http/HttpClientResponse";
 
 import { redactUserPaths } from "@frt/api/logging/redact-user-paths.ts";
 import { makeRepeatedFailureLogger } from "@frt/shared/util/make-repeated-failure-logger.ts";

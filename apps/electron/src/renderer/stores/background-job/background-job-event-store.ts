@@ -3,7 +3,7 @@ import * as E from "effect/Effect";
 import * as Fiber from "effect/Fiber";
 import * as Match from "effect/Match";
 import * as Stream from "effect/Stream";
-import type * as Socket from "effect/unstable/socket/Socket";
+import type * as Socket from "effect/socket/Socket";
 
 import { type BackgroundJobApiSnapshot } from "@frt/shared/background-job/background-job-api-schema.ts";
 

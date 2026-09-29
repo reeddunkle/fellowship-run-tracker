@@ -1,5 +1,6 @@
 import { type TextDecoder } from "node:util";
 
+import * as ByteSize from "effect/ByteSize";
 import * as Context from "effect/Context";
 import * as E from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
@@ -62,9 +63,9 @@ export type FileMonitorShape = {
 };
 
 type ReadFileRangeOptions = {
-  readonly bytesToRead: FileSystem.Size;
+  readonly bytesToRead: ByteSize.ByteSize;
   readonly filePath: string;
-  readonly offset: FileSystem.Size;
+  readonly offset: ByteSize.ByteSize;
 };
 
 type DecodeChunksOptions = {
@@ -128,9 +129,9 @@ const makeFileMonitor = E.gen(function* () {
         });
       }
 
-      const bytesToRead = FileSystem.Size(file.size - state.byteOffset);
+      const bytesToRead = ByteSize.bytes(file.size - state.byteOffset);
 
-      if (bytesToRead === FileSystem.Size(0)) {
+      if (bytesToRead === ByteSize.bytes(0)) {
         return {
           lines: [],
           state: {
@@ -163,7 +164,7 @@ const makeFileMonitor = E.gen(function* () {
       return {
         lines: splitResult.lines,
         state: {
-          byteOffset: FileSystem.Size(state.byteOffset + bytesRead),
+          byteOffset: ByteSize.bytes(state.byteOffset + bytesRead),
           decoder: state.decoder,
           file,
           incompleteLine: splitResult.incompleteLine,
@@ -219,7 +220,7 @@ const makeFileMonitor = E.gen(function* () {
                   onNone: () => {
                     const initialState = createFileReadState({
                       byteOffset:
-                        startFrom === "end" ? file.size : FileSystem.Size(0),
+                        startFrom === "end" ? file.size : ByteSize.bytes(0),
                       file,
                     });
 

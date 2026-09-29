@@ -1,22 +1,24 @@
 import * as E from "effect/Effect";
+import * as FetchHttpClient from "effect/http/FetchHttpClient";
+import * as HttpServer from "effect/http/HttpServer";
+import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Layer from "effect/Layer";
-import * as FetchHttpClient from "effect/unstable/http/FetchHttpClient";
-import * as HttpServer from "effect/unstable/http/HttpServer";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
+import * as NetAddress from "effect/net/NetAddress";
 
 import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
 
 import { AppApiClient } from "@/renderer/services/app-api-client/app-api-client.ts";
 
-function getHttpUrl(address: HttpServer.Address): string {
-  if (address._tag === "UnixAddress") {
+function getHttpUrl(address: NetAddress.SocketAddress): string {
+  if (NetAddress.isUnixPathAddress(address)) {
     throw new Error("HTTP test does not support Unix socket addresses.");
   }
 
-  const hostname =
-    address.hostname === "0.0.0.0" ? "127.0.0.1" : address.hostname;
+  const hostAddress = NetAddress.isUnspecified(address.address)
+    ? NetAddress.inetAddressUnsafe(NetAddress.ipv4Loopback, address.port)
+    : address;
 
-  return `http://${hostname}:${address.port}`;
+  return NetAddress.formatUrlUnsafe(hostAddress);
 }
 
 const makeTestAppApiClient = E.gen(function* () {

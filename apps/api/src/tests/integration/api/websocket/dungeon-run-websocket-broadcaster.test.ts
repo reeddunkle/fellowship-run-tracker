@@ -1,7 +1,7 @@
 import * as Data from "effect/Data";
 import * as Deferred from "effect/Deferred";
 import * as E from "effect/Effect";
-import * as HttpServer from "effect/unstable/http/HttpServer";
+import * as HttpServer from "effect/http/HttpServer";
 import { describe, expect, test } from "vitest";
 
 import {

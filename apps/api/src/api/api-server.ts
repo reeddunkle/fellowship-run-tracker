@@ -1,8 +1,8 @@
 import * as E from "effect/Effect";
+import * as HttpMiddleware from "effect/http/HttpMiddleware";
+import * as HttpRouter from "effect/http/HttpRouter";
+import * as HttpApiBuilder from "effect/http-api/HttpApiBuilder";
 import * as Layer from "effect/Layer";
-import * as HttpMiddleware from "effect/unstable/http/HttpMiddleware";
-import * as HttpRouter from "effect/unstable/http/HttpRouter";
-import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 
 import { AbilitiesApiLayer } from "@frt/api/api/http/groups/abilities/abilities-api-layer.ts";
 import { AppSettingsApiLayer } from "@frt/api/api/http/groups/app-settings/app-settings-api-layer.ts";

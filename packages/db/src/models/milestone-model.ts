@@ -1,4 +1,4 @@
-import * as Model from "effect/unstable/schema/Model";
+import * as Model from "effect/schema/Model";
 
 import { MilestoneIdSchema } from "@frt/db/validation/milestone/milestone-id-schema.ts";
 import { ConfigurationIdSchema } from "@frt/shared/configuration/configuration-id-schema.ts";

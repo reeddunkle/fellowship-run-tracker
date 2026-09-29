@@ -3,7 +3,7 @@ import type * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import type * as Option from "effect/Option";
 import type * as Schema from "effect/Schema";
-import type * as SqlError from "effect/unstable/sql/SqlError";
+import type * as SqlError from "effect/sql/SqlError";
 
 import { makeLiveSplitSettingDAO } from "@frt/db/daos/live-split-setting/make-live-split-setting-dao.ts";
 import { type LiveSplitSettingModel } from "@frt/db/models/live-split-setting-model.ts";

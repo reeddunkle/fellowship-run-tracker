@@ -5,7 +5,7 @@ import * as Queue from "effect/Queue";
 import * as Schedule from "effect/Schedule";
 import * as Schema from "effect/Schema";
 import * as Stream from "effect/Stream";
-import * as Socket from "effect/unstable/socket/Socket";
+import * as Socket from "effect/socket/Socket";
 
 import { ROUTES } from "@frt/api-contract/constants/routes.ts";
 import {
@@ -100,31 +100,38 @@ function makeLiveSplitEventStreamForUrl(
         );
 
         const socket = yield* Socket.makeWebSocket(url, {
-          closeCodeIsError: (code) => {
-            return code !== 1000;
-          },
           openTimeout: "5 seconds",
         });
 
-        yield* socket.runString(
-          (data) => {
-            return E.gen(function* () {
-              const message = yield* decodeMessage(data);
+        const pull = yield* Socket.readerString(socket);
 
-              yield* Queue.offer(queue, {
-                message,
-                type: "MESSAGE_RECEIVED",
-              });
-            });
-          },
-          {
-            onOpen: offerConnectionState(
+        yield* offerConnectionState(
+          queue,
+          API_EVENT_CONNECTION_STATE.CONNECTED,
+        ).pipe(E.andThen(connectionFailures.onSuccess));
+
+        return yield* pull.pipe(
+          E.flatMap((data) => {
+            return E.forEach(data, decodeMessage);
+          }),
+          E.flatMap((messages) => {
+            return Queue.offerAll(
               queue,
-              API_EVENT_CONNECTION_STATE.CONNECTED,
-            ).pipe(E.andThen(connectionFailures.onSuccess)),
-          },
+              messages.map((message): LiveSplitEventStreamEvent => {
+                return {
+                  message,
+                  type: "MESSAGE_RECEIVED",
+                };
+              }),
+            );
+          }),
+          E.forever,
         );
       }).pipe(
+        E.catchReason("SocketError", "SocketCloseError", (reason, error) => {
+          return reason.code === 1000 ? E.void : E.fail(error);
+        }),
+        E.scoped,
         E.ensuring(
           offerConnectionState(queue, API_EVENT_CONNECTION_STATE.DISCONNECTED),
         ),

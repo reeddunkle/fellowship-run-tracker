@@ -6,7 +6,7 @@ import * as Exit from "effect/Exit";
 import * as Match from "effect/Match";
 import * as Queue from "effect/Queue";
 import * as Stream from "effect/Stream";
-import type * as Socket from "effect/unstable/socket/Socket";
+import * as Socket from "effect/socket/Socket";
 
 type LiveSplitGatewayTransportChunk =
   | {
@@ -68,55 +68,61 @@ export const makeNodeLiveSplitGatewayTransport = E.fn(
 
   const chunksQueue = yield* Queue.unbounded<LiveSplitGatewayTransportChunk>();
 
-  const socketEffect = socket
-    .runString(
-      (socketChunk) => {
-        return Queue.offer(chunksQueue, {
-          data: socketChunk,
-          type: "CHUNK",
-        }).pipe(E.asVoid);
-      },
-      {
-        onOpen: E.gen(function* () {
-          yield* E.logDebug("LiveSplit TCP connection opened.", {
+  const socketEffect = E.gen(function* () {
+    const pull = yield* Socket.readerString(socket);
+
+    yield* E.logDebug("LiveSplit TCP connection opened.", {
+      host,
+      port,
+    });
+
+    yield* Deferred.succeed(connectedDeferred, undefined);
+
+    return yield* pull.pipe(
+      E.flatMap((socketChunks) => {
+        return Queue.offerAll(
+          chunksQueue,
+          socketChunks.map((data): LiveSplitGatewayTransportChunk => {
+            return {
+              data,
+              type: "CHUNK",
+            };
+          }),
+        );
+      }),
+      E.forever,
+    );
+  }).pipe(
+    E.scoped,
+    E.tapError((error) => {
+      return Deferred.fail(connectedDeferred, error);
+    }),
+    E.exit,
+    E.tap((exit) => {
+      return Queue.offer(chunksQueue, {
+        exit,
+        type: "END",
+      });
+    }),
+    E.tap((exit) => {
+      return Exit.match(exit, {
+        onFailure: (cause) => {
+          return E.logDebug("LiveSplit TCP connection failed.", {
+            cause: Cause.pretty(cause),
             host,
             port,
           });
-
-          yield* Deferred.succeed(connectedDeferred, undefined);
-        }),
-      },
-    )
-    .pipe(
-      E.tapError((error) => {
-        return Deferred.fail(connectedDeferred, error);
-      }),
-      E.exit,
-      E.tap((exit) => {
-        return Queue.offer(chunksQueue, {
-          exit,
-          type: "END",
-        });
-      }),
-      E.tap((exit) => {
-        return Exit.match(exit, {
-          onFailure: (cause) => {
-            return E.logDebug("LiveSplit TCP connection failed.", {
-              cause: Cause.pretty(cause),
-              host,
-              port,
-            });
-          },
-          onSuccess: () => {
-            return E.logDebug("LiveSplit TCP connection ended.", {
-              host,
-              port,
-            });
-          },
-        });
-      }),
-      E.asVoid,
-    );
+        },
+        onSuccess: () => {
+          return E.logDebug("LiveSplit TCP connection ended.", {
+            host,
+            port,
+          });
+        },
+      });
+    }),
+    E.asVoid,
+  );
 
   yield* socketEffect.pipe(E.forkScoped);
 
@@ -154,7 +160,7 @@ export const makeNodeLiveSplitGatewayTransport = E.fn(
     connected,
 
     write: (data) => {
-      return socketWriter(data).pipe(
+      return socketWriter.write(data).pipe(
         E.tapCause((cause) => {
           return E.logDebug("LiveSplit TCP write failed.", {
             cause: Cause.pretty(cause),

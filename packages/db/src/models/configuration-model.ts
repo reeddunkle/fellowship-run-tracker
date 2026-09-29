@@ -1,5 +1,5 @@
 import * as Schema from "effect/Schema";
-import * as Model from "effect/unstable/schema/Model";
+import * as Model from "effect/schema/Model";
 
 import { ConfigurationDefinitionIdSchema } from "@frt/db/validation/configuration/configuration-definition-id-schema.ts";
 import { ConfigurationFingerprintSchema } from "@frt/shared/configuration/configuration-fingerprint-schema.ts";

@@ -4,7 +4,7 @@ import * as HashSet from "effect/HashSet";
 import * as Layer from "effect/Layer";
 import * as Ref from "effect/Ref";
 import type * as Scope from "effect/Scope";
-import type * as Socket from "effect/unstable/socket/Socket";
+import type * as Socket from "effect/socket/Socket";
 
 export type WebSocketWriter = (
   message: string,

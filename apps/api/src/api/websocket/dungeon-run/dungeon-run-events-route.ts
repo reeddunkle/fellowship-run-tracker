@@ -1,8 +1,7 @@
 import * as E from "effect/Effect";
-import * as HttpRouter from "effect/unstable/http/HttpRouter";
-import * as HttpServerRequest from "effect/unstable/http/HttpServerRequest";
-import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
-import * as Socket from "effect/unstable/socket/Socket";
+import * as HttpRouter from "effect/http/HttpRouter";
+import * as HttpServerRequest from "effect/http/HttpServerRequest";
+import * as HttpServerResponse from "effect/http/HttpServerResponse";
 
 import { DungeonRunWebSocketBroadcaster } from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
 import { ROUTES } from "@frt/api-contract/constants/routes.ts";
@@ -22,7 +21,7 @@ const handleDungeonRunEventsRequest = E.gen(function* () {
       const writer = yield* socket.writer;
 
       const writeMessage = (message: string) => {
-        return writer(message);
+        return writer.write(message);
       };
 
       yield* runWebSocketBroadcaster.registerClient(writeMessage);
@@ -34,29 +33,20 @@ const handleDungeonRunEventsRequest = E.gen(function* () {
         url: request.url,
       });
 
-      yield* socket
-        .runRaw(
-          () => {
-            return E.void;
-          },
-          {
-            onOpen: E.gen(function* () {
-              yield* E.logDebug("DungeonRun WebSocket socket opened.", {
-                url: request.url,
-              });
+      const { pull } = yield* socket.reader;
 
-              yield* runWebSocketBroadcaster.sendLatestToClient(writeMessage);
-            }),
-          },
-        )
-        .pipe(
-          E.catchFilter(
-            Socket.SocketCloseError.filterClean((code) => {
-              return code === 1000;
-            }),
-            () => E.void,
-          ),
-        );
+      yield* E.logDebug("DungeonRun WebSocket socket opened.", {
+        url: request.url,
+      });
+
+      yield* runWebSocketBroadcaster.sendLatestToClient(writeMessage);
+
+      yield* pull.pipe(
+        E.forever,
+        E.catchReason("SocketError", "SocketCloseError", (reason, error) => {
+          return reason.code === 1000 ? E.void : E.fail(error);
+        }),
+      );
     }),
   ).pipe(
     E.ensuring(

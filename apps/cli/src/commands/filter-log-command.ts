@@ -1,6 +1,6 @@
+import * as Command from "effect/cli/Command";
+import * as Flag from "effect/cli/Flag";
 import * as E from "effect/Effect";
-import * as Command from "effect/unstable/cli/Command";
-import * as Flag from "effect/unstable/cli/Flag";
 
 import { filterFellowshipLogFile } from "@frt/api/services/fellowship/utilities/filter-fellowship-log-file.ts";
 import { NonEmptyStringSchema } from "@frt/shared/util/common-schemas.ts";
@@ -30,12 +30,12 @@ const runFilterLogCommand = E.fn("runFilterLogCommand")(function* (
 export const filterLogCommand = Command.make(
   "filter-log",
   {
-    inputFilePath: Flag.string("log").pipe(
+    inputFilePath: Flag.String("log").pipe(
       Flag.withAlias("l"),
       Flag.withSchema(NonEmptyStringSchema),
       Flag.withDescription("Fellowship combat log to filter."),
     ),
-    outputFilePath: Flag.string("output").pipe(
+    outputFilePath: Flag.String("output").pipe(
       Flag.withAlias("o"),
       Flag.withSchema(NonEmptyStringSchema),
       Flag.withDescription("Where to write the filtered log."),

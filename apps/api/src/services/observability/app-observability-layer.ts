@@ -1,9 +1,9 @@
 import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
-import * as Otlp from "effect/unstable/observability/Otlp";
-import * as OtlpSerialization from "effect/unstable/observability/OtlpSerialization";
-import * as OtlpTracer from "effect/unstable/observability/OtlpTracer";
+import * as Otlp from "effect/observability/Otlp";
+import * as OtlpSerialization from "effect/observability/OtlpSerialization";
+import * as OtlpTracer from "effect/observability/OtlpTracer";
 
 import { appConfig } from "@frt/api/app-config.ts";
 import {

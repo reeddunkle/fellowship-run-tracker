@@ -1,8 +1,8 @@
 import * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
+import * as HttpApiBuilder from "effect/http-api/HttpApiBuilder";
+import * as HttpApiError from "effect/http-api/HttpApiError";
 import type * as Layer from "effect/Layer";
-import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
-import * as HttpApiError from "effect/unstable/httpapi/HttpApiError";
 
 import { type DungeonRunRepositoryError } from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
 import {

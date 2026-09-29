@@ -2,7 +2,7 @@ import * as Context from "effect/Context";
 import type * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import type * as Scope from "effect/Scope";
-import type * as Socket from "effect/unstable/socket/Socket";
+import type * as Socket from "effect/socket/Socket";
 
 import {
   type LiveSplitGatewayTransport,

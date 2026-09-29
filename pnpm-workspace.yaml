@@ -12,6 +12,13 @@ minimumReleaseAge: 10080 # Minutes -- (7 days)
 minimumReleaseAgeExclude:
   - "@biomejs/*"
   - '@effect/tsgo*'
+  # Remove after 2026-10-05, once these clear minimumReleaseAge on their own.
+  - "@effect/platform-node@4.0.0-rc.118"
+  - "@effect/platform-node-shared@4.0.0-rc.118"
+  - "@effect/sql-sqlite-node@4.0.0-rc.118"
+  - "effect@4.0.0-rc.118"
+  - "undici@8.11.2"
+  - "ws@8.22.0"
   - "@types/node"
   - "tsx"
 
@@ -23,14 +30,13 @@ overrides:
   '@electron/rebuild': '^4.2.0'
 
   # @effect/platform-node depends on @effect/platform-node-shared via a caret
-  # range (e.g. ^4.0.0-beta.107), which semver lets resolve to a newer rc that
-  # requires a newer `effect` than the catalog's. Keep it on the catalog version.
+  # range, which semver lets resolve to a newer rc that requires a newer
+  # `effect` than the catalog's. Keep it on the catalog version.
   '@effect/platform-node-shared': 'catalog:effect'
 
 allowBuilds:
   '@playwright/browser-chromium': true # Playwright uses for browser tests
   esbuild: true # Vite/tsx use for builds
-  msgpackr-extract: false # Effect dependency via msgpackr
   puppeteer: true # Mermaid uses for rendering
 
 catalogs:
@@ -38,13 +44,13 @@ catalogs:
     "@biomejs/biome": "2.3.4"
   effect:
     # Match versions
-    "@effect/platform-node": "4.0.0-beta.107"
-    "@effect/platform-node-shared": "4.0.0-beta.107"
-    "@effect/sql-sqlite-node": "4.0.0-beta.107"
-    "effect": "4.0.0-beta.107"
+    "@effect/platform-node": "4.0.0-rc.118"
+    "@effect/platform-node-shared": "4.0.0-rc.118"
+    "@effect/sql-sqlite-node": "4.0.0-rc.118"
+    "effect": "4.0.0-rc.118"
 
     # Match versions
-    "@effect/tsgo": 0.45.0
+    "@effect/tsgo": "0.45.0"
     "@effect/tsgo-win32-x64": "0.45.0"
   electron:
     "electron": "^44.3.0"

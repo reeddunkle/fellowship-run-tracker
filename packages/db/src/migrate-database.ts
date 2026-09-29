@@ -1,9 +1,9 @@
 import * as A from "effect/Array";
 import * as E from "effect/Effect";
 import * as Schema from "effect/Schema";
-import * as Migrator from "effect/unstable/sql/Migrator";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
-import { type SqlError } from "effect/unstable/sql/SqlError";
+import * as Migrator from "effect/sql/Migrator";
+import * as SqlClient from "effect/sql/SqlClient";
+import { type SqlError } from "effect/sql/SqlError";
 
 import { DatabaseNewerThanAppError } from "@frt/db/errors/database-newer-than-app-error.ts";
 import { createInitialAnalyticsSchema } from "@frt/db/migrations/analytics/0001-initial/index.ts";

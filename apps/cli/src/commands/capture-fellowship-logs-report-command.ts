@@ -1,10 +1,10 @@
+import * as Command from "effect/cli/Command";
+import * as Flag from "effect/cli/Flag";
 import * as E from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
 import * as Option from "effect/Option";
 import * as Path from "effect/Path";
 import * as Stream from "effect/Stream";
-import * as Command from "effect/unstable/cli/Command";
-import * as Flag from "effect/unstable/cli/Flag";
 
 import { appConfig } from "@frt/api/app-config.ts";
 import { FellowshipLogsGatewayRequestError } from "@frt/api/errors/fellowship-logs-gateway-error.ts";
@@ -258,11 +258,11 @@ const runCaptureFellowshipLogsReportCommand = E.fn(
 export const captureFellowshipLogsReportCommand = Command.make(
   "capture-fellowship-logs-report",
   {
-    fightId: Flag.integer("fight-id").pipe(
+    fightId: Flag.Int("fight-id").pipe(
       Flag.withSchema(FellowshipLogsFightIdSchema),
       Flag.withDescription("Fight ID within the report."),
     ),
-    outputFilePath: Flag.string("output").pipe(
+    outputFilePath: Flag.String("output").pipe(
       Flag.withAlias("o"),
       Flag.withSchema(NonEmptyStringSchema),
       Flag.optional,
@@ -271,7 +271,7 @@ export const captureFellowshipLogsReportCommand = Command.make(
         "Fixture directory to write (defaults to the Fellowship Logs fixtures directory).",
       ),
     ),
-    reportCode: Flag.string("report-code").pipe(
+    reportCode: Flag.String("report-code").pipe(
       Flag.withSchema(FellowshipLogsReportCodeSchema),
       Flag.withDescription("Fellowship Logs report code."),
     ),

@@ -26,7 +26,7 @@ const makeSubgraphHeaderSchema = ({
 }) => {
   return Schema.String.pipe(
     Schema.decodeTo(SubgraphHeaderValueSchema, {
-      decode: SchemaGetter.transformOrFail((line, options) => {
+      decode: SchemaGetter.transformEffect((line, options) => {
         const match = pattern.exec(line);
         const id = match?.groups?.id;
         const name = match?.groups?.name;

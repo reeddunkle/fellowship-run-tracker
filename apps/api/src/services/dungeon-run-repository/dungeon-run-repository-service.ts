@@ -3,7 +3,7 @@ import type * as DateTime from "effect/DateTime";
 import type * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import type * as Option from "effect/Option";
-import type * as SqlError from "effect/unstable/sql/SqlError";
+import type * as SqlError from "effect/sql/SqlError";
 
 import { DungeonRunDAO } from "@frt/db/daos/dungeon-run/dungeon-run-dao.ts";
 import { DungeonRunObservationDAO } from "@frt/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";

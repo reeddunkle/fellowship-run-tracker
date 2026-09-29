@@ -1,7 +1,7 @@
+import * as Command from "effect/cli/Command";
+import * as Flag from "effect/cli/Flag";
 import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Command from "effect/unstable/cli/Command";
-import * as Flag from "effect/unstable/cli/Flag";
 
 import { getDatabaseOptions } from "@frt/api/helpers/get-database-options.ts";
 import { makePersistenceLayer } from "@frt/api/layers/persistence-layer.ts";
@@ -63,12 +63,12 @@ const runGenerateLSSCommand = E.fn("runGenerateLSSCommand")(function* (
 export const generateLSSCommand = Command.make(
   "generate-lss",
   {
-    configurationFilePath: Flag.string("configuration").pipe(
+    configurationFilePath: Flag.String("configuration").pipe(
       Flag.withAlias("c"),
       Flag.withSchema(NonEmptyStringSchema),
       Flag.withDescription("Milestone configuration JSON file."),
     ),
-    outputFilePath: Flag.string("output").pipe(
+    outputFilePath: Flag.String("output").pipe(
       Flag.withAlias("o"),
       Flag.withSchema(NonEmptyStringSchema),
       Flag.withDescription("Where to write the LiveSplit .lss file."),

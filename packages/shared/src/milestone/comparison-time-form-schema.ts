@@ -67,7 +67,7 @@ export function formatComparisonTime(value: number | null): string {
 
 export const ComparisonTimeFormSchema = Schema.String.pipe(
   Schema.decodeTo(Schema.NullOr(NonNegativeIntegerSchema), {
-    decode: SchemaGetter.transformOrFail((value) => {
+    decode: SchemaGetter.transformEffect((value) => {
       if (value === "") {
         return E.succeed(null);
       }

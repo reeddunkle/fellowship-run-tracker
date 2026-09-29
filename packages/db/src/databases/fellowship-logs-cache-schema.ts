@@ -1,6 +1,6 @@
 import * as E from "effect/Effect";
 import * as Schema from "effect/Schema";
-import type * as SqlClient from "effect/unstable/sql/SqlClient";
+import type * as SqlClient from "effect/sql/SqlClient";
 
 export const FELLOWSHIP_LOGS_CACHE_SCHEMA_VERSION = 1;
 

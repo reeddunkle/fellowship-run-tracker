@@ -2,8 +2,8 @@ import { NodeFileSystem, NodePath } from "@effect/platform-node";
 import * as Context from "effect/Context";
 import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Reactivity from "effect/unstable/reactivity/Reactivity";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
+import * as Reactivity from "effect/reactivity/Reactivity";
+import * as SqlClient from "effect/sql/SqlClient";
 
 import { openSqliteDatabase } from "@frt/db/databases/open-sqlite-database.ts";
 import { migrateMainDatabase } from "@frt/db/migrate-database.ts";

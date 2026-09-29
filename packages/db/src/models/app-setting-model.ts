@@ -1,4 +1,4 @@
-import * as Model from "effect/unstable/schema/Model";
+import * as Model from "effect/schema/Model";
 
 import {
   FellowshipLogDirectorySchema,

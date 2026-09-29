@@ -1,4 +1,4 @@
-import * as Model from "effect/unstable/schema/Model";
+import * as Model from "effect/schema/Model";
 
 import { CatalogNameSchema } from "@frt/db/validation/catalog-sync/catalog-sync-schema.ts";
 import { NonEmptyStringSchema } from "@frt/shared/util/common-schemas.ts";

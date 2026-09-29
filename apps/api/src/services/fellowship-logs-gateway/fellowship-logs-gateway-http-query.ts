@@ -1,12 +1,8 @@
 import * as Clock from "effect/Clock";
 import * as E from "effect/Effect";
+import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/http";
 import * as Option from "effect/Option";
 import * as SynchronizedRef from "effect/SynchronizedRef";
-import {
-  HttpClient,
-  HttpClientRequest,
-  HttpClientResponse,
-} from "effect/unstable/http";
 
 import {
   FellowshipLogsGatewayRateLimitRejectedError,

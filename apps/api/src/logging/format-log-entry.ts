@@ -4,7 +4,7 @@ import * as Logger from "effect/Logger";
 import { redactUserPaths } from "@frt/api/logging/redact-user-paths.ts";
 
 export const formatLogEntry = Logger.make((options) => {
-  const span = options.fiber.currentSpan;
+  const span = options.fiber.cache.span;
 
   return redactUserPaths(
     Formatter.formatJson({

@@ -5,7 +5,7 @@ import * as NodeServices from "@effect/platform-node/NodeServices";
 import * as A from "effect/Array";
 import * as Crypto from "effect/Crypto";
 import * as E from "effect/Effect";
-import * as Encoding from "effect/Encoding";
+import * as Hex from "effect/encoding/Hex";
 import * as FileSystem from "effect/FileSystem";
 import { pipe } from "effect/Function";
 import * as Layer from "effect/Layer";
@@ -68,7 +68,7 @@ const hashCatalog = E.fn("hash-catalog")(function* (
     new TextEncoder().encode(contents),
   );
 
-  return Encoding.encodeHex(digest);
+  return Hex.encode(digest);
 });
 
 const generateCatalogChecksums = E.gen(function* () {

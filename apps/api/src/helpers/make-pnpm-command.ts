@@ -1,6 +1,6 @@
 import * as Config from "effect/Config";
 import * as E from "effect/Effect";
-import { ChildProcess } from "effect/unstable/process";
+import { ChildProcess } from "effect/process";
 
 export function makePnpmCommand(
   args: ReadonlyArray<string>,
@@ -11,7 +11,7 @@ export function makePnpmCommand(
   }
 
   return E.gen(function* () {
-    const comSpec = yield* Config.string("ComSpec").pipe(
+    const comSpec = yield* Config.String("ComSpec").pipe(
       E.orElseSucceed(() => "cmd.exe"),
     );
 

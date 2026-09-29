@@ -1,10 +1,10 @@
+import * as Command from "effect/cli/Command";
+import * as Flag from "effect/cli/Flag";
 import * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
 import * as Option from "effect/Option";
 import * as Path from "effect/Path";
-import * as Command from "effect/unstable/cli/Command";
-import * as Flag from "effect/unstable/cli/Flag";
 
 import {
   ReplayLogFileEmptyInputError,
@@ -183,29 +183,29 @@ const runReplayLogCommand = E.fn("runReplayLogCommand")(function* ({
 export const replayLogCommand = Command.make(
   "replay-log",
   {
-    initialDelayMilliseconds: Flag.float("initial-delay").pipe(
+    initialDelayMilliseconds: Flag.Finite("initial-delay").pipe(
       Flag.withSchema(NonNegativeNumberSchema),
       Flag.withDefault(1_000),
       Flag.withDescription("Milliseconds to wait before the first line."),
     ),
-    inputFilePath: Flag.string("input").pipe(
+    inputFilePath: Flag.String("input").pipe(
       Flag.withAlias("i"),
       Flag.withSchema(NonEmptyStringSchema),
       Flag.withDescription("Existing Fellowship combat log to replay."),
     ),
-    maxDelayMilliseconds: Flag.float("max-delay").pipe(
+    maxDelayMilliseconds: Flag.Finite("max-delay").pipe(
       Flag.withSchema(NonNegativeNumberSchema),
       Flag.withDefault(10_000),
       Flag.withDescription("Longest wait between two replayed lines."),
     ),
-    outputFilePath: Flag.string("output").pipe(
+    outputFilePath: Flag.String("output").pipe(
       Flag.withAlias("o"),
       Flag.withSchema(NonEmptyStringSchema),
       Flag.withDescription(
         "Where to write the replayed log (e.g. the Fellowship log directory).",
       ),
     ),
-    speed: Flag.integer("speed").pipe(
+    speed: Flag.Int("speed").pipe(
       Flag.withAlias("s"),
       Flag.withSchema(PositiveIntegerSchema),
       Flag.withDefault(1),

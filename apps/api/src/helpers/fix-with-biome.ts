@@ -1,5 +1,5 @@
 import * as E from "effect/Effect";
-import { ChildProcessSpawner } from "effect/unstable/process";
+import { ChildProcessSpawner } from "effect/process";
 
 import { BiomeFixError } from "@frt/api/errors/biome-fix-error.ts";
 import { makePnpmCommand } from "@frt/api/helpers/make-pnpm-command.ts";

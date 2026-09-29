@@ -56,10 +56,10 @@ export const appConfig = {
     FellowshipLogsClientSecretSchema,
     "FELLOWSHIP_LOGS_CLIENT_SECRET",
   ).pipe(Config.option),
-  fellowshipLogsSimulateImports: Config.boolean(
+  fellowshipLogsSimulateImports: Config.Boolean(
     "FELLOWSHIP_LOGS_SIMULATE_IMPORTS",
   ).pipe(Config.withDefault(false)),
-  fellowshipLogsUseFixtures: Config.boolean(
+  fellowshipLogsUseFixtures: Config.Boolean(
     "FELLOWSHIP_LOGS_USE_FIXTURES",
   ).pipe(Config.withDefault(false)),
   liveSplitHost: Config.schema(LiveSplitHostSchema, "LIVE_SPLIT_HOST").pipe(
@@ -72,7 +72,7 @@ export const appConfig = {
       LiveSplitPortSchema.make(APP_CONFIG_DEFAULTS.LIVE_SPLIT_PORT),
     ),
   ),
-  otelExporterOtlpEndpoint: Config.url("OTEL_EXPORTER_OTLP_ENDPOINT").pipe(
+  otelExporterOtlpEndpoint: Config.URL("OTEL_EXPORTER_OTLP_ENDPOINT").pipe(
     Config.option,
   ),
   publicApiHost: Config.schema(PublicApiHostSchema, "PUBLIC_API_HOST").pipe(

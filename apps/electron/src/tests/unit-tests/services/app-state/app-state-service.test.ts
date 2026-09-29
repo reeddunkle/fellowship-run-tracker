@@ -1,6 +1,6 @@
 import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as KeyValueStore from "effect/unstable/persistence/KeyValueStore";
+import * as KeyValueStore from "effect/persistence/KeyValueStore";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { runTest } from "@frt/api/tests/common/run-test.ts";

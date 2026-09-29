@@ -1,4 +1,4 @@
-import * as HttpApi from "effect/unstable/httpapi/HttpApi";
+import * as HttpApi from "effect/http-api/HttpApi";
 
 import { AbilitiesApi } from "@frt/api-contract/http/groups/abilities/abilities-api.ts";
 import { AppSettingsApi } from "@frt/api-contract/http/groups/app-settings/app-settings-api.ts";

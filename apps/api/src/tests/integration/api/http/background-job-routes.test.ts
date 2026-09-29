@@ -1,10 +1,11 @@
 import * as E from "effect/Effect";
+import * as FetchHttpClient from "effect/http/FetchHttpClient";
+import type * as HttpClient from "effect/http/HttpClient";
+import * as HttpServer from "effect/http/HttpServer";
+import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Layer from "effect/Layer";
+import * as NetAddress from "effect/net/NetAddress";
 import * as Schema from "effect/Schema";
-import * as FetchHttpClient from "effect/unstable/http/FetchHttpClient";
-import type * as HttpClient from "effect/unstable/http/HttpClient";
-import * as HttpServer from "effect/unstable/http/HttpServer";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { describe, expect, test } from "vitest";
 
 import { BackgroundJobQueueNotFoundError } from "@frt/api/errors/background-job-queue-error.ts";
@@ -22,15 +23,16 @@ const JOB_ID = Schema.decodeSync(BackgroundJobIdSchema)(
   "00000000-0000-7000-8000-000000000000",
 );
 
-function getBaseUrl(address: HttpServer.Address) {
-  if (address._tag === "UnixAddress") {
+function getBaseUrl(address: NetAddress.SocketAddress) {
+  if (NetAddress.isUnixPathAddress(address)) {
     throw new Error("HTTP test does not support Unix socket addresses.");
   }
 
-  const hostname =
-    address.hostname === "0.0.0.0" ? "127.0.0.1" : address.hostname;
+  const hostAddress = NetAddress.isUnspecified(address.address)
+    ? NetAddress.inetAddressUnsafe(NetAddress.ipv4Loopback, address.port)
+    : address;
 
-  return `http://${hostname}:${address.port}`;
+  return NetAddress.formatUrlUnsafe(hostAddress);
 }
 
 function runWithBackgroundJob<A, Error>(

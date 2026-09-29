@@ -1,6 +1,6 @@
+import * as Command from "effect/cli/Command";
+import * as Flag from "effect/cli/Flag";
 import * as E from "effect/Effect";
-import * as Command from "effect/unstable/cli/Command";
-import * as Flag from "effect/unstable/cli/Flag";
 
 import { splitFellowshipLogFile } from "@frt/api/services/fellowship/utilities/split-fellowship-log-file.ts";
 import { NonEmptyStringSchema } from "@frt/shared/util/common-schemas.ts";
@@ -27,12 +27,12 @@ const runSplitLogCommand = E.fn("runSplitLogCommand")(function* (
 export const splitLogCommand = Command.make(
   "split-log",
   {
-    inputFilePath: Flag.string("log").pipe(
+    inputFilePath: Flag.String("log").pipe(
       Flag.withAlias("l"),
       Flag.withSchema(NonEmptyStringSchema),
       Flag.withDescription("Fellowship combat log to split."),
     ),
-    outputDirectoryPath: Flag.string("output").pipe(
+    outputDirectoryPath: Flag.String("output").pipe(
       Flag.withAlias("o"),
       Flag.withSchema(NonEmptyStringSchema),
       Flag.withDescription("Directory to write one log per dungeon attempt."),

@@ -1,3 +1,4 @@
+import * as ByteSize from "effect/ByteSize";
 import * as E from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
 import * as Option from "effect/Option";
@@ -36,7 +37,7 @@ describe("FileMonitorSource", () => {
           });
 
           expect(file.filePath).toBe(filePath);
-          expect(file.size).toBe(FileSystem.Size(11));
+          expect(file.size).toBe(ByteSize.bytes(11));
         }),
       ).pipe(E.provide(FileMonitorSourceTestLive));
 

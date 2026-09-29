@@ -1,11 +1,11 @@
 import * as E from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
+import type * as HttpClient from "effect/http/HttpClient";
+import * as HttpClientRequest from "effect/http/HttpClientRequest";
 import * as Layer from "effect/Layer";
+import * as OtlpSerialization from "effect/observability/OtlpSerialization";
+import * as OtlpTracer from "effect/observability/OtlpTracer";
 import * as Path from "effect/Path";
-import type * as HttpClient from "effect/unstable/http/HttpClient";
-import * as HttpClientRequest from "effect/unstable/http/HttpClientRequest";
-import * as OtlpSerialization from "effect/unstable/observability/OtlpSerialization";
-import * as OtlpTracer from "effect/unstable/observability/OtlpTracer";
 import { describe, expect, test } from "vitest";
 
 import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";

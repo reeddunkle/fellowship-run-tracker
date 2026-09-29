@@ -1,7 +1,7 @@
+import * as HttpApiEndpoint from "effect/http-api/HttpApiEndpoint";
+import * as HttpApiError from "effect/http-api/HttpApiError";
+import * as HttpApiGroup from "effect/http-api/HttpApiGroup";
 import * as Schema from "effect/Schema";
-import * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
-import * as HttpApiError from "effect/unstable/httpapi/HttpApiError";
-import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
 
 import { DungeonRunApiHistorySchema } from "@frt/shared/dungeon-run/dungeon-run-api-schema.ts";
 import { DungeonIdSchema } from "@frt/shared/fellowship/validation/fellowship-common.ts";

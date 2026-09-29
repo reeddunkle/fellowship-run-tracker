@@ -6,7 +6,7 @@ import * as Queue from "effect/Queue";
 import * as Ref from "effect/Ref";
 import * as Result from "effect/Result";
 import * as Stream from "effect/Stream";
-import type * as Socket from "effect/unstable/socket/Socket";
+import type * as Socket from "effect/socket/Socket";
 
 import {
   LiveSplitGatewayInvalidResponseError,

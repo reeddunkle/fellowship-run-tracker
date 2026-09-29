@@ -1,5 +1,5 @@
-import * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
-import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
+import * as HttpApiEndpoint from "effect/http-api/HttpApiEndpoint";
+import * as HttpApiGroup from "effect/http-api/HttpApiGroup";
 
 import { LiveSplitApiConnectionError } from "@frt/api-contract/errors/live-split-api-error.ts";
 import { LiveSplitApiStatusSchema } from "@frt/shared/live-split/live-split-api-schema.ts";

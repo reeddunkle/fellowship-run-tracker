@@ -6,13 +6,13 @@ import * as E from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
 import * as Layer from "effect/Layer";
 import * as Path from "effect/Path";
+import { ChildProcess, ChildProcessSpawner } from "effect/process";
+import { type ChildProcessHandle } from "effect/process/ChildProcessSpawner";
 import * as Queue from "effect/Queue";
 import * as Ref from "effect/Ref";
 import * as Schema from "effect/Schema";
 import type * as Scope from "effect/Scope";
 import * as Stream from "effect/Stream";
-import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
-import { type ChildProcessHandle } from "effect/unstable/process/ChildProcessSpawner";
 
 import { makePnpmCommand } from "@frt/api/helpers/make-pnpm-command.ts";
 import { encodeJson } from "@frt/shared/util/common-schemas.ts";

@@ -2,14 +2,15 @@ import { NodeHttpServer } from "@effect/platform-node";
 import * as Deferred from "effect/Deferred";
 import * as E from "effect/Effect";
 import * as Fiber from "effect/Fiber";
+import * as HttpRouter from "effect/http/HttpRouter";
+import * as HttpServer from "effect/http/HttpServer";
+import * as HttpServerRequest from "effect/http/HttpServerRequest";
+import * as HttpServerResponse from "effect/http/HttpServerResponse";
 import * as Layer from "effect/Layer";
+import * as NetAddress from "effect/net/NetAddress";
 import * as Schema from "effect/Schema";
 import * as Stream from "effect/Stream";
-import * as HttpRouter from "effect/unstable/http/HttpRouter";
-import * as HttpServer from "effect/unstable/http/HttpServer";
-import * as HttpServerRequest from "effect/unstable/http/HttpServerRequest";
-import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
-import * as Socket from "effect/unstable/socket/Socket";
+import * as Socket from "effect/socket/Socket";
 import { describe, expect, test } from "vitest";
 
 import { DungeonRunWebSocketBroadcaster } from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
@@ -55,15 +56,16 @@ const message = {
   version: 1,
 } satisfies DungeonRunApiMessage;
 
-function getWebSocketUrl(address: HttpServer.Address): string {
-  if (address._tag === "UnixAddress") {
+function getWebSocketUrl(address: NetAddress.SocketAddress): string {
+  if (NetAddress.isUnixPathAddress(address)) {
     throw new Error("WebSocket test does not support Unix socket addresses.");
   }
 
-  const hostname =
-    address.hostname === "0.0.0.0" ? "127.0.0.1" : address.hostname;
+  const hostAddress = NetAddress.isUnspecified(address.address)
+    ? NetAddress.inetAddressUnsafe(NetAddress.ipv4Loopback, address.port)
+    : address;
 
-  return `ws://${hostname}:${address.port}${ROUTES.dungeonRunEvents}`;
+  return `${NetAddress.formatUrlUnsafe(hostAddress, "ws")}${ROUTES.dungeonRunEvents}`;
 }
 
 function collectClientEvents(
@@ -92,26 +94,23 @@ const handleNormalCloseRequest = E.gen(function* () {
       const socket = yield* request.upgrade;
       const writer = yield* socket.writer;
 
-      const closeNormally = writer(
-        new Socket.CloseEvent(1000, "Normal test disconnect."),
-      ).pipe(E.ignore);
+      const closeNormally = writer
+        .write(new Socket.CloseEvent(1000, "Normal test disconnect."))
+        .pipe(E.ignore);
 
-      yield* socket
-        .runRaw(
-          () => {
-            return E.void;
-          },
-          {
-            onOpen: closeNormally,
-          },
-        )
-        .pipe(
-          /*
-           * This route only exists to initiate a normal close. Any error from
-           * the server side of the close handshake is irrelevant to the test.
-           */
-          E.ignore,
-        );
+      yield* E.gen(function* () {
+        const { pull } = yield* socket.reader;
+
+        yield* closeNormally;
+
+        return yield* pull.pipe(E.forever);
+      }).pipe(
+        /*
+         * This route only exists to initiate a normal close. Any error from
+         * the server side of the close handshake is irrelevant to the test.
+         */
+        E.ignore,
+      );
     }),
   );
 

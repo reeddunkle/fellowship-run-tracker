@@ -68,7 +68,7 @@ function parseReportUrl(input: string) {
 
 export const FellowshipLogsReportUrlSchema = Schema.String.pipe(
   Schema.decodeTo(FellowshipLogsApiDungeonRunReferenceSchema, {
-    decode: SchemaGetter.transformOrFail(parseReportUrl),
+    decode: SchemaGetter.transformEffect(parseReportUrl),
     encode: SchemaGetter.transform((reference) => {
       return `https://www.fellowshiplogs.com/${REPORTS_PATH_SEGMENT}/${reference.reportCode}?${FIGHT_QUERY_PARAM}=${reference.fightId}`;
     }),

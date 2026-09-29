@@ -1,5 +1,5 @@
 import * as E from "effect/Effect";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
+import * as SqlClient from "effect/sql/SqlClient";
 
 export const createConfigurationTables = E.gen(function* () {
   const sql = yield* SqlClient.SqlClient;

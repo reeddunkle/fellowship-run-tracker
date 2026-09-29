@@ -1,8 +1,8 @@
 import * as E from "effect/Effect";
+import * as HttpApiBuilder from "effect/http-api/HttpApiBuilder";
+import * as HttpApiError from "effect/http-api/HttpApiError";
 import type * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
-import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
-import * as HttpApiError from "effect/unstable/httpapi/HttpApiError";
 
 import { ConfigurationLibrary } from "@frt/api/services/configuration-library/configuration-library-service.ts";
 import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";

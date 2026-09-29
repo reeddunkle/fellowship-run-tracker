@@ -1,6 +1,6 @@
 import * as E from "effect/Effect";
+import * as HttpApiBuilder from "effect/http-api/HttpApiBuilder";
 import type * as Layer from "effect/Layer";
-import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 
 import { LiveSplit } from "@frt/api/services/live-split/live-split-service.ts";
 import { LiveSplitApiConnectionError } from "@frt/api-contract/errors/live-split-api-error.ts";

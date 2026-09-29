@@ -1,6 +1,6 @@
 import * as E from "effect/Effect";
 import * as Ref from "effect/Ref";
-import * as Socket from "effect/unstable/socket/Socket";
+import * as Socket from "effect/socket/Socket";
 import { describe, expect, test } from "vitest";
 
 import {

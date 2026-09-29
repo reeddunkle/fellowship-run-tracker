@@ -1,5 +1,5 @@
 import * as E from "effect/Effect";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
+import * as SqlClient from "effect/sql/SqlClient";
 
 /* [KEEP]
  * Version 1 of the analytics database. Until this version ships, edit it in

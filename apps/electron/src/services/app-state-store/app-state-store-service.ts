@@ -4,9 +4,9 @@ import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Match from "effect/Match";
 import * as Option from "effect/Option";
+import * as KeyValueStore from "effect/persistence/KeyValueStore";
 import * as Queue from "effect/Queue";
 import * as Result from "effect/Result";
-import * as KeyValueStore from "effect/unstable/persistence/KeyValueStore";
 
 import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
 import {

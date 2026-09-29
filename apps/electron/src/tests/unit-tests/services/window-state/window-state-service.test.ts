@@ -1,6 +1,6 @@
 import * as E from "effect/Effect";
 import * as Option from "effect/Option";
-import * as KeyValueStore from "effect/unstable/persistence/KeyValueStore";
+import * as KeyValueStore from "effect/persistence/KeyValueStore";
 import { describe, expect, test } from "vitest";
 
 import { runTest } from "@frt/api/tests/common/run-test.ts";

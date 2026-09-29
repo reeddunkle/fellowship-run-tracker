@@ -3,7 +3,7 @@ import type * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import type * as Option from "effect/Option";
 import type * as Schema from "effect/Schema";
-import type * as SqlError from "effect/unstable/sql/SqlError";
+import type * as SqlError from "effect/sql/SqlError";
 
 import { type AbilityModel } from "@frt/db/models/ability-model.ts";
 

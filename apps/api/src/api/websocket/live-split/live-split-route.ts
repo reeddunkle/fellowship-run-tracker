@@ -1,8 +1,7 @@
 import * as E from "effect/Effect";
-import * as HttpRouter from "effect/unstable/http/HttpRouter";
-import * as HttpServerRequest from "effect/unstable/http/HttpServerRequest";
-import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
-import * as Socket from "effect/unstable/socket/Socket";
+import * as HttpRouter from "effect/http/HttpRouter";
+import * as HttpServerRequest from "effect/http/HttpServerRequest";
+import * as HttpServerResponse from "effect/http/HttpServerResponse";
 
 import { LiveSplitWebSocketBroadcaster } from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
 import { ROUTES } from "@frt/api-contract/constants/routes.ts";
@@ -21,31 +20,26 @@ const handleLiveSplitRequest = E.gen(function* () {
       const socket = yield* request.upgrade;
       const writer = yield* socket.writer;
 
-      yield* liveSplitWebSocketBroadcaster.registerClient(writer);
+      const writeMessage = (message: string) => {
+        return writer.write(message);
+      };
 
-      yield* socket
-        .runRaw(
-          () => {
-            return E.void;
-          },
-          {
-            onOpen: E.gen(function* () {
-              yield* E.logDebug("LiveSplit WebSocket client connected.", {
-                url: request.url,
-              });
+      yield* liveSplitWebSocketBroadcaster.registerClient(writeMessage);
 
-              yield* liveSplitWebSocketBroadcaster.sendLatestToClient(writer);
-            }),
-          },
-        )
-        .pipe(
-          E.catchFilter(
-            Socket.SocketCloseError.filterClean((code) => {
-              return code === 1000;
-            }),
-            () => E.void,
-          ),
-        );
+      const { pull } = yield* socket.reader;
+
+      yield* E.logDebug("LiveSplit WebSocket client connected.", {
+        url: request.url,
+      });
+
+      yield* liveSplitWebSocketBroadcaster.sendLatestToClient(writeMessage);
+
+      yield* pull.pipe(
+        E.forever,
+        E.catchReason("SocketError", "SocketCloseError", (reason, error) => {
+          return reason.code === 1000 ? E.void : E.fail(error);
+        }),
+      );
     }),
   ).pipe(
     E.ensuring(
