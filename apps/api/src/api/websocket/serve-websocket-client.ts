@@ -3,6 +3,8 @@ import * as HttpServerRequest from "effect/http/HttpServerRequest";
 import * as HttpServerResponse from "effect/http/HttpServerResponse";
 import * as Stream from "effect/Stream";
 
+import { WebSocketClientShutdown } from "@frt/api/api/websocket/websocket-client-shutdown-service.ts";
+
 type ServeWebSocketClientOptions = {
   readonly label: string;
   readonly messages: Stream.Stream<string>;
@@ -13,6 +15,7 @@ export const serveWebSocketClient = E.fn(function* ({
   messages,
 }: ServeWebSocketClientOptions) {
   const request = yield* HttpServerRequest.HttpServerRequest;
+  const webSocketClientShutdown = yield* WebSocketClientShutdown;
 
   yield* E.logDebug(`${label} WebSocket upgrade requested.`, {
     method: request.method,
@@ -30,6 +33,7 @@ export const serveWebSocketClient = E.fn(function* ({
       });
 
       const writeMessages = messages.pipe(
+        Stream.interruptWhen(webSocketClientShutdown.awaitShutdown),
         Stream.runForEach((message) => {
           return writer.write(message);
         }),

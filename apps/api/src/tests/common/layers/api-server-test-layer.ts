@@ -4,6 +4,10 @@ import * as Layer from "effect/Layer";
 import { ApiServer } from "@frt/api/api/api-server.ts";
 import { DungeonRunWebSocketBroadcaster } from "@frt/api/api/websocket/dungeon-run/dungeon-run-websocket-broadcaster-service.ts";
 import { WebSocketChannel } from "@frt/api/api/websocket/websocket-channel-service.ts";
+import {
+  shutdownWebSocketClientsFirst,
+  WebSocketClientShutdown,
+} from "@frt/api/api/websocket/websocket-client-shutdown-service.ts";
 import { type FellowshipTracker } from "@frt/api/application/fellowship-tracker/fellowship-tracker-service.ts";
 import { type AbilityCatalog } from "@frt/api/services/ability-catalog/ability-catalog-service.ts";
 import { type AppSettings } from "@frt/api/services/app-settings/app-settings-service.ts";
@@ -86,11 +90,14 @@ export function makeApiServerTestLayer(
         AppVersion.layerWith(TEST_APP_VERSION),
         DungeonRunWebSocketBroadcaster.layer,
         NodeHttpServer.layerTest,
+        WebSocketClientShutdown.layer,
       ),
     ),
   );
 
-  return ApiServer.pipe(Layer.provideMerge(ApiServerDependenciesTest));
+  return shutdownWebSocketClientsFirst(ApiServer).pipe(
+    Layer.provideMerge(ApiServerDependenciesTest),
+  );
 }
 
 export function makeApiServerTestLayerWith(
