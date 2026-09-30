@@ -3,6 +3,7 @@ import * as FileSystem from "effect/FileSystem";
 import * as Layer from "effect/Layer";
 import * as Path from "effect/Path";
 import type * as PlatformError from "effect/PlatformError";
+import * as Ref from "effect/Ref";
 import * as Stream from "effect/Stream";
 
 import {
@@ -47,6 +48,69 @@ export function makeFileMonitorSourceFailureTestLive(
     ),
     FileMonitorSourceFailureDependenciesLive,
   );
+}
+
+type MakeWatchCountingFileMonitorSourceTestLiveOptions = {
+  readonly firstWatchError?: PlatformError.PlatformError;
+};
+
+export function makeWatchCountingFileMonitorSourceTestLive({
+  firstWatchError,
+}: MakeWatchCountingFileMonitorSourceTestLiveOptions = {}) {
+  return E.gen(function* () {
+    const openedWatchCount = yield* Ref.make(0);
+    const closedWatchCount = yield* Ref.make(0);
+
+    const WatchCountingFileSystemLive = Layer.effect(
+      FileSystem.FileSystem,
+      E.gen(function* () {
+        const fileSystem = yield* FileSystem.FileSystem;
+
+        return {
+          ...fileSystem,
+          watch: (path, options) => {
+            return Stream.unwrap(
+              Ref.updateAndGet(openedWatchCount, (count) => {
+                return count + 1;
+              }).pipe(
+                E.map((watchNumber) => {
+                  return watchNumber === 1 && firstWatchError !== undefined
+                    ? Stream.fail(firstWatchError)
+                    : fileSystem.watch(path, options);
+                }),
+              ),
+            ).pipe(
+              Stream.ensuring(
+                Ref.update(closedWatchCount, (count) => {
+                  return count + 1;
+                }),
+              ),
+            );
+          },
+        } satisfies FileSystem.FileSystem;
+      }).pipe(E.provide(NodeFileSystemLayer)),
+    );
+
+    const WatchCountingDependenciesLive = Layer.mergeAll(
+      WatchCountingFileSystemLive,
+      NodePathLayer,
+    );
+
+    const layer = Layer.mergeAll(
+      Layer.fresh(
+        FileMonitorSource.layerNoDeps.pipe(
+          Layer.provide(WatchCountingDependenciesLive),
+        ),
+      ),
+      WatchCountingDependenciesLive,
+    );
+
+    return {
+      closedWatchCount,
+      layer,
+      openedWatchCount,
+    };
+  });
 }
 
 export function makeFileMonitorSourceTestHarness() {

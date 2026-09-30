@@ -1,11 +1,13 @@
 import * as Context from "effect/Context";
+import * as Deferred from "effect/Deferred";
 import * as E from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Path from "effect/Path";
 import type * as PlatformError from "effect/PlatformError";
-import * as Queue from "effect/Queue";
+import * as PubSub from "effect/PubSub";
+import * as RcMap from "effect/RcMap";
 import * as Stream from "effect/Stream";
 
 import { FileNotFoundError } from "@frt/api/errors/file-not-found-error.ts";
@@ -25,15 +27,10 @@ type FileMonitorSourceStatus =
       readonly filePath: string;
     };
 
-type FileWatchSignal =
-  | {
-      readonly _tag: "EVENT";
-      readonly event: FileSystem.WatchEvent;
-    }
-  | {
-      readonly _tag: "FAILURE";
-      readonly error: PlatformError.PlatformError;
-    };
+type DirectoryWatcher = {
+  readonly events: PubSub.PubSub<FileSystem.WatchEvent>;
+  readonly failure: Deferred.Deferred<never, PlatformError.PlatformError>;
+};
 
 type FindLatestFileOptions = {
   readonly directoryPath: string;
@@ -61,6 +58,43 @@ export type FileMonitorSourceShape = {
 const makeFileMonitorSource = E.gen(function* () {
   const fileSystem = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
+
+  const serviceScope = yield* E.scope;
+
+  const lookupDirectoryWatcher = E.fn(function* (directoryPath: string) {
+    const events = yield* E.acquireRelease(
+      PubSub.unbounded<FileSystem.WatchEvent>(),
+      PubSub.shutdown,
+    );
+
+    const failure = yield* Deferred.make<never, PlatformError.PlatformError>();
+
+    yield* fileSystem.watch(directoryPath).pipe(
+      Stream.runForEach((event) => {
+        return PubSub.publish(events, event);
+      }),
+      E.catch((error) => {
+        return Deferred.fail(failure, error).pipe(
+          E.andThen(
+            RcMap.invalidate(directoryWatchers, directoryPath).pipe(
+              E.forkIn(serviceScope),
+            ),
+          ),
+        );
+      }),
+      E.forkScoped,
+    );
+
+    return {
+      events,
+      failure,
+    } satisfies DirectoryWatcher;
+  });
+
+  const directoryWatchers: RcMap.RcMap<string, DirectoryWatcher> =
+    yield* RcMap.make({
+      lookup: lookupDirectoryWatcher,
+    });
 
   const findLatestFile: FileMonitorSourceShape["findLatestFile"] = ({
     directoryPath,
@@ -137,34 +171,20 @@ const makeFileMonitorSource = E.gen(function* () {
     options,
   ) => {
     return E.gen(function* () {
-      const watchSignals = yield* Queue.make<FileWatchSignal>();
-
-      yield* fileSystem.watch(options.directoryPath).pipe(
-        Stream.runForEach((watchEvent) => {
-          return Queue.offer(watchSignals, {
-            _tag: "EVENT",
-            event: watchEvent,
-          });
-        }),
-        E.catch((error) => {
-          return Queue.offer(watchSignals, {
-            _tag: "FAILURE",
-            error,
-          });
-        }),
-        E.forkScoped,
+      const directoryWatcher = yield* RcMap.get(
+        directoryWatchers,
+        options.directoryPath,
       );
+
+      const watchEvents = yield* PubSub.subscribe(directoryWatcher.events);
 
       const initialLatestFile = yield* getLatestFileOption(options);
 
-      const latestFileChanges = Stream.fromQueue(watchSignals).pipe(
-        Stream.mapEffect((signal) => {
-          if (signal._tag === "FAILURE") {
-            return E.fail(signal.error);
-          }
-
+      const latestFileChanges = Stream.fromSubscription(watchEvents).pipe(
+        Stream.mapEffect(() => {
           return getLatestFileOption(options);
         }),
+        Stream.interruptWhen(Deferred.await(directoryWatcher.failure)),
       );
 
       return Stream.concat(

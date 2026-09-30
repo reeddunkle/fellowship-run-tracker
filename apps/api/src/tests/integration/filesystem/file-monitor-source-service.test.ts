@@ -3,7 +3,9 @@ import * as E from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
 import * as Option from "effect/Option";
 import * as PlatformError from "effect/PlatformError";
+import * as Ref from "effect/Ref";
 import * as Result from "effect/Result";
+import * as Schedule from "effect/Schedule";
 import * as Stream from "effect/Stream";
 import { describe, expect, test } from "vitest";
 
@@ -12,6 +14,7 @@ import {
   FileMonitorSourceTestLive,
   makeFileMonitorSourceFailureTestLive,
   makeFileMonitorSourceTestHarness,
+  makeWatchCountingFileMonitorSourceTestLive,
 } from "@frt/api/tests/common/harnesses/file-monitor-source-test-harness.ts";
 import { makeStreamTestHarness } from "@frt/api/tests/common/harnesses/stream-test-harness.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
@@ -259,6 +262,145 @@ describe("FileMonitorSource", () => {
           }
         }),
       ).pipe(E.provide(makeFileMonitorSourceFailureTestLive(watchError)));
+
+      await runTest(program);
+    });
+  });
+
+  describe("directory watcher sharing", () => {
+    test("shares one watcher between concurrent streams of the same directory", async () => {
+      const program = E.gen(function* () {
+        const watchCounting =
+          yield* makeWatchCountingFileMonitorSourceTestLive();
+
+        yield* E.scoped(
+          E.gen(function* () {
+            const harness = yield* makeFileMonitorSourceTestHarness();
+
+            const options = {
+              directoryPath: harness.directoryPath,
+              matches: matchesTextFile,
+            };
+
+            const firstLatestFiles = yield* makeStreamTestHarness(
+              harness.fileMonitorSource.streamLatestFile(options),
+            );
+
+            const secondLatestFiles = yield* makeStreamTestHarness(
+              harness.fileMonitorSource.streamStatus(options),
+            );
+
+            yield* firstLatestFiles.take;
+            yield* secondLatestFiles.take;
+
+            yield* harness.writeFile("fellowship.txt", "first line\n");
+
+            const firstUpdate = yield* firstLatestFiles.take;
+            const secondUpdate = yield* secondLatestFiles.take;
+
+            expect(Option.isSome(firstUpdate)).toBe(true);
+            expect(secondUpdate._tag).toBe("MONITORING");
+            expect(yield* Ref.get(watchCounting.openedWatchCount)).toBe(1);
+          }),
+        ).pipe(E.provide(watchCounting.layer));
+      });
+
+      await runTest(program);
+    });
+
+    test("closes the watcher when the last stream ends and reopens it on demand", async () => {
+      const program = E.gen(function* () {
+        const watchCounting =
+          yield* makeWatchCountingFileMonitorSourceTestLive();
+
+        yield* E.scoped(
+          E.gen(function* () {
+            const harness = yield* makeFileMonitorSourceTestHarness();
+
+            const options = {
+              directoryPath: harness.directoryPath,
+              matches: matchesTextFile,
+            };
+
+            yield* E.scoped(
+              E.gen(function* () {
+                const latestFiles = yield* makeStreamTestHarness(
+                  harness.fileMonitorSource.streamLatestFile(options),
+                );
+
+                yield* latestFiles.take;
+              }),
+            );
+
+            expect(yield* Ref.get(watchCounting.closedWatchCount)).toBe(1);
+
+            const latestFiles = yield* makeStreamTestHarness(
+              harness.fileMonitorSource.streamLatestFile(options),
+            );
+
+            yield* latestFiles.take;
+
+            expect(yield* Ref.get(watchCounting.openedWatchCount)).toBe(2);
+          }),
+        ).pipe(E.provide(watchCounting.layer));
+      });
+
+      await runTest(program);
+    });
+
+    test("fails every stream when the watcher fails and recovers with a fresh watcher", async () => {
+      const watchError = PlatformError.systemError({
+        _tag: "Unknown",
+        description: "Test watcher failure.",
+        method: "watch",
+        module: "FileSystem",
+      });
+
+      const program = E.gen(function* () {
+        const watchCounting = yield* makeWatchCountingFileMonitorSourceTestLive(
+          {
+            firstWatchError: watchError,
+          },
+        );
+
+        yield* E.scoped(
+          E.gen(function* () {
+            const harness = yield* makeFileMonitorSourceTestHarness();
+
+            const options = {
+              directoryPath: harness.directoryPath,
+              matches: matchesTextFile,
+            };
+
+            const [latestFileError, statusError] = yield* E.all(
+              [
+                harness.fileMonitorSource
+                  .streamLatestFile(options)
+                  .pipe(Stream.runDrain, E.flip),
+                harness.fileMonitorSource
+                  .streamStatus(options)
+                  .pipe(Stream.runDrain, E.flip),
+              ],
+              {
+                concurrency: "unbounded",
+              },
+            );
+
+            expect(latestFileError).toBe(watchError);
+            expect(statusError).toBe(watchError);
+
+            const recoveredLatestFiles = yield* makeStreamTestHarness(
+              harness.fileMonitorSource
+                .streamLatestFile(options)
+                .pipe(Stream.retry(Schedule.recurs(3))),
+            );
+
+            yield* recoveredLatestFiles.take;
+
+            expect(yield* Ref.get(watchCounting.openedWatchCount)).toBe(2);
+          }),
+        ).pipe(E.provide(watchCounting.layer));
+      });
 
       await runTest(program);
     });
