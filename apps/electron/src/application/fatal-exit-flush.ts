@@ -1,3 +1,5 @@
+import { settleWithin } from "@/application/settle-within.ts";
+
 type Flush = () => Promise<unknown>;
 
 let registeredFlush: Flush | undefined;
@@ -11,14 +13,5 @@ export function flushBeforeFatalExit(timeoutMilliseconds: number) {
     return Promise.resolve();
   }
 
-  return Promise.race([
-    registeredFlush().catch(() => {
-      return undefined;
-    }),
-    // @effect-diagnostics-next-line newPromise:off
-    new Promise((resolve) => {
-      // @effect-diagnostics-next-line globalTimers:off
-      setTimeout(resolve, timeoutMilliseconds);
-    }),
-  ]);
+  return settleWithin(registeredFlush, timeoutMilliseconds);
 }

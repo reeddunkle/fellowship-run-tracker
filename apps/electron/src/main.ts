@@ -17,6 +17,7 @@ import { configureWindowIpc } from "@/application/configure-window-ipc.ts";
 import { configureDetachedWindowPlacement } from "@/application/detached-window/configure-detached-window-placement.ts";
 import { exitOnStartupFailure } from "@/application/exit-on-startup-failure.ts";
 import { registerFatalExitFlush } from "@/application/fatal-exit-flush.ts";
+import { runQuitCleanup } from "@/application/quit-cleanup.ts";
 import { flushWindowStateSavesForQuit } from "@/application/window-state-tracking.ts";
 import { electronRuntime } from "@/runtimes/electron-runtime.ts";
 import { type AppState } from "@/services/app-state/app-state-service.ts";
@@ -87,11 +88,12 @@ function runElectronMain() {
     app.once("before-quit", (event) => {
       event.preventDefault();
 
-      void flushWindowStateSavesForQuit()
-        .then(disposeElectronRuntime)
-        .finally(() => {
-          app.quit();
-        });
+      void runQuitCleanup({
+        disposeRuntime: disposeElectronRuntime,
+        flushWindowState: flushWindowStateSavesForQuit,
+      }).finally(() => {
+        app.quit();
+      });
     });
 
     app.on("window-all-closed", () => {

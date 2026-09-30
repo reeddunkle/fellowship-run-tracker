@@ -6,9 +6,13 @@ const windowStateFlushes = new Set<() => Promise<void>>();
 let hasFlushedWindowStateForQuit = false;
 
 export function flushWindowStateSavesForQuit() {
-  const flushed = Promise.all(
+  const flushed = Promise.allSettled(
     [...windowStateFlushes].map((flush) => {
-      return flush();
+      try {
+        return flush();
+      } catch (error) {
+        return Promise.reject(error);
+      }
     }),
   );
 
