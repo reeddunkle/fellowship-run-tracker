@@ -90,6 +90,53 @@ export const makeFellowshipTracker = E.gen(function* () {
           localLogDungeonRunPersistence,
         });
 
+        const interruptActiveDungeonRun = E.gen(function* () {
+          const currentState = yield* Ref.get(dungeonRunStateRef);
+
+          if (currentState.configuredRun.dungeonRun?.status !== "ACTIVE") {
+            return;
+          }
+
+          const endedAt = yield* DateTime.now;
+
+          const interruptedState = interruptDungeonRunProcessingState({
+            endedAt,
+            state: currentState,
+          });
+
+          yield* Ref.set(dungeonRunStateRef, interruptedState);
+
+          if (localLogDungeonRunPersistence !== undefined) {
+            yield* localLogDungeonRunPersistence.interrupt(endedAt).pipe(
+              E.catch((error) => {
+                return E.logError(
+                  "Failed to interrupt persisted local log dungeon run.",
+                  {
+                    error,
+                  },
+                );
+              }),
+            );
+          }
+
+          yield* publishDungeonRunState({
+            state: interruptedState,
+          }).pipe(
+            E.provideService(
+              DungeonRunWebSocketBroadcaster,
+              dungeonRunWebSocketBroadcaster,
+            ),
+            E.catch((error) => {
+              return E.logError(
+                "Failed to publish interrupted dungeon run state.",
+                {
+                  error,
+                },
+              );
+            }),
+          );
+        });
+
         const trackingStarted = yield* Deferred.make<void>();
 
         const runTrackingEffect = E.scoped(
@@ -120,6 +167,7 @@ export const makeFellowshipTracker = E.gen(function* () {
 
         const trackingEffect = Deferred.await(trackingStarted).pipe(
           E.andThen(runTrackingEffect),
+          E.ensuring(interruptActiveDungeonRun),
           E.tap(() => {
             return trackerState.setIdle;
           }),
@@ -164,9 +212,7 @@ export const makeFellowshipTracker = E.gen(function* () {
         yield* trackerState.setActiveTracker({
           dungeonId: configuration.dungeonId,
           fiber,
-          localLogDungeonRunPersistence,
           source,
-          stateRef: dungeonRunStateRef,
         });
 
         if (liveStatus === undefined) {
@@ -266,51 +312,6 @@ export const makeFellowshipTracker = E.gen(function* () {
 
           yield* Fiber.interrupt(tracker.fiber);
           yield* trackerState.setIdle;
-
-          const currentState = yield* Ref.get(tracker.stateRef);
-
-          if (currentState.configuredRun.dungeonRun?.status === "ACTIVE") {
-            const endedAt = yield* DateTime.now;
-
-            const interruptedState = interruptDungeonRunProcessingState({
-              endedAt,
-              state: currentState,
-            });
-
-            yield* Ref.set(tracker.stateRef, interruptedState);
-
-            if (tracker.localLogDungeonRunPersistence !== undefined) {
-              yield* tracker.localLogDungeonRunPersistence
-                .interrupt(endedAt)
-                .pipe(
-                  E.catch((error) => {
-                    return E.logError(
-                      "Failed to interrupt persisted local log dungeon run.",
-                      {
-                        error,
-                      },
-                    );
-                  }),
-                );
-            }
-
-            yield* publishDungeonRunState({
-              state: interruptedState,
-            }).pipe(
-              E.provideService(
-                DungeonRunWebSocketBroadcaster,
-                dungeonRunWebSocketBroadcaster,
-              ),
-              E.catch((error) => {
-                return E.logError(
-                  "Failed to publish interrupted dungeon run state.",
-                  {
-                    error,
-                  },
-                );
-              }),
-            );
-          }
 
           yield* E.logInfo("Stopped Fellowship tracker.", {
             dungeonId: tracker.dungeonId,

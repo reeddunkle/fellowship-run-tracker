@@ -6,6 +6,11 @@ import * as Stream from "effect/Stream";
 import { describe, expect, test } from "vitest";
 
 import { FellowshipTracker } from "@frt/api/application/fellowship-tracker/fellowship-tracker-service.ts";
+import { parseFellowshipEventStream } from "@frt/api/services/fellowship/parsing/parse-fellowship-event-stream.ts";
+import {
+  DUNGEON_START_CONFIGURATION,
+  DUNGEON_START_LINE,
+} from "@frt/api/tests/common/fixtures/dungeon-start-fixtures.ts";
 import { makeFellowshipTrackerTestHarness } from "@frt/api/tests/common/harnesses/fellowship-tracker-test-harness.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 
@@ -163,5 +168,55 @@ describe("FellowshipTracker failures", () => {
 
     expect(result.currentStatus).toEqual(result.failedStatus);
     expect(result.currentStatus._tag).toBe("Failed");
+  });
+
+  test("interrupts the active dungeon run when the live event stream fails", async () => {
+    const fileSystemError = PlatformError.systemError({
+      _tag: "Unknown",
+      description: "Test Fellowship filesystem failure.",
+      method: "watch",
+      module: "FileSystem",
+    });
+
+    const lastMessage = await E.gen(function* () {
+      const harness = yield* makeFellowshipTrackerTestHarness({
+        configuration: DUNGEON_START_CONFIGURATION,
+        liveEvents: parseFellowshipEventStream(
+          Stream.make(DUNGEON_START_LINE),
+        ).pipe(Stream.concat(Stream.fail(fileSystemError))),
+      });
+
+      yield* E.gen(function* () {
+        const tracker = yield* FellowshipTracker;
+
+        const failedStatusFiber = yield* tracker.statusChanges.pipe(
+          Stream.filter((status) => {
+            return status._tag === "Failed";
+          }),
+          Stream.runHead,
+          E.forkScoped,
+        );
+
+        yield* tracker.start({
+          configurationId: harness.configurationId,
+        });
+
+        yield* Fiber.join(failedStatusFiber);
+      }).pipe(E.provide(harness.layer));
+
+      const messages =
+        yield* harness.dungeonRunWebSocketBroadcasterHarness.getParsedMessages();
+
+      return messages.at(-1);
+    }).pipe(E.scoped, runTest);
+
+    expect(lastMessage).toMatchObject({
+      state: {
+        dungeonRun: {
+          endedAtMilliseconds: expect.any(Number),
+          status: "INTERRUPTED",
+        },
+      },
+    });
   });
 });
