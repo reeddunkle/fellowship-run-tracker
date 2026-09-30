@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 
-import { runQuitCleanup } from "@/application/quit-cleanup.ts";
+import { makeQuitCleanup, runQuitCleanup } from "@/application/quit-cleanup.ts";
 
 const SHORT_TIMEOUT_MILLISECONDS = 10;
 
@@ -83,5 +83,32 @@ describe("runQuitCleanup", () => {
         },
       }),
     ).resolves.toBeUndefined();
+  });
+});
+
+describe("makeQuitCleanup", () => {
+  test("runs the cleanup once no matter how many quit paths trigger it", async () => {
+    const disposeRuntime = vi.fn(() => {
+      return Promise.resolve();
+    });
+
+    const flushWindowState = vi.fn(() => {
+      return Promise.resolve();
+    });
+
+    const runQuitCleanupOnce = makeQuitCleanup({
+      disposeRuntime,
+      flushWindowState,
+    });
+
+    const firstCleanup = runQuitCleanupOnce();
+    const secondCleanup = runQuitCleanupOnce();
+
+    expect(secondCleanup).toBe(firstCleanup);
+
+    await Promise.all([firstCleanup, secondCleanup, runQuitCleanupOnce()]);
+
+    expect(flushWindowState).toHaveBeenCalledOnce();
+    expect(disposeRuntime).toHaveBeenCalledOnce();
   });
 });

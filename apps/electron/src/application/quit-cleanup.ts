@@ -29,3 +29,15 @@ export function runQuitCleanup({
     return settleWithin(disposeRuntime, disposeTimeoutMilliseconds);
   });
 }
+
+export function makeQuitCleanup(
+  options: RunQuitCleanupOptions,
+): () => Promise<void> {
+  let quitCleanup: Promise<void> | undefined;
+
+  return () => {
+    quitCleanup ??= runQuitCleanup(options);
+
+    return quitCleanup;
+  };
+}
