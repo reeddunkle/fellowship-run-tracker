@@ -1,4 +1,4 @@
-import { type TextDecoder } from "node:util";
+import { TextDecoder } from "node:util";
 
 import * as ByteSize from "effect/ByteSize";
 import * as Clock from "effect/Clock";
@@ -224,7 +224,7 @@ const makeFileMonitor = E.gen(function* () {
       E.map((chunks) => {
         return decodeChunks({
           chunks,
-          decoder: new globalThis.TextDecoder(),
+          decoder: new TextDecoder(),
         });
       }),
     );
