@@ -32,6 +32,22 @@ function getSummaryAfterInserting(
 }
 
 describe("FellowshipLogsRequestDAO", () => {
+  test("saves more events at once than SQLite accepts in a single statement", async () => {
+    const eventCount = 10_000;
+
+    const summary = await getSummaryAfterInserting(
+      Array.from({ length: eventCount }, () => {
+        return makeEvent({
+          operation: "REPORT_PAGE",
+          pointsSpent: null,
+          source: "CACHE",
+        });
+      }),
+    );
+
+    expect(summary.cacheHitCount).toBe(eventCount);
+  });
+
   test("summarizes nothing when no requests were recorded", async () => {
     const summary = await getSummaryAfterInserting([]);
 

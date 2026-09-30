@@ -1,3 +1,4 @@
+import * as A from "effect/Array";
 import * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
 import * as Schema from "effect/Schema";
@@ -18,6 +19,8 @@ const FellowshipLogsRequestSummaryRowSchema = Schema.Struct({
   pointsSpent: NonNegativeIntegerSchema,
   trackingSince: Schema.NullOr(Schema.DateTimeUtcFromMillis),
 });
+
+const INSERT_BATCH_SIZE = 1_000;
 
 function mapFellowshipLogsRequestDAOError(
   cause: unknown,
@@ -50,10 +53,20 @@ export const makeFellowshipLogsRequestDAO = E.gen(function* () {
       },
     );
 
-    return sql`
-      INSERT INTO
-        fellowship_logs_request ${sql.insert(rows)}
-    `.pipe(E.asVoid, E.mapError(mapFellowshipLogsRequestDAOError));
+    return sql
+      .withTransaction(
+        E.forEach(
+          A.chunksOf(rows, INSERT_BATCH_SIZE),
+          (batch) => {
+            return sql`
+              INSERT INTO
+                fellowship_logs_request ${sql.insert(batch)}
+            `;
+          },
+          { discard: true },
+        ),
+      )
+      .pipe(E.mapError(mapFellowshipLogsRequestDAOError));
   };
 
   const getSummary: FellowshipLogsRequestDAOShape["getSummary"] = () => {

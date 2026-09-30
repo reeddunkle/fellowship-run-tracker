@@ -41,12 +41,14 @@ export const makeFellowshipLogsAnalytics = E.gen(function* () {
     return Queue.clear(events).pipe(E.flatMap(writeBatch));
   });
 
-  yield* Queue.takeBetween(events, 1, MAX_BATCH_SIZE).pipe(
-    E.flatMap(writeBatch),
-    E.andThen(E.sleep(FLUSH_INTERVAL)),
-    E.forever,
-    E.forkScoped,
+  const flushBufferedEvents = Queue.takeBetween(events, 1, MAX_BATCH_SIZE).pipe(
+    E.tap(writeBatch),
+    E.flatMap((batch) => {
+      return batch.length < MAX_BATCH_SIZE ? E.sleep(FLUSH_INTERVAL) : E.void;
+    }),
   );
+
+  yield* flushBufferedEvents.pipe(E.forever, E.forkScoped);
 
   const record: FellowshipLogsAnalyticsShape["record"] = (options) => {
     return DateTime.now.pipe(
