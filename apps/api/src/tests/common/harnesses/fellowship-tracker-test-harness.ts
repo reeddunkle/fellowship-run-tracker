@@ -46,6 +46,7 @@ import { makeWebSocketBroadcasterTestHarness } from "./websocket-broadcaster-tes
 
 type FellowshipLiveEvents = ReturnType<FellowshipShape["liveEvents"]>;
 type FellowshipLiveStatus = ReturnType<FellowshipShape["liveStatus"]>;
+type FellowshipReplayEvents = ReturnType<FellowshipShape["streamEvents"]>;
 
 type MakeFellowshipTrackerTestHarnessOptions = {
   readonly configuration?: FellowshipMilestoneConfiguration;
@@ -55,6 +56,7 @@ type MakeFellowshipTrackerTestHarnessOptions = {
   readonly handleRunEvent?: LiveSplitShape["handleRunEvent"];
   readonly liveEvents?: FellowshipLiveEvents;
   readonly liveStatus?: FellowshipLiveStatus;
+  readonly replayEvents?: FellowshipReplayEvents;
 };
 
 const DEFAULT_CONFIGURATION = {
@@ -107,6 +109,7 @@ export function makeFellowshipTrackerTestHarness(
     const fellowshipHarness = makeFellowshipTestHarness({
       liveEvents: options.liveEvents ?? defaultLiveEvents,
       liveStatus: options.liveStatus ?? Stream.never,
+      replayEvents: options.replayEvents ?? Stream.empty,
     });
 
     const dungeonRunWebSocketBroadcasterHarness =

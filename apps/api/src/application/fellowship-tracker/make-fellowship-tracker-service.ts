@@ -335,7 +335,11 @@ export const makeFellowshipTracker = E.gen(function* () {
       },
     });
 
-    yield* Fiber.join(fiber);
+    yield* Fiber.join(fiber).pipe(
+      E.onInterrupt(() => {
+        return Fiber.interrupt(fiber);
+      }),
+    );
   });
 
   return {

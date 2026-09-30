@@ -5,15 +5,18 @@ import { type FellowshipShape } from "@frt/api/services/fellowship/fellowship-se
 
 type FellowshipLiveEvents = ReturnType<FellowshipShape["liveEvents"]>;
 type FellowshipLiveStatus = ReturnType<FellowshipShape["liveStatus"]>;
+type FellowshipReplayEvents = ReturnType<FellowshipShape["streamEvents"]>;
 
 export type MakeFellowshipTestHarnessOptions = {
   readonly liveEvents?: FellowshipLiveEvents;
   readonly liveStatus?: FellowshipLiveStatus;
+  readonly replayEvents?: FellowshipReplayEvents;
 };
 
 export function makeFellowshipTestHarness({
   liveEvents = Stream.never,
   liveStatus = Stream.never,
+  replayEvents = Stream.empty,
 }: MakeFellowshipTestHarnessOptions = {}) {
   const fellowship = {
     liveEvents: () => {
@@ -29,7 +32,7 @@ export function makeFellowshipTestHarness({
     },
 
     streamEvents: () => {
-      return Stream.empty;
+      return replayEvents;
     },
   } satisfies FellowshipShape;
 
