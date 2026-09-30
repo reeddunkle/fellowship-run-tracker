@@ -41,8 +41,11 @@ export const makeFellowshipLogsAnalytics = E.gen(function* () {
     return Queue.clear(events).pipe(E.flatMap(writeBatch));
   });
 
-  const flushBufferedEvents = Queue.takeBetween(events, 1, MAX_BATCH_SIZE).pipe(
-    E.tap(writeBatch),
+  const flushBufferedEvents = E.uninterruptibleMask((restore) => {
+    return restore(Queue.takeBetween(events, 1, MAX_BATCH_SIZE)).pipe(
+      E.tap(writeBatch),
+    );
+  }).pipe(
     E.flatMap((batch) => {
       return batch.length < MAX_BATCH_SIZE ? E.sleep(FLUSH_INTERVAL) : E.void;
     }),
