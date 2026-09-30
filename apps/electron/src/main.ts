@@ -17,7 +17,10 @@ import { configureWindowIpc } from "@/application/configure-window-ipc.ts";
 import { configureDetachedWindowPlacement } from "@/application/detached-window/configure-detached-window-placement.ts";
 import { exitOnStartupFailure } from "@/application/exit-on-startup-failure.ts";
 import { registerFatalExitFlush } from "@/application/fatal-exit-flush.ts";
-import { makeQuitCleanup } from "@/application/quit-cleanup.ts";
+import {
+  makeBeforeQuitHandler,
+  makeQuitCleanup,
+} from "@/application/quit-cleanup.ts";
 import { flushWindowStateSavesForQuit } from "@/application/window-state-tracking.ts";
 import { electronRuntime } from "@/runtimes/electron-runtime.ts";
 import { type AppState } from "@/services/app-state/app-state-service.ts";
@@ -90,13 +93,15 @@ function runElectronMain() {
       flushWindowState: flushWindowStateSavesForQuit,
     });
 
-    app.once("before-quit", (event) => {
-      event.preventDefault();
-
-      void runQuitCleanupOnce().finally(() => {
-        app.quit();
-      });
-    });
+    app.on(
+      "before-quit",
+      makeBeforeQuitHandler({
+        quit: () => {
+          app.quit();
+        },
+        runQuitCleanupOnce,
+      }),
+    );
 
     app.on("browser-window-created", (_event, window) => {
       window.once("session-end", () => {

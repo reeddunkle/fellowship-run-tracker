@@ -30,6 +30,43 @@ export function runQuitCleanup({
   });
 }
 
+type BeforeQuitEvent = {
+  readonly preventDefault: () => void;
+};
+
+type MakeBeforeQuitHandlerOptions = {
+  readonly quit: () => void;
+  readonly runQuitCleanupOnce: () => Promise<void>;
+};
+
+export function makeBeforeQuitHandler({
+  quit,
+  runQuitCleanupOnce,
+}: MakeBeforeQuitHandlerOptions): (event: BeforeQuitEvent) => void {
+  let hasStartedQuitCleanup = false;
+  let hasFinishedQuitCleanup = false;
+
+  return (event) => {
+    if (hasFinishedQuitCleanup) {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (hasStartedQuitCleanup) {
+      return;
+    }
+
+    hasStartedQuitCleanup = true;
+
+    void runQuitCleanupOnce().then(() => {
+      hasFinishedQuitCleanup = true;
+
+      quit();
+    });
+  };
+}
+
 export function makeQuitCleanup(
   options: RunQuitCleanupOptions,
 ): () => Promise<void> {

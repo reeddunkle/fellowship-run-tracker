@@ -1,6 +1,10 @@
 import { describe, expect, test, vi } from "vitest";
 
-import { makeQuitCleanup, runQuitCleanup } from "@/application/quit-cleanup.ts";
+import {
+  makeBeforeQuitHandler,
+  makeQuitCleanup,
+  runQuitCleanup,
+} from "@/application/quit-cleanup.ts";
 
 const SHORT_TIMEOUT_MILLISECONDS = 10;
 
@@ -110,5 +114,92 @@ describe("makeQuitCleanup", () => {
 
     expect(flushWindowState).toHaveBeenCalledOnce();
     expect(disposeRuntime).toHaveBeenCalledOnce();
+  });
+});
+
+describe("makeBeforeQuitHandler", () => {
+  function makeQuitEvent() {
+    return { preventDefault: vi.fn() };
+  }
+
+  function makePendingCleanup() {
+    let finishCleanup: () => void = () => {};
+
+    // @effect-diagnostics-next-line newPromise:off
+    const cleanup = new Promise<void>((resolve) => {
+      finishCleanup = resolve;
+    });
+
+    return { cleanup, finishCleanup };
+  }
+
+  test("keeps preventing quit until the cleanup finishes", async () => {
+    const { cleanup, finishCleanup } = makePendingCleanup();
+    const quit = vi.fn();
+
+    const handleBeforeQuit = makeBeforeQuitHandler({
+      quit,
+      runQuitCleanupOnce: () => {
+        return cleanup;
+      },
+    });
+
+    const firstQuitEvent = makeQuitEvent();
+    const secondQuitEvent = makeQuitEvent();
+
+    handleBeforeQuit(firstQuitEvent);
+    handleBeforeQuit(secondQuitEvent);
+
+    expect(firstQuitEvent.preventDefault).toHaveBeenCalledOnce();
+    expect(secondQuitEvent.preventDefault).toHaveBeenCalledOnce();
+    expect(quit).not.toHaveBeenCalled();
+
+    finishCleanup();
+
+    await vi.waitFor(() => {
+      expect(quit).toHaveBeenCalledOnce();
+    });
+  });
+
+  test("starts the cleanup once for repeated quit requests", () => {
+    const { cleanup } = makePendingCleanup();
+
+    const runQuitCleanupOnce = vi.fn(() => {
+      return cleanup;
+    });
+
+    const handleBeforeQuit = makeBeforeQuitHandler({
+      quit: vi.fn(),
+      runQuitCleanupOnce,
+    });
+
+    handleBeforeQuit(makeQuitEvent());
+    handleBeforeQuit(makeQuitEvent());
+
+    expect(runQuitCleanupOnce).toHaveBeenCalledOnce();
+  });
+
+  test("lets the app quit once the cleanup has finished", async () => {
+    const quit = vi.fn();
+
+    const handleBeforeQuit = makeBeforeQuitHandler({
+      quit,
+      runQuitCleanupOnce: () => {
+        return Promise.resolve();
+      },
+    });
+
+    handleBeforeQuit(makeQuitEvent());
+
+    await vi.waitFor(() => {
+      expect(quit).toHaveBeenCalledOnce();
+    });
+
+    const finalQuitEvent = makeQuitEvent();
+
+    handleBeforeQuit(finalQuitEvent);
+
+    expect(finalQuitEvent.preventDefault).not.toHaveBeenCalled();
+    expect(quit).toHaveBeenCalledOnce();
   });
 });
