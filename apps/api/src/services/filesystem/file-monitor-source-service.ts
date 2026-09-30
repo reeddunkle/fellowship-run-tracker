@@ -1,11 +1,13 @@
+import * as Cause from "effect/Cause";
 import * as Context from "effect/Context";
 import * as Deferred from "effect/Deferred";
 import * as E from "effect/Effect";
+import * as Exit from "effect/Exit";
 import * as FileSystem from "effect/FileSystem";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Path from "effect/Path";
-import type * as PlatformError from "effect/PlatformError";
+import * as PlatformError from "effect/PlatformError";
 import * as PubSub from "effect/PubSub";
 import * as RcMap from "effect/RcMap";
 import * as Stream from "effect/Stream";
@@ -73,8 +75,24 @@ const makeFileMonitorSource = E.gen(function* () {
       Stream.runForEach((event) => {
         return PubSub.publish(events, event);
       }),
-      E.catch((error) => {
-        return Deferred.fail(failure, error).pipe(
+      E.onExit((exit) => {
+        if (Exit.isFailure(exit) && Cause.hasInterruptsOnly(exit.cause)) {
+          return E.void;
+        }
+
+        const failureCause = Exit.isFailure(exit)
+          ? exit.cause
+          : Cause.fail(
+              PlatformError.systemError({
+                _tag: "Unknown",
+                description: "The directory watcher closed unexpectedly.",
+                method: "watch",
+                module: "FileSystem",
+                pathOrDescriptor: directoryPath,
+              }),
+            );
+
+        return Deferred.failCause(failure, failureCause).pipe(
           E.andThen(
             RcMap.invalidate(directoryWatchers, directoryPath).pipe(
               E.forkIn(serviceScope),

@@ -51,11 +51,11 @@ export function makeFileMonitorSourceFailureTestLive(
 }
 
 type MakeWatchCountingFileMonitorSourceTestLiveOptions = {
-  readonly firstWatchError?: PlatformError.PlatformError;
+  readonly firstWatch?: Stream.Stream<never, PlatformError.PlatformError>;
 };
 
 export function makeWatchCountingFileMonitorSourceTestLive({
-  firstWatchError,
+  firstWatch,
 }: MakeWatchCountingFileMonitorSourceTestLiveOptions = {}) {
   return E.gen(function* () {
     const openedWatchCount = yield* Ref.make(0);
@@ -74,8 +74,8 @@ export function makeWatchCountingFileMonitorSourceTestLive({
                 return count + 1;
               }).pipe(
                 E.map((watchNumber) => {
-                  return watchNumber === 1 && firstWatchError !== undefined
-                    ? Stream.fail(firstWatchError)
+                  return watchNumber === 1 && firstWatch !== undefined
+                    ? firstWatch
                     : fileSystem.watch(path, options);
                 }),
               ),

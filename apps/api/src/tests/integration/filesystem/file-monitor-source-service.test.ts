@@ -359,7 +359,7 @@ describe("FileMonitorSource", () => {
       const program = E.gen(function* () {
         const watchCounting = yield* makeWatchCountingFileMonitorSourceTestLive(
           {
-            firstWatchError: watchError,
+            firstWatch: Stream.fail(watchError),
           },
         );
 
@@ -400,6 +400,58 @@ describe("FileMonitorSource", () => {
             expect(yield* Ref.get(watchCounting.openedWatchCount)).toBe(2);
           }),
         ).pipe(E.provide(watchCounting.layer));
+      });
+
+      await runTest(program);
+    });
+
+    test("fails every stream when the watcher closes and recovers with a fresh watcher", async () => {
+      const program = E.gen(function* () {
+        const watchCounting = yield* makeWatchCountingFileMonitorSourceTestLive(
+          {
+            firstWatch: Stream.empty,
+          },
+        );
+
+        yield* E.scoped(
+          E.gen(function* () {
+            const harness = yield* makeFileMonitorSourceTestHarness();
+
+            const options = {
+              directoryPath: harness.directoryPath,
+              matches: matchesTextFile,
+            };
+
+            const [latestFileError, statusError] = yield* E.all(
+              [
+                harness.fileMonitorSource
+                  .streamLatestFile(options)
+                  .pipe(Stream.runDrain, E.flip),
+                harness.fileMonitorSource
+                  .streamStatus(options)
+                  .pipe(Stream.runDrain, E.flip),
+              ],
+              {
+                concurrency: "unbounded",
+              },
+            );
+
+            expect(latestFileError.message).toContain(
+              "The directory watcher closed unexpectedly.",
+            );
+            expect(statusError).toBe(latestFileError);
+
+            const recoveredLatestFiles = yield* makeStreamTestHarness(
+              harness.fileMonitorSource
+                .streamLatestFile(options)
+                .pipe(Stream.retry(Schedule.recurs(3))),
+            );
+
+            yield* recoveredLatestFiles.take;
+
+            expect(yield* Ref.get(watchCounting.openedWatchCount)).toBe(2);
+          }),
+        ).pipe(E.provide(watchCounting.layer), E.timeout("2 seconds"));
       });
 
       await runTest(program);
