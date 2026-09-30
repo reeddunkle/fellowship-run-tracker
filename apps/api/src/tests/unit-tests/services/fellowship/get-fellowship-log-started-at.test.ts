@@ -11,8 +11,9 @@ describe("getFellowshipLogStartedAt", () => {
     );
 
     expect(startedAt).toEqual(
-      Option.some(
-        DateTime.toEpochMillis(DateTime.makeUnsafe("2026-08-20T02:35:02.873Z")),
+      DateTime.makeUnsafe("2026-08-20T02:35:02.873Z").pipe(
+        DateTime.toEpochMillis,
+        Option.some,
       ),
     );
   });
