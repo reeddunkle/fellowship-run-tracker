@@ -141,4 +141,50 @@ describe("AppStateStore", () => {
 
     await runTest(program);
   });
+  test("finishes an in-progress write and saves queued updates when the store shuts down", async () => {
+    const program = E.gen(function* () {
+      const keyValueStore = yield* KeyValueStore.KeyValueStore;
+
+      const slowKeyValueStore = {
+        ...keyValueStore,
+        set: (key: string, value: string | Uint8Array) => {
+          return E.sleep("30 millis").pipe(
+            E.andThen(keyValueStore.set(key, value)),
+          );
+        },
+      } satisfies KeyValueStore.KeyValueStore;
+
+      yield* E.scoped(
+        E.gen(function* () {
+          const store = yield* makeAppStateStore.pipe(
+            E.provideService(KeyValueStore.KeyValueStore, slowKeyValueStore),
+          );
+
+          yield* store.setTheme("light").pipe(E.forkChild);
+
+          yield* E.sleep("10 millis");
+
+          yield* store.setSidebarOpen(false).pipe(E.forkChild);
+
+          yield* E.sleep("5 millis");
+        }),
+      );
+
+      return yield* E.scoped(
+        E.gen(function* () {
+          const store = yield* makeAppStateStore;
+
+          return {
+            sidebarOpen: yield* store.getSidebarOpen,
+            theme: yield* store.getTheme,
+          };
+        }),
+      );
+    }).pipe(E.provide(KeyValueStore.layerMemory));
+
+    expect(await runTest(program)).toEqual({
+      sidebarOpen: false,
+      theme: "light",
+    });
+  });
 });

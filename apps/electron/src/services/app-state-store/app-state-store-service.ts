@@ -23,6 +23,7 @@ import {
   CURRENT_APP_STATE_VERSION,
   PersistedAppStateSchema,
 } from "./persistence/app-state-persistence-schema.ts";
+import { layerAtomicFileSystem } from "./persistence/atomic-file-system-key-value-store.ts";
 
 const APP_STATE_KEY = "app-state";
 const CORRUPT_APP_STATE_BACKUP_KEY = "app-state-corrupt-backup";
@@ -229,29 +230,42 @@ export const makeAppStateStore = E.gen(function* () {
 
   const queue = yield* Queue.unbounded<AppStateUpdateRequest>();
 
-  const processBatch = E.gen(function* () {
-    const requests = yield* Queue.takeAll(queue);
-    const result = yield* E.result(
-      E.gen(function* () {
-        const state = yield* readState;
-        const updatedState = requests.reduce((currentState, request) => {
-          return applyAppStateUpdate(currentState, request.update);
-        }, state);
+  const processRequests = (requests: ReadonlyArray<AppStateUpdateRequest>) => {
+    return E.gen(function* () {
+      const result = yield* E.result(
+        E.gen(function* () {
+          const state = yield* readState;
+          const updatedState = requests.reduce((currentState, request) => {
+            return applyAppStateUpdate(currentState, request.update);
+          }, state);
 
-        yield* write(updatedState);
-      }),
-    );
+          yield* write(updatedState);
+        }),
+      );
 
-    yield* E.forEach(requests, ({ deferred }) => {
-      return Result.match(result, {
-        onFailure: (failure) => Deferred.fail(deferred, failure).pipe(E.asVoid),
-        onSuccess: () => Deferred.succeed(deferred, undefined).pipe(E.asVoid),
+      yield* E.forEach(requests, ({ deferred }) => {
+        return Result.match(result, {
+          onFailure: (failure) =>
+            Deferred.fail(deferred, failure).pipe(E.asVoid),
+          onSuccess: () => Deferred.succeed(deferred, undefined).pipe(E.asVoid),
+        });
       });
-    });
-  });
+    }).pipe(E.uninterruptible);
+  };
+
+  const processBatch = Queue.takeAll(queue).pipe(E.flatMap(processRequests));
 
   const processLoop: E.Effect<never, never> = E.suspend(() => {
     return processBatch.pipe(E.andThen(processLoop));
+  });
+
+  yield* E.addFinalizer(() => {
+    return Queue.clear(queue).pipe(
+      E.flatMap((requests) => {
+        return requests.length === 0 ? E.void : processRequests(requests);
+      }),
+      E.andThen(Queue.shutdown(queue)),
+    );
   });
 
   yield* processLoop.pipe(E.tapCause(E.logError), E.forkScoped);
@@ -331,7 +345,7 @@ export class AppStateStore extends Context.Service<
 ) {
   static readonly layerWith = (directoryPath: string) =>
     Layer.effect(this, makeAppStateStore).pipe(
-      Layer.provide(KeyValueStore.layerFileSystem(directoryPath)),
+      Layer.provide(layerAtomicFileSystem(directoryPath)),
       Layer.provide(NodePlatformLayer),
     );
 }
