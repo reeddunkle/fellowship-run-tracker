@@ -13,6 +13,7 @@ import {
 import { FileMonitorSource } from "@frt/api/services/filesystem/file-monitor-source-service.ts";
 import { type FellowshipEvent } from "@frt/shared/fellowship/validation/fellowship-event-schema.ts";
 
+import { getFellowshipLogStartedAt } from "./parsing/get-fellowship-log-started-at.ts";
 import { parseFellowshipEventStream } from "./parsing/parse-fellowship-event-stream.ts";
 
 const FELLOWSHIP_LOG_FILE_EXTENSION = ".txt";
@@ -72,6 +73,7 @@ const makeFellowship = E.gen(function* () {
         return fileMonitor
           .streamLatestFileLines({
             directoryPath: settings.fellowshipLogDirectory,
+            getContentStartedAt: getFellowshipLogStartedAt,
             matches: isFellowshipLogFile,
             startFrom: "end",
           })

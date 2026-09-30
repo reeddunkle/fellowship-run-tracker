@@ -41,9 +41,12 @@ type StreamLinesOptions = {
 
 type StreamLatestFileLinesOptions = {
   readonly directoryPath: string;
+  readonly getContentStartedAt?: (leadingText: string) => Option.Option<number>;
   readonly matches: (fileName: string) => boolean;
   readonly startFrom: "end" | "start";
 };
+
+const LEADING_TEXT_BYTES = ByteSize.bytes(1_024);
 
 export type FileMonitorShape = {
   readonly findLatestFile: (
@@ -211,8 +214,25 @@ const makeFileMonitor = E.gen(function* () {
     }).pipe(Stream.runCollect);
   };
 
+  const readLeadingText = (file: FileData) => {
+    return readFileRange({
+      bytesToRead:
+        file.size < LEADING_TEXT_BYTES ? file.size : LEADING_TEXT_BYTES,
+      filePath: file.filePath,
+      offset: ByteSize.bytes(0),
+    }).pipe(
+      E.map((chunks) => {
+        return decodeChunks({
+          chunks,
+          decoder: new globalThis.TextDecoder(),
+        });
+      }),
+    );
+  };
+
   const streamLatestFileLines: FileMonitorShape["streamLatestFileLines"] = ({
     directoryPath,
+    getContentStartedAt,
     matches,
     startFrom,
   }) => {
@@ -220,15 +240,42 @@ const makeFileMonitor = E.gen(function* () {
       E.gen(function* () {
         const streamStartedAtMilliseconds = yield* Clock.currentTimeMillis;
 
-        const getStartingByteOffset = (file: FileData) => {
-          const isStartOfFileWanted =
-            startFrom === "start" ||
-            isFileWrittenSince({
+        const isFileFromThisStream = (file: FileData) => {
+          const isWrittenSinceStreamStarted = () => {
+            return isFileWrittenSince({
               file,
               sinceEpochMilliseconds: streamStartedAtMilliseconds,
             });
+          };
 
-          return isStartOfFileWanted ? ByteSize.bytes(0) : file.size;
+          if (getContentStartedAt === undefined) {
+            return E.succeed(isWrittenSinceStreamStarted());
+          }
+
+          return readLeadingText(file).pipe(
+            E.map((leadingText) => {
+              return Option.match(getContentStartedAt(leadingText), {
+                onNone: isWrittenSinceStreamStarted,
+                onSome: (contentStartedAtMilliseconds) => {
+                  return (
+                    contentStartedAtMilliseconds > streamStartedAtMilliseconds
+                  );
+                },
+              });
+            }),
+          );
+        };
+
+        const getStartingByteOffset = (file: FileData) => {
+          if (startFrom === "start") {
+            return E.succeed(ByteSize.bytes(0));
+          }
+
+          return isFileFromThisStream(file).pipe(
+            E.map((isFromThisStream) => {
+              return isFromThisStream ? ByteSize.bytes(0) : file.size;
+            }),
+          );
         };
 
         const readFrom = (state: ReturnType<typeof createFileReadState>) => {
@@ -238,6 +285,14 @@ const makeFileMonitor = E.gen(function* () {
           }).pipe(
             E.map((result) => {
               return [Option.some(result.state), result.lines] as const;
+            }),
+          );
+        };
+
+        const readFromNewFile = (file: FileData) => {
+          return getStartingByteOffset(file).pipe(
+            E.flatMap((byteOffset) => {
+              return readFrom(createFileReadState({ byteOffset, file }));
             }),
           );
         };
@@ -256,19 +311,14 @@ const makeFileMonitor = E.gen(function* () {
                     return E.succeed([state, []] as const);
                   },
                   onSome: (file) => {
-                    const newFileState = createFileReadState({
-                      byteOffset: getStartingByteOffset(file),
-                      file,
-                    });
-
                     return Option.match(state, {
                       onNone: () => {
-                        return readFrom(newFileState);
+                        return readFromNewFile(file);
                       },
                       onSome: (currentState) => {
                         return isSameFile(file, currentState.file)
                           ? readFrom({ ...currentState, file })
-                          : readFrom(newFileState);
+                          : readFromNewFile(file);
                       },
                     });
                   },

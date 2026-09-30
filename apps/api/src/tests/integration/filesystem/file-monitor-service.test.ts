@@ -1,3 +1,4 @@
+import * as Clock from "effect/Clock";
 import * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
 import * as Fiber from "effect/Fiber";
@@ -23,6 +24,17 @@ const FILE_TIMESTAMP_SEPARATION = "5 millis";
 const OLD_MODIFIED_TIME = DateTime.toDateUtc(
   DateTime.makeUnsafe("2020-01-01T00:00:00.000Z"),
 );
+
+function getLeadingEpochMilliseconds(
+  leadingText: string,
+): Option.Option<number> {
+  const [leadingField] = leadingText.split("|");
+  const epochMilliseconds = Number(leadingField);
+
+  return leadingText.includes("|") && Number.isFinite(epochMilliseconds)
+    ? Option.some(epochMilliseconds)
+    : Option.none();
+}
 
 describe("FileMonitor", () => {
   describe("findLatestFile", () => {
@@ -384,6 +396,85 @@ describe("FileMonitor", () => {
 
           yield* harness.appendFile("copied.txt", "appended line\n");
           yield* harness.emitFile("copied.txt");
+
+          const line = yield* lines.take;
+
+          expect(line).toBe("appended line");
+        }),
+      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+
+      await runTest(program);
+    });
+
+    test("reads a file from its beginning when its content started after monitoring, whatever its file times say", async () => {
+      const program = E.scoped(
+        E.gen(function* () {
+          const harness = yield* makeFileMonitorTestHarness();
+
+          yield* harness.writeFile("current.txt", "");
+
+          const lines = yield* makeStreamTestHarness(
+            harness.fileMonitor.streamLatestFileLines({
+              directoryPath: harness.directoryPath,
+              getContentStartedAt: getLeadingEpochMilliseconds,
+              matches: matchesTextFile,
+              startFrom: "end",
+            }),
+          );
+
+          yield* harness.awaitSourceRequest;
+          yield* harness.emitFile("current.txt");
+
+          yield* harness.awaitSourceRequest;
+
+          const contentStartedAt = yield* Clock.currentTimeMillis;
+
+          yield* harness.writeFile(
+            "new-session.txt",
+            `${contentStartedAt + 1_000}|first line\n`,
+          );
+          yield* harness.setModifiedTime("new-session.txt", OLD_MODIFIED_TIME);
+          yield* harness.emitFile("new-session.txt");
+
+          const line = yield* lines.take;
+
+          expect(line).toBe(`${contentStartedAt + 1_000}|first line`);
+        }),
+      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+
+      await runTest(program);
+    });
+
+    test("starts a file from its end when its content started before monitoring, whatever its file times say", async () => {
+      const program = E.scoped(
+        E.gen(function* () {
+          const harness = yield* makeFileMonitorTestHarness();
+
+          yield* harness.writeFile("current.txt", "");
+
+          const lines = yield* makeStreamTestHarness(
+            harness.fileMonitor.streamLatestFileLines({
+              directoryPath: harness.directoryPath,
+              getContentStartedAt: getLeadingEpochMilliseconds,
+              matches: matchesTextFile,
+              startFrom: "end",
+            }),
+          );
+
+          yield* harness.awaitSourceRequest;
+          yield* harness.emitFile("current.txt");
+
+          yield* harness.awaitSourceRequest;
+
+          yield* E.sleep(FILE_TIMESTAMP_SEPARATION);
+
+          yield* harness.writeFile("old-session.txt", "0|old line\n");
+          yield* harness.emitFile("old-session.txt");
+
+          yield* harness.awaitSourceRequest;
+
+          yield* harness.appendFile("old-session.txt", "appended line\n");
+          yield* harness.emitFile("old-session.txt");
 
           const line = yield* lines.take;
 
