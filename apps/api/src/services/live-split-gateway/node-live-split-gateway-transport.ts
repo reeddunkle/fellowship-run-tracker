@@ -91,6 +91,9 @@ export const makeNodeLiveSplitGatewayTransport = E.fn(
         );
       }),
       E.forever,
+      E.catchReason("SocketError", "SocketCloseError", (reason, error) => {
+        return reason.code === 1000 ? E.void : E.fail(error);
+      }),
     );
   }).pipe(
     E.scoped,
@@ -132,18 +135,18 @@ export const makeNodeLiveSplitGatewayTransport = E.fn(
     Stream.takeUntilEffect((item) => {
       return E.succeed(item.type === "END");
     }),
-    Stream.mapEffect(
+    Stream.flatMap(
       Match.type<LiveSplitGatewayTransportChunk>().pipe(
         Match.when({ type: "CHUNK" }, ({ data }) => {
-          return E.succeed(data);
+          return Stream.succeed(data);
         }),
         Match.when({ type: "END" }, ({ exit }) => {
           return Exit.match(exit, {
             onFailure: (cause) => {
-              return E.failCause(cause);
+              return Stream.failCause(cause);
             },
             onSuccess: () => {
-              return E.die("Unexpected terminal LiveSplit transport item.");
+              return Stream.empty;
             },
           });
         }),
