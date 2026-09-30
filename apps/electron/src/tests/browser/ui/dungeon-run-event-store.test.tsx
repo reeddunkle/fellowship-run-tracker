@@ -1,3 +1,4 @@
+import { QueryClient } from "@tanstack/react-query";
 import * as E from "effect/Effect";
 import * as Stream from "effect/Stream";
 import { describe, expect, test, vi } from "vitest";
@@ -10,6 +11,7 @@ import {
 import { DungeonRunEventMessageDecodeError } from "@/errors/dungeon-run-event-message-error.ts";
 import { API_EVENT_CONNECTION_STATE } from "@/renderer/api/common.ts";
 import { type DungeonRunEventStreamEvent } from "@/renderer/api/dungeon-run/dungeon-run-event-stream.ts";
+import { DUNGEON_RUN_HISTORY_QUERY_KEY_PREFIX } from "@/renderer/api/dungeon-run/dungeon-run-queries.ts";
 import { makeDungeonRunEventStore } from "@/renderer/stores/dungeon-run/dungeon-run-event-store.ts";
 
 describe("DungeonRunEventStore", () => {
@@ -141,7 +143,7 @@ describe("DungeonRunEventStore", () => {
     expect(listener).not.toHaveBeenCalled();
   });
 
-  test("notifies onRunFinished listeners when the run transitions away from ACTIVE", async () => {
+  test("invalidates dungeon run history when the run transitions away from ACTIVE", async () => {
     const activeEvent = {
       message: MOCK_DUNGEON_RUN_API_MESSAGE,
       type: "MESSAGE_RECEIVED",
@@ -161,88 +163,51 @@ describe("DungeonRunEventStore", () => {
       type: "MESSAGE_RECEIVED",
     } satisfies DungeonRunEventStreamEvent;
 
+    const queryClient = new QueryClient();
+    const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
     const store = makeDungeonRunEventStore({
       makeEventStream: () => {
         return Stream.make(activeEvent, finishedEvent);
       },
+      queryClient,
     });
 
-    const listener = vi.fn();
-
-    store.onRunFinished(listener);
     store.start();
 
     await vi.waitFor(() => {
-      expect(store.getSnapshot().runState?.dungeonRun?.status).toBe(
-        "COMPLETED",
-      );
+      expect(invalidateQueries).toHaveBeenCalledOnce();
     });
 
-    expect(listener).toHaveBeenCalledOnce();
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: DUNGEON_RUN_HISTORY_QUERY_KEY_PREFIX,
+    });
+    expect(store.getSnapshot().runState?.dungeonRun?.status).toBe("COMPLETED");
   });
 
-  test("does not notify onRunFinished when the run becomes active for the first time", async () => {
+  test("does not invalidate dungeon run history when the run becomes active for the first time", async () => {
     const activeEvent = {
       message: MOCK_DUNGEON_RUN_API_MESSAGE,
       type: "MESSAGE_RECEIVED",
     } satisfies DungeonRunEventStreamEvent;
 
+    const queryClient = new QueryClient();
+    const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
     const store = makeDungeonRunEventStore({
       makeEventStream: () => {
         return Stream.make(activeEvent);
       },
+      queryClient,
     });
 
-    const listener = vi.fn();
-
-    store.onRunFinished(listener);
     store.start();
 
     await vi.waitFor(() => {
       expect(store.getSnapshot().runState).toEqual(MOCK_DUNGEON_RUN_STATE_API);
     });
 
-    expect(listener).not.toHaveBeenCalled();
-  });
-
-  test("does not notify an onRunFinished listener after it unsubscribes", async () => {
-    const activeEvent = {
-      message: MOCK_DUNGEON_RUN_API_MESSAGE,
-      type: "MESSAGE_RECEIVED",
-    } satisfies DungeonRunEventStreamEvent;
-
-    const finishedEvent = {
-      message: {
-        ...MOCK_DUNGEON_RUN_API_MESSAGE,
-        state: {
-          ...MOCK_DUNGEON_RUN_STATE_API,
-          dungeonRun: {
-            ...MOCK_DUNGEON_RUN_STATE_API.dungeonRun,
-            status: "EXITED",
-          },
-        },
-      },
-      type: "MESSAGE_RECEIVED",
-    } satisfies DungeonRunEventStreamEvent;
-
-    const store = makeDungeonRunEventStore({
-      makeEventStream: () => {
-        return Stream.make(activeEvent, finishedEvent);
-      },
-    });
-
-    const listener = vi.fn();
-
-    const unsubscribe = store.onRunFinished(listener);
-
-    unsubscribe();
-    store.start();
-
-    await vi.waitFor(() => {
-      expect(store.getSnapshot().runState?.dungeonRun?.status).toBe("EXITED");
-    });
-
-    expect(listener).not.toHaveBeenCalled();
+    expect(invalidateQueries).not.toHaveBeenCalled();
   });
 
   test("does not start another event stream while already running", () => {

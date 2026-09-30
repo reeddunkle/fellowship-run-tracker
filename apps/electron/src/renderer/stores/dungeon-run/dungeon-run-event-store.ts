@@ -1,3 +1,4 @@
+import { type QueryClient } from "@tanstack/react-query";
 import * as E from "effect/Effect";
 import * as Match from "effect/Match";
 import * as Stream from "effect/Stream";
@@ -14,6 +15,8 @@ import {
   type DungeonRunEventStreamEvent,
   makeDungeonRunEventStream,
 } from "@/renderer/api/dungeon-run/dungeon-run-event-stream.ts";
+import { invalidateDungeonRunHistory } from "@/renderer/api/fellowship-logs/fellowship-logs-invalidation.ts";
+import { queryClient as defaultQueryClient } from "@/renderer/query/query-client.ts";
 import { makeRestartableBrowserProgram } from "@/renderer/runtimes/make-restartable-browser-program.ts";
 
 export type DungeonRunEventStoreSnapshot = {
@@ -31,11 +34,11 @@ type DungeonRunEventStreamFactory = () => Stream.Stream<
 
 export type MakeDungeonRunEventStoreOptions = {
   readonly makeEventStream?: DungeonRunEventStreamFactory;
+  readonly queryClient?: QueryClient;
 };
 
 export type DungeonRunEventStore = {
   readonly getSnapshot: () => DungeonRunEventStoreSnapshot;
-  readonly onRunFinished: (listener: Listener) => () => void;
   readonly start: () => void;
   readonly stop: () => void;
   readonly subscribe: (listener: Listener) => () => void;
@@ -48,20 +51,14 @@ const initialSnapshot: DungeonRunEventStoreSnapshot = {
 
 export function makeDungeonRunEventStore({
   makeEventStream = makeDungeonRunEventStream,
+  queryClient = defaultQueryClient,
 }: MakeDungeonRunEventStoreOptions = {}): DungeonRunEventStore {
   let snapshot = initialSnapshot;
 
   const listeners = new Set<Listener>();
-  const runFinishedListeners = new Set<Listener>();
 
   function emit(): void {
     listeners.forEach((listener) => {
-      listener();
-    });
-  }
-
-  function emitRunFinished(): void {
-    runFinishedListeners.forEach((listener) => {
       listener();
     });
   }
@@ -97,12 +94,21 @@ export function makeDungeonRunEventStore({
           runState: event.message.state,
         };
       }).pipe(
-        E.tap(() => {
-          return E.sync(() => {
-            if (previousStatus === "ACTIVE" && nextStatus !== "ACTIVE") {
-              emitRunFinished();
-            }
-          });
+        E.andThen(() => {
+          if (previousStatus !== "ACTIVE" || nextStatus === "ACTIVE") {
+            return E.void;
+          }
+
+          return invalidateDungeonRunHistory(queryClient).pipe(
+            E.catch((error) => {
+              return E.logWarning(
+                "Failed to refresh dungeon run history after a run finished.",
+                {
+                  error,
+                },
+              );
+            }),
+          );
         }),
       );
     }),
@@ -137,21 +143,12 @@ export function makeDungeonRunEventStore({
     };
   }
 
-  function onRunFinished(listener: Listener): () => void {
-    runFinishedListeners.add(listener);
-
-    return () => {
-      runFinishedListeners.delete(listener);
-    };
-  }
-
   function getSnapshot(): DungeonRunEventStoreSnapshot {
     return snapshot;
   }
 
   return {
     getSnapshot,
-    onRunFinished,
     start,
     stop,
     subscribe,

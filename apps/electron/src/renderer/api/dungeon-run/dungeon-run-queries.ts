@@ -2,11 +2,9 @@ import {
   queryOptions,
   skipToken,
   useQuery,
-  useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
 import * as E from "effect/Effect";
-import { useCallback } from "react";
 
 import { type DungeonRunApiHistory } from "@frt/shared/dungeon-run/dungeon-run-api-schema.ts";
 import { type DungeonId } from "@frt/shared/fellowship/validation/fellowship-common.ts";
@@ -68,16 +66,6 @@ export function useDungeonRunHistorySuspense(
   const { data } = useSuspenseQuery(getDungeonRunHistoryQueryOptions(args));
 
   return data;
-}
-
-export function useInvalidateDungeonRunHistory(): () => void {
-  const queryClient = useQueryClient();
-
-  return useCallback(() => {
-    void queryClient.invalidateQueries({
-      queryKey: DUNGEON_RUN_HISTORY_QUERY_KEY_PREFIX,
-    });
-  }, [queryClient]);
 }
 
 export function useDungeonRunHistoryQuery(

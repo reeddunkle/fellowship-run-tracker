@@ -3,7 +3,6 @@ import * as Option from "effect/Option";
 import {
   createContext,
   type ReactNode,
-  useCallback,
   useContext,
   useMemo,
   useSyncExternalStore,
@@ -30,10 +29,7 @@ import {
   type ApiEventConnectionState,
 } from "@/renderer/api/common.ts";
 import { useConfigurationsQuery } from "@/renderer/api/configuration/configuration-queries.ts";
-import {
-  useDungeonRunHistoryQuery,
-  useInvalidateDungeonRunHistory,
-} from "@/renderer/api/dungeon-run/dungeon-run-queries.ts";
+import { useDungeonRunHistoryQuery } from "@/renderer/api/dungeon-run/dungeon-run-queries.ts";
 import {
   type DungeonRunEventStore,
   type DungeonRunEventStoreSnapshot,
@@ -119,7 +115,6 @@ export function DungeonRunProvider({
   trackingEventStore: trackingEventStoreOverride = defaultTrackingEventStore,
 }: DungeonRunProviderProps) {
   const comparisonGroup = useDungeonRunComparisonGroup();
-
   const {
     collapseAllMilestones,
     expandAllMilestones,
@@ -188,23 +183,8 @@ function useDungeonRunContext(): DungeonRunContextValue {
 
 export function useDungeonRunServerState(): DungeonRunServerState {
   const { eventStore, trackingEventStore } = useDungeonRunSources();
-  const invalidateDungeonRunHistory = useInvalidateDungeonRunHistory();
-  const subscribeToDungeonRunEvents = useCallback(
-    (onStoreChange: () => void) => {
-      const unsubscribeSnapshot = eventStore.subscribe(onStoreChange);
-      const unsubscribeRunFinished = eventStore.onRunFinished(
-        invalidateDungeonRunHistory,
-      );
-
-      return () => {
-        unsubscribeSnapshot();
-        unsubscribeRunFinished();
-      };
-    },
-    [eventStore, invalidateDungeonRunHistory],
-  );
   const dungeonRunSnapshot = useSyncExternalStore(
-    subscribeToDungeonRunEvents,
+    eventStore.subscribe,
     eventStore.getSnapshot,
     eventStore.getSnapshot,
   );
