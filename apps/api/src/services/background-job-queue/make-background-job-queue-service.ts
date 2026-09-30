@@ -204,6 +204,7 @@ export const makeBackgroundJobQueue = E.gen(function* () {
     Fiber.Fiber<unknown, unknown>
   >();
   const cancelRequests = new Set<BackgroundJobId>();
+  const claimedJobIds = new Set<BackgroundJobId>();
 
   const stateLock = yield* Semaphore.make(1);
 
@@ -278,6 +279,7 @@ export const makeBackgroundJobQueue = E.gen(function* () {
   const releaseJob = (id: BackgroundJobId) => {
     return stateLock.withPermit(
       E.sync(() => {
+        claimedJobIds.delete(id);
         runningFibers.delete(id);
         cancelRequests.delete(id);
         progressById.delete(id);
@@ -381,10 +383,27 @@ export const makeBackgroundJobQueue = E.gen(function* () {
     const runNextJob = E.gen(function* () {
       yield* latch.close;
 
-      const claimed = yield* backgroundJobDAO.claimNext({
-        holdWhileWaiting,
-        queue,
-      });
+      const claimed = yield* stateLock.withPermit(
+        backgroundJobDAO
+          .claimNext({
+            holdWhileWaiting,
+            queue,
+          })
+          .pipe(
+            E.tap(
+              Option.match({
+                onNone: () => {
+                  return E.void;
+                },
+                onSome: (job) => {
+                  return E.sync(() => {
+                    claimedJobIds.add(job.id);
+                  });
+                },
+              }),
+            ),
+          ),
+      );
 
       if (Option.isNone(claimed)) {
         return yield* awaitWork(queue);
@@ -524,6 +543,17 @@ export const makeBackgroundJobQueue = E.gen(function* () {
                 operation: "Cancel",
               });
             }
+          }
+
+          if (!claimedJobIds.has(id)) {
+            yield* backgroundJobDAO.delete({ id, statuses: ["RUNNING"] });
+            yield* bumpRevision;
+
+            yield* E.logWarning(
+              "Cancelled a background job that was left running without a worker.",
+            );
+
+            return undefined;
           }
 
           cancelRequests.add(id);

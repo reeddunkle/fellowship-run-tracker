@@ -755,6 +755,57 @@ describe("BackgroundJobQueue", () => {
     expect(job.status).toBe("SUCCEEDED");
   });
 
+  test("cancels a job left running after its final status could not be saved", async () => {
+    const remainingJob = await withTempDatabase((databaseFilename) => {
+      const UnsettleableBackgroundJobDAOLive = Layer.effect(
+        BackgroundJobDAO,
+        E.gen(function* () {
+          const backgroundJobDAO = yield* makeBackgroundJobDAO;
+
+          return {
+            ...backgroundJobDAO,
+            markSucceeded: () => {
+              return E.die(new Error("Unexpected status write failure."));
+            },
+          } satisfies BackgroundJobDAOShape;
+        }),
+      );
+
+      const BackgroundJobQueueTestLive = BackgroundJobQueue.layerNoDeps.pipe(
+        Layer.provide(BackgroundJobRunnerTestLive),
+        Layer.provide(UnsettleableBackgroundJobDAOLive),
+        Layer.provideMerge(
+          Layer.merge(
+            makePersistenceTestLayer(databaseFilename),
+            makeStubImporterLayer(() => {
+              return E.succeed({ dungeonRunId: STUB_DUNGEON_RUN_ID });
+            }),
+          ),
+        ),
+        Layer.provide(NodePlatformLayer),
+      );
+
+      return E.gen(function* () {
+        const backgroundJobQueue = yield* BackgroundJobQueue;
+
+        const { job } = yield* backgroundJobQueue.offer(makeImportJob());
+
+        yield* waitForJob(job.id, hasStatus("RUNNING"));
+
+        return yield* backgroundJobQueue.cancel({ id: job.id }).pipe(
+          E.andThen(getJob(job.id)),
+          E.repeat({
+            schedule: Schedule.spaced("10 millis"),
+            until: Option.isNone,
+          }),
+          E.timeout("2 seconds"),
+        );
+      }).pipe(E.provide(BackgroundJobQueueTestLive));
+    });
+
+    expect(Option.isNone(remainingJob)).toBe(true);
+  });
+
   test("emits a new revision when a job changes", async () => {
     const revisions = await withTempDatabase((databaseFilename) => {
       return E.gen(function* () {
