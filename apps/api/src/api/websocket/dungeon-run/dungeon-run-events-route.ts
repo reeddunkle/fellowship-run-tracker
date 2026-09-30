@@ -1,16 +1,16 @@
 import * as E from "effect/Effect";
 import * as HttpRouter from "effect/http/HttpRouter";
 
+import { DungeonRunWebSocketBroadcaster } from "@frt/api/api/websocket/dungeon-run/dungeon-run-websocket-broadcaster-service.ts";
 import { serveWebSocketClient } from "@frt/api/api/websocket/serve-websocket-client.ts";
-import { DungeonRunWebSocketBroadcaster } from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
 import { ROUTES } from "@frt/api-contract/constants/routes.ts";
 
 const handleDungeonRunEventsRequest = E.gen(function* () {
-  const broadcaster = yield* DungeonRunWebSocketBroadcaster;
+  const dungeonRunWebSocketBroadcaster = yield* DungeonRunWebSocketBroadcaster;
 
   return yield* serveWebSocketClient({
-    broadcaster,
     label: "DungeonRun",
+    messages: dungeonRunWebSocketBroadcaster.messages,
   });
 });
 

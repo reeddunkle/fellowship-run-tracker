@@ -2,9 +2,6 @@ import * as E from "effect/Effect";
 import * as HttpServer from "effect/http/HttpServer";
 import * as Layer from "effect/Layer";
 
-import { publishBackgroundJobChanges } from "@frt/api/api/websocket/background-job/publish-background-job-changes.ts";
-import { publishLiveSplitStatusChanges } from "@frt/api/api/websocket/live-split/publish-live-split-status-changes.ts";
-import { publishTrackingStatusChanges } from "@frt/api/api/websocket/tracking/publish-tracking-status-changes.ts";
 import { SESSION_STARTED_AT } from "@frt/api/helpers/session-started-at.ts";
 import { AppVersion } from "@frt/api/services/app-version/app-version-service.ts";
 import { BackgroundJobQueue } from "@frt/api/services/background-job-queue/background-job-queue-service.ts";
@@ -42,10 +39,6 @@ const runApiLifecycle = E.gen(function* () {
     address: HttpServer.formatAddress(httpServer.address),
     appVersion,
   });
-
-  yield* publishBackgroundJobChanges.pipe(E.forkScoped);
-  yield* publishLiveSplitStatusChanges.pipe(E.forkScoped);
-  yield* publishTrackingStatusChanges.pipe(E.forkScoped);
 
   yield* queueStartupJobs;
 });

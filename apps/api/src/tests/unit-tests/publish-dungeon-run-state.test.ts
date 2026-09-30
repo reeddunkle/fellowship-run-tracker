@@ -3,8 +3,8 @@ import * as E from "effect/Effect";
 import * as HashMap from "effect/HashMap";
 import { describe, expect, test } from "vitest";
 
+import { DungeonRunWebSocketBroadcaster } from "@frt/api/api/websocket/dungeon-run/dungeon-run-websocket-broadcaster-service.ts";
 import { publishDungeonRunState } from "@frt/api/api/websocket/dungeon-run/publish-dungeon-run-state.ts";
-import { DungeonRunWebSocketBroadcaster } from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
 import {
   type ConfiguredDungeonRunProcessingState,
   type ConfiguredDungeonRunState,

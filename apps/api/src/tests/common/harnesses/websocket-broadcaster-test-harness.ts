@@ -1,55 +1,22 @@
 import * as E from "effect/Effect";
 import * as Ref from "effect/Ref";
+import * as Stream from "effect/Stream";
 
-import {
-  type WebSocketBroadcasterShape,
-  type WebSocketWriter,
-} from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
+import { type DungeonRunWebSocketBroadcasterShape } from "@frt/api/api/websocket/dungeon-run/dungeon-run-websocket-broadcaster-service.ts";
 
 export function makeWebSocketBroadcasterTestHarness() {
   return E.gen(function* () {
-    const clientCount = yield* Ref.make(0);
-    const latestMessage = yield* Ref.make<string | undefined>(undefined);
     const messages = yield* Ref.make<ReadonlyArray<string>>([]);
 
     const webSocketBroadcaster = {
-      clientCount: Ref.get(clientCount),
+      messages: Stream.die("unexpected call: messages"),
 
       publish: (message: string) => {
-        return E.gen(function* () {
-          yield* Ref.set(latestMessage, message);
-
-          yield* Ref.update(messages, (currentMessages) => {
-            return [...currentMessages, message];
-          });
+        return Ref.update(messages, (currentMessages) => {
+          return [...currentMessages, message];
         });
       },
-
-      registerClient: () => {
-        return E.acquireRelease(
-          Ref.update(clientCount, (count) => {
-            return count + 1;
-          }),
-          () => {
-            return Ref.update(clientCount, (count) => {
-              return count - 1;
-            });
-          },
-        );
-      },
-
-      sendLatestToClient: (writer: WebSocketWriter) => {
-        return E.gen(function* () {
-          const message = yield* Ref.get(latestMessage);
-
-          if (message === undefined) {
-            return;
-          }
-
-          yield* writer(message).pipe(E.ignore);
-        });
-      },
-    } satisfies WebSocketBroadcasterShape;
+    } satisfies DungeonRunWebSocketBroadcasterShape;
 
     const getMessages = () => {
       return Ref.get(messages);

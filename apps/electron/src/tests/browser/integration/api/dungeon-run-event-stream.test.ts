@@ -14,7 +14,7 @@ import * as Stream from "effect/Stream";
 import * as Socket from "effect/socket/Socket";
 import { describe, expect, test } from "vitest";
 
-import { DungeonRunWebSocketBroadcaster } from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
+import { DungeonRunWebSocketBroadcaster } from "@frt/api/api/websocket/dungeon-run/dungeon-run-websocket-broadcaster-service.ts";
 import { ApiServerTest } from "@frt/api/tests/common/layers/api-server-test-layer.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { ROUTES } from "@frt/api-contract/constants/routes.ts";

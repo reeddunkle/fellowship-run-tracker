@@ -1,7 +1,7 @@
 import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { DungeonRunWebSocketBroadcaster } from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
+import { DungeonRunWebSocketBroadcaster } from "@frt/api/api/websocket/dungeon-run/dungeon-run-websocket-broadcaster-service.ts";
 import { FellowshipTracker } from "@frt/api/application/fellowship-tracker/fellowship-tracker-service.ts";
 import { AppSettingsStore } from "@frt/api/services/app-settings-store/app-settings-store-service.ts";
 import { Encryption } from "@frt/api/services/encryption/encryption-service.ts";

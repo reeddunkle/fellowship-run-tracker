@@ -5,7 +5,7 @@ import * as Layer from "effect/Layer";
 import type * as Ref from "effect/Ref";
 import type * as Stream from "effect/Stream";
 
-import { DungeonRunWebSocketBroadcaster } from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
+import { DungeonRunWebSocketBroadcaster } from "@frt/api/api/websocket/dungeon-run/dungeon-run-websocket-broadcaster-service.ts";
 import { type LocalLogDungeonRunPersistence } from "@frt/api/application/dungeon-run-processing/local-log-dungeon-run-persistence.ts";
 import {
   type FellowshipTrackerAlreadyRunningError,

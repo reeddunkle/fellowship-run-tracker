@@ -1,17 +1,16 @@
 import * as E from "effect/Effect";
 import * as HttpServerRequest from "effect/http/HttpServerRequest";
 import * as HttpServerResponse from "effect/http/HttpServerResponse";
-
-import { type WebSocketBroadcasterShape } from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
+import * as Stream from "effect/Stream";
 
 type ServeWebSocketClientOptions = {
-  readonly broadcaster: WebSocketBroadcasterShape;
   readonly label: string;
+  readonly messages: Stream.Stream<string>;
 };
 
 export const serveWebSocketClient = E.fn(function* ({
-  broadcaster,
   label,
+  messages,
 }: ServeWebSocketClientOptions) {
   const request = yield* HttpServerRequest.HttpServerRequest;
 
@@ -24,27 +23,35 @@ export const serveWebSocketClient = E.fn(function* ({
     E.gen(function* () {
       const socket = yield* request.upgrade;
       const writer = yield* socket.writer;
-
-      const writeMessage = (message: string) => {
-        return writer.write(message);
-      };
-
-      yield* broadcaster.registerClient(writeMessage);
-
       const { pull } = yield* socket.reader;
 
       yield* E.logDebug(`${label} WebSocket client connected.`, {
         url: request.url,
       });
 
-      yield* broadcaster.sendLatestToClient(writeMessage);
+      const writeMessages = messages.pipe(
+        Stream.runForEach((message) => {
+          return writer.write(message);
+        }),
+        E.catch((error) => {
+          return E.logDebug(
+            `${label} WebSocket client write failed; closing the connection.`,
+            {
+              error,
+              url: request.url,
+            },
+          );
+        }),
+      );
 
-      yield* pull.pipe(
+      const readUntilClosed = pull.pipe(
         E.forever,
         E.catchReason("SocketError", "SocketCloseError", () => {
           return E.void;
         }),
       );
+
+      yield* E.raceFirst(writeMessages, readUntilClosed);
     }),
   ).pipe(
     E.ensuring(

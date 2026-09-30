@@ -4,10 +4,7 @@ import * as E from "effect/Effect";
 import * as HttpServer from "effect/http/HttpServer";
 import { describe, expect, test } from "vitest";
 
-import {
-  DungeonRunWebSocketBroadcaster,
-  type WebSocketBroadcasterShape,
-} from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
+import { DungeonRunWebSocketBroadcaster } from "@frt/api/api/websocket/dungeon-run/dungeon-run-websocket-broadcaster-service.ts";
 import {
   ApiServicesTest,
   makeApiServerTestLayer,
@@ -131,73 +128,67 @@ function closeWebSocket(websocket: WebSocket): E.Effect<void> {
   });
 }
 
-function waitForClientCount({
-  clientCount,
-  webSocketBroadcaster,
-}: {
-  readonly clientCount: number;
-  readonly webSocketBroadcaster: WebSocketBroadcasterShape;
-}): E.Effect<void> {
-  return E.gen(function* () {
-    while ((yield* webSocketBroadcaster.clientCount) !== clientCount) {
-      yield* E.sleep("1 millis");
-    }
-  });
+function getWebSocketUrl(httpServer: HttpServer.HttpServer["Service"]): string {
+  return `${HttpServer.formatAddress(httpServer.address)
+    .replace(/^http:/, "ws:")
+    .replace("0.0.0.0", "127.0.0.1")}${ROUTES.dungeonRunEvents}`;
+}
+
+function openWebSocket(url: string) {
+  return E.acquireRelease(
+    E.sync(() => {
+      return new WebSocket(url);
+    }),
+    closeWebSocket,
+  );
 }
 
 describe("DungeonRunWebSocketBroadcaster integration", () => {
-  test("registers, publishes to, and unregisters a dungeon run WebSocket client", async () => {
-    const program = E.scoped(
-      E.gen(function* () {
-        const webSocketBroadcaster = yield* DungeonRunWebSocketBroadcaster;
-        const httpServer = yield* HttpServer.HttpServer;
+  test("sends the latest published message to a newly connected client", async () => {
+    const program = E.gen(function* () {
+      const webSocketBroadcaster = yield* DungeonRunWebSocketBroadcaster;
+      const httpServer = yield* HttpServer.HttpServer;
 
-        const address = HttpServer.formatAddress(httpServer.address);
+      yield* webSocketBroadcaster.publish("first");
+      yield* webSocketBroadcaster.publish("latest");
 
-        const websocketUrl = `${address
-          .replace(/^http:/, "ws:")
-          .replace("0.0.0.0", "127.0.0.1")}${ROUTES.dungeonRunEvents}`;
+      const websocket = yield* openWebSocket(getWebSocketUrl(httpServer));
 
-        const websocket = yield* E.acquireRelease(
-          E.sync(() => {
-            return new WebSocket(websocketUrl);
-          }),
-          closeWebSocket,
-        );
+      const awaitMessage = yield* makeWebSocketMessageAwaiter(websocket);
 
-        yield* waitForWebSocketOpen(websocket).pipe(E.timeout(MOCK_TIMEOUT));
+      yield* waitForWebSocketOpen(websocket).pipe(E.timeout(MOCK_TIMEOUT));
 
-        yield* waitForClientCount({
-          clientCount: 1,
-          webSocketBroadcaster,
-        }).pipe(E.timeout(MOCK_TIMEOUT));
+      const message = yield* awaitMessage.pipe(E.timeout(MOCK_TIMEOUT));
 
-        expect(yield* webSocketBroadcaster.clientCount).toBe(1);
+      expect(message).toBe("latest");
+    }).pipe(E.scoped, E.provide(ApiServerTest));
 
-        /*
-         * Acquire the listener before publishing so the response cannot
-         * arrive before the native message handler is installed.
-         */
-        const awaitMessage = yield* makeWebSocketMessageAwaiter(websocket);
+    await runTest(program);
+  });
 
-        yield* webSocketBroadcaster
-          .publish("hello")
-          .pipe(E.timeout(MOCK_TIMEOUT));
+  test("sends messages published after a client connects", async () => {
+    const program = E.gen(function* () {
+      const webSocketBroadcaster = yield* DungeonRunWebSocketBroadcaster;
+      const httpServer = yield* HttpServer.HttpServer;
 
-        const message = yield* awaitMessage.pipe(E.timeout(MOCK_TIMEOUT));
+      const websocket = yield* openWebSocket(getWebSocketUrl(httpServer));
 
-        expect(message).toBe("hello");
+      yield* waitForWebSocketOpen(websocket).pipe(E.timeout(MOCK_TIMEOUT));
 
-        yield* closeWebSocket(websocket).pipe(E.timeout(MOCK_TIMEOUT));
+      /*
+       * Acquire the listener before publishing so the response cannot
+       * arrive before the native message handler is installed.
+       */
+      const awaitMessage = yield* makeWebSocketMessageAwaiter(websocket);
 
-        yield* waitForClientCount({
-          clientCount: 0,
-          webSocketBroadcaster,
-        }).pipe(E.timeout(MOCK_TIMEOUT));
+      yield* webSocketBroadcaster
+        .publish("hello")
+        .pipe(E.timeout(MOCK_TIMEOUT));
 
-        expect(yield* webSocketBroadcaster.clientCount).toBe(0);
-      }).pipe(E.provide(ApiServerTest)),
-    );
+      const message = yield* awaitMessage.pipe(E.timeout(MOCK_TIMEOUT));
+
+      expect(message).toBe("hello");
+    }).pipe(E.scoped, E.provide(ApiServerTest));
 
     await runTest(program);
   });

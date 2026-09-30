@@ -2,12 +2,8 @@ import { NodeHttpServer } from "@effect/platform-node";
 import * as Layer from "effect/Layer";
 
 import { ApiServer } from "@frt/api/api/api-server.ts";
-import {
-  BackgroundJobWebSocketBroadcaster,
-  DungeonRunWebSocketBroadcaster,
-  LiveSplitWebSocketBroadcaster,
-  TrackingWebSocketBroadcaster,
-} from "@frt/api/api/websocket/websocket-broadcaster-service.ts";
+import { DungeonRunWebSocketBroadcaster } from "@frt/api/api/websocket/dungeon-run/dungeon-run-websocket-broadcaster-service.ts";
+import { WebSocketChannel } from "@frt/api/api/websocket/websocket-channel-service.ts";
 import { type FellowshipTracker } from "@frt/api/application/fellowship-tracker/fellowship-tracker-service.ts";
 import { type AbilityCatalog } from "@frt/api/services/ability-catalog/ability-catalog-service.ts";
 import { type AppSettings } from "@frt/api/services/app-settings/app-settings-service.ts";
@@ -83,14 +79,15 @@ function makeApiServicesTestLayer(
 export function makeApiServerTestLayer(
   apiServicesLayer: Layer.Layer<ApiServices> = ApiServicesTest,
 ) {
-  const ApiServerDependenciesTest = Layer.mergeAll(
-    apiServicesLayer,
-    AppVersion.layerWith(TEST_APP_VERSION),
-    BackgroundJobWebSocketBroadcaster.layer,
-    DungeonRunWebSocketBroadcaster.layer,
-    LiveSplitWebSocketBroadcaster.layer,
-    TrackingWebSocketBroadcaster.layer,
-    NodeHttpServer.layerTest,
+  const ApiServerDependenciesTest = WebSocketChannel.layer.pipe(
+    Layer.provideMerge(
+      Layer.mergeAll(
+        apiServicesLayer,
+        AppVersion.layerWith(TEST_APP_VERSION),
+        DungeonRunWebSocketBroadcaster.layer,
+        NodeHttpServer.layerTest,
+      ),
+    ),
   );
 
   return ApiServer.pipe(Layer.provideMerge(ApiServerDependenciesTest));
