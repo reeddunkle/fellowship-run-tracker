@@ -25,6 +25,15 @@ export class AppStateClientError extends Data.TaggedError(
   }
 }
 
+export class AppStateStoreClosedError extends Data.TaggedError(
+  "AppStateStoreClosedError",
+) {
+  override get message() {
+    return "The app state store has shut down and can't save updates.";
+  }
+}
+
 export type AppStateStoreError =
+  | AppStateStoreClosedError
   | KeyValueStore.KeyValueStoreError
   | Schema.SchemaError;

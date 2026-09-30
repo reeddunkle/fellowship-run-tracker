@@ -1,6 +1,12 @@
+import * as Deferred from "effect/Deferred";
 import * as E from "effect/Effect";
+import * as Exit from "effect/Exit";
+import * as Fiber from "effect/Fiber";
+import * as Option from "effect/Option";
 import * as KeyValueStore from "effect/persistence/KeyValueStore";
+import * as Queue from "effect/Queue";
 import * as Result from "effect/Result";
+import * as Scope from "effect/Scope";
 import { describe, expect, test } from "vitest";
 
 import { runTest } from "@frt/api/tests/common/run-test.ts";
@@ -186,5 +192,110 @@ describe("AppStateStore", () => {
       sidebarOpen: false,
       theme: "light",
     });
+  });
+
+  test("rejects updates offered while shutdown is saving queued updates", async () => {
+    const program = E.gen(function* () {
+      const keyValueStore = yield* KeyValueStore.KeyValueStore;
+      const writeStarts = yield* Queue.unbounded<number>();
+      const firstWriteRelease = yield* Deferred.make<void>();
+      const secondWriteRelease = yield* Deferred.make<void>();
+      const writeReleases = [firstWriteRelease, secondWriteRelease];
+
+      let writeCount = 0;
+
+      const gatedKeyValueStore = {
+        ...keyValueStore,
+        set: (key: string, value: string | Uint8Array) => {
+          return E.suspend(() => {
+            const writeIndex = writeCount;
+
+            writeCount += 1;
+
+            const writeRelease = writeReleases[writeIndex];
+
+            return Queue.offer(writeStarts, writeIndex).pipe(
+              E.andThen(
+                writeRelease === undefined
+                  ? E.void
+                  : Deferred.await(writeRelease),
+              ),
+              E.andThen(keyValueStore.set(key, value)),
+            );
+          });
+        },
+      } satisfies KeyValueStore.KeyValueStore;
+
+      const scope = yield* Scope.make();
+
+      const store = yield* makeAppStateStore.pipe(
+        Scope.provide(scope),
+        E.provideService(KeyValueStore.KeyValueStore, gatedKeyValueStore),
+      );
+
+      const themeUpdate = yield* store.setTheme("light").pipe(E.forkChild);
+
+      yield* Queue.take(writeStarts);
+
+      const sidebarUpdate = yield* store
+        .setSidebarOpen(false)
+        .pipe(E.forkChild);
+
+      yield* E.sleep("10 millis");
+
+      const scopeClose = yield* Scope.close(scope, Exit.void).pipe(E.forkChild);
+
+      yield* E.sleep("10 millis");
+
+      yield* Deferred.succeed(firstWriteRelease, undefined);
+
+      yield* Queue.take(writeStarts);
+
+      const lateUpdate = yield* E.result(
+        store.setSelectedConfigurationId(null),
+      ).pipe(E.timeoutOption("1 second"));
+
+      yield* Deferred.succeed(secondWriteRelease, undefined);
+
+      yield* Fiber.join(scopeClose);
+      yield* Fiber.join(themeUpdate);
+      yield* Fiber.join(sidebarUpdate);
+
+      return lateUpdate.pipe(
+        Option.map(
+          Result.match({
+            onFailure: (error) => error._tag,
+            onSuccess: () => "Succeeded",
+          }),
+        ),
+      );
+    }).pipe(E.provide(KeyValueStore.layerMemory));
+
+    expect(await runTest(program)).toEqual(
+      Option.some("AppStateStoreClosedError"),
+    );
+  });
+
+  test("rejects updates after the store has shut down", async () => {
+    const program = E.gen(function* () {
+      const store = yield* E.scoped(makeAppStateStore);
+
+      return yield* E.result(store.setTheme("light")).pipe(
+        E.timeoutOption("1 second"),
+      );
+    }).pipe(E.provide(KeyValueStore.layerMemory));
+
+    const result = await runTest(program);
+
+    expect(
+      result.pipe(
+        Option.map(
+          Result.match({
+            onFailure: (error) => error._tag,
+            onSuccess: () => "Succeeded",
+          }),
+        ),
+      ),
+    ).toEqual(Option.some("AppStateStoreClosedError"));
   });
 });

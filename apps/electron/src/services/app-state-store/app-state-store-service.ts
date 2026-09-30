@@ -1,3 +1,4 @@
+import type * as Cause from "effect/Cause";
 import * as Context from "effect/Context";
 import * as Deferred from "effect/Deferred";
 import * as E from "effect/Effect";
@@ -16,7 +17,10 @@ import {
 import { type ConfigurationId } from "@frt/shared/configuration/configuration-id-schema.ts";
 import { type DungeonRunComparisonGroupSchema } from "@frt/shared/dungeon-run/dungeon-run-comparison-group-schema.ts";
 
-import { type AppStateStoreError } from "@/errors/app-state-error.ts";
+import {
+  AppStateStoreClosedError,
+  type AppStateStoreError,
+} from "@/errors/app-state-error.ts";
 
 import { migratePersistedAppState } from "./persistence/app-state-migrations.ts";
 import {
@@ -228,7 +232,7 @@ export const makeAppStateStore = E.gen(function* () {
     });
   };
 
-  const queue = yield* Queue.unbounded<AppStateUpdateRequest>();
+  const queue = yield* Queue.unbounded<AppStateUpdateRequest, Cause.Done>();
 
   const processRequests = (requests: ReadonlyArray<AppStateUpdateRequest>) => {
     return E.gen(function* () {
@@ -250,21 +254,23 @@ export const makeAppStateStore = E.gen(function* () {
           onSuccess: () => Deferred.succeed(deferred, undefined).pipe(E.asVoid),
         });
       });
-    }).pipe(E.uninterruptible);
+    });
   };
 
-  const processBatch = Queue.takeAll(queue).pipe(E.flatMap(processRequests));
+  const processBatch = E.uninterruptibleMask((restore) => {
+    return restore(Queue.takeAll(queue)).pipe(E.flatMap(processRequests));
+  });
 
-  const processLoop: E.Effect<never, never> = E.suspend(() => {
+  const processLoop: E.Effect<never, Cause.Done> = E.suspend(() => {
     return processBatch.pipe(E.andThen(processLoop));
   });
 
   yield* E.addFinalizer(() => {
-    return Queue.clear(queue).pipe(
+    return Queue.end(queue).pipe(
+      E.andThen(Queue.clear(queue)),
       E.flatMap((requests) => {
         return requests.length === 0 ? E.void : processRequests(requests);
       }),
-      E.andThen(Queue.shutdown(queue)),
     );
   });
 
@@ -274,10 +280,14 @@ export const makeAppStateStore = E.gen(function* () {
     return E.gen(function* () {
       const deferred = yield* Deferred.make<void, AppStateStoreError>();
 
-      yield* Queue.offer(queue, {
+      const wasOffered = yield* Queue.offer(queue, {
         deferred,
         update: appStateUpdate,
       });
+
+      if (!wasOffered) {
+        return yield* new AppStateStoreClosedError();
+      }
 
       yield* Deferred.await(deferred);
     });
