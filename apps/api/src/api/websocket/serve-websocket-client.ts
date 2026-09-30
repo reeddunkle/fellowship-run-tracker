@@ -41,8 +41,8 @@ export const serveWebSocketClient = E.fn(function* ({
 
       yield* pull.pipe(
         E.forever,
-        E.catchReason("SocketError", "SocketCloseError", (reason, error) => {
-          return reason.code === 1000 ? E.void : E.fail(error);
+        E.catchReason("SocketError", "SocketCloseError", () => {
+          return E.void;
         }),
       );
     }),

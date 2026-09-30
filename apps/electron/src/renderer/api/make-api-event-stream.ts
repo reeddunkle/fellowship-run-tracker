@@ -38,11 +38,13 @@ const DEFAULT_RECONNECT_DELAY = "1 second";
 
 const RECONNECT_WARNING_THRESHOLD = 3;
 
+const CLEAN_CLOSE_CODES: ReadonlySet<number> = new Set([1000, 1001, 1005]);
+
 function isCleanClose(error: unknown): error is Socket.SocketError {
   return (
     Socket.isSocketError(error) &&
     error.reason._tag === "SocketCloseError" &&
-    error.reason.code === 1000
+    CLEAN_CLOSE_CODES.has(error.reason.code)
   );
 }
 
