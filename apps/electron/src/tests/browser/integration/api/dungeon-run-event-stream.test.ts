@@ -1,5 +1,6 @@
 import { NodeHttpServer } from "@effect/platform-node";
 import * as Deferred from "effect/Deferred";
+import type * as Duration from "effect/Duration";
 import * as E from "effect/Effect";
 import * as Fiber from "effect/Fiber";
 import * as HttpRouter from "effect/http/HttpRouter";
@@ -22,11 +23,10 @@ import {
   DungeonRunApiMessageSchema,
 } from "@frt/api-contract/websocket/dungeon-run/dungeon-run-api-message-schema.ts";
 
+import { DungeonRunEventMessageDecodeError } from "@/errors/dungeon-run-event-message-error.ts";
 import { API_EVENT_CONNECTION_STATE } from "@/renderer/api/common.ts";
-import {
-  type DungeonRunEventStreamEvent,
-  makeDungeonRunEventStreamForUrl,
-} from "@/renderer/api/dungeon-run/dungeon-run-event-stream.ts";
+import { type DungeonRunEventStreamEvent } from "@/renderer/api/dungeon-run/dungeon-run-event-stream.ts";
+import { makeApiEventStream } from "@/renderer/api/make-api-event-stream.ts";
 
 const MOCK_TIMEOUT = "1 second";
 const MOCK_RECONNECT_DELAY = "10 millis";
@@ -55,6 +55,23 @@ const message = {
   },
   version: 1,
 } satisfies DungeonRunApiMessage;
+
+function makeDungeonRunEventStreamForUrl(
+  url: string,
+  options: { readonly reconnectDelay?: Duration.Input } = {},
+) {
+  return makeApiEventStream({
+    ...options,
+    connectionLostMessage: "Lost connection to the test event stream.",
+    makeDecodeError: (cause) => {
+      return new DungeonRunEventMessageDecodeError({
+        cause,
+      });
+    },
+    schema: DungeonRunApiMessageSchema,
+    url,
+  });
+}
 
 function getWebSocketUrl(address: NetAddress.SocketAddress): string {
   if (NetAddress.isUnixPathAddress(address)) {
