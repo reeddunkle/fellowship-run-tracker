@@ -3,6 +3,7 @@ import * as E from "effect/Effect";
 import * as Option from "effect/Option";
 import type * as Scope from "effect/Scope";
 import * as ScopedRef from "effect/ScopedRef";
+import * as Semaphore from "effect/Semaphore";
 import * as Stream from "effect/Stream";
 import * as SubscriptionRef from "effect/SubscriptionRef";
 
@@ -54,6 +55,10 @@ export function makeConnectionManager<Connection, AcquireError>({
   Scope.Scope
 > {
   return E.gen(function* () {
+    const managerScope = yield* E.scope;
+
+    const connectionLock = yield* Semaphore.make(1);
+
     const connectionRef = yield* ScopedRef.make<Option.Option<Connection>>(() =>
       Option.none(),
     );
@@ -67,6 +72,23 @@ export function makeConnectionManager<Connection, AcquireError>({
       yield* E.logInfo(`${name} connection status changed to Disconnected.`);
     });
 
+    const releaseUnavailableConnection = (connection: Connection) => {
+      return E.gen(function* () {
+        const currentConnection = yield* ScopedRef.get(connectionRef);
+
+        if (
+          Option.isNone(currentConnection) ||
+          currentConnection.value !== connection
+        ) {
+          return;
+        }
+
+        yield* ScopedRef.set(connectionRef, E.succeedNone);
+
+        yield* setDisconnected;
+      }).pipe(connectionLock.withPermit);
+    };
+
     const acquireConnection = E.gen(function* () {
       const connection = yield* acquire;
 
@@ -77,7 +99,9 @@ export function makeConnectionManager<Connection, AcquireError>({
               cause: Cause.isCause(cause) ? Cause.pretty(cause) : cause,
             });
 
-            yield* setDisconnected;
+            yield* releaseUnavailableConnection(connection).pipe(
+              E.forkIn(managerScope),
+            );
           });
         }),
         E.forkScoped,
@@ -106,7 +130,7 @@ export function makeConnectionManager<Connection, AcquireError>({
           yield* SubscriptionRef.set(statusRef, CONNECTED_STATUS);
 
           yield* E.logInfo(`${name} connection status changed to Connected.`);
-        });
+        }).pipe(connectionLock.withPermit);
       };
 
     const disconnect: ConnectionManager<
@@ -119,7 +143,7 @@ export function makeConnectionManager<Connection, AcquireError>({
         yield* ScopedRef.set(connectionRef, E.succeedNone);
 
         yield* setDisconnected;
-      });
+      }).pipe(connectionLock.withPermit);
     };
 
     return {

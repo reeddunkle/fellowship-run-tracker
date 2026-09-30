@@ -6,7 +6,12 @@ import * as Stream from "effect/Stream";
 import { describe, expect, test } from "vitest";
 
 import { runTest } from "@frt/api/tests/common/run-test.ts";
-import { makeConnectionManager } from "@frt/api/util/connection-manager/make-connection-manager.ts";
+import {
+  type ConnectionManager,
+  makeConnectionManager,
+} from "@frt/api/util/connection-manager/make-connection-manager.ts";
+
+const MOCK_TIMEOUT = "1 second";
 
 type TestConnection = {
   readonly id: number;
@@ -46,6 +51,19 @@ function makeTestConnectionManager() {
       releasedCount,
     };
   });
+}
+
+function waitForDisconnected(
+  connectionManager: ConnectionManager<TestConnection, never>,
+) {
+  return connectionManager.statusChanges.pipe(
+    Stream.dropWhile((change) => {
+      return change._tag !== "Disconnected";
+    }),
+    Stream.take(1),
+    Stream.runLast,
+    E.timeout(MOCK_TIMEOUT),
+  );
 }
 
 describe("makeConnectionManager", () => {
@@ -94,14 +112,62 @@ describe("makeConnectionManager", () => {
 
         yield* Deferred.succeed(connection.unavailable, undefined);
 
-        const status = yield* connectionManager.statusChanges.pipe(
-          Stream.takeUntil((change) => {
-            return change._tag === "Disconnected";
-          }),
-          Stream.runLast,
+        expect(yield* waitForDisconnected(connectionManager)).toEqual(
+          Option.some({ _tag: "Disconnected" }),
+        );
+      }),
+    );
+
+    await runTest(program);
+  });
+
+  test("releases the connection when it becomes unavailable", async () => {
+    const program = E.scoped(
+      E.gen(function* () {
+        const { connectionManager, releasedCount } =
+          yield* makeTestConnectionManager();
+
+        yield* connectionManager.connect();
+
+        const connection = Option.getOrThrow(
+          yield* connectionManager.connection,
         );
 
-        expect(status).toEqual(Option.some({ _tag: "Disconnected" }));
+        yield* Deferred.succeed(connection.unavailable, undefined);
+
+        yield* waitForDisconnected(connectionManager);
+
+        expect(Option.isNone(yield* connectionManager.connection)).toBe(true);
+        expect(yield* Ref.get(releasedCount)).toBe(1);
+      }),
+    );
+
+    await runTest(program);
+  });
+
+  test("connects again after the connection became unavailable", async () => {
+    const program = E.scoped(
+      E.gen(function* () {
+        const { connectionManager } = yield* makeTestConnectionManager();
+
+        yield* connectionManager.connect();
+
+        const connection = Option.getOrThrow(
+          yield* connectionManager.connection,
+        );
+
+        yield* Deferred.succeed(connection.unavailable, undefined);
+
+        yield* waitForDisconnected(connectionManager);
+
+        yield* connectionManager.connect();
+
+        const reconnection = yield* connectionManager.connection;
+
+        expect(yield* connectionManager.status).toEqual({ _tag: "Connected" });
+        expect(Option.map(reconnection, ({ id }) => id)).toEqual(
+          Option.some(2),
+        );
       }),
     );
 
