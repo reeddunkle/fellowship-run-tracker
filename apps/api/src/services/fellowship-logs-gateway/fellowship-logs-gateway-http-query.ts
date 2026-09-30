@@ -33,6 +33,8 @@ const ACCESS_TOKEN_EXPIRATION_BUFFER_MILLISECONDS = 30_000;
 
 const MIN_QUERY_INTERVAL = "500 millis";
 
+const REQUEST_TIMEOUT = "30 seconds";
+
 const TOO_MANY_REQUESTS_STATUS = 429;
 
 export function makeFellowshipLogsGatewayHttpQuery(
@@ -59,11 +61,16 @@ export function makeFellowshipLogsGatewayHttpQuery(
           }),
         );
 
-        const response = yield* httpClient.execute(request);
-
-        const tokenResponse = yield* HttpClientResponse.schemaBodyJson(
-          FellowshipLogsGatewayOAuthTokenResponseSchema,
-        )(response);
+        const tokenResponse = yield* httpClient
+          .execute(request)
+          .pipe(
+            E.flatMap(
+              HttpClientResponse.schemaBodyJson(
+                FellowshipLogsGatewayOAuthTokenResponseSchema,
+              ),
+            ),
+            E.timeout(REQUEST_TIMEOUT),
+          );
 
         const nowMilliseconds = yield* Clock.currentTimeMillis;
 
@@ -135,7 +142,9 @@ export function makeFellowshipLogsGatewayHttpQuery(
           )(request),
         );
 
-        const response = yield* pace(baseHttpClient.execute(httpRequest));
+        const response = yield* pace(
+          baseHttpClient.execute(httpRequest).pipe(E.timeout(REQUEST_TIMEOUT)),
+        );
 
         if (response.status === TOO_MANY_REQUESTS_STATUS) {
           return yield* new FellowshipLogsGatewayRateLimitRejectedError();
@@ -145,7 +154,7 @@ export function makeFellowshipLogsGatewayHttpQuery(
 
         return yield* HttpClientResponse.schemaBodyJson(
           makeFellowshipLogsGatewayGraphQLResponseSchema(responseSchema),
-        )(okResponse);
+        )(okResponse).pipe(E.timeout(REQUEST_TIMEOUT));
       }).pipe(
         E.mapError((error) => {
           if (
