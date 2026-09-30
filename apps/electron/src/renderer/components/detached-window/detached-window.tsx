@@ -1,12 +1,13 @@
-import * as Deferred from "effect/Deferred";
 import * as E from "effect/Effect";
-import * as Fiber from "effect/Fiber";
 import { type ReactNode, useCallback } from "react";
 import { createPortal } from "react-dom";
 
 import * as windowClient from "@/renderer/api/electron-ipc/window/window-client.ts";
 import { useDetachedWindow } from "@/renderer/components/detached-window/detached-window-provider";
-import { browserRuntime } from "@/renderer/runtimes/browser-runtime.ts";
+import {
+  makeScopedBrowserRunner,
+  type ScopedBrowserRunner,
+} from "@/renderer/runtimes/make-scoped-browser-runner.ts";
 
 const SCROLLBAR_GUTTER_WIDTH = 30;
 
@@ -56,16 +57,14 @@ function configureDetachedDocument({
 }
 
 function waitForAnimationFrame(window: Window) {
-  return E.gen(function* () {
-    const deferred = yield* Deferred.make<void>();
-
-    yield* E.sync(() => {
-      window.requestAnimationFrame(() => {
-        browserRuntime.runFork(Deferred.succeed(deferred, undefined));
-      });
+  return E.callback<void>((resume) => {
+    const animationFrameId = window.requestAnimationFrame(() => {
+      resume(E.void);
     });
 
-    return yield* Deferred.await(deferred);
+    return E.sync(() => {
+      window.cancelAnimationFrame(animationFrameId);
+    });
   });
 }
 
@@ -216,10 +215,12 @@ function observeDetachedWindowContent({
   childContainer,
   childWindow,
   resizeToContent,
+  runInWindow,
 }: {
   readonly childContainer: HTMLElement;
   readonly childWindow: Window;
   readonly resizeToContent: E.Effect<void, unknown>;
+  readonly runInWindow: ScopedBrowserRunner["run"];
 }) {
   return E.acquireRelease(
     E.sync(() => {
@@ -244,9 +245,7 @@ function observeDetachedWindowContent({
             return;
           }
 
-          browserRuntime.runFork(
-            resizeToContent.pipe(E.catchCause(E.logError)),
-          );
+          runInWindow(resizeToContent.pipe(E.catchCause(E.logError)));
         });
       };
 
@@ -317,6 +316,8 @@ function DetachedWindow({ children, onClose }: DetachedWindowProps) {
 
       const childContainer = createDetachedWindowContainer(childDocument);
 
+      const windowRunner = makeScopedBrowserRunner();
+
       setPortalContainer(childContainer);
 
       const resizeToContent = resizeDetachedWindowToContent({
@@ -330,7 +331,7 @@ function DetachedWindow({ children, onClose }: DetachedWindowProps) {
       });
 
       setResizeToContent(() => {
-        browserRuntime.runFork(resizeToContent.pipe(E.catchCause(E.logError)));
+        windowRunner.run(resizeToContent.pipe(E.catchCause(E.logError)));
       });
 
       const runDetachedWindow = E.scoped(
@@ -345,6 +346,7 @@ function DetachedWindow({ children, onClose }: DetachedWindowProps) {
             childContainer,
             childWindow,
             resizeToContent: resizeToContentHeight,
+            runInWindow: windowRunner.run,
           });
 
           childWindow.electronAPI.showWindow();
@@ -353,9 +355,7 @@ function DetachedWindow({ children, onClose }: DetachedWindowProps) {
         }),
       );
 
-      const lifecycleFiber = browserRuntime.runFork(
-        runDetachedWindow.pipe(E.catchCause(E.logError)),
-      );
+      windowRunner.run(runDetachedWindow.pipe(E.catchCause(E.logError)));
 
       const handleClose = () => {
         onClose();
@@ -366,7 +366,7 @@ function DetachedWindow({ children, onClose }: DetachedWindowProps) {
       return () => {
         childWindow.removeEventListener("beforeunload", handleClose);
 
-        browserRuntime.runFork(Fiber.interrupt(lifecycleFiber));
+        windowRunner.close();
 
         setPortalContainer(null);
         setResizeToContent(null);
