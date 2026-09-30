@@ -1,3 +1,4 @@
+import * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
 import * as Fiber from "effect/Fiber";
 import * as Option from "effect/Option";
@@ -16,6 +17,12 @@ import { runTest } from "@frt/api/tests/common/run-test.ts";
 const matchesTextFile = (fileName: string): boolean => {
   return fileName.toLowerCase().endsWith(".txt");
 };
+
+const FILE_TIMESTAMP_SEPARATION = "5 millis";
+
+const OLD_MODIFIED_TIME = DateTime.toDateUtc(
+  DateTime.makeUnsafe("2020-01-01T00:00:00.000Z"),
+);
 
 describe("FileMonitor", () => {
   describe("findLatestFile", () => {
@@ -302,7 +309,7 @@ describe("FileMonitor", () => {
       await runTest(program);
     });
 
-    test("waits when no matching file exists and starts monitoring when one appears", async () => {
+    test("waits when no matching file exists and reads a file that appears later from its beginning", async () => {
       const program = E.scoped(
         E.gen(function* () {
           const harness = yield* makeFileMonitorTestHarness();
@@ -324,17 +331,59 @@ describe("FileMonitor", () => {
            */
           yield* harness.awaitSourceRequest;
 
-          yield* harness.writeFile("fellowship.txt", "existing line\n");
+          yield* E.sleep(FILE_TIMESTAMP_SEPARATION);
+
+          yield* harness.writeFile("fellowship.txt", "first line\n");
           yield* harness.emitFile("fellowship.txt");
 
-          /*
-           * The newly discovered file has been processed and its initial
-           * byte offset has been established at the end.
-           */
           yield* harness.awaitSourceRequest;
 
           yield* harness.appendFile("fellowship.txt", "appended line\n");
           yield* harness.emitFile("fellowship.txt");
+
+          const firstLine = yield* lines.take;
+          const appendedLine = yield* lines.take;
+
+          expect([firstLine, appendedLine]).toEqual([
+            "first line",
+            "appended line",
+          ]);
+        }),
+      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+
+      await runTest(program);
+    });
+
+    test("switches to a copied older file from its end instead of replaying it", async () => {
+      const program = E.scoped(
+        E.gen(function* () {
+          const harness = yield* makeFileMonitorTestHarness();
+
+          yield* harness.writeFile("current.txt", "");
+
+          const lines = yield* makeStreamTestHarness(
+            harness.fileMonitor.streamLatestFileLines({
+              directoryPath: harness.directoryPath,
+              matches: matchesTextFile,
+              startFrom: "end",
+            }),
+          );
+
+          yield* harness.awaitSourceRequest;
+          yield* harness.emitFile("current.txt");
+
+          yield* harness.awaitSourceRequest;
+
+          yield* E.sleep(FILE_TIMESTAMP_SEPARATION);
+
+          yield* harness.writeFile("copied.txt", "old line\n");
+          yield* harness.setModifiedTime("copied.txt", OLD_MODIFIED_TIME);
+          yield* harness.emitFile("copied.txt");
+
+          yield* harness.awaitSourceRequest;
+
+          yield* harness.appendFile("copied.txt", "appended line\n");
+          yield* harness.emitFile("copied.txt");
 
           const line = yield* lines.take;
 
@@ -532,6 +581,8 @@ describe("FileMonitor", () => {
 
           // The first-file update has been fully processed.
           yield* harness.awaitSourceRequest;
+
+          yield* E.sleep(FILE_TIMESTAMP_SEPARATION);
 
           yield* harness.writeFile("second.txt", "second file existing line\n");
 
@@ -756,6 +807,8 @@ describe("FileMonitor", () => {
            * previous read state for comparison with the next discovered file.
            */
           yield* harness.awaitSourceRequest;
+
+          yield* E.sleep(FILE_TIMESTAMP_SEPARATION);
 
           yield* harness.writeFile("second.txt", "second file existing line\n");
           yield* harness.emitFile("second.txt");

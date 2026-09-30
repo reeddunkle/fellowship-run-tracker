@@ -77,6 +77,14 @@ export function makeFileMonitorTestHarness() {
       return fileSystem.truncate(getFilePath(fileName));
     };
 
+    const setModifiedTime = (fileName: string, modifiedTime: Date) => {
+      return fileSystem.utimes(
+        getFilePath(fileName),
+        modifiedTime,
+        modifiedTime,
+      );
+    };
+
     const removeFile = (fileName: string) => {
       return fileSystem.remove(getFilePath(fileName));
     };
@@ -198,6 +206,7 @@ export function makeFileMonitorTestHarness() {
       getFileData,
       getFilePath,
       removeFile,
+      setModifiedTime,
       truncateFile,
       writeFile,
       writeFileBytes,

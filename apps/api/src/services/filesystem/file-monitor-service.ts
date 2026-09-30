@@ -1,6 +1,7 @@
 import { type TextDecoder } from "node:util";
 
 import * as ByteSize from "effect/ByteSize";
+import * as Clock from "effect/Clock";
 import * as Context from "effect/Context";
 import * as E from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
@@ -72,6 +73,19 @@ type DecodeChunksOptions = {
   readonly chunks: ReadonlyArray<Uint8Array>;
   readonly decoder: TextDecoder;
 };
+
+function isFileWrittenSince({
+  file,
+  sinceEpochMilliseconds,
+}: {
+  readonly file: FileData;
+  readonly sinceEpochMilliseconds: number;
+}): boolean {
+  return (
+    file.createdAtEpochMilliseconds > sinceEpochMilliseconds &&
+    file.modifiedAtEpochMilliseconds > sinceEpochMilliseconds
+  );
+}
 
 const makeFileMonitor = E.gen(function* () {
   const fileSystem = yield* FileSystem.FileSystem;
@@ -202,66 +216,68 @@ const makeFileMonitor = E.gen(function* () {
     matches,
     startFrom,
   }) => {
-    return fileMonitorSource
-      .streamLatestFile({
-        directoryPath,
-        matches,
-      })
-      .pipe(
-        Stream.mapAccumEffect(
-          () => Option.none<ReturnType<typeof createFileReadState>>(),
-          (state, latestFile) => {
-            return Option.match(latestFile, {
-              onNone: () => {
-                return E.succeed([state, []] as const);
-              },
-              onSome: (file) => {
-                return Option.match(state, {
+    return Stream.unwrap(
+      E.gen(function* () {
+        const streamStartedAtMilliseconds = yield* Clock.currentTimeMillis;
+
+        const getStartingByteOffset = (file: FileData) => {
+          const isStartOfFileWanted =
+            startFrom === "start" ||
+            isFileWrittenSince({
+              file,
+              sinceEpochMilliseconds: streamStartedAtMilliseconds,
+            });
+
+          return isStartOfFileWanted ? ByteSize.bytes(0) : file.size;
+        };
+
+        const readFrom = (state: ReturnType<typeof createFileReadState>) => {
+          return readAppendedLines({
+            file: state.file,
+            state,
+          }).pipe(
+            E.map((result) => {
+              return [Option.some(result.state), result.lines] as const;
+            }),
+          );
+        };
+
+        return fileMonitorSource
+          .streamLatestFile({
+            directoryPath,
+            matches,
+          })
+          .pipe(
+            Stream.mapAccumEffect(
+              () => Option.none<ReturnType<typeof createFileReadState>>(),
+              (state, latestFile) => {
+                return Option.match(latestFile, {
                   onNone: () => {
-                    const initialState = createFileReadState({
-                      byteOffset:
-                        startFrom === "end" ? file.size : ByteSize.bytes(0),
+                    return E.succeed([state, []] as const);
+                  },
+                  onSome: (file) => {
+                    const newFileState = createFileReadState({
+                      byteOffset: getStartingByteOffset(file),
                       file,
                     });
 
-                    if (startFrom === "end") {
-                      return E.succeed([
-                        Option.some(initialState),
-                        [],
-                      ] as const);
-                    }
-
-                    return readAppendedLines({
-                      file,
-                      state: initialState,
-                    }).pipe(
-                      E.map((result) => {
-                        return [
-                          Option.some(result.state),
-                          result.lines,
-                        ] as const;
-                      }),
-                    );
-                  },
-                  onSome: (currentState) => {
-                    return readAppendedLines({
-                      file,
-                      state: currentState,
-                    }).pipe(
-                      E.map((result) => {
-                        return [
-                          Option.some(result.state),
-                          result.lines,
-                        ] as const;
-                      }),
-                    );
+                    return Option.match(state, {
+                      onNone: () => {
+                        return readFrom(newFileState);
+                      },
+                      onSome: (currentState) => {
+                        return isSameFile(file, currentState.file)
+                          ? readFrom({ ...currentState, file })
+                          : readFrom(newFileState);
+                      },
+                    });
                   },
                 });
               },
-            });
-          },
-        ),
-      );
+            ),
+          );
+      }),
+    );
   };
 
   return {
