@@ -199,6 +199,7 @@ const makeFileMonitorSource = E.gen(function* () {
       const initialLatestFile = yield* getLatestFileOption(options);
 
       const latestFileChanges = Stream.fromSubscription(watchEvents).pipe(
+        Stream.buffer({ capacity: 1, strategy: "sliding" }),
         Stream.mapEffect(() => {
           return getLatestFileOption(options);
         }),

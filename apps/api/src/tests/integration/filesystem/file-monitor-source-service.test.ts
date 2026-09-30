@@ -456,6 +456,58 @@ describe("FileMonitorSource", () => {
 
       await runTest(program);
     });
+
+    test("coalesces watch events that arrive while a directory scan is running", async () => {
+      const watchEventBurst = Stream.fromEffect(E.sleep("20 millis")).pipe(
+        Stream.drain,
+        Stream.concat(
+          Stream.fromIterable(
+            Array.from({ length: 50 }, (): FileSystem.WatchEvent => {
+              return {
+                _tag: "Update",
+                path: "fellowship.txt",
+              };
+            }),
+          ),
+        ),
+        Stream.concat(Stream.never),
+      );
+
+      const program = E.gen(function* () {
+        const watchCounting = yield* makeWatchCountingFileMonitorSourceTestLive(
+          {
+            firstWatch: watchEventBurst,
+            readDirectoryDelay: "5 millis",
+          },
+        );
+
+        yield* E.scoped(
+          E.gen(function* () {
+            const harness = yield* makeFileMonitorSourceTestHarness();
+
+            const latestFiles = yield* makeStreamTestHarness(
+              harness.fileMonitorSource.streamLatestFile({
+                directoryPath: harness.directoryPath,
+                matches: matchesTextFile,
+              }),
+            );
+
+            yield* latestFiles.take;
+
+            yield* E.sleep("300 millis");
+
+            const readDirectoryCount = yield* Ref.get(
+              watchCounting.readDirectoryCount,
+            );
+
+            expect(readDirectoryCount).toBeGreaterThanOrEqual(2);
+            expect(readDirectoryCount).toBeLessThanOrEqual(5);
+          }),
+        ).pipe(E.provide(watchCounting.layer));
+      });
+
+      await runTest(program);
+    });
   });
 
   describe("streamStatus", () => {

@@ -1,3 +1,4 @@
+import type * as Duration from "effect/Duration";
 import * as E from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
 import * as Layer from "effect/Layer";
@@ -51,15 +52,21 @@ export function makeFileMonitorSourceFailureTestLive(
 }
 
 type MakeWatchCountingFileMonitorSourceTestLiveOptions = {
-  readonly firstWatch?: Stream.Stream<never, PlatformError.PlatformError>;
+  readonly firstWatch?: Stream.Stream<
+    FileSystem.WatchEvent,
+    PlatformError.PlatformError
+  >;
+  readonly readDirectoryDelay?: Duration.Input;
 };
 
 export function makeWatchCountingFileMonitorSourceTestLive({
   firstWatch,
+  readDirectoryDelay,
 }: MakeWatchCountingFileMonitorSourceTestLiveOptions = {}) {
   return E.gen(function* () {
     const openedWatchCount = yield* Ref.make(0);
     const closedWatchCount = yield* Ref.make(0);
+    const readDirectoryCount = yield* Ref.make(0);
 
     const WatchCountingFileSystemLive = Layer.effect(
       FileSystem.FileSystem,
@@ -68,6 +75,18 @@ export function makeWatchCountingFileMonitorSourceTestLive({
 
         return {
           ...fileSystem,
+          readDirectory: (path, options) => {
+            return Ref.update(readDirectoryCount, (count) => {
+              return count + 1;
+            }).pipe(
+              E.andThen(
+                readDirectoryDelay === undefined
+                  ? E.void
+                  : E.sleep(readDirectoryDelay),
+              ),
+              E.andThen(fileSystem.readDirectory(path, options)),
+            );
+          },
           watch: (path, options) => {
             return Stream.unwrap(
               Ref.updateAndGet(openedWatchCount, (count) => {
@@ -109,6 +128,7 @@ export function makeWatchCountingFileMonitorSourceTestLive({
       closedWatchCount,
       layer,
       openedWatchCount,
+      readDirectoryCount,
     };
   });
 }
