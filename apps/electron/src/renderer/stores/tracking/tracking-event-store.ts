@@ -1,5 +1,4 @@
 import * as E from "effect/Effect";
-import * as Fiber from "effect/Fiber";
 import * as Match from "effect/Match";
 import * as Stream from "effect/Stream";
 
@@ -13,7 +12,7 @@ import {
   makeTrackingEventStream,
   type TrackingEventStreamEvent,
 } from "@/renderer/api/tracking/tracking-event-stream.ts";
-import { browserRuntime } from "@/renderer/runtimes/browser-runtime.ts";
+import { makeRestartableBrowserProgram } from "@/renderer/runtimes/make-restartable-browser-program.ts";
 
 type TrackingEventStoreSnapshot = {
   readonly eventConnectionState: ApiEventConnectionState;
@@ -36,7 +35,6 @@ const initialSnapshot: TrackingEventStoreSnapshot = {
 
 export function makeTrackingEventStore(): TrackingEventStore {
   let snapshot = initialSnapshot;
-  let fiber: Fiber.Fiber<void, unknown> | undefined;
 
   const listeners = new Set<Listener>();
 
@@ -78,12 +76,8 @@ export function makeTrackingEventStore(): TrackingEventStore {
     Match.exhaustive,
   );
 
-  function start(): void {
-    if (fiber !== undefined) {
-      return;
-    }
-
-    const program = makeTrackingEventStream().pipe(
+  const { start, stop } = makeRestartableBrowserProgram(() => {
+    return makeTrackingEventStream().pipe(
       Stream.runForEach(handleTrackingEvent),
       E.catch((error) => {
         return E.gen(function* () {
@@ -99,25 +93,8 @@ export function makeTrackingEventStore(): TrackingEventStore {
           });
         });
       }),
-      E.ensuring(
-        E.sync(() => {
-          fiber = undefined;
-        }),
-      ),
     );
-
-    fiber = browserRuntime.runFork(program);
-  }
-
-  function stop(): void {
-    if (fiber === undefined) {
-      return;
-    }
-
-    fiber.pipe(Fiber.interrupt, E.runFork);
-
-    fiber = undefined;
-  }
+  });
 
   function subscribe(listener: Listener): () => void {
     listeners.add(listener);

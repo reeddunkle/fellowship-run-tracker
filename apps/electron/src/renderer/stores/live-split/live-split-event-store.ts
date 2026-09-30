@@ -1,5 +1,4 @@
 import * as E from "effect/Effect";
-import * as Fiber from "effect/Fiber";
 import * as Match from "effect/Match";
 import * as Stream from "effect/Stream";
 
@@ -13,7 +12,7 @@ import {
   type LiveSplitEventStreamEvent,
   makeLiveSplitEventStream,
 } from "@/renderer/api/live-split/live-split-event-stream.ts";
-import { browserRuntime } from "@/renderer/runtimes/browser-runtime.ts";
+import { makeRestartableBrowserProgram } from "@/renderer/runtimes/make-restartable-browser-program.ts";
 
 export type LiveSplitEventStoreSnapshot = {
   readonly eventConnectionState: ApiEventConnectionState;
@@ -34,7 +33,6 @@ const initialSnapshot: LiveSplitEventStoreSnapshot = {
 
 function makeLiveSplitEventStore(): LiveSplitEventStore {
   let snapshot = initialSnapshot;
-  let fiber: Fiber.Fiber<void, unknown> | undefined;
 
   const listeners = new Set<Listener>();
 
@@ -76,12 +74,8 @@ function makeLiveSplitEventStore(): LiveSplitEventStore {
     Match.exhaustive,
   );
 
-  function start(): void {
-    if (fiber !== undefined) {
-      return;
-    }
-
-    const program = makeLiveSplitEventStream().pipe(
+  const { start, stop } = makeRestartableBrowserProgram(() => {
+    return makeLiveSplitEventStream().pipe(
       Stream.runForEach(handleLiveSplitEvent),
       E.catch((error) => {
         return E.gen(function* () {
@@ -97,25 +91,8 @@ function makeLiveSplitEventStore(): LiveSplitEventStore {
           });
         });
       }),
-      E.ensuring(
-        E.sync(() => {
-          fiber = undefined;
-        }),
-      ),
     );
-
-    fiber = browserRuntime.runFork(program);
-  }
-
-  function stop(): void {
-    if (fiber === undefined) {
-      return;
-    }
-
-    fiber.pipe(Fiber.interrupt, E.runFork);
-
-    fiber = undefined;
-  }
+  });
 
   function subscribe(listener: Listener): () => void {
     listeners.add(listener);

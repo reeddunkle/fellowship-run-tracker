@@ -1,6 +1,5 @@
 import { type QueryClient } from "@tanstack/react-query";
 import * as E from "effect/Effect";
-import * as Fiber from "effect/Fiber";
 import * as Match from "effect/Match";
 import * as Stream from "effect/Stream";
 import type * as Socket from "effect/socket/Socket";
@@ -27,7 +26,7 @@ import {
   invalidateImportedDungeonRuns,
 } from "@/renderer/api/fellowship-logs/fellowship-logs-invalidation.ts";
 import { queryClient as defaultQueryClient } from "@/renderer/query/query-client.ts";
-import { browserRuntime } from "@/renderer/runtimes/browser-runtime.ts";
+import { makeRestartableBrowserProgram } from "@/renderer/runtimes/make-restartable-browser-program.ts";
 
 import {
   getNewlyFinishedBackgroundJobs,
@@ -67,7 +66,6 @@ export function makeBackgroundJobEventStore({
   queryClient = defaultQueryClient,
 }: MakeBackgroundJobEventStoreOptions = {}): BackgroundJobEventStore {
   let snapshot = initialSnapshot;
-  let fiber: Fiber.Fiber<void, unknown> | undefined;
 
   const listeners = new Set<Listener>();
 
@@ -154,12 +152,8 @@ export function makeBackgroundJobEventStore({
       Match.exhaustive,
     );
 
-  function start(): void {
-    if (fiber !== undefined) {
-      return;
-    }
-
-    const program = makeEventStream().pipe(
+  const { start, stop } = makeRestartableBrowserProgram(() => {
+    return makeEventStream().pipe(
       Stream.runForEach(handleBackgroundJobEvent),
       E.catch((error) => {
         return E.gen(function* () {
@@ -170,25 +164,8 @@ export function makeBackgroundJobEventStore({
           yield* setConnectionState(API_EVENT_CONNECTION_STATE.ERROR);
         });
       }),
-      E.ensuring(
-        E.sync(() => {
-          fiber = undefined;
-        }),
-      ),
     );
-
-    fiber = browserRuntime.runFork(program);
-  }
-
-  function stop(): void {
-    if (fiber === undefined) {
-      return;
-    }
-
-    fiber.pipe(Fiber.interrupt, E.runFork);
-
-    fiber = undefined;
-  }
+  });
 
   function subscribe(listener: Listener): () => void {
     listeners.add(listener);

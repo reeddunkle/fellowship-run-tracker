@@ -1,3 +1,4 @@
+import * as E from "effect/Effect";
 import * as Stream from "effect/Stream";
 import { describe, expect, test, vi } from "vitest";
 
@@ -259,6 +260,44 @@ describe("DungeonRunEventStore", () => {
     expect(makeEventStream).toHaveBeenCalledOnce();
 
     store.stop();
+  });
+
+  test("stops the restarted event stream after a quick stop and restart", async () => {
+    let endedStreamCount = 0;
+
+    const makeEventStream = vi.fn(() => {
+      return Stream.never.pipe(
+        Stream.ensuring(
+          E.sleep("5 millis").pipe(
+            E.andThen(
+              E.sync(() => {
+                endedStreamCount += 1;
+              }),
+            ),
+          ),
+        ),
+      );
+    });
+
+    const store = makeDungeonRunEventStore({
+      makeEventStream,
+    });
+
+    store.start();
+    store.stop();
+    store.start();
+
+    await vi.waitFor(() => {
+      expect(endedStreamCount).toBe(1);
+    });
+
+    await E.runPromise(E.sleep("1 millis"));
+
+    store.stop();
+
+    await vi.waitFor(() => {
+      expect(endedStreamCount).toBe(2);
+    });
   });
 
   test("can be started again after being stopped", () => {
