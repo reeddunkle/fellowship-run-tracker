@@ -8,7 +8,10 @@ import * as TestClock from "effect/testing/TestClock";
 import { describe, expect, test } from "vitest";
 
 import { FellowshipLogsGatewayRequestError } from "@frt/api/errors/fellowship-logs-gateway-error.ts";
-import { makeFellowshipLogsGatewayHttpQuery } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-http-query.ts";
+import {
+  makeFellowshipLogsGatewayHttpQuery,
+  REQUEST_TIMEOUT,
+} from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-http-query.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 
 const OkResponseSchema = Schema.Struct({ ok: Schema.Boolean });
@@ -60,7 +63,7 @@ function runQueriesAfterFirstCallHangs(hangingEndpoint: HangingEndpoint) {
       query({ query: "{ ok }" }, OkResponseSchema).pipe(E.flip),
     );
 
-    yield* TestClock.adjust("30 seconds");
+    yield* TestClock.adjust(REQUEST_TIMEOUT);
 
     const timeoutError = yield* Fiber.join(hangingQuery);
 

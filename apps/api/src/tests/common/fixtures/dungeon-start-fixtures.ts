@@ -1,3 +1,6 @@
+import * as Stream from "effect/Stream";
+
+import { parseFellowshipEventStream } from "@frt/api/services/fellowship/parsing/parse-fellowship-event-stream.ts";
 import { type FellowshipMilestoneConfiguration } from "@frt/shared/fellowship/configurations/configuration-types.ts";
 
 export const DUNGEON_START_LINE =
@@ -8,3 +11,7 @@ export const DUNGEON_START_CONFIGURATION = {
   dungeonLevel: 64,
   milestones: [],
 } satisfies FellowshipMilestoneConfiguration;
+
+export const DUNGEON_START_EVENTS = parseFellowshipEventStream(
+  Stream.make(DUNGEON_START_LINE),
+);

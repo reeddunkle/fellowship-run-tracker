@@ -1,4 +1,3 @@
-import type * as Duration from "effect/Duration";
 import * as E from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
 import * as Layer from "effect/Layer";
@@ -56,12 +55,12 @@ type MakeWatchCountingFileMonitorSourceTestLiveOptions = {
     FileSystem.WatchEvent,
     PlatformError.PlatformError
   >;
-  readonly readDirectoryDelay?: Duration.Input;
+  readonly beforeReadDirectory?: (readNumber: number) => E.Effect<void>;
 };
 
 export function makeWatchCountingFileMonitorSourceTestLive({
+  beforeReadDirectory,
   firstWatch,
-  readDirectoryDelay,
 }: MakeWatchCountingFileMonitorSourceTestLiveOptions = {}) {
   return E.gen(function* () {
     const openedWatchCount = yield* Ref.make(0);
@@ -76,14 +75,14 @@ export function makeWatchCountingFileMonitorSourceTestLive({
         return {
           ...fileSystem,
           readDirectory: (path, options) => {
-            return Ref.update(readDirectoryCount, (count) => {
+            return Ref.updateAndGet(readDirectoryCount, (count) => {
               return count + 1;
             }).pipe(
-              E.andThen(
-                readDirectoryDelay === undefined
+              E.flatMap((readNumber) => {
+                return beforeReadDirectory === undefined
                   ? E.void
-                  : E.sleep(readDirectoryDelay),
-              ),
+                  : beforeReadDirectory(readNumber);
+              }),
               E.andThen(fileSystem.readDirectory(path, options)),
             );
           },

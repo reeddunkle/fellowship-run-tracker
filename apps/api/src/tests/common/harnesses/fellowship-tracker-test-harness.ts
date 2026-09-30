@@ -2,6 +2,7 @@ import * as DateTime from "effect/DateTime";
 import * as Deferred from "effect/Deferred";
 import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Ref from "effect/Ref";
 import * as Schema from "effect/Schema";
 import * as Stream from "effect/Stream";
 
@@ -38,7 +39,10 @@ import {
 import { type ConfigurationDefinitionId } from "@frt/db/validation/configuration/configuration-definition-id-schema.ts";
 import { type ConfigurationId } from "@frt/shared/configuration/configuration-id-schema.ts";
 import { type ConfigurationLabel } from "@frt/shared/configuration/configuration-label-schema.ts";
-import { DungeonRunIdSchema } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
+import {
+  type DungeonRunId,
+  DungeonRunIdSchema,
+} from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 import { type FellowshipMilestoneConfiguration } from "@frt/shared/fellowship/configurations/configuration-types.ts";
 
 import { makeFellowshipTestHarness } from "./fellowship-test-harness.ts";
@@ -68,7 +72,7 @@ const DEFAULT_CONFIGURATION = {
 const MOCK_CREATED_AT = DateTime.makeUnsafe("2026-01-01T00:00:00.000Z");
 const MOCK_UPDATED_AT = DateTime.makeUnsafe("2026-01-01T00:00:00.000Z");
 
-const MOCK_DUNGEON_RUN_ID = Schema.decodeSync(DungeonRunIdSchema)(
+export const MOCK_DUNGEON_RUN_ID = Schema.decodeSync(DungeonRunIdSchema)(
   "0198d56c-9999-7abc-8def-1234567890ab",
 );
 
@@ -114,6 +118,20 @@ export function makeFellowshipTrackerTestHarness(
 
     const dungeonRunWebSocketBroadcasterHarness =
       yield* makeWebSocketBroadcasterTestHarness();
+
+    const interruptedDungeonRunIds = yield* Ref.make<
+      ReadonlyArray<DungeonRunId>
+    >([]);
+
+    const getInterruptedDungeonRunIds = Ref.get(interruptedDungeonRunIds);
+
+    const getLastBroadcastMessage = dungeonRunWebSocketBroadcasterHarness
+      .getParsedMessages()
+      .pipe(
+        E.map((messages) => {
+          return messages.at(-1);
+        }),
+      );
 
     const configurationDAO = {
       delete: () => {
@@ -189,8 +207,10 @@ export function makeFellowshipTrackerTestHarness(
       getFellowshipLogsDungeonRun: () => {
         return E.succeedNone;
       },
-      interruptLocal: () => {
-        return E.void;
+      interruptLocal: ({ dungeonRunId }) => {
+        return Ref.update(interruptedDungeonRunIds, (dungeonRunIds) => {
+          return [...dungeonRunIds, dungeonRunId];
+        });
       },
       interruptUnfinishedLocal: () => {
         return E.succeed([]);
@@ -261,6 +281,8 @@ export function makeFellowshipTrackerTestHarness(
       dungeonRunRepository,
       dungeonRunWebSocketBroadcasterHarness,
       fellowshipHarness,
+      getInterruptedDungeonRunIds,
+      getLastBroadcastMessage,
       layer: FellowshipTrackerTestLive,
       liveSplit,
       trackingInterrupted,

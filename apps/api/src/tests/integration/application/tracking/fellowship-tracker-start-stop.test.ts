@@ -6,12 +6,14 @@ import { describe, expect, test } from "vitest";
 
 import { FellowshipTracker } from "@frt/api/application/fellowship-tracker/fellowship-tracker-service.ts";
 import { FellowshipTrackerAlreadyRunningError } from "@frt/api/errors/fellowship-tracker-error.ts";
-import { parseFellowshipEventStream } from "@frt/api/services/fellowship/parsing/parse-fellowship-event-stream.ts";
 import {
   DUNGEON_START_CONFIGURATION,
-  DUNGEON_START_LINE,
+  DUNGEON_START_EVENTS,
 } from "@frt/api/tests/common/fixtures/dungeon-start-fixtures.ts";
-import { makeFellowshipTrackerTestHarness } from "@frt/api/tests/common/harnesses/fellowship-tracker-test-harness.ts";
+import {
+  MOCK_DUNGEON_RUN_ID,
+  makeFellowshipTrackerTestHarness,
+} from "@frt/api/tests/common/harnesses/fellowship-tracker-test-harness.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 
 describe("FellowshipTracker start and stop", () => {
@@ -65,15 +67,13 @@ describe("FellowshipTracker start and stop", () => {
     }).pipe(E.scoped, runTest);
   });
 
-  test("interrupts the active dungeon run when stopped", async () => {
-    const lastMessage = await E.gen(function* () {
+  test("interrupts and saves the active dungeon run when stopped", async () => {
+    const result = await E.gen(function* () {
       const runStarted = yield* Deferred.make<void>();
 
       const harness = yield* makeFellowshipTrackerTestHarness({
         configuration: DUNGEON_START_CONFIGURATION,
-        liveEvents: parseFellowshipEventStream(
-          Stream.make(DUNGEON_START_LINE),
-        ).pipe(
+        liveEvents: DUNGEON_START_EVENTS.pipe(
           Stream.concat(
             Stream.fromEffect(Deferred.succeed(runStarted, undefined)).pipe(
               Stream.drain,
@@ -95,13 +95,13 @@ describe("FellowshipTracker start and stop", () => {
         yield* tracker.stop();
       }).pipe(E.provide(harness.layer));
 
-      const messages =
-        yield* harness.dungeonRunWebSocketBroadcasterHarness.getParsedMessages();
-
-      return messages.at(-1);
+      return {
+        interruptedDungeonRunIds: yield* harness.getInterruptedDungeonRunIds,
+        lastMessage: yield* harness.getLastBroadcastMessage,
+      };
     }).pipe(E.scoped, runTest);
 
-    expect(lastMessage).toMatchObject({
+    expect(result.lastMessage).toMatchObject({
       state: {
         dungeonRun: {
           endedAtMilliseconds: expect.any(Number),
@@ -109,6 +109,42 @@ describe("FellowshipTracker start and stop", () => {
         },
       },
     });
+    expect(result.interruptedDungeonRunIds).toEqual([MOCK_DUNGEON_RUN_ID]);
+  });
+
+  test("does not interrupt a dungeon run when stopped without an active run", async () => {
+    const result = await E.gen(function* () {
+      const harness = yield* makeFellowshipTrackerTestHarness();
+
+      yield* E.gen(function* () {
+        const tracker = yield* FellowshipTracker;
+
+        yield* tracker.start({
+          configurationId: harness.configurationId,
+        });
+
+        yield* Deferred.await(harness.trackingStarted);
+
+        yield* tracker.stop();
+
+        yield* Deferred.await(harness.trackingInterrupted);
+      }).pipe(E.provide(harness.layer));
+
+      return {
+        interruptedDungeonRunIds: yield* harness.getInterruptedDungeonRunIds,
+        messages:
+          yield* harness.dungeonRunWebSocketBroadcasterHarness.getParsedMessages(),
+      };
+    }).pipe(E.scoped, runTest);
+
+    expect(result.messages).not.toContainEqual(
+      expect.objectContaining({
+        state: expect.objectContaining({
+          dungeonRun: expect.objectContaining({ status: "INTERRUPTED" }),
+        }),
+      }),
+    );
+    expect(result.interruptedDungeonRunIds).toEqual([]);
   });
 
   test("does not transition to failed when stopped", async () => {

@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
   makeBeforeQuitHandler,
@@ -6,7 +6,7 @@ import {
   runQuitCleanup,
 } from "@/application/quit-cleanup.ts";
 
-const SHORT_TIMEOUT_MILLISECONDS = 10;
+const TIMEOUT_MILLISECONDS = 1_000;
 
 function never(): Promise<never> {
   // @effect-diagnostics-next-line newPromise:off
@@ -63,30 +63,58 @@ describe("runQuitCleanup", () => {
     expect(disposeRuntime).toHaveBeenCalledOnce();
   });
 
-  test("disposes the runtime when flushing window state never finishes", async () => {
-    const disposeRuntime = vi.fn(() => {
-      return Promise.resolve();
+  describe("when a step never finishes", () => {
+    afterEach(() => {
+      vi.useRealTimers();
     });
 
-    await runQuitCleanup({
-      disposeRuntime,
-      flushTimeoutMilliseconds: SHORT_TIMEOUT_MILLISECONDS,
-      flushWindowState: never,
+    test("disposes the runtime once flushing window state times out", async () => {
+      vi.useFakeTimers();
+
+      const disposeRuntime = vi.fn(() => {
+        return Promise.resolve();
+      });
+
+      const cleanup = runQuitCleanup({
+        disposeRuntime,
+        flushTimeoutMilliseconds: TIMEOUT_MILLISECONDS,
+        flushWindowState: never,
+      });
+
+      await vi.advanceTimersByTimeAsync(TIMEOUT_MILLISECONDS - 1);
+
+      expect(disposeRuntime).not.toHaveBeenCalled();
+
+      await vi.advanceTimersByTimeAsync(1);
+      await cleanup;
+
+      expect(disposeRuntime).toHaveBeenCalledOnce();
     });
 
-    expect(disposeRuntime).toHaveBeenCalledOnce();
-  });
+    test("finishes once disposing the runtime times out", async () => {
+      vi.useFakeTimers();
 
-  test("finishes when disposing the runtime never finishes", async () => {
-    await expect(
-      runQuitCleanup({
+      let hasFinished = false;
+
+      const cleanup = runQuitCleanup({
         disposeRuntime: never,
-        disposeTimeoutMilliseconds: SHORT_TIMEOUT_MILLISECONDS,
+        disposeTimeoutMilliseconds: TIMEOUT_MILLISECONDS,
         flushWindowState: () => {
           return Promise.resolve();
         },
-      }),
-    ).resolves.toBeUndefined();
+      }).then(() => {
+        hasFinished = true;
+      });
+
+      await vi.advanceTimersByTimeAsync(TIMEOUT_MILLISECONDS - 1);
+
+      expect(hasFinished).toBe(false);
+
+      await vi.advanceTimersByTimeAsync(1);
+      await cleanup;
+
+      expect(hasFinished).toBe(true);
+    });
   });
 });
 
@@ -105,12 +133,11 @@ describe("makeQuitCleanup", () => {
       flushWindowState,
     });
 
-    const firstCleanup = runQuitCleanupOnce();
-    const secondCleanup = runQuitCleanupOnce();
-
-    expect(secondCleanup).toBe(firstCleanup);
-
-    await Promise.all([firstCleanup, secondCleanup, runQuitCleanupOnce()]);
+    await Promise.all([
+      runQuitCleanupOnce(),
+      runQuitCleanupOnce(),
+      runQuitCleanupOnce(),
+    ]);
 
     expect(flushWindowState).toHaveBeenCalledOnce();
     expect(disposeRuntime).toHaveBeenCalledOnce();
@@ -137,11 +164,13 @@ describe("makeBeforeQuitHandler", () => {
     const { cleanup, finishCleanup } = makePendingCleanup();
     const quit = vi.fn();
 
+    const runQuitCleanupOnce = vi.fn(() => {
+      return cleanup;
+    });
+
     const handleBeforeQuit = makeBeforeQuitHandler({
       quit,
-      runQuitCleanupOnce: () => {
-        return cleanup;
-      },
+      runQuitCleanupOnce,
     });
 
     const firstQuitEvent = makeQuitEvent();
@@ -152,6 +181,7 @@ describe("makeBeforeQuitHandler", () => {
 
     expect(firstQuitEvent.preventDefault).toHaveBeenCalledOnce();
     expect(secondQuitEvent.preventDefault).toHaveBeenCalledOnce();
+    expect(runQuitCleanupOnce).toHaveBeenCalledOnce();
     expect(quit).not.toHaveBeenCalled();
 
     finishCleanup();
@@ -159,24 +189,6 @@ describe("makeBeforeQuitHandler", () => {
     await vi.waitFor(() => {
       expect(quit).toHaveBeenCalledOnce();
     });
-  });
-
-  test("starts the cleanup once for repeated quit requests", () => {
-    const { cleanup } = makePendingCleanup();
-
-    const runQuitCleanupOnce = vi.fn(() => {
-      return cleanup;
-    });
-
-    const handleBeforeQuit = makeBeforeQuitHandler({
-      quit: vi.fn(),
-      runQuitCleanupOnce,
-    });
-
-    handleBeforeQuit(makeQuitEvent());
-    handleBeforeQuit(makeQuitEvent());
-
-    expect(runQuitCleanupOnce).toHaveBeenCalledOnce();
   });
 
   test("lets the app quit once the cleanup has finished", async () => {

@@ -6,10 +6,9 @@ import * as Stream from "effect/Stream";
 import { describe, expect, test } from "vitest";
 
 import { FellowshipTracker } from "@frt/api/application/fellowship-tracker/fellowship-tracker-service.ts";
-import { parseFellowshipEventStream } from "@frt/api/services/fellowship/parsing/parse-fellowship-event-stream.ts";
 import {
   DUNGEON_START_CONFIGURATION,
-  DUNGEON_START_LINE,
+  DUNGEON_START_EVENTS,
 } from "@frt/api/tests/common/fixtures/dungeon-start-fixtures.ts";
 import { makeFellowshipTrackerTestHarness } from "@frt/api/tests/common/harnesses/fellowship-tracker-test-harness.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
@@ -181,9 +180,9 @@ describe("FellowshipTracker failures", () => {
     const lastMessage = await E.gen(function* () {
       const harness = yield* makeFellowshipTrackerTestHarness({
         configuration: DUNGEON_START_CONFIGURATION,
-        liveEvents: parseFellowshipEventStream(
-          Stream.make(DUNGEON_START_LINE),
-        ).pipe(Stream.concat(Stream.fail(fileSystemError))),
+        liveEvents: DUNGEON_START_EVENTS.pipe(
+          Stream.concat(Stream.fail(fileSystemError)),
+        ),
       });
 
       yield* E.gen(function* () {
@@ -204,10 +203,7 @@ describe("FellowshipTracker failures", () => {
         yield* Fiber.join(failedStatusFiber);
       }).pipe(E.provide(harness.layer));
 
-      const messages =
-        yield* harness.dungeonRunWebSocketBroadcasterHarness.getParsedMessages();
-
-      return messages.at(-1);
+      return yield* harness.getLastBroadcastMessage;
     }).pipe(E.scoped, runTest);
 
     expect(lastMessage).toMatchObject({

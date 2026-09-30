@@ -1,4 +1,5 @@
 import * as ByteSize from "effect/ByteSize";
+import * as Deferred from "effect/Deferred";
 import * as E from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
 import * as Option from "effect/Option";
@@ -22,6 +23,12 @@ import { runTest } from "@frt/api/tests/common/run-test.ts";
 const matchesTextFile = (fileName: string): boolean => {
   return fileName.endsWith(".txt");
 };
+
+const NO_FURTHER_SCAN_WINDOW = "50 millis";
+
+function waitFor(deferred: Deferred.Deferred<void>) {
+  return deferred.pipe(Deferred.await, Stream.fromEffect, Stream.drain);
+}
 
 describe("FileMonitorSource", () => {
   describe("findLatestFile", () => {
@@ -348,136 +355,134 @@ describe("FileMonitorSource", () => {
       await runTest(program);
     });
 
-    test("fails every stream when the watcher fails and recovers with a fresh watcher", async () => {
-      const watchError = PlatformError.systemError({
-        _tag: "Unknown",
-        description: "Test watcher failure.",
-        method: "watch",
-        module: "FileSystem",
-      });
+    describe("when the watcher stops", () => {
+      function failStreamsThenRecover(
+        firstWatch: Stream.Stream<
+          FileSystem.WatchEvent,
+          PlatformError.PlatformError
+        >,
+      ) {
+        return E.gen(function* () {
+          const watchCounting =
+            yield* makeWatchCountingFileMonitorSourceTestLive({
+              firstWatch,
+            });
 
-      const program = E.gen(function* () {
-        const watchCounting = yield* makeWatchCountingFileMonitorSourceTestLive(
-          {
-            firstWatch: Stream.fail(watchError),
-          },
-        );
+          return yield* E.scoped(
+            E.gen(function* () {
+              const harness = yield* makeFileMonitorSourceTestHarness();
 
-        yield* E.scoped(
-          E.gen(function* () {
-            const harness = yield* makeFileMonitorSourceTestHarness();
+              const options = {
+                directoryPath: harness.directoryPath,
+                matches: matchesTextFile,
+              };
 
-            const options = {
-              directoryPath: harness.directoryPath,
-              matches: matchesTextFile,
-            };
+              const [latestFileError, statusError] = yield* E.all(
+                [
+                  harness.fileMonitorSource
+                    .streamLatestFile(options)
+                    .pipe(Stream.runDrain, E.flip),
+                  harness.fileMonitorSource
+                    .streamStatus(options)
+                    .pipe(Stream.runDrain, E.flip),
+                ],
+                {
+                  concurrency: "unbounded",
+                },
+              );
 
-            const [latestFileError, statusError] = yield* E.all(
-              [
+              const recoveredLatestFiles = yield* makeStreamTestHarness(
                 harness.fileMonitorSource
                   .streamLatestFile(options)
-                  .pipe(Stream.runDrain, E.flip),
-                harness.fileMonitorSource
-                  .streamStatus(options)
-                  .pipe(Stream.runDrain, E.flip),
-              ],
-              {
-                concurrency: "unbounded",
-              },
-            );
+                  .pipe(Stream.retry(Schedule.recurs(3))),
+              );
 
-            expect(latestFileError).toBe(watchError);
-            expect(statusError).toBe(watchError);
+              yield* recoveredLatestFiles.take;
 
-            const recoveredLatestFiles = yield* makeStreamTestHarness(
-              harness.fileMonitorSource
-                .streamLatestFile(options)
-                .pipe(Stream.retry(Schedule.recurs(3))),
-            );
+              return {
+                latestFileError,
+                openedWatchCount: yield* Ref.get(
+                  watchCounting.openedWatchCount,
+                ),
+                statusError,
+              };
+            }),
+          ).pipe(E.provide(watchCounting.layer), E.timeout("2 seconds"));
+        });
+      }
 
-            yield* recoveredLatestFiles.take;
+      test("fails every stream when the watcher fails and recovers with a fresh watcher", async () => {
+        const watchError = PlatformError.systemError({
+          _tag: "Unknown",
+          description: "Test watcher failure.",
+          method: "watch",
+          module: "FileSystem",
+        });
 
-            expect(yield* Ref.get(watchCounting.openedWatchCount)).toBe(2);
-          }),
-        ).pipe(E.provide(watchCounting.layer));
-      });
-
-      await runTest(program);
-    });
-
-    test("fails every stream when the watcher closes and recovers with a fresh watcher", async () => {
-      const program = E.gen(function* () {
-        const watchCounting = yield* makeWatchCountingFileMonitorSourceTestLive(
-          {
-            firstWatch: Stream.empty,
-          },
+        const result = await Stream.fail(watchError).pipe(
+          failStreamsThenRecover,
+          runTest,
         );
 
-        yield* E.scoped(
-          E.gen(function* () {
-            const harness = yield* makeFileMonitorSourceTestHarness();
-
-            const options = {
-              directoryPath: harness.directoryPath,
-              matches: matchesTextFile,
-            };
-
-            const [latestFileError, statusError] = yield* E.all(
-              [
-                harness.fileMonitorSource
-                  .streamLatestFile(options)
-                  .pipe(Stream.runDrain, E.flip),
-                harness.fileMonitorSource
-                  .streamStatus(options)
-                  .pipe(Stream.runDrain, E.flip),
-              ],
-              {
-                concurrency: "unbounded",
-              },
-            );
-
-            expect(latestFileError.message).toContain(
-              "The directory watcher closed unexpectedly.",
-            );
-            expect(statusError).toBe(latestFileError);
-
-            const recoveredLatestFiles = yield* makeStreamTestHarness(
-              harness.fileMonitorSource
-                .streamLatestFile(options)
-                .pipe(Stream.retry(Schedule.recurs(3))),
-            );
-
-            yield* recoveredLatestFiles.take;
-
-            expect(yield* Ref.get(watchCounting.openedWatchCount)).toBe(2);
-          }),
-        ).pipe(E.provide(watchCounting.layer), E.timeout("2 seconds"));
+        expect(result.latestFileError).toBe(watchError);
+        expect(result.statusError).toBe(watchError);
+        expect(result.openedWatchCount).toBe(2);
       });
 
-      await runTest(program);
+      test("fails every stream when the watcher closes and recovers with a fresh watcher", async () => {
+        const result = await Stream.empty.pipe(failStreamsThenRecover, runTest);
+
+        expect(result.latestFileError.message).toContain(
+          "The directory watcher closed unexpectedly.",
+        );
+        expect(result.statusError.message).toContain(
+          "The directory watcher closed unexpectedly.",
+        );
+        expect(result.openedWatchCount).toBe(2);
+      });
     });
 
     test("coalesces watch events that arrive while a directory scan is running", async () => {
-      const watchEventBurst = Stream.fromEffect(E.sleep("20 millis")).pipe(
-        Stream.drain,
-        Stream.concat(
-          Stream.fromIterable(
-            Array.from({ length: 50 }, (): FileSystem.WatchEvent => {
-              return {
-                _tag: "Update",
-                path: "fellowship.txt",
-              };
-            }),
-          ),
-        ),
-        Stream.concat(Stream.never),
-      );
-
       const program = E.gen(function* () {
+        const emitFirstEvent = yield* Deferred.make<void>();
+        const emitEventBurst = yield* Deferred.make<void>();
+        const eventBurstPublished = yield* Deferred.make<void>();
+        const rescanStarted = yield* Deferred.make<void>();
+        const releaseRescan = yield* Deferred.make<void>();
+
+        const updateEvent: FileSystem.WatchEvent = {
+          _tag: "Update",
+          path: "fellowship.txt",
+        };
+
+        const watchEvents = waitFor(emitFirstEvent).pipe(
+          Stream.concat(Stream.make(updateEvent)),
+          Stream.concat(waitFor(emitEventBurst)),
+          Stream.concat(
+            Stream.fromIterable(
+              Array.from({ length: 50 }, () => {
+                return updateEvent;
+              }),
+            ),
+          ),
+          Stream.concat(
+            Stream.fromEffect(
+              Deferred.succeed(eventBurstPublished, undefined),
+            ).pipe(Stream.drain),
+          ),
+          Stream.concat(Stream.never),
+        );
+
         const watchCounting = yield* makeWatchCountingFileMonitorSourceTestLive(
           {
-            firstWatch: watchEventBurst,
-            readDirectoryDelay: "5 millis",
+            beforeReadDirectory: (readNumber) => {
+              return readNumber === 2
+                ? Deferred.succeed(rescanStarted, undefined).pipe(
+                    E.andThen(Deferred.await(releaseRescan)),
+                  )
+                : E.void;
+            },
+            firstWatch: watchEvents,
           },
         );
 
@@ -494,14 +499,23 @@ describe("FileMonitorSource", () => {
 
             yield* latestFiles.take;
 
-            yield* E.sleep("300 millis");
+            yield* Deferred.succeed(emitFirstEvent, undefined);
+            yield* Deferred.await(rescanStarted);
 
-            const readDirectoryCount = yield* Ref.get(
-              watchCounting.readDirectoryCount,
+            yield* Deferred.succeed(emitEventBurst, undefined);
+            yield* Deferred.await(eventBurstPublished);
+
+            yield* Deferred.succeed(releaseRescan, undefined);
+
+            yield* latestFiles.take;
+            yield* latestFiles.take;
+
+            const extraScan = yield* latestFiles.take.pipe(
+              E.timeoutOption(NO_FURTHER_SCAN_WINDOW),
             );
 
-            expect(readDirectoryCount).toBeGreaterThanOrEqual(2);
-            expect(readDirectoryCount).toBeLessThanOrEqual(5);
+            expect(Option.isNone(extraScan)).toBe(true);
+            expect(yield* Ref.get(watchCounting.readDirectoryCount)).toBe(3);
           }),
         ).pipe(E.provide(watchCounting.layer));
       });

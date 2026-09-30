@@ -18,19 +18,21 @@ describe("getFellowshipLogStartedAt", () => {
     );
   });
 
-  test("returns nothing while the first line's timestamp is incomplete", () => {
-    expect(getFellowshipLogStartedAt("2026-08-19T22:35")).toEqual(
-      Option.none(),
-    );
-  });
+  describe("returns nothing", () => {
+    test("while the first line's timestamp is incomplete", () => {
+      expect(getFellowshipLogStartedAt("2026-08-19T22:35")).toEqual(
+        Option.none(),
+      );
+    });
 
-  test("returns nothing for text that does not start with a timestamp", () => {
-    expect(getFellowshipLogStartedAt("not a log line|DUNGEON_START|")).toEqual(
-      Option.none(),
-    );
-  });
+    test("for an empty file", () => {
+      expect(getFellowshipLogStartedAt("")).toEqual(Option.none());
+    });
 
-  test("returns nothing for an empty file", () => {
-    expect(getFellowshipLogStartedAt("")).toEqual(Option.none());
+    test("for text that does not start with a timestamp", () => {
+      expect(
+        getFellowshipLogStartedAt("not a log line|DUNGEON_START|"),
+      ).toEqual(Option.none());
+    });
   });
 });

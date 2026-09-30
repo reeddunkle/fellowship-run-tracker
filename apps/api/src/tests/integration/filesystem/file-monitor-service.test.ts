@@ -1,4 +1,3 @@
-import * as Clock from "effect/Clock";
 import * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
 import * as Fiber from "effect/Fiber";
@@ -8,6 +7,8 @@ import * as Result from "effect/Result";
 import * as Stream from "effect/Stream";
 import { describe, expect, test } from "vitest";
 
+import { getFellowshipLogStartedAt } from "@frt/api/services/fellowship/parsing/get-fellowship-log-started-at.ts";
+import { DUNGEON_START_LINE } from "@frt/api/tests/common/fixtures/dungeon-start-fixtures.ts";
 import {
   FileMonitorTestDependenciesLive,
   makeFileMonitorTestHarness,
@@ -24,17 +25,6 @@ const FILE_TIMESTAMP_SEPARATION = "5 millis";
 const OLD_MODIFIED_TIME = DateTime.toDateUtc(
   DateTime.makeUnsafe("2020-01-01T00:00:00.000Z"),
 );
-
-function getLeadingEpochMilliseconds(
-  leadingText: string,
-): Option.Option<number> {
-  const [leadingField] = leadingText.split("|");
-  const epochMilliseconds = Number(leadingField);
-
-  return leadingText.includes("|") && Number.isFinite(epochMilliseconds)
-    ? Option.some(epochMilliseconds)
-    : Option.none();
-}
 
 describe("FileMonitor", () => {
   describe("findLatestFile", () => {
@@ -416,7 +406,7 @@ describe("FileMonitor", () => {
           const lines = yield* makeStreamTestHarness(
             harness.fileMonitor.streamLatestFileLines({
               directoryPath: harness.directoryPath,
-              getContentStartedAt: getLeadingEpochMilliseconds,
+              getContentStartedAt: getFellowshipLogStartedAt,
               matches: matchesTextFile,
               startFrom: "end",
             }),
@@ -427,18 +417,21 @@ describe("FileMonitor", () => {
 
           yield* harness.awaitSourceRequest;
 
-          const contentStartedAt = yield* Clock.currentTimeMillis;
+          const contentStartedAt = (yield* DateTime.now).pipe(
+            DateTime.add({ seconds: 1 }),
+            DateTime.formatIso,
+          );
 
           yield* harness.writeFile(
             "new-session.txt",
-            `${contentStartedAt + 1_000}|first line\n`,
+            `${contentStartedAt}|DUNGEON_START|\n`,
           );
           yield* harness.setModifiedTime("new-session.txt", OLD_MODIFIED_TIME);
           yield* harness.emitFile("new-session.txt");
 
           const line = yield* lines.take;
 
-          expect(line).toBe(`${contentStartedAt + 1_000}|first line`);
+          expect(line).toBe(`${contentStartedAt}|DUNGEON_START|`);
         }),
       ).pipe(E.provide(FileMonitorTestDependenciesLive));
 
@@ -455,7 +448,7 @@ describe("FileMonitor", () => {
           const lines = yield* makeStreamTestHarness(
             harness.fileMonitor.streamLatestFileLines({
               directoryPath: harness.directoryPath,
-              getContentStartedAt: getLeadingEpochMilliseconds,
+              getContentStartedAt: getFellowshipLogStartedAt,
               matches: matchesTextFile,
               startFrom: "end",
             }),
@@ -468,7 +461,10 @@ describe("FileMonitor", () => {
 
           yield* E.sleep(FILE_TIMESTAMP_SEPARATION);
 
-          yield* harness.writeFile("old-session.txt", "0|old line\n");
+          yield* harness.writeFile(
+            "old-session.txt",
+            `${DUNGEON_START_LINE}\n`,
+          );
           yield* harness.emitFile("old-session.txt");
 
           yield* harness.awaitSourceRequest;

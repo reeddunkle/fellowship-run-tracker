@@ -33,7 +33,7 @@ const ACCESS_TOKEN_EXPIRATION_BUFFER_MILLISECONDS = 30_000;
 
 const MIN_QUERY_INTERVAL = "500 millis";
 
-const REQUEST_TIMEOUT = "30 seconds";
+export const REQUEST_TIMEOUT = "30 seconds";
 
 const TOO_MANY_REQUESTS_STATUS = 429;
 

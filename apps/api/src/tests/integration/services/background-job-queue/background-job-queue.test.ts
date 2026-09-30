@@ -3,6 +3,7 @@ import * as Deferred from "effect/Deferred";
 import * as E from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
 import * as Layer from "effect/Layer";
+import * as Logger from "effect/Logger";
 import * as Option from "effect/Option";
 import * as Path from "effect/Path";
 import * as Schedule from "effect/Schedule";
@@ -757,6 +758,16 @@ describe("BackgroundJobQueue", () => {
 
   test("cancels a job left running after its final status could not be saved", async () => {
     const remainingJob = await withTempDatabase((databaseFilename) => {
+      const workerFailed = Deferred.makeUnsafe<void>();
+
+      const WorkerFailureLoggerLive = Logger.layer([
+        Logger.make(({ logLevel }) => {
+          if (logLevel === "Error") {
+            Deferred.doneUnsafe(workerFailed, E.void);
+          }
+        }),
+      ]);
+
       const UnsettleableBackgroundJobDAOLive = Layer.effect(
         BackgroundJobDAO,
         E.gen(function* () {
@@ -790,17 +801,18 @@ describe("BackgroundJobQueue", () => {
 
         const { job } = yield* backgroundJobQueue.offer(makeImportJob());
 
-        yield* waitForJob(job.id, hasStatus("RUNNING"));
+        yield* Deferred.await(workerFailed).pipe(E.timeout("5 seconds"));
 
-        return yield* backgroundJobQueue.cancel({ id: job.id }).pipe(
-          E.andThen(getJob(job.id)),
-          E.repeat({
-            schedule: Schedule.spaced("10 millis"),
-            until: Option.isNone,
-          }),
-          E.timeout("2 seconds"),
-        );
-      }).pipe(E.provide(BackgroundJobQueueTestLive));
+        yield* backgroundJobQueue.cancel({ id: job.id });
+
+        return yield* getJob(job.id);
+      }).pipe(
+        E.provide(
+          BackgroundJobQueueTestLive.pipe(
+            Layer.provide(WorkerFailureLoggerLive),
+          ),
+        ),
+      );
     });
 
     expect(Option.isNone(remainingJob)).toBe(true);

@@ -27,38 +27,32 @@ describe("makeScopedBrowserRunner", () => {
     });
   });
 
-  test("lets programs finish on their own before being closed", async () => {
-    let completedProgramCount = 0;
-
-    const runner = makeScopedBrowserRunner();
-
-    runner.run(
-      E.sync(() => {
-        completedProgramCount += 1;
-      }),
-    );
-
-    await vi.waitFor(() => {
-      expect(completedProgramCount).toBe(1);
-    });
-
-    runner.close();
-  });
-
   test("does not start programs after being closed", async () => {
     let startedProgramCount = 0;
+    let hasOpenRunnerProgramRun = false;
 
-    const runner = makeScopedBrowserRunner();
+    const closedRunner = makeScopedBrowserRunner();
+    const openRunner = makeScopedBrowserRunner();
 
-    runner.close();
+    closedRunner.close();
 
-    runner.run(
+    closedRunner.run(
       E.sync(() => {
         startedProgramCount += 1;
       }),
     );
 
-    await E.runPromise(E.sleep("10 millis"));
+    openRunner.run(
+      E.sync(() => {
+        hasOpenRunnerProgramRun = true;
+      }),
+    );
+
+    await vi.waitFor(() => {
+      expect(hasOpenRunnerProgramRun).toBe(true);
+    });
+
+    openRunner.close();
 
     expect(startedProgramCount).toBe(0);
   });

@@ -147,54 +147,8 @@ describe("AppStateStore", () => {
 
     await runTest(program);
   });
-  test("finishes an in-progress write and saves queued updates when the store shuts down", async () => {
-    const program = E.gen(function* () {
-      const keyValueStore = yield* KeyValueStore.KeyValueStore;
 
-      const slowKeyValueStore = {
-        ...keyValueStore,
-        set: (key: string, value: string | Uint8Array) => {
-          return E.sleep("30 millis").pipe(
-            E.andThen(keyValueStore.set(key, value)),
-          );
-        },
-      } satisfies KeyValueStore.KeyValueStore;
-
-      yield* E.scoped(
-        E.gen(function* () {
-          const store = yield* makeAppStateStore.pipe(
-            E.provideService(KeyValueStore.KeyValueStore, slowKeyValueStore),
-          );
-
-          yield* store.setTheme("light").pipe(E.forkChild);
-
-          yield* E.sleep("10 millis");
-
-          yield* store.setSidebarOpen(false).pipe(E.forkChild);
-
-          yield* E.sleep("5 millis");
-        }),
-      );
-
-      return yield* E.scoped(
-        E.gen(function* () {
-          const store = yield* makeAppStateStore;
-
-          return {
-            sidebarOpen: yield* store.getSidebarOpen,
-            theme: yield* store.getTheme,
-          };
-        }),
-      );
-    }).pipe(E.provide(KeyValueStore.layerMemory));
-
-    expect(await runTest(program)).toEqual({
-      sidebarOpen: false,
-      theme: "light",
-    });
-  });
-
-  test("rejects updates offered while shutdown is saving queued updates", async () => {
+  test("finishes an in-progress write, saves queued updates, and rejects later updates when the store shuts down", async () => {
     const program = E.gen(function* () {
       const keyValueStore = yield* KeyValueStore.KeyValueStore;
       const writeStarts = yield* Queue.unbounded<number>();
@@ -239,21 +193,19 @@ describe("AppStateStore", () => {
 
       const sidebarUpdate = yield* store
         .setSidebarOpen(false)
-        .pipe(E.forkChild);
+        .pipe(E.forkChild({ startImmediately: true }));
 
-      yield* E.sleep("10 millis");
-
-      const scopeClose = yield* Scope.close(scope, Exit.void).pipe(E.forkChild);
-
-      yield* E.sleep("10 millis");
+      const scopeClose = yield* Scope.close(scope, Exit.void).pipe(
+        E.forkChild({ startImmediately: true }),
+      );
 
       yield* Deferred.succeed(firstWriteRelease, undefined);
 
       yield* Queue.take(writeStarts);
 
-      const lateUpdate = yield* E.result(
-        store.setSelectedConfigurationId(null),
-      ).pipe(E.timeoutOption("1 second"));
+      const lateUpdate = yield* E.result(store.setTheme("system")).pipe(
+        E.timeoutOption("1 second"),
+      );
 
       yield* Deferred.succeed(secondWriteRelease, undefined);
 
@@ -261,19 +213,37 @@ describe("AppStateStore", () => {
       yield* Fiber.join(themeUpdate);
       yield* Fiber.join(sidebarUpdate);
 
-      return lateUpdate.pipe(
-        Option.map(
-          Result.match({
-            onFailure: (error) => error._tag,
-            onSuccess: () => "Succeeded",
-          }),
-        ),
+      const persistedState = yield* E.scoped(
+        E.gen(function* () {
+          const reopenedStore = yield* makeAppStateStore;
+
+          return {
+            sidebarOpen: yield* reopenedStore.getSidebarOpen,
+            theme: yield* reopenedStore.getTheme,
+          };
+        }),
       );
+
+      return {
+        lateUpdate: lateUpdate.pipe(
+          Option.map(
+            Result.match({
+              onFailure: (error) => error._tag,
+              onSuccess: () => "Succeeded",
+            }),
+          ),
+        ),
+        persistedState,
+      };
     }).pipe(E.provide(KeyValueStore.layerMemory));
 
-    expect(await runTest(program)).toEqual(
-      Option.some("AppStateStoreClosedError"),
-    );
+    expect(await runTest(program)).toEqual({
+      lateUpdate: Option.some("AppStateStoreClosedError"),
+      persistedState: {
+        sidebarOpen: false,
+        theme: "light",
+      },
+    });
   });
 
   test("rejects updates after the store has shut down", async () => {

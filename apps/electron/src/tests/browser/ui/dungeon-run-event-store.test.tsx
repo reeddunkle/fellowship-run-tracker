@@ -14,6 +14,24 @@ import { type DungeonRunEventStreamEvent } from "@/renderer/api/dungeon-run/dung
 import { DUNGEON_RUN_HISTORY_QUERY_KEY_PREFIX } from "@/renderer/api/dungeon-run/dungeon-run-queries.ts";
 import { makeDungeonRunEventStore } from "@/renderer/stores/dungeon-run/dungeon-run-event-store.ts";
 
+const DUNGEON_RUN_HISTORY_QUERY_KEY = [
+  ...DUNGEON_RUN_HISTORY_QUERY_KEY_PREFIX,
+  "seeded",
+];
+
+function makeQueryClientWithDungeonRunHistory() {
+  const queryClient = new QueryClient();
+
+  queryClient.setQueryData(DUNGEON_RUN_HISTORY_QUERY_KEY, "seeded history");
+
+  return queryClient;
+}
+
+function isDungeonRunHistoryInvalidated(queryClient: QueryClient) {
+  return queryClient.getQueryState(DUNGEON_RUN_HISTORY_QUERY_KEY)
+    ?.isInvalidated;
+}
+
 describe("DungeonRunEventStore", () => {
   test("starts with a disconnected empty snapshot", () => {
     const store = makeDungeonRunEventStore();
@@ -163,8 +181,7 @@ describe("DungeonRunEventStore", () => {
       type: "MESSAGE_RECEIVED",
     } satisfies DungeonRunEventStreamEvent;
 
-    const queryClient = new QueryClient();
-    const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+    const queryClient = makeQueryClientWithDungeonRunHistory();
 
     const store = makeDungeonRunEventStore({
       makeEventStream: () => {
@@ -176,12 +193,9 @@ describe("DungeonRunEventStore", () => {
     store.start();
 
     await vi.waitFor(() => {
-      expect(invalidateQueries).toHaveBeenCalledOnce();
+      expect(isDungeonRunHistoryInvalidated(queryClient)).toBe(true);
     });
 
-    expect(invalidateQueries).toHaveBeenCalledWith({
-      queryKey: DUNGEON_RUN_HISTORY_QUERY_KEY_PREFIX,
-    });
     expect(store.getSnapshot().runState?.dungeonRun?.status).toBe("COMPLETED");
   });
 
@@ -191,8 +205,7 @@ describe("DungeonRunEventStore", () => {
       type: "MESSAGE_RECEIVED",
     } satisfies DungeonRunEventStreamEvent;
 
-    const queryClient = new QueryClient();
-    const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+    const queryClient = makeQueryClientWithDungeonRunHistory();
 
     const store = makeDungeonRunEventStore({
       makeEventStream: () => {
@@ -207,7 +220,7 @@ describe("DungeonRunEventStore", () => {
       expect(store.getSnapshot().runState).toEqual(MOCK_DUNGEON_RUN_STATE_API);
     });
 
-    expect(invalidateQueries).not.toHaveBeenCalled();
+    expect(isDungeonRunHistoryInvalidated(queryClient)).toBe(false);
   });
 
   test("does not start another event stream while already running", () => {

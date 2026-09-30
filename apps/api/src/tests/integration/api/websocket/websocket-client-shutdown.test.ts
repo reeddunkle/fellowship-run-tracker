@@ -1,6 +1,5 @@
 import * as Context from "effect/Context";
 import * as Data from "effect/Data";
-import * as Deferred from "effect/Deferred";
 import * as Duration from "effect/Duration";
 import * as E from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -65,17 +64,11 @@ describe("WebSocket client shutdown", () => {
         E.timeout(MOCK_TIMEOUT),
       );
 
-      const shutdownDuration = yield* Deferred.make<Duration.Duration>();
-
-      yield* Scope.close(scope, Exit.void).pipe(
+      const [shutdownDuration] = yield* Scope.close(scope, Exit.void).pipe(
         E.timed,
-        E.flatMap(([duration]) => {
-          return Deferred.succeed(shutdownDuration, duration);
-        }),
-        E.forkDetach,
       );
 
-      return Duration.toMillis(yield* Deferred.await(shutdownDuration));
+      return Duration.toMillis(shutdownDuration);
     }).pipe(runTest);
 
     expect(shutdownMilliseconds).toBeLessThan(1_000);
