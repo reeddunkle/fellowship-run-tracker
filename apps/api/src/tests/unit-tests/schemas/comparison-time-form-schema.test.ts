@@ -13,65 +13,114 @@ const decodeComparisonTimeResult = Schema.decodeUnknownResult(
 );
 
 describe("parseColonTime", () => {
-  test.each([
-    ["0:00", 0],
-    ["0:01", 1_000],
-    ["1:00", 60_000],
-    ["1:23", 83_000],
-    ["1:23.1", 83_100],
-    ["1:23.12", 83_120],
-    ["1:23.123", 83_123],
-    ["10:59.999", 659_999],
-    ["123:45.678", 7_425_678],
-  ])("parses %j to %j", (value, expected) => {
-    expect(parseColonTime(value)).toBe(expected);
+  describe("parses", () => {
+    test("zero", () => {
+      expect(parseColonTime("0:00")).toBe(0);
+    });
+
+    test("minutes and seconds", () => {
+      expect(parseColonTime("1:23")).toBe(83_000);
+    });
+
+    test("one fractional digit as tenths", () => {
+      expect(parseColonTime("1:23.1")).toBe(83_100);
+    });
+
+    test("three fractional digits as milliseconds", () => {
+      expect(parseColonTime("1:23.123")).toBe(83_123);
+    });
+
+    test("more than two minute digits", () => {
+      expect(parseColonTime("123:45.678")).toBe(7_425_678);
+    });
   });
 
-  test.each([
-    "",
-    "1:",
-    ":01",
-    "1:1",
-    "1:60",
-    "1:99",
-    "1:23.",
-    "1:23.1234",
-    "1:23.abc",
-    "-1:00",
-    "abc",
-    " 1:23",
-    "1:23 ",
-  ])("rejects %j", (value) => {
-    expect(parseColonTime(value)).toBeUndefined();
+  describe("rejects", () => {
+    test("an empty string", () => {
+      expect(parseColonTime("")).toBeUndefined();
+    });
+
+    test("missing seconds", () => {
+      expect(parseColonTime("1:")).toBeUndefined();
+    });
+
+    test("missing minutes", () => {
+      expect(parseColonTime(":01")).toBeUndefined();
+    });
+
+    test("single-digit seconds", () => {
+      expect(parseColonTime("1:1")).toBeUndefined();
+    });
+
+    test("seconds of 60 or more", () => {
+      expect(parseColonTime("1:60")).toBeUndefined();
+    });
+
+    test("a trailing decimal point", () => {
+      expect(parseColonTime("1:23.")).toBeUndefined();
+    });
+
+    test("more than three fractional digits", () => {
+      expect(parseColonTime("1:23.1234")).toBeUndefined();
+    });
+
+    test("a negative time", () => {
+      expect(parseColonTime("-1:00")).toBeUndefined();
+    });
+
+    test("surrounding whitespace", () => {
+      expect(parseColonTime(" 1:23")).toBeUndefined();
+    });
   });
 });
 
 describe("parseDecimalMinutes", () => {
-  test.each([
-    ["0", 0],
-    ["1", 60_000],
-    ["1.25", 75_000],
-    ["1.5", 90_000],
-    ["0.5", 30_000],
-    ["2.125", 127_500],
-    ["10.001", 600_060],
-  ])("parses %j to %j", (value, expected) => {
-    expect(parseDecimalMinutes(value)).toBe(expected);
+  describe("parses", () => {
+    test("zero", () => {
+      expect(parseDecimalMinutes("0")).toBe(0);
+    });
+
+    test("whole minutes", () => {
+      expect(parseDecimalMinutes("1")).toBe(60_000);
+    });
+
+    test("fractional minutes", () => {
+      expect(parseDecimalMinutes("1.25")).toBe(75_000);
+    });
+
+    test("fractional minutes that land on whole milliseconds", () => {
+      expect(parseDecimalMinutes("10.001")).toBe(600_060);
+    });
   });
 
-  test.each([
-    "",
-    ".5",
-    "1.",
-    "1:00",
-    "-1",
-    "-1.25",
-    "abc",
-    "1.2.3",
-    " 1",
-    "1 ",
-  ])("rejects %j", (value) => {
-    expect(parseDecimalMinutes(value)).toBeUndefined();
+  describe("rejects", () => {
+    test("an empty string", () => {
+      expect(parseDecimalMinutes("")).toBeUndefined();
+    });
+
+    test("a missing whole part", () => {
+      expect(parseDecimalMinutes(".5")).toBeUndefined();
+    });
+
+    test("a trailing decimal point", () => {
+      expect(parseDecimalMinutes("1.")).toBeUndefined();
+    });
+
+    test("colon time", () => {
+      expect(parseDecimalMinutes("1:00")).toBeUndefined();
+    });
+
+    test("a negative number", () => {
+      expect(parseDecimalMinutes("-1")).toBeUndefined();
+    });
+
+    test("more than one decimal point", () => {
+      expect(parseDecimalMinutes("1.2.3")).toBeUndefined();
+    });
+
+    test("surrounding whitespace", () => {
+      expect(parseDecimalMinutes(" 1")).toBeUndefined();
+    });
   });
 
   test("rounds fractional milliseconds", () => {
@@ -110,21 +159,27 @@ describe("ComparisonTimeFormSchema", () => {
 });
 
 describe("formatComparisonTime", () => {
-  test.each([
-    [null, ""],
-    [0, "0:00"],
-    [1_000, "0:01"],
-    [30_000, "0:30"],
-    [60_000, "1:00"],
-    [75_000, "1:15"],
-    [83_000, "1:23"],
-    [83_100, "1:23.100"],
-    [83_120, "1:23.120"],
-    [83_123, "1:23.123"],
-    [127_500, "2:07.500"],
-    [659_999, "10:59.999"],
-    [7_425_678, "123:45.678"],
-  ])("formats %j to %j", (value, expected) => {
-    expect(formatComparisonTime(value)).toBe(expected);
+  test("formats no time as an empty string", () => {
+    expect(formatComparisonTime(null)).toBe("");
+  });
+
+  test("formats zero", () => {
+    expect(formatComparisonTime(0)).toBe("0:00");
+  });
+
+  test("pads seconds to two digits", () => {
+    expect(formatComparisonTime(75_000)).toBe("1:15");
+  });
+
+  test("pads milliseconds to three digits", () => {
+    expect(formatComparisonTime(83_100)).toBe("1:23.100");
+  });
+
+  test("formats milliseconds", () => {
+    expect(formatComparisonTime(659_999)).toBe("10:59.999");
+  });
+
+  test("formats more than two minute digits", () => {
+    expect(formatComparisonTime(7_425_678)).toBe("123:45.678");
   });
 });

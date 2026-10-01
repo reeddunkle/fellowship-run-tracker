@@ -70,29 +70,43 @@ describe("fitBoundsToWorkArea", () => {
 });
 
 describe("getWindowAnchor", () => {
-  test.each([
-    {
-      bounds: { height: 400, width: 900, x: 2570, y: 10 },
-      expected: { horizontal: "left", vertical: "top", x: 2570, y: 10 },
-    },
-    {
-      bounds: { height: 400, width: 900, x: 3570, y: 10 },
-      expected: { horizontal: "right", vertical: "top", x: 4470, y: 10 },
-    },
-    {
-      bounds: { height: 400, width: 900, x: 2570, y: 630 },
-      expected: { horizontal: "left", vertical: "bottom", x: 2570, y: 1030 },
-    },
-    {
-      bounds: { height: 400, width: 900, x: 3570, y: 630 },
-      expected: { horizontal: "right", vertical: "bottom", x: 4470, y: 1030 },
-    },
-  ])(
-    "anchors to the nearest corner at $expected.horizontal/$expected.vertical",
-    ({ bounds, expected }) => {
-      expect(getWindowAnchor(bounds, SECONDARY_WORK_AREA)).toEqual(expected);
-    },
-  );
+  describe("anchors to the nearest corner", () => {
+    test("top left", () => {
+      expect(
+        getWindowAnchor(
+          { height: 400, width: 900, x: 2570, y: 10 },
+          SECONDARY_WORK_AREA,
+        ),
+      ).toEqual({ horizontal: "left", vertical: "top", x: 2570, y: 10 });
+    });
+
+    test("top right", () => {
+      expect(
+        getWindowAnchor(
+          { height: 400, width: 900, x: 3570, y: 10 },
+          SECONDARY_WORK_AREA,
+        ),
+      ).toEqual({ horizontal: "right", vertical: "top", x: 4470, y: 10 });
+    });
+
+    test("bottom left", () => {
+      expect(
+        getWindowAnchor(
+          { height: 400, width: 900, x: 2570, y: 630 },
+          SECONDARY_WORK_AREA,
+        ),
+      ).toEqual({ horizontal: "left", vertical: "bottom", x: 2570, y: 1030 });
+    });
+
+    test("bottom right", () => {
+      expect(
+        getWindowAnchor(
+          { height: 400, width: 900, x: 3570, y: 630 },
+          SECONDARY_WORK_AREA,
+        ),
+      ).toEqual({ horizontal: "right", vertical: "bottom", x: 4470, y: 1030 });
+    });
+  });
 
   test("prefers the top-left corner when centered", () => {
     expect(

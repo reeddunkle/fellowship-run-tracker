@@ -1,14 +1,10 @@
 import * as E from "effect/Effect";
-import * as Layer from "effect/Layer";
-import * as Result from "effect/Result";
 import { describe, expect, test } from "vitest";
 
 import { makeApiServerTestLayerWith } from "@frt/api/tests/common/layers/api-server-test-layer.ts";
 import { makeConfigurationLibraryMock } from "@frt/api/tests/common/mocks/configuration-library-mock.ts";
-import { runTest } from "@frt/api/tests/common/run-test.ts";
 import {
   MOCK_CONFIGURATION,
-  MOCK_CONFIGURATION_FINGERPRINT,
   MOCK_CONFIGURATION_ID,
   MOCK_CONFIGURATION_LABEL,
   MOCK_SAVE_CONFIGURATION_REQUEST,
@@ -24,207 +20,136 @@ import {
   saveConfiguration,
   updateConfiguration,
 } from "@/renderer/api/configuration/configuration-client.ts";
-import { TestAppApiClientTestLive } from "@/tests/browser/common/layers/app-api-client-test-layer.ts";
+import { runWithTestApiServer } from "@/tests/browser/common/run-with-test-api-server.ts";
 
-describe("configuration client", () => {
-  test("gets all configurations", async () => {
-    const configurationLibraryMock = makeConfigurationLibraryMock({
-      getAll: () => {
-        return E.succeed([MOCK_CONFIGURATION]);
-      },
-    });
+const UPDATED_CONFIGURATION = {
+  ...MOCK_CONFIGURATION,
+  label: MOCK_UPDATED_CONFIGURATION_LABEL,
+} satisfies ConfigurationApiConfiguration;
 
-    const ApiServerTestLive = makeApiServerTestLayerWith(
-      configurationLibraryMock,
-    );
+const UPDATED_REQUEST = {
+  ...MOCK_SAVE_CONFIGURATION_REQUEST,
+  label: MOCK_UPDATED_CONFIGURATION_LABEL,
+} as const;
 
-    const TestLive = TestAppApiClientTestLive.pipe(
-      Layer.provide(ApiServerTestLive),
-    );
+function makeRecordingApiServer() {
+  const receivedCalls: Array<unknown> = [];
 
-    const program = E.scoped(
-      E.gen(function* () {
-        const configurations = yield* getConfigurations();
-
-        expect(configurations).toEqual([MOCK_CONFIGURATION]);
-      }).pipe(E.provide(TestLive)),
-    );
-
-    await runTest(program);
-  });
-
-  test("gets a configuration", async () => {
-    const configurationLibraryMock = makeConfigurationLibraryMock({
-      getById: ({ id }) => {
-        if (id === MOCK_CONFIGURATION_ID) {
-          return E.succeedSome(MOCK_CONFIGURATION);
-        }
-
-        return E.succeedNone;
-      },
-    });
-
-    const ApiServerTestLive = makeApiServerTestLayerWith(
-      configurationLibraryMock,
-    );
-
-    const TestLive = TestAppApiClientTestLive.pipe(
-      Layer.provide(ApiServerTestLive),
-    );
-
-    const program = E.scoped(
-      E.gen(function* () {
-        const result = yield* getConfiguration({
-          id: MOCK_CONFIGURATION_ID,
-        });
-
-        expect(result).toEqual(MOCK_CONFIGURATION);
-      }).pipe(E.provide(TestLive)),
-    );
-
-    await runTest(program);
-  });
-
-  test("returns NotFound when a configuration does not exist", async () => {
-    const configurationLibraryMock = makeConfigurationLibraryMock();
-
-    const ApiServerTestLive = makeApiServerTestLayerWith(
-      configurationLibraryMock,
-    );
-
-    const TestLive = TestAppApiClientTestLive.pipe(
-      Layer.provide(ApiServerTestLive),
-    );
-
-    const program = E.scoped(
-      E.gen(function* () {
-        const result = yield* getConfiguration({
-          id: MOCK_UNKNOWN_CONFIGURATION_ID,
-        }).pipe(E.result);
-
-        expect(Result.isFailure(result)).toBe(true);
-
-        if (Result.isFailure(result)) {
-          expect(result.failure._tag).toBe("NotFound");
-        }
-      }).pipe(E.provide(TestLive)),
-    );
-
-    await runTest(program);
-  });
-
-  test("saves a configuration", async () => {
-    const configurationLibraryMock = makeConfigurationLibraryMock({
-      save: ({ configuration: savedConfiguration, label }) => {
-        expect(savedConfiguration).toEqual({
-          dungeonId: MOCK_SAVE_CONFIGURATION_REQUEST.configuration.dungeonId,
-          dungeonLevel:
-            MOCK_SAVE_CONFIGURATION_REQUEST.configuration.dungeonLevel,
-          milestones: MOCK_SAVE_CONFIGURATION_REQUEST.configuration.milestones,
-        });
-
-        expect(label).toBe(MOCK_CONFIGURATION_LABEL);
-
-        return E.succeed(MOCK_CONFIGURATION);
-      },
-    });
-
-    const ApiServerTestLive = makeApiServerTestLayerWith(
-      configurationLibraryMock,
-    );
-
-    const TestLive = TestAppApiClientTestLive.pipe(
-      Layer.provide(ApiServerTestLive),
-    );
-
-    const program = E.scoped(
-      E.gen(function* () {
-        const result = yield* saveConfiguration({
-          request: MOCK_SAVE_CONFIGURATION_REQUEST,
-        });
-
-        expect(result).toEqual(MOCK_CONFIGURATION);
-        expect(result.fingerprint).toBe(MOCK_CONFIGURATION_FINGERPRINT);
-      }).pipe(E.provide(TestLive)),
-    );
-
-    await runTest(program);
-  });
-
-  test("updates a configuration", async () => {
-    const updatedConfiguration = {
-      ...MOCK_CONFIGURATION,
-      label: MOCK_UPDATED_CONFIGURATION_LABEL,
-    } satisfies ConfigurationApiConfiguration;
-
-    const updatedRequest = {
-      ...MOCK_SAVE_CONFIGURATION_REQUEST,
-      label: MOCK_UPDATED_CONFIGURATION_LABEL,
-    } as const;
-
-    const configurationLibraryMock = makeConfigurationLibraryMock({
-      update: ({ configuration: updatedValue, id, label }) => {
-        expect(id).toBe(MOCK_CONFIGURATION_ID);
-        expect(updatedValue).toEqual(updatedRequest.configuration);
-        expect(label).toBe(MOCK_UPDATED_CONFIGURATION_LABEL);
-
-        return E.succeed(updatedConfiguration);
-      },
-    });
-
-    const ApiServerTestLive = makeApiServerTestLayerWith(
-      configurationLibraryMock,
-    );
-
-    const TestLive = TestAppApiClientTestLive.pipe(
-      Layer.provide(ApiServerTestLive),
-    );
-
-    const program = E.scoped(
-      E.gen(function* () {
-        const result = yield* updateConfiguration({
-          id: MOCK_CONFIGURATION_ID,
-          request: updatedRequest,
-        });
-
-        expect(result).toEqual(updatedConfiguration);
-        expect(result.id).toBe(MOCK_CONFIGURATION_ID);
-        expect(result.label).toBe(MOCK_UPDATED_CONFIGURATION_LABEL);
-      }).pipe(E.provide(TestLive)),
-    );
-
-    await runTest(program);
-  });
-
-  test("deletes a configuration", async () => {
-    let deletedConfigurationId: string | undefined;
-
-    const configurationLibraryMock = makeConfigurationLibraryMock({
+  const layer = makeApiServerTestLayerWith(
+    makeConfigurationLibraryMock({
       delete: ({ id }) => {
-        deletedConfigurationId = id;
+        receivedCalls.push({ id, method: "delete" });
 
         return E.void;
       },
-    });
+      getAll: () => {
+        return E.succeed([MOCK_CONFIGURATION]);
+      },
+      getById: ({ id }) => {
+        return id === MOCK_CONFIGURATION_ID
+          ? E.succeedSome(MOCK_CONFIGURATION)
+          : E.succeedNone;
+      },
+      save: ({ configuration, label }) => {
+        receivedCalls.push({ configuration, label, method: "save" });
 
-    const ApiServerTestLive = makeApiServerTestLayerWith(
-      configurationLibraryMock,
+        return E.succeed(MOCK_CONFIGURATION);
+      },
+      update: ({ configuration, id, label }) => {
+        receivedCalls.push({ configuration, id, label, method: "update" });
+
+        return E.succeed(UPDATED_CONFIGURATION);
+      },
+    }),
+  );
+
+  return { layer, receivedCalls };
+}
+
+describe("configuration client", () => {
+  test("gets all configurations", async () => {
+    const { layer } = makeRecordingApiServer();
+
+    const configurations = await runWithTestApiServer(
+      getConfigurations(),
+      layer,
     );
 
-    const TestLive = TestAppApiClientTestLive.pipe(
-      Layer.provide(ApiServerTestLive),
+    expect(configurations).toEqual([MOCK_CONFIGURATION]);
+  });
+
+  test("gets a configuration", async () => {
+    const { layer } = makeRecordingApiServer();
+
+    const configuration = await runWithTestApiServer(
+      getConfiguration({ id: MOCK_CONFIGURATION_ID }),
+      layer,
     );
 
-    const program = E.scoped(
-      E.gen(function* () {
-        yield* deleteConfiguration({
-          id: MOCK_CONFIGURATION_ID,
-        });
+    expect(configuration).toEqual(MOCK_CONFIGURATION);
+  });
 
-        expect(deletedConfigurationId).toBe(MOCK_CONFIGURATION_ID);
-      }).pipe(E.provide(TestLive)),
+  test("returns NotFound when a configuration does not exist", async () => {
+    const { layer } = makeRecordingApiServer();
+
+    const error = await runWithTestApiServer(
+      getConfiguration({ id: MOCK_UNKNOWN_CONFIGURATION_ID }).pipe(E.flip),
+      layer,
     );
 
-    await runTest(program);
+    expect(error._tag).toBe("NotFound");
+  });
+
+  test("saves a configuration", async () => {
+    const { layer, receivedCalls } = makeRecordingApiServer();
+
+    const configuration = await runWithTestApiServer(
+      saveConfiguration({ request: MOCK_SAVE_CONFIGURATION_REQUEST }),
+      layer,
+    );
+
+    expect(configuration).toEqual(MOCK_CONFIGURATION);
+    expect(receivedCalls).toEqual([
+      {
+        configuration: MOCK_SAVE_CONFIGURATION_REQUEST.configuration,
+        label: MOCK_CONFIGURATION_LABEL,
+        method: "save",
+      },
+    ]);
+  });
+
+  test("updates a configuration", async () => {
+    const { layer, receivedCalls } = makeRecordingApiServer();
+
+    const configuration = await runWithTestApiServer(
+      updateConfiguration({
+        id: MOCK_CONFIGURATION_ID,
+        request: UPDATED_REQUEST,
+      }),
+      layer,
+    );
+
+    expect(configuration).toEqual(UPDATED_CONFIGURATION);
+    expect(receivedCalls).toEqual([
+      {
+        configuration: UPDATED_REQUEST.configuration,
+        id: MOCK_CONFIGURATION_ID,
+        label: MOCK_UPDATED_CONFIGURATION_LABEL,
+        method: "update",
+      },
+    ]);
+  });
+
+  test("deletes a configuration", async () => {
+    const { layer, receivedCalls } = makeRecordingApiServer();
+
+    await runWithTestApiServer(
+      deleteConfiguration({ id: MOCK_CONFIGURATION_ID }),
+      layer,
+    );
+
+    expect(receivedCalls).toEqual([
+      { id: MOCK_CONFIGURATION_ID, method: "delete" },
+    ]);
   });
 });
