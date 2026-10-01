@@ -67,8 +67,6 @@
     "electron": "catalog:electron",
     "npm-run-all2": "catalog:tooling",
     "playwright": "catalog:testing",
-    "tailwindcss": "catalog:tailwind",
-    "tw-animate-css": "catalog:tailwind",
     "typescript": "catalog:typescript",
     "vite": "catalog:vite",
     "vitest": "catalog:testing",

@@ -5,15 +5,13 @@ import {
   FieldDescription,
   FieldError,
   FieldLabel,
-} from "@frt/ui/field.tsx";
-import { NumberField } from "@frt/ui/number-field.tsx";
+} from "@frt/ui/primitives/field.tsx";
+import { NumberField } from "@frt/ui/primitives/number-field.tsx";
 
 import { useFieldContext } from "../form-context.ts";
 
 type AppNumberFieldProps = {
   readonly description?: React.ReactNode;
-  readonly errorClassName?: string;
-  readonly fieldClassName?: string;
   readonly label: React.ReactNode;
 } & Omit<
   React.ComponentProps<typeof NumberField>,
@@ -22,8 +20,6 @@ type AppNumberFieldProps = {
 
 export function AppNumberField({
   description,
-  errorClassName,
-  fieldClassName,
   label,
   ...inputProps
 }: AppNumberFieldProps) {
@@ -32,7 +28,7 @@ export function AppNumberField({
   const isInvalid = field.state.meta.isBlurred && !field.state.meta.isValid;
 
   return (
-    <Field className={fieldClassName} data-invalid={isInvalid}>
+    <Field data-invalid={isInvalid}>
       <FieldLabel htmlFor={field.name}>{label}</FieldLabel>
       <NumberField
         aria-invalid={isInvalid}
@@ -50,12 +46,7 @@ export function AppNumberField({
       {description !== undefined ? (
         <FieldDescription>{description}</FieldDescription>
       ) : null}
-      {isInvalid ? (
-        <FieldError
-          className={errorClassName}
-          errors={field.state.meta.errors}
-        />
-      ) : null}
+      {isInvalid ? <FieldError errors={field.state.meta.errors} /> : null}
     </Field>
   );
 }

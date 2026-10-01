@@ -3,14 +3,14 @@ import { useState } from "react";
 
 import { FELLOWSHIP_EVENT } from "@frt/shared/fellowship/constants/fellowship-event.ts";
 import { type RequirementEventType } from "@frt/shared/fellowship/validation/requirement-event-type-schema.ts";
-import { Button } from "@frt/ui/button.tsx";
+import { Button } from "@frt/ui/primitives/button.tsx";
 import {
   Card,
   CardAction,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@frt/ui/card.tsx";
+} from "@frt/ui/primitives/card.tsx";
 
 import { useConfigurationEditor } from "@/renderer/components/configuration/configuration-editor-provider.tsx";
 import {
@@ -56,16 +56,17 @@ export function MilestoneEditor({
           </Button>
         </CardAction>
       </CardHeader>
-      <CardContent className="grid gap-4">
+      <CardContent>
         <div className="flex gap-3">
           <form.AppField name={`${milestonePath}.label` as const}>
             {(field) => {
               return (
-                <field.TextField
-                  fieldClassName="min-w-0 flex-1"
-                  label="Label"
-                  placeholder="Milestone label"
-                />
+                <div className="min-w-0 flex-1">
+                  <field.TextField
+                    label="Label"
+                    placeholder="Milestone label"
+                  />
+                </div>
               );
             }}
           </form.AppField>
@@ -73,14 +74,14 @@ export function MilestoneEditor({
           <form.AppField name={`${milestonePath}.comparisonTime` as const}>
             {(field) => {
               return (
-                <field.TextField
-                  className="field-sizing-content"
-                  errorClassName="whitespace-normal contain-[inline-size]"
-                  fieldClassName="w-fit"
-                  inputMode="text"
-                  label="Goal time (optional)"
-                  placeholder="1:15 or 1.25"
-                />
+                <div className="w-fit">
+                  <field.TextField
+                    className="field-sizing-content"
+                    inputMode="text"
+                    label="Goal time (optional)"
+                    placeholder="1:15 or 1.25"
+                  />
+                </div>
               );
             }}
           </form.AppField>
@@ -110,7 +111,7 @@ export function MilestoneEditor({
                   },
                 )}
                 <Button
-                  className="h-auto min-h-24 border-dashed"
+                  className="h-auto min-h-24"
                   onClick={() => {
                     const requirementIndex =
                       requirementsField.state.value.length;
@@ -131,7 +132,7 @@ export function MilestoneEditor({
                     requirementsField.pushValue(requirement);
                   }}
                   type="button"
-                  variant="outline"
+                  variant="dashed"
                 >
                   <PlusIcon />
                   Add requirement

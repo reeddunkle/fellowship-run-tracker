@@ -11,20 +11,20 @@ import { pipe } from "effect/Function";
 import * as Match from "effect/Match";
 import * as Option from "effect/Option";
 import * as Order from "effect/Order";
-import {
-  createContext,
-  type HTMLAttributes,
-  type ReactNode,
-  type TdHTMLAttributes,
-  useContext,
-  useMemo,
-} from "react";
+import { createContext, type ReactNode, useContext, useMemo } from "react";
 
 import {
   DUNGEON_RUN_TIME_COLUMN,
   type DungeonRunTimeColumn,
 } from "@frt/shared/app-state/app-state-schema.ts";
-import { cn } from "@frt/ui/class-names.ts";
+import { SplitDelta } from "@frt/ui/composites/split-delta.tsx";
+import {
+  TimingTable,
+  TimingTableLabelColumn,
+  TimingTableTimeCell,
+  TimingTableTimeColumn,
+  TimingTableTimeHead,
+} from "@frt/ui/composites/timing-table.tsx";
 import { ReactContextError } from "@frt/ui/errors/react-context-error.ts";
 
 import { useDungeonRunTimeColumns } from "@/renderer/api/app-state/app-state-queries.ts";
@@ -176,67 +176,16 @@ export function DungeonRunTable({ children, rows }: DungeonRunTableProps) {
 
   return (
     <DungeonRunTableContext value={contextValue}>
-      <table className="w-full table-fixed border-separate border-spacing-0">
+      <TimingTable>
         <colgroup>
-          <col className="min-w-[16ch]" data-dungeon-run-label-col="" />
+          <TimingTableLabelColumn data-dungeon-run-label-col="" />
           {A.map(contextValue.visibleTimeColumns, (timeColumn) => {
-            return <col key={timeColumn.value} style={{ width: "10ch" }} />;
+            return <TimingTableTimeColumn key={timeColumn.value} />;
           })}
         </colgroup>
         {children}
-      </table>
+      </TimingTable>
     </DungeonRunTableContext>
-  );
-}
-
-type DungeonRunTableTrProps = HTMLAttributes<HTMLTableRowElement>;
-
-export function DungeonRunTableTr({
-  children,
-  className,
-  ...props
-}: DungeonRunTableTrProps) {
-  return (
-    <tr {...props} className={className}>
-      {children}
-    </tr>
-  );
-}
-
-type DungeonRunTableLabelCellProps = TdHTMLAttributes<HTMLTableCellElement>;
-
-export function DungeonRunTableLabelCell({
-  children,
-  className,
-  ...props
-}: DungeonRunTableLabelCellProps) {
-  return (
-    <td
-      {...props}
-      className={cn("min-w-[10ch] overflow-hidden align-middle", className)}
-    >
-      <div className="min-w-0 overflow-hidden">{children}</div>
-    </td>
-  );
-}
-
-type DungeonRunTableTimeCellProps = TdHTMLAttributes<HTMLTableCellElement>;
-
-function DungeonRunTableTimeCell({
-  children,
-  className,
-  ...props
-}: DungeonRunTableTimeCellProps) {
-  return (
-    <td
-      {...props}
-      className={cn(
-        "min-w-[10ch] whitespace-nowrap px-2 text-right align-middle font-mono tabular-nums",
-        className,
-      )}
-    >
-      {children}
-    </td>
   );
 }
 
@@ -247,13 +196,9 @@ export function DungeonRunTableTimeHeaders() {
     <>
       {A.map(visibleTimeColumns, (timeColumn) => {
         return (
-          <th
-            className="min-w-[12ch] whitespace-nowrap px-2 text-left font-normal"
-            key={timeColumn.value}
-            scope="col"
-          >
+          <TimingTableTimeHead key={timeColumn.value}>
             {timeColumn.label}
-          </th>
+          </TimingTableTimeHead>
         );
       })}
     </>
@@ -265,6 +210,16 @@ type DungeonRunTableTimeCellsProps = {
   readonly segmentMilliseconds: number | undefined;
   readonly totalMilliseconds: number | undefined;
 };
+
+function getSplitDeltaStatus(
+  delta: number | undefined,
+): "ahead" | "behind" | undefined {
+  if (delta === undefined || delta === 0) {
+    return undefined;
+  }
+
+  return delta > 0 ? "behind" : "ahead";
+}
 
 export function DungeonRunTableTimeCells({
   comparisonElapsedMilliseconds,
@@ -308,20 +263,16 @@ export function DungeonRunTableTimeCells({
     delta: number | undefined,
   ) => {
     return (
-      <DungeonRunTableTimeCell
-        className={cn({
-          "text-red-500": delta !== undefined && delta > 0,
-          "text-yellow-500": delta !== undefined && delta < 0,
-        })}
-        key={timeColumn.value}
-      >
-        {formatSignedDuration(delta, {
-          fractionalDigits: 2,
-          includeZeroMinutes: false,
-          minimumFractionalDigits: 1,
-          padSeconds: false,
-        })}
-      </DungeonRunTableTimeCell>
+      <TimingTableTimeCell key={timeColumn.value}>
+        <SplitDelta status={getSplitDeltaStatus(delta)}>
+          {formatSignedDuration(delta, {
+            fractionalDigits: 2,
+            includeZeroMinutes: false,
+            minimumFractionalDigits: 1,
+            padSeconds: false,
+          })}
+        </SplitDelta>
+      </TimingTableTimeCell>
     );
   };
 
@@ -346,26 +297,22 @@ export function DungeonRunTableTimeCells({
           }),
           Match.when(DUNGEON_RUN_TIME_COLUMN.SEGMENT, () => {
             return (
-              <DungeonRunTableTimeCell
-                className={cn(
-                  isFirstActiveTimeColumn && "border-l-2! border-l-border!",
-                )}
+              <TimingTableTimeCell
+                divider={isFirstActiveTimeColumn}
                 key={timeColumn.value}
               >
                 {formatDuration(segmentMilliseconds)}
-              </DungeonRunTableTimeCell>
+              </TimingTableTimeCell>
             );
           }),
           Match.when(DUNGEON_RUN_TIME_COLUMN.TOTAL, () => {
             return (
-              <DungeonRunTableTimeCell
-                className={cn(
-                  isFirstActiveTimeColumn && "border-l-2! border-l-border!",
-                )}
+              <TimingTableTimeCell
+                divider={isFirstActiveTimeColumn}
                 key={timeColumn.value}
               >
                 {formatDuration(totalMilliseconds)}
-              </DungeonRunTableTimeCell>
+              </TimingTableTimeCell>
             );
           }),
           Match.exhaustive,

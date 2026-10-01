@@ -4,9 +4,15 @@ import * as Schema from "effect/Schema";
 import { SearchIcon } from "lucide-react";
 
 import { type FellowshipLogsApiDungeonRunReference } from "@frt/shared/fellowship-logs/fellowship-logs-api-schema.ts";
-import { Button } from "@frt/ui/button.tsx";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@frt/ui/field.tsx";
-import { Input } from "@frt/ui/input.tsx";
+import { StatusText } from "@frt/ui/composites/status-text.tsx";
+import { Button } from "@frt/ui/primitives/button.tsx";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@frt/ui/primitives/field.tsx";
+import { Input } from "@frt/ui/primitives/input.tsx";
 
 import {
   ImportDungeonRunUrlFormSchema,
@@ -97,7 +103,7 @@ export function ImportUrlForm({
             {isSubmitting ? "Looking up run..." : "Look up run"}
           </Button>
           {message === undefined ? null : (
-            <p className="text-sm text-destructive">{message}</p>
+            <StatusText variant="destructive">{message}</StatusText>
           )}
         </div>
       </FieldGroup>

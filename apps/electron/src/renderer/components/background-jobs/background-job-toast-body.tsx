@@ -1,5 +1,5 @@
 import { type BackgroundJobApiItem } from "@frt/shared/background-job/background-job-api-schema.ts";
-import { cn } from "@frt/ui/class-names.ts";
+import { cn } from "@frt/ui/styles/class-names.ts";
 
 import { useNowMilliseconds } from "@/renderer/stores/clock/use-now-milliseconds.ts";
 

@@ -2,15 +2,17 @@ import * as A from "effect/Array";
 import {
   ChevronsDownUpIcon,
   ChevronsUpDownIcon,
-  PlayIcon,
   SquareDashedBottomIcon,
-  SquareIcon,
 } from "lucide-react";
 import { useMemo } from "react";
 
-import { Button } from "@frt/ui/button.tsx";
-import { Separator } from "@frt/ui/separator.tsx";
-import { Spinner } from "@frt/ui/spinner.tsx";
+import { EmptyState } from "@frt/ui/composites/empty-state.tsx";
+import {
+  TimingTableHeaderRow,
+  TimingTableLabelHead,
+} from "@frt/ui/composites/timing-table.tsx";
+import { Button } from "@frt/ui/primitives/button.tsx";
+import { Separator } from "@frt/ui/primitives/separator.tsx";
 
 import { useDetachedWindow } from "@/renderer/components/detached-window/detached-window-provider.tsx";
 import { DungeonRunDropdownMenu } from "@/renderer/components/dungeon-run/dungeon-run-dropdown-menu.tsx";
@@ -22,8 +24,8 @@ import { DungeonRunMilestone } from "@/renderer/components/dungeon-run/table/dun
 import {
   DungeonRunTable,
   DungeonRunTableTimeHeaders,
-  DungeonRunTableTr,
 } from "@/renderer/components/dungeon-run/table/dungeon-run-table.tsx";
+import { TrackingStartStopButtons } from "@/renderer/components/tracking/tracking-start-stop-buttons.tsx";
 import {
   useConfigurationById,
   useSelectedConfigurationId,
@@ -33,11 +35,7 @@ import {
   useDungeonRunInterpretationState,
   useDungeonRunServerState,
 } from "@/renderer/stores/dungeon-run/dungeon-run-provider.tsx";
-import {
-  useTrackingActionState,
-  useTrackingActions,
-  useTrackingServerState,
-} from "@/renderer/stores/tracking/tracking-provider.tsx";
+import { useTrackingServerState } from "@/renderer/stores/tracking/tracking-provider.tsx";
 import { isNil } from "@/util/is-nil.ts";
 
 export function DungeonRun() {
@@ -48,8 +46,6 @@ export function DungeonRun() {
     useDungeonRunDisplayState();
 
   const { trackingStatus } = useTrackingServerState();
-  const { start, stop } = useTrackingActions();
-  const { isPending } = useTrackingActionState();
   const { comparisonGroup, dungeonRun } = useDungeonRunServerState();
   const { latestObservation, observations } =
     useDungeonRunInterpretationState();
@@ -88,14 +84,12 @@ export function DungeonRun() {
 
   if (configuration === undefined) {
     return (
-      <div className="flex min-h-40 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
+      <EmptyState className="min-h-40" variant="outline">
         Select a configuration to view dungeon run data.
-      </div>
+      </EmptyState>
     );
   }
 
-  const isTracking = trackingStatus?.status === "Tracking";
-  const isWaitingForFile = trackingStatus?.status === "WaitingForLogFile";
   const isActiveRun = dungeonRun?.status === "ACTIVE";
 
   const isTimerRunning = isActiveRun;
@@ -156,12 +150,10 @@ export function DungeonRun() {
       </header>
       <DungeonRunTable rows={tableRows}>
         <thead>
-          <DungeonRunTableTr className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            <th className="px-3 text-left font-medium" scope="col">
-              Milestone
-            </th>
+          <TimingTableHeaderRow>
+            <TimingTableLabelHead>Milestone</TimingTableLabelHead>
             <DungeonRunTableTimeHeaders />
-          </DungeonRunTableTr>
+          </TimingTableHeaderRow>
         </thead>
         {A.map(tableRows, (tableRow) => {
           return (
@@ -173,52 +165,13 @@ export function DungeonRun() {
         })}
       </DungeonRunTable>
       <Separator />
-      <DungeonRunTimer
-        className="justify-self-end text-end"
-        initialElapsedMilliseconds={timerStartTimeMilliseconds}
-        isRunning={isTimerRunning}
-      />
-      <Button
-        className="min-w-32 bg-green-600 text-white hover:bg-green-700"
-        disabled={
-          selectedConfigurationId === null ||
-          isTracking ||
-          isPending ||
-          isWaitingForFile
-        }
-        onClick={() => {
-          if (selectedConfigurationId === null) {
-            return;
-          }
-
-          start(selectedConfigurationId);
-        }}
-        size="xl"
-        type="button"
-      >
-        {isTracking ? (
-          <>
-            <Spinner className="size-6" />
-            {isActiveRun ? "Active run" : "Waiting for run"}
-          </>
-        ) : (
-          <>
-            <PlayIcon className="fill-current" />
-            Start
-          </>
-        )}
-      </Button>
-      <Button
-        className="min-w-32"
-        disabled={!isTracking || isPending}
-        onClick={stop}
-        size="xl"
-        type="button"
-        variant="destructive"
-      >
-        <SquareIcon className="fill-current" />
-        Stop
-      </Button>
+      <div className="justify-self-end text-end">
+        <DungeonRunTimer
+          initialElapsedMilliseconds={timerStartTimeMilliseconds}
+          isRunning={isTimerRunning}
+        />
+      </div>
+      <TrackingStartStopButtons />
     </section>
   );
 }

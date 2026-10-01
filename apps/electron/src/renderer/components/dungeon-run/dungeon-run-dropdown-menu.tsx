@@ -4,14 +4,17 @@ import { useState } from "react";
 
 import { type DungeonRunTimeColumn } from "@frt/shared/app-state/app-state-schema.ts";
 import { type DungeonRunApiComparisonGroup } from "@frt/shared/dungeon-run/dungeon-run-api-schema.ts";
-import { Button } from "@frt/ui/button.tsx";
+import { Button } from "@frt/ui/primitives/button.tsx";
+import { Field, FieldLabel } from "@frt/ui/primitives/field.tsx";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@frt/ui/dropdown-menu.tsx";
-import { Field, FieldLabel } from "@frt/ui/field.tsx";
-import { NativeSelect, NativeSelectOption } from "@frt/ui/native-select.tsx";
+  NativeSelect,
+  NativeSelectOption,
+} from "@frt/ui/primitives/native-select.tsx";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@frt/ui/primitives/popover.tsx";
 
 import {
   useSetDungeonRunComparisonGroup,
@@ -55,8 +58,7 @@ export function DungeonRunDropdownMenu() {
   });
 
   return (
-    <DropdownMenu
-      modal={false}
+    <Popover
       onOpenChange={(open) => {
         setIsOpen(open);
 
@@ -66,18 +68,14 @@ export function DungeonRunDropdownMenu() {
       }}
       open={isOpen}
     >
-      <DropdownMenuTrigger
+      <PopoverTrigger
         render={
           <Button size="icon" variant="outline">
             <MenuIcon />
           </Button>
         }
       />
-      <DropdownMenuContent
-        align="end"
-        className="min-w-72 border bg-popover p-6 shadow-2xl ring-1 ring-foreground/15 dark:bg-muted rounded-2xl"
-        container={portalContainer}
-      >
+      <PopoverContent align="end" container={portalContainer} size="lg">
         <section className="grid gap-4">
           <Field>
             <FieldLabel htmlFor="dungeon-run-comparison-group">
@@ -148,7 +146,7 @@ export function DungeonRunDropdownMenu() {
             </Button>
           </form>
         </section>
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </PopoverContent>
+    </Popover>
   );
 }

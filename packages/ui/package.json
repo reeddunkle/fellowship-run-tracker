@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./*.css": "./src/*.css",
     "./*.ts": "./src/*.ts",
     "./*.tsx": "./src/*.tsx",
     "./package.json": "./package.json"
@@ -19,7 +20,10 @@
     "effect": "catalog:effect",
     "lucide-react": "catalog:ui",
     "react": "catalog:react",
-    "tailwind-merge": "catalog:tailwind"
+    "shadcn": "catalog:ui",
+    "tailwind-merge": "catalog:tailwind",
+    "tailwindcss": "catalog:tailwind",
+    "tw-animate-css": "catalog:tailwind"
   },
   "devDependencies": {
     "@effect/tsgo": "catalog:effect",

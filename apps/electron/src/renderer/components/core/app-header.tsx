@@ -1,4 +1,4 @@
-import { SidebarTrigger } from "@frt/ui/sidebar.tsx";
+import { SidebarTrigger } from "@frt/ui/primitives/sidebar.tsx";
 
 import { NavMenu } from "@/renderer/components/core/nav-menu.tsx";
 

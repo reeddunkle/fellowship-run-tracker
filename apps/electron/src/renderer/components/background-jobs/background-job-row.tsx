@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 
 import { type BackgroundJobApiItem } from "@frt/shared/background-job/background-job-api-schema.ts";
-import { Button } from "@frt/ui/button.tsx";
+import { Button } from "@frt/ui/primitives/button.tsx";
 import {
   Item,
   ItemActions,
@@ -17,10 +17,14 @@ import {
   ItemDescription,
   ItemMedia,
   ItemTitle,
-} from "@frt/ui/item.tsx";
-import { Progress } from "@frt/ui/progress.tsx";
-import { Spinner } from "@frt/ui/spinner.tsx";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@frt/ui/tooltip.tsx";
+} from "@frt/ui/primitives/item.tsx";
+import { Progress } from "@frt/ui/primitives/progress.tsx";
+import { Spinner } from "@frt/ui/primitives/spinner.tsx";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@frt/ui/primitives/tooltip.tsx";
 
 import {
   useCancelBackgroundJob,
@@ -52,7 +56,7 @@ function BackgroundJobStatusIcon({
   }
 
   if (job.status === "SUCCEEDED") {
-    return <CircleCheckIcon className="text-primary" />;
+    return <CircleCheckIcon className="text-success" />;
   }
 
   if (job.status === "WAITING") {

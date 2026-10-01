@@ -2,9 +2,12 @@ import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
 import { ThemeSchema } from "@frt/shared/app-state/app-state-schema.ts";
-import { Card, CardContent } from "@frt/ui/card.tsx";
-import { Field, FieldLabel } from "@frt/ui/field.tsx";
-import { NativeSelect, NativeSelectOption } from "@frt/ui/native-select.tsx";
+import { Card, CardContent } from "@frt/ui/primitives/card.tsx";
+import { Field, FieldLabel } from "@frt/ui/primitives/field.tsx";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@frt/ui/primitives/native-select.tsx";
 
 import { useTheme } from "@/renderer/components/providers/theme-provider.tsx";
 

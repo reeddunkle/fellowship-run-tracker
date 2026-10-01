@@ -5,9 +5,17 @@ import {
   type FellowshipEventType,
 } from "@frt/shared/fellowship/constants/fellowship-event.ts";
 import { type RequirementEventType } from "@frt/shared/fellowship/validation/requirement-event-type-schema.ts";
-import { Button } from "@frt/ui/button.tsx";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@frt/ui/field.tsx";
-import { NativeSelect, NativeSelectOption } from "@frt/ui/native-select.tsx";
+import { Button } from "@frt/ui/primitives/button.tsx";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@frt/ui/primitives/field.tsx";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@frt/ui/primitives/native-select.tsx";
 
 import { useConfigurationEditor } from "@/renderer/components/configuration/configuration-editor-provider.tsx";
 import { type ConfigurationFormApi } from "@/renderer/components/configuration/form/configuration-form.ts";
@@ -81,7 +89,7 @@ export function RequirementEditor({
 
   return (
     <fieldset
-      className="grid gap-4 rounded-lg border bg-muted/30 p-4 transition-[border-color,box-shadow,background-color] data-[matches-focused-requirement=true]:border-primary/60 data-[matches-focused-requirement=true]:bg-primary/5 data-[matches-focused-requirement=true]:ring-2 data-[matches-focused-requirement=true]:ring-primary/20"
+      className="grid gap-4 rounded-lg border bg-muted/30 p-4 transition data-[matches-focused-requirement=true]:border-primary/60 data-[matches-focused-requirement=true]:bg-primary/5 data-[matches-focused-requirement=true]:ring-2 data-[matches-focused-requirement=true]:ring-primary/20"
       data-matches-focused-requirement={matchesFocusedRequirement}
       onBlurCapture={(event) => {
         const nextFocusedElement = event.relatedTarget;
@@ -171,7 +179,7 @@ export function RequirementEditor({
                   requirementPath={requirementPath}
                 />
                 {showOccurrenceFields && (
-                  <FieldGroup className="grid grid-cols-2 gap-3">
+                  <FieldGroup className="grid grid-cols-2">
                     <form.AppField
                       name={`${requirementPath}.startOccurrence` as const}
                     >

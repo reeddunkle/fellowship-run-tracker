@@ -6,7 +6,7 @@ import {
   Trash2Icon,
 } from "lucide-react";
 
-import { Button } from "@frt/ui/button.tsx";
+import { Button } from "@frt/ui/primitives/button.tsx";
 
 import { CONFIGURATION_FORM_DOM_ID } from "@/renderer/components/configuration/configuration-editor-form-fields.tsx";
 import {
@@ -122,12 +122,8 @@ export function ConfigurationEditorActions({
               persistenceState.saveState !== undefined &&
               persistenceState.updateConfigurationId !== null;
 
-            const shouldWarn =
-              hasChanges && persistenceState.shouldWarnAboutOverwrite;
-
             return (
               <Button
-                className={shouldWarn ? "ring-2 ring-amber-500" : undefined}
                 disabled={!isUpdateEnabled || isUpdating}
                 form={CONFIGURATION_FORM_DOM_ID}
                 type="submit"

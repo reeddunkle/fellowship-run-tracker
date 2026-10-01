@@ -405,7 +405,7 @@ export function ManagedDetachedWindow({
 
   return (
     <DetachedWindow onClose={close}>
-      <main className="w-full p-2 sidebar-gutter-auto">{children}</main>
+      <main className="w-full p-2">{children}</main>
     </DetachedWindow>
   );
 }

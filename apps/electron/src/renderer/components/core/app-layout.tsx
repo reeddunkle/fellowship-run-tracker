@@ -1,6 +1,6 @@
 import { type ReactNode } from "react";
 
-import { SidebarInset, SidebarProvider } from "@frt/ui/sidebar.tsx";
+import { SidebarInset, SidebarProvider } from "@frt/ui/primitives/sidebar.tsx";
 
 import { useSetSidebarOpen } from "@/renderer/api/app-state/app-state-mutations.ts";
 import { useSidebarOpen } from "@/renderer/api/app-state/app-state-queries.ts";

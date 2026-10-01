@@ -34,7 +34,7 @@ function ImportQueuedMessage({
 
   return (
     <output className="flex items-center gap-2 text-sm">
-      <CircleCheckIcon aria-hidden="true" className="size-4 text-primary" />
+      <CircleCheckIcon aria-hidden="true" className="size-4 text-success" />
       {result.wasAlreadyQueued
         ? `${runName} is already in the import queue.`
         : `Added ${runName} to the import queue. You can import another run.`}

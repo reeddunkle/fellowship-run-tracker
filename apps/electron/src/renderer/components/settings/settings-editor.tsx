@@ -9,13 +9,29 @@ import {
 } from "lucide-react";
 
 import { type AppSettingsApiUpdate } from "@frt/shared/app-settings/app-settings-api-schema.ts";
-import { Button } from "@frt/ui/button.tsx";
-import { Card, CardContent } from "@frt/ui/card.tsx";
-import { Checkbox } from "@frt/ui/checkbox.tsx";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@frt/ui/field.tsx";
-import { DirectoryInput } from "@frt/ui/file-input.tsx";
-import { Input } from "@frt/ui/input.tsx";
-import { Separator } from "@frt/ui/separator.tsx";
+import {
+  SectionDescription,
+  SectionHeader,
+  SectionTitle,
+} from "@frt/ui/composites/section.tsx";
+import { StatusText } from "@frt/ui/composites/status-text.tsx";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@frt/ui/primitives/alert.tsx";
+import { Button } from "@frt/ui/primitives/button.tsx";
+import { Card, CardContent } from "@frt/ui/primitives/card.tsx";
+import { Checkbox } from "@frt/ui/primitives/checkbox.tsx";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@frt/ui/primitives/field.tsx";
+import { DirectoryInput } from "@frt/ui/primitives/file-input.tsx";
+import { Input } from "@frt/ui/primitives/input.tsx";
+import { Separator } from "@frt/ui/primitives/separator.tsx";
 
 import { useRefreshFellowshipLogsRateLimitData } from "@/renderer/api/fellowship-logs/fellowship-logs-mutations.ts";
 import { FellowshipLogsRateLimitData } from "@/renderer/components/fellowship-logs/fellowship-logs-rate-limit-data.tsx";
@@ -157,7 +173,7 @@ export function SettingsEditor() {
               }}
             </form.Field>
             <Separator className="@3xl:col-span-2" />
-            <FieldGroup className="min-w-0 gap-4">
+            <FieldGroup className="min-w-0">
               <form.Field name="isLiveSplitEnabled">
                 {(field) => {
                   return (
@@ -184,10 +200,7 @@ export function SettingsEditor() {
                         {(field) => {
                           return (
                             <Field>
-                              <FieldLabel
-                                className="text-xs font-normal text-muted-foreground"
-                                htmlFor={field.name}
-                              >
+                              <FieldLabel htmlFor={field.name} variant="group">
                                 LiveSplit host
                               </FieldLabel>
                               <Input
@@ -212,10 +225,7 @@ export function SettingsEditor() {
                         {(field) => {
                           return (
                             <Field>
-                              <FieldLabel
-                                className="text-xs font-normal text-muted-foreground"
-                                htmlFor={field.name}
-                              >
+                              <FieldLabel htmlFor={field.name} variant="group">
                                 LiveSplit port
                               </FieldLabel>
                               <Input
@@ -243,13 +253,13 @@ export function SettingsEditor() {
               </form.Subscribe>
             </FieldGroup>
             <Separator className="@3xl:col-span-2" />
-            <FieldGroup className="col-start-1 min-w-0 gap-4">
-              <div>
-                <p className="text-sm font-medium">Fellowship Logs</p>
-                <p className="text-sm text-muted-foreground">
+            <FieldGroup className="col-start-1 min-w-0">
+              <SectionHeader>
+                <SectionTitle>Fellowship Logs</SectionTitle>
+                <SectionDescription>
                   Configure your Fellowship Logs API credentials.
-                </p>
-              </div>
+                </SectionDescription>
+              </SectionHeader>
               <form.Field name="fellowshipLogsClientId">
                 {(field) => {
                   return (
@@ -385,27 +395,22 @@ export function SettingsEditor() {
                 </Button>
               </div>
               {refreshRateLimitDataMutation.isError ? (
-                <div className="rounded-md border border-destructive p-3">
-                  <div className="flex items-center gap-1.5 text-xs font-medium text-destructive">
-                    <XCircleIcon className="size-3.5" />
-                    Error
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
+                <Alert variant="destructive">
+                  <XCircleIcon />
+                  <AlertTitle>Error</AlertTitle>
+                  <AlertDescription>
                     <FellowshipLogsRateLimitRefreshErrorMessage
                       error={refreshRateLimitDataMutation.error}
                     />
-                  </p>
-                </div>
+                  </AlertDescription>
+                </Alert>
               ) : rateLimitData !== null ? (
                 <div className="grid gap-2">
-                  <div className="flex items-center gap-1.5 text-xs font-medium text-green-600 dark:text-green-500">
-                    <CheckCircle2Icon className="size-3.5" />
+                  <StatusText size="xs" variant="success">
+                    <CheckCircle2Icon />
                     Success
-                  </div>
-                  <FellowshipLogsRateLimitData
-                    className="border-green-600/60 dark:border-green-500/60"
-                    rateLimitData={rateLimitData}
-                  />
+                  </StatusText>
+                  <FellowshipLogsRateLimitData rateLimitData={rateLimitData} />
                 </div>
               ) : null}
             </FieldGroup>
@@ -434,9 +439,9 @@ export function SettingsEditor() {
                       {isSaving ? "Saving..." : "Save settings"}
                     </Button>
                     {error !== undefined ? (
-                      <p className="text-destructive text-sm">
+                      <StatusText variant="destructive">
                         Failed to save settings.
-                      </p>
+                      </StatusText>
                     ) : null}
                   </div>
                 );

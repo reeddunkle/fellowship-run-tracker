@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { getToastStackLayout } from "@frt/ui/toast-stack-layout.ts";
+import { getToastStackLayout } from "@frt/ui/primitives/toast-stack-layout.ts";
 
 type StackedToast = Parameters<typeof getToastStackLayout>[0][number];
 

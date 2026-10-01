@@ -1,11 +1,13 @@
+import { Section } from "@frt/ui/composites/section.tsx";
+
 import { LiveSplitControls } from "@/renderer/components/live-split/live-split-controls.tsx";
 import { LiveSplitStatus } from "@/renderer/components/live-split/live-split-status.tsx";
 
 export function LiveSplitPanel() {
   return (
-    <section className="flex items-center justify-between gap-4 rounded-lg border p-4">
+    <Section className="flex items-center justify-between" variant="outline">
       <LiveSplitStatus />
       <LiveSplitControls />
-    </section>
+    </Section>
   );
 }

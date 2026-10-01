@@ -8,8 +8,15 @@ import { useMemo } from "react";
 
 import { type DungeonRunApiObservationStatistics } from "@frt/shared/dungeon-run/dungeon-run-api-schema.ts";
 import { getRequirementTargetLabel } from "@frt/shared/fellowship/requirements/requirement-target-label.ts";
-import { cn } from "@frt/ui/class-names.ts";
-import { Skeleton } from "@frt/ui/skeleton.tsx";
+import { Skeleton } from "@frt/ui/primitives/skeleton.tsx";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@frt/ui/primitives/table.tsx";
 
 import { formatDuration } from "@/renderer/components/dungeon-run/helpers/dungeon-run-time.ts";
 import { type HistoryRequirementComparisonRow } from "@/renderer/components/history/history-requirement-comparison.ts";
@@ -65,8 +72,8 @@ function StatisticsCell({
 
 const historyComparisonTableFeatures = tableFeatures({
   columnMeta: {} as {
-    readonly cellClassName?: string;
-    readonly headerClassName?: string;
+    readonly align?: "center" | "end" | "start";
+    readonly variant?: "default" | "muted";
   },
 });
 
@@ -79,7 +86,7 @@ const columns = columnHelper.columns([
   columnHelper.accessor("milestoneLabel", {
     cell: (info) => info.getValue(),
     header: comparisonColumnLabels.milestone,
-    meta: { cellClassName: "text-muted-foreground" },
+    meta: { variant: "muted" },
   }),
   columnHelper.display({
     cell: ({ row }) => {
@@ -100,7 +107,7 @@ const columns = columnHelper.columns([
     },
     header: comparisonColumnLabels.mine,
     id: "mine",
-    meta: { headerClassName: "text-center" },
+    meta: { align: "center" },
   }),
   columnHelper.display({
     cell: ({ row }) => {
@@ -108,7 +115,7 @@ const columns = columnHelper.columns([
     },
     header: comparisonColumnLabels.comparison,
     id: "comparison",
-    meta: { headerClassName: "text-center" },
+    meta: { align: "center" },
   }),
 ]);
 
@@ -144,63 +151,50 @@ export function HistoryComparisonTable({ rows }: HistoryComparisonTableProps) {
   });
 
   return (
-    <div className="overflow-x-auto rounded-lg border">
-      <table className="w-full text-sm">
-        <thead>
-          {table.getHeaderGroups().map((headerGroup) => {
-            return (
-              <tr
-                className="border-b bg-muted/50 text-left text-xs text-muted-foreground"
-                key={headerGroup.id}
-              >
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <th
-                      className={cn(
-                        "px-3 py-2 font-medium",
-                        header.column.columnDef.meta?.headerClassName,
-                      )}
-                      key={header.id}
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                    </th>
-                  );
-                })}
-              </tr>
-            );
-          })}
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.map((row) => {
-            return (
-              <tr className="border-b last:border-b-0" key={row.id}>
-                {row.getAllCells().map((cell) => {
-                  return (
-                    <td
-                      className={cn(
-                        "px-3 py-2 align-top",
-                        cell.column.columnDef.meta?.cellClassName,
-                      )}
-                      key={cell.id}
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </td>
-                  );
-                })}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+    <Table>
+      <TableHeader>
+        {table.getHeaderGroups().map((headerGroup) => {
+          return (
+            <TableRow key={headerGroup.id}>
+              {headerGroup.headers.map((header) => {
+                return (
+                  <TableHead
+                    align={header.column.columnDef.meta?.align}
+                    key={header.id}
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                  </TableHead>
+                );
+              })}
+            </TableRow>
+          );
+        })}
+      </TableHeader>
+      <TableBody>
+        {table.getRowModel().rows.map((row) => {
+          return (
+            <TableRow key={row.id}>
+              {row.getAllCells().map((cell) => {
+                return (
+                  <TableCell
+                    align={cell.column.columnDef.meta?.align}
+                    key={cell.id}
+                    variant={cell.column.columnDef.meta?.variant}
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                );
+              })}
+            </TableRow>
+          );
+        })}
+      </TableBody>
+    </Table>
   );
 }
 
@@ -208,59 +202,42 @@ export function HistoryComparisonTableSkeleton({
   rows,
 }: HistoryComparisonTableProps) {
   return (
-    <div className="overflow-x-auto rounded-lg border">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
-            {[
-              comparisonColumnLabels.milestone,
-              comparisonColumnLabels.checkpoint,
-              comparisonColumnLabels.mine,
-              comparisonColumnLabels.comparison,
-            ].map((label) => (
-              <th
-                className={cn(
-                  "px-3 py-2 font-medium",
-                  label === comparisonColumnLabels.mine ||
-                    label === comparisonColumnLabels.comparison
-                    ? "text-center"
-                    : undefined,
-                )}
-                key={label}
-              >
-                {label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr className="border-b last:border-b-0" key={row.key}>
-              <td className="px-3 py-2 align-top text-muted-foreground">
-                {row.milestoneLabel}
-              </td>
-              <td className="px-3 py-2 align-top">
-                <Skeleton className="h-4 w-28" />
-              </td>
-              {["mine", "comparison"].map((group) => (
-                <td className="px-3 py-2 align-top" key={group}>
-                  <div className="grid gap-1">
-                    <div className="grid grid-cols-3 gap-3">
-                      {["best", "avg", "median"].map((statistic) => (
-                        <div className="grid gap-1" key={statistic}>
-                          <Skeleton className="h-3 w-10" />
-                          <Skeleton className="h-4 w-12" />
-                        </div>
-                      ))}
-                    </div>
-                    <Skeleton className="h-3 w-16" />
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>{comparisonColumnLabels.milestone}</TableHead>
+          <TableHead>{comparisonColumnLabels.checkpoint}</TableHead>
+          <TableHead align="center">{comparisonColumnLabels.mine}</TableHead>
+          <TableHead align="center">
+            {comparisonColumnLabels.comparison}
+          </TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {rows.map((row) => (
+          <TableRow key={row.key}>
+            <TableCell variant="muted">{row.milestoneLabel}</TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-28" />
+            </TableCell>
+            {["mine", "comparison"].map((group) => (
+              <TableCell key={group}>
+                <div className="grid gap-1">
+                  <div className="grid grid-cols-3 gap-3">
+                    {["best", "avg", "median"].map((statistic) => (
+                      <div className="grid gap-1" key={statistic}>
+                        <Skeleton className="h-3 w-10" />
+                        <Skeleton className="h-4 w-12" />
+                      </div>
+                    ))}
                   </div>
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+                  <Skeleton className="h-3 w-16" />
+                </div>
+              </TableCell>
+            ))}
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }

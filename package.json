@@ -34,9 +34,9 @@
     "knip:fix": "knip --fix",
     "knip": "knip",
     "lint:fix": "run-s format:db-sql:prettier format:test-sql biome:fix",
-    "lint": "run-s lint:biome lint:comments",
-    "lint:biome": "biome check",
-    "lint:comments": "oxlint",
+    "lint": "run-s lint:biome lint:oxlint",
+    "lint:biome": "biome check --error-on-warnings",
+    "lint:oxlint": "oxlint --deny-warnings",
     "prepare": "effect-tsgo patch --typescript --no-oxlint",
     "start": "electron apps/electron --env-file=.env",
     "test": "pnpm -r run test",
@@ -45,7 +45,8 @@
     "typecheck": "run-s typecheck:config typecheck:packages typecheck:electron",
     "typecheck:config": "tsc --project tsconfig.config.json",
     "typecheck:electron": "pnpm -F @frt/electron typecheck",
-    "typecheck:packages": "tsc -b tsconfig.packages.json"
+    "typecheck:packages": "tsc -b tsconfig.packages.json",
+    "ui:add": "shadcn add --cwd apps/electron"
   },
   "packageManager": "pnpm@12.4.1",
   "engines": {
@@ -57,6 +58,7 @@
     "@effect/tsgo": "catalog:effect",
     "@effect/tsgo-win32-x64": "catalog:effect",
     "@mermaid-js/mermaid-cli": "catalog:mermaid",
+    "@shadcn/lint": "catalog:tooling",
     "@types/node": "catalog:node",
     "electron": "catalog:electron",
     "jsonc-parser": "catalog:tooling",

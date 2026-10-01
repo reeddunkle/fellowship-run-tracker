@@ -2,8 +2,10 @@ import { CatchBoundary } from "@tanstack/react-router";
 import { Suspense } from "react";
 
 import { type BackgroundJobApiItem } from "@frt/shared/background-job/background-job-api-schema.ts";
-import { Item, ItemContent, ItemGroup } from "@frt/ui/item.tsx";
-import { Skeleton } from "@frt/ui/skeleton.tsx";
+import { EmptyState } from "@frt/ui/composites/empty-state.tsx";
+import { StatusText } from "@frt/ui/composites/status-text.tsx";
+import { Item, ItemContent, ItemGroup } from "@frt/ui/primitives/item.tsx";
+import { Skeleton } from "@frt/ui/primitives/skeleton.tsx";
 
 import { type BackgroundJobCategoryId } from "@/renderer/api/background-job/background-job-categories.ts";
 import { useBackgroundJobCategorySuspense } from "@/renderer/api/background-job/background-job-queries.ts";
@@ -35,7 +37,7 @@ function BackgroundJobItems({
 }
 
 function BackgroundJobListLoadError() {
-  return <p className="text-sm text-destructive">Failed to load jobs.</p>;
+  return <StatusText variant="destructive">Failed to load jobs.</StatusText>;
 }
 
 function BackgroundJobListSkeleton() {
@@ -67,7 +69,7 @@ function BackgroundJobCategoryListContent({
   }
 
   return emptyMessage === undefined ? null : (
-    <p className="text-sm text-muted-foreground">{emptyMessage}</p>
+    <EmptyState>{emptyMessage}</EmptyState>
   );
 }
 

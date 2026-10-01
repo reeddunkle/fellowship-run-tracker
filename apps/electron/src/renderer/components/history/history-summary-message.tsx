@@ -1,4 +1,5 @@
-import { Skeleton } from "@frt/ui/skeleton.tsx";
+import { SectionDescription } from "@frt/ui/composites/section.tsx";
+import { Skeleton } from "@frt/ui/primitives/skeleton.tsx";
 
 type HistorySummaryMessageProps = {
   readonly emptyMessage: string;
@@ -12,17 +13,17 @@ export function HistorySummaryMessage({
   sampleCount,
 }: HistorySummaryMessageProps) {
   if (runCount === 0) {
-    return <p className="text-sm text-muted-foreground">{emptyMessage}</p>;
+    return <SectionDescription>{emptyMessage}</SectionDescription>;
   }
 
   const sampleLabel = sampleCount === 1 ? "sample" : "samples";
   const runLabel = runCount === 1 ? "run" : "runs";
 
   return (
-    <p className="text-sm text-muted-foreground">
+    <SectionDescription>
       {sampleCount} historical {sampleLabel} across {runCount} tracked{" "}
       {runLabel}.
-    </p>
+    </SectionDescription>
   );
 }
 

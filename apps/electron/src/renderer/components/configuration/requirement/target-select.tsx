@@ -1,4 +1,7 @@
-import { NativeSelect, NativeSelectOption } from "@frt/ui/native-select.tsx";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@frt/ui/primitives/native-select.tsx";
 
 export const CUSTOM_TARGET = "__CUSTOM__" as const;
 

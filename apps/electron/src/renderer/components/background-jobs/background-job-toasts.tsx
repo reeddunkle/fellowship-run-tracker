@@ -3,7 +3,7 @@ import * as DateTime from "effect/DateTime";
 import { useEffect, useRef, useState } from "react";
 
 import { type BackgroundJobApiItem } from "@frt/shared/background-job/background-job-api-schema.ts";
-import { toast } from "@frt/ui/toast.tsx";
+import { toast } from "@frt/ui/primitives/toast.tsx";
 
 import { groupBackgroundJobsByCategory } from "@/renderer/api/background-job/background-job-categories.ts";
 import { getBackgroundJobsQueryOptions } from "@/renderer/api/background-job/background-job-queries.ts";

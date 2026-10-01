@@ -8,14 +8,15 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@frt/ui/collapsible.tsx";
+} from "@frt/ui/primitives/collapsible.tsx";
+import { Label } from "@frt/ui/primitives/label.tsx";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@frt/ui/select.tsx";
+} from "@frt/ui/primitives/select.tsx";
 import {
   Sidebar,
   SidebarContent,
@@ -29,7 +30,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarRail,
-} from "@frt/ui/sidebar.tsx";
+} from "@frt/ui/primitives/sidebar.tsx";
 
 import {
   ConfigurationUpdatedAtAscendingOrder,
@@ -81,18 +82,15 @@ export function ConfigurationSidebar() {
 
   return (
     <Sidebar collapsible="offcanvas">
-      <SidebarHeader className="shrink-0 border-b py-2">
+      <SidebarHeader className="shrink-0">
         <div className="space-y-2 px-2">
           <div>
             <div className="text-sm font-semibold">Saved configurations</div>
           </div>
           <div className="space-y-1">
-            <label
-              className="text-xs font-medium text-muted-foreground"
-              htmlFor="configuration-sort"
-            >
+            <Label htmlFor="configuration-sort" variant="group">
               Sort
-            </label>
+            </Label>
             <Select
               onValueChange={(value) => {
                 Match.value(value).pipe(

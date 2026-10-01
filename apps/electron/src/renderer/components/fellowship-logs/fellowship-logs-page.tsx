@@ -2,7 +2,14 @@ import { type AbilityApiAbilityList } from "@frt/shared/ability/ability-api-sche
 import { type DungeonApiDungeonList } from "@frt/shared/dungeon/dungeon-api-schema.ts";
 import { type EncounterApiEncounterList } from "@frt/shared/encounter/encounter-api-schema.ts";
 import { type UnitApiUnitList } from "@frt/shared/unit/unit-api-schema.ts";
-import { Separator } from "@frt/ui/separator.tsx";
+import {
+  PageDescription,
+  PageHeader,
+  PageShell,
+  PageTitle,
+} from "@frt/ui/composites/page.tsx";
+import { Section, SectionTitle } from "@frt/ui/composites/section.tsx";
+import { Separator } from "@frt/ui/primitives/separator.tsx";
 
 import { BackgroundJobCategoryList } from "@/renderer/components/background-jobs/background-job-list.tsx";
 import { AppLayout } from "@/renderer/components/core/app-layout.tsx";
@@ -35,39 +42,39 @@ export function FellowshipLogsPage({
       units={units}
     >
       <AppLayout>
-        <main className="mx-auto grid w-full max-w-5xl gap-6 p-6">
-          <div className="grid gap-1">
-            <h1 className="text-2xl font-semibold">Fellowship Logs</h1>
-            <p className="text-sm text-muted-foreground">
+        <PageShell>
+          <PageHeader>
+            <PageTitle>Fellowship Logs</PageTitle>
+            <PageDescription>
               Import dungeon runs from Fellowship Logs and manage your rate
               limit.
-            </p>
-          </div>
+            </PageDescription>
+          </PageHeader>
           <FellowshipLogsRateLimitSection />
           <FellowshipLogsAnalyticsSection />
           <Separator />
-          <div className="grid gap-2">
-            <p className="text-sm font-medium">Import a run</p>
+          <Section>
+            <SectionTitle>Import a run</SectionTitle>
             <ImportDungeonRunSection />
-          </div>
+          </Section>
           <Separator />
-          <div className="grid gap-2">
-            <p className="text-sm font-medium">Import queue</p>
+          <Section>
+            <SectionTitle>Import queue</SectionTitle>
             <BackgroundJobCategoryList
               categoryId="fellowship-logs-import"
               emptyMessage="Nothing is queued or running."
             />
-          </div>
+          </Section>
           <Separator />
-          <div className="grid gap-2">
-            <p className="text-sm font-medium">Imported runs</p>
+          <Section>
+            <SectionTitle>Imported runs</SectionTitle>
             <ImportedDungeonRunsList />
-          </div>
+          </Section>
           {import.meta.env.DEV &&
           import.meta.env.PUBLIC_SIMULATE_FELLOWSHIP_LOGS_IMPORTS ? (
             <SimulatedImportPanel />
           ) : null}
-        </main>
+        </PageShell>
       </AppLayout>
     </FellowshipDataProvider>
   );

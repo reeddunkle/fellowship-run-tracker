@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 
-import { cn } from "@frt/ui/class-names.ts";
+import { TimerDisplay } from "@frt/ui/composites/time.tsx";
 
 import { formatDuration } from "@/renderer/components/dungeon-run/helpers/dungeon-run-time";
 
 const TIMER_INTERVAL_MILLISECONDS = 1000 / 30;
 
 type DungeonRunTimerProps = {
-  className?: string;
   readonly initialElapsedMilliseconds: number | undefined;
   readonly isRunning: boolean;
 };
@@ -73,7 +72,6 @@ function useElapsedTimer({
 }
 
 export function DungeonRunTimer({
-  className,
   initialElapsedMilliseconds,
   isRunning,
 }: DungeonRunTimerProps) {
@@ -82,11 +80,5 @@ export function DungeonRunTimer({
     isRunning,
   });
 
-  return (
-    <div
-      className={cn("font-mono text-5xl font-semibold tabular-nums", className)}
-    >
-      {formatDuration(elapsedMilliseconds)}
-    </div>
-  );
+  return <TimerDisplay>{formatDuration(elapsedMilliseconds)}</TimerDisplay>;
 }

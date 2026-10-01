@@ -1,29 +1,23 @@
-import {
-  Minimize2Icon,
-  PlayIcon,
-  SquareArrowOutUpRightIcon,
-  SquareIcon,
-} from "lucide-react";
+import { Minimize2Icon, SquareArrowOutUpRightIcon } from "lucide-react";
 
 import {
   type TrackingApiFailure,
   type TrackingApiStatus,
 } from "@frt/api-contract/application/fellowship-tracker/tracking-api-schema.ts";
-import { Button } from "@frt/ui/button.tsx";
-import { cn } from "@frt/ui/class-names.ts";
-import { Spinner } from "@frt/ui/spinner.tsx";
+import { StatusText } from "@frt/ui/composites/status-text.tsx";
+import { Button } from "@frt/ui/primitives/button.tsx";
+import { cn } from "@frt/ui/styles/class-names.ts";
 
 import { getTrackingActionErrorMessage } from "@/renderer/components/dashboard/get-tracking-action-error-message.ts";
 import { useDetachedWindow } from "@/renderer/components/detached-window/detached-window-provider.tsx";
+import { TrackingStartStopButtons } from "@/renderer/components/tracking/tracking-start-stop-buttons.tsx";
 import {
   useConfigurationById,
   useSelectedConfiguration,
   useSelectedConfigurationId,
 } from "@/renderer/stores/configuration/configuration-provider.tsx";
-import { useDungeonRunServerState } from "@/renderer/stores/dungeon-run/dungeon-run-provider.tsx";
 import {
   useTrackingActionState,
-  useTrackingActions,
   useTrackingServerState,
 } from "@/renderer/stores/tracking/tracking-provider.tsx";
 
@@ -90,10 +84,8 @@ export function TrackingControls() {
   const selectedConfiguration = useSelectedConfiguration();
   const selectedConfigurationId = useSelectedConfigurationId();
 
-  const { start, stop } = useTrackingActions();
   const { isPending, startError, stopError } = useTrackingActionState();
   const { trackingStatus } = useTrackingServerState();
-  const { isActiveRun } = useDungeonRunServerState();
 
   const detachedWindow = useDetachedWindow();
 
@@ -123,48 +115,7 @@ export function TrackingControls() {
   return (
     <section className="flex flex-col items-end gap-3">
       <div className="flex items-center gap-3">
-        <Button
-          className="min-w-32 bg-green-600 text-white hover:bg-green-700"
-          disabled={
-            selectedConfigurationId === null ||
-            isTracking ||
-            isPending ||
-            isWaitingForFile
-          }
-          onClick={() => {
-            if (selectedConfigurationId === null) {
-              return;
-            }
-
-            start(selectedConfigurationId);
-            detachedWindow.open();
-          }}
-          size="xl"
-          type="button"
-        >
-          {isTracking ? (
-            <>
-              <Spinner className="size-6" />
-              {isActiveRun ? "Active run" : "Waiting for run"}
-            </>
-          ) : (
-            <>
-              <PlayIcon className="fill-current" />
-              Start
-            </>
-          )}
-        </Button>
-        <Button
-          className="min-w-32"
-          disabled={!isTracking || isPending}
-          onClick={stop}
-          size="xl"
-          type="button"
-          variant="destructive"
-        >
-          <SquareIcon className="fill-current" />
-          Stop
-        </Button>
+        <TrackingStartStopButtons onStart={detachedWindow.open} />
         {detachedWindow.isOpen ? (
           <Button
             onClick={detachedWindow.close}
@@ -188,14 +139,12 @@ export function TrackingControls() {
         />
       )}
       {actionErrorMessage !== undefined && (
-        <p className="text-sm text-destructive" role="alert">
+        <StatusText role="alert" variant="destructive">
           {actionErrorMessage}
-        </p>
+        </StatusText>
       )}
       {selectedConfigurationId === null && !isTracking && (
-        <p className="text-sm text-muted-foreground">
-          Save the configuration before starting a run.
-        </p>
+        <StatusText>Save the configuration before starting a run.</StatusText>
       )}
     </section>
   );

@@ -5,15 +5,13 @@ import {
   FieldDescription,
   FieldError,
   FieldLabel,
-} from "@frt/ui/field.tsx";
-import { Input } from "@frt/ui/input.tsx";
+} from "@frt/ui/primitives/field.tsx";
+import { Input } from "@frt/ui/primitives/input.tsx";
 
 import { useFieldContext } from "../form-context.ts";
 
 type AppTextFieldProps = {
   readonly description?: React.ReactNode;
-  readonly errorClassName?: string;
-  readonly fieldClassName?: string;
   readonly label: React.ReactNode;
 } & Omit<
   React.ComponentProps<typeof Input>,
@@ -22,8 +20,6 @@ type AppTextFieldProps = {
 
 export function AppTextField({
   description,
-  errorClassName,
-  fieldClassName,
   label,
   ...inputProps
 }: AppTextFieldProps) {
@@ -32,7 +28,7 @@ export function AppTextField({
   const isInvalid = field.state.meta.isBlurred && !field.state.meta.isValid;
 
   return (
-    <Field className={fieldClassName} data-invalid={isInvalid}>
+    <Field data-invalid={isInvalid}>
       <FieldLabel htmlFor={field.name}>{label}</FieldLabel>
       <Input
         aria-invalid={isInvalid}
@@ -48,12 +44,7 @@ export function AppTextField({
       {description !== undefined ? (
         <FieldDescription>{description}</FieldDescription>
       ) : null}
-      {isInvalid ? (
-        <FieldError
-          className={errorClassName}
-          errors={field.state.meta.errors}
-        />
-      ) : null}
+      {isInvalid ? <FieldError errors={field.state.meta.errors} /> : null}
     </Field>
   );
 }

@@ -30,6 +30,7 @@ export default defineConfig({
   ignorePatterns: biomeIgnorePatterns,
   jsPlugins: [
     "./tools/dev-scripts/src/comment-policy/comment-policy-plugin.ts",
+    "@shadcn/lint",
   ],
   overrides: [
     {
@@ -45,9 +46,29 @@ export default defineConfig({
         "comment-policy/require-comment-marker": "off",
       },
     },
+    {
+      files: ["packages/ui/src/primitives/**", "packages/ui/src/styles/**"],
+      rules: {
+        "shadcn/no-arbitrary-values": "off",
+        "shadcn/no-restyle": "off",
+        "shadcn/require-static-classes": "off",
+      },
+    },
   ],
   plugins: [],
   rules: {
     "comment-policy/require-comment-marker": "error",
+    "shadcn/no-arbitrary-values": ["warn", { allow: ["layout"] }],
+    "shadcn/no-inline-styles": "warn",
+    "shadcn/no-raw-colors": "warn",
+    "shadcn/no-restyle": ["warn", { allow: ["layout"] }],
+    "shadcn/no-unknown-classes": "warn",
+    "shadcn/require-static-classes": "warn",
+  },
+  settings: {
+    shadcn: {
+      note: 'See "Where a style goes" in packages/ui/README.md before adding a variant, composite, or token.',
+      ui: "@frt/ui",
+    },
   },
 });

@@ -2,6 +2,7 @@ import { type AbilityApiAbilityList } from "@frt/shared/ability/ability-api-sche
 import { type DungeonApiDungeonList } from "@frt/shared/dungeon/dungeon-api-schema.ts";
 import { type EncounterApiEncounterList } from "@frt/shared/encounter/encounter-api-schema.ts";
 import { type UnitApiUnitList } from "@frt/shared/unit/unit-api-schema.ts";
+import { PageShell } from "@frt/ui/composites/page.tsx";
 
 import { ConfigurationWorkspaceLayout } from "@/renderer/components/core/configuration-workspace-layout.tsx";
 import { HistoryPageContent } from "@/renderer/components/history/history-page-content.tsx";
@@ -26,9 +27,9 @@ export function HistoryPage({
       encounters={encounters}
       units={units}
     >
-      <main className="mx-auto grid w-full gap-6 p-6">
+      <PageShell size="full">
         <HistoryPageContent />
-      </main>
+      </PageShell>
     </ConfigurationWorkspaceLayout>
   );
 }

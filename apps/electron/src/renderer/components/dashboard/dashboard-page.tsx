@@ -2,6 +2,7 @@ import { type AbilityApiAbilityList } from "@frt/shared/ability/ability-api-sche
 import { type DungeonApiDungeonList } from "@frt/shared/dungeon/dungeon-api-schema.ts";
 import { type EncounterApiEncounterList } from "@frt/shared/encounter/encounter-api-schema.ts";
 import { type UnitApiUnitList } from "@frt/shared/unit/unit-api-schema.ts";
+import { PageShell } from "@frt/ui/composites/page.tsx";
 
 import { ConfigurationEditorContainer } from "@/renderer/components/configuration/configuration-editor-container.tsx";
 import { ConfigurationWorkspaceLayout } from "@/renderer/components/core/configuration-workspace-layout.tsx";
@@ -40,11 +41,11 @@ export function DashboardPage({
           <ManagedDetachedWindow>
             <DungeonRun />
           </ManagedDetachedWindow>
-          <main className="mx-auto grid w-full gap-6 p-6">
+          <PageShell size="full">
             {appSettings.isLiveSplitEnabled ? <LiveSplitPanel /> : null}
             <TrackingControls />
             <ConfigurationEditorContainer />
-          </main>
+          </PageShell>
         </DetachedWindowProvider>
       </DungeonRunProvider>
     </ConfigurationWorkspaceLayout>

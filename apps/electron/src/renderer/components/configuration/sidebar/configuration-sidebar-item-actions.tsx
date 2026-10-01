@@ -2,8 +2,7 @@ import { EllipsisVerticalIcon, Trash2Icon } from "lucide-react";
 
 import { type ConfigurationApiConfiguration } from "@frt/shared/configuration/configuration-api-schema.ts";
 import { type ConfigurationId } from "@frt/shared/configuration/configuration-id-schema.ts";
-import { Button } from "@frt/ui/button.tsx";
-import { cn } from "@frt/ui/class-names.ts";
+import { Button } from "@frt/ui/primitives/button.tsx";
 import {
   Popover,
   PopoverContent,
@@ -11,20 +10,18 @@ import {
   PopoverHeader,
   PopoverTitle,
   PopoverTrigger,
-} from "@frt/ui/popover.tsx";
-import { Separator } from "@frt/ui/separator.tsx";
+} from "@frt/ui/primitives/popover.tsx";
+import { Separator } from "@frt/ui/primitives/separator.tsx";
 
 import { formatLocalDateTime } from "@/util/format-date-time.ts";
 
 type ConfigurationSidebarItemActionsProps = {
   readonly configuration: ConfigurationApiConfiguration;
-  readonly isActive: boolean;
   readonly onDelete: (id: ConfigurationId) => void;
 };
 
 export function ConfigurationSidebarItemActions({
   configuration,
-  isActive,
   onDelete,
 }: ConfigurationSidebarItemActionsProps) {
   return (
@@ -33,11 +30,7 @@ export function ConfigurationSidebarItemActions({
         render={
           <Button
             aria-label={`Actions for ${configuration.label}`}
-            className={cn(
-              "rounded-full",
-              isActive &&
-                "hover:bg-sidebar-accent-foreground/10 aria-expanded:bg-sidebar-accent-foreground/10 dark:hover:bg-sidebar-accent-foreground/10",
-            )}
+            shape="round"
             size="icon"
             type="button"
             variant="ghost"

@@ -1,4 +1,9 @@
 import { type RequirementEventType } from "@frt/shared/fellowship/validation/requirement-event-type-schema.ts";
+import {
+  PageDescription,
+  PageHeader,
+  PageTitle,
+} from "@frt/ui/composites/page.tsx";
 
 import { ConfigurationEditorActions } from "@/renderer/components/configuration/configuration-editor-actions.tsx";
 import { ConfigurationEditorFormFields } from "@/renderer/components/configuration/configuration-editor-form-fields.tsx";
@@ -39,14 +44,12 @@ export function ConfigurationEditor({
   return (
     <ConfigurationEditorProvider form={form}>
       <section className="grid gap-6">
-        <header className="grid gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Configure a run
-          </h1>
-          <p className="text-sm text-muted-foreground">
+        <PageHeader>
+          <PageTitle>Configure a run</PageTitle>
+          <PageDescription>
             Select a saved configuration from the sidebar or create a new one.
-          </p>
-        </header>
+          </PageDescription>
+        </PageHeader>
         <ConfigurationEditorActions form={form} getSaveState={getSaveState} />
         <ConfigurationEditorHistory />
         <ConfigurationEditorFormFields

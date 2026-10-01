@@ -1,7 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import { HistoryIcon } from "lucide-react";
 
-import { buttonVariants } from "@frt/ui/button.tsx";
+import {
+  Section,
+  SectionHeader,
+  SectionTitle,
+} from "@frt/ui/composites/section.tsx";
+import { buttonVariants } from "@frt/ui/primitives/button.tsx";
 
 import { HistorySummaryMessage } from "@/renderer/components/history/history-summary-message.tsx";
 import { useSelectedConfigurationId } from "@/renderer/stores/configuration/configuration-provider.tsx";
@@ -20,21 +25,21 @@ export function ConfigurationEditorHistory() {
       : "No historical timing data is available for this configuration.";
 
   return (
-    <section className="grid max-w-xl gap-3 rounded-lg border p-4">
-      <div className="grid gap-1">
-        <h2 className="text-sm font-medium">Run history</h2>
+    <Section className="max-w-xl" variant="outline">
+      <SectionHeader>
+        <SectionTitle>Run history</SectionTitle>
         <HistorySummaryMessage
           emptyMessage={emptyMessage}
           runCount={runCount}
           sampleCount={sampleCount}
         />
-      </div>
+      </SectionHeader>
       <div>
         <Link className={buttonVariants({ variant: "outline" })} to="/history">
           <HistoryIcon />
           View history
         </Link>
       </div>
-    </section>
+    </Section>
   );
 }

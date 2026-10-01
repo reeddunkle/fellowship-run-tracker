@@ -1,10 +1,12 @@
 import { PlusIcon } from "lucide-react";
 
 import { type RequirementEventType } from "@frt/shared/fellowship/validation/requirement-event-type-schema.ts";
-import { Button } from "@frt/ui/button.tsx";
-import { Card, CardContent } from "@frt/ui/card.tsx";
-import { Field, FieldError, FieldLabel } from "@frt/ui/field.tsx";
-import { NativeSelect, NativeSelectOption } from "@frt/ui/native-select.tsx";
+import { Button } from "@frt/ui/primitives/button.tsx";
+import { Field, FieldError, FieldLabel } from "@frt/ui/primitives/field.tsx";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@frt/ui/primitives/native-select.tsx";
 
 import {
   type ConfigurationSaveStateResolver,
@@ -93,13 +95,10 @@ export function ConfigurationEditorFormFields({
             hasUnsavedChanges(state) &&
             persistenceState.shouldWarnAboutOverwrite;
 
-          const saveStateClassName = shouldWarn
-            ? "border-amber-500/70"
-            : "border-border";
-
           return (
             <div
-              className={`grid gap-8 rounded-xl border-2 p-4 transition-colors ${saveStateClassName}`}
+              className="grid gap-8 rounded-xl border-2 border-border p-4 transition-colors data-[warning=true]:border-warning/70"
+              data-warning={shouldWarn}
             >
               <div className="grid gap-4">
                 <div className="w-full max-w-lg">
@@ -233,23 +232,19 @@ export function ConfigurationEditorFormFields({
                           );
                         },
                       )}
-                      <Card className="min-h-64 border-dashed">
-                        <CardContent className="flex h-full min-h-64 items-center justify-center">
-                          <Button
-                            className="h-full min-h-48 w-full border-dashed"
-                            onClick={() => {
-                              milestonesField.pushValue(
-                                createMilestoneEditorValue(),
-                              );
-                            }}
-                            type="button"
-                            variant="ghost"
-                          >
-                            <PlusIcon />
-                            Add milestone
-                          </Button>
-                        </CardContent>
-                      </Card>
+                      <Button
+                        className="h-auto min-h-64 w-full"
+                        onClick={() => {
+                          milestonesField.pushValue(
+                            createMilestoneEditorValue(),
+                          );
+                        }}
+                        type="button"
+                        variant="dashed"
+                      >
+                        <PlusIcon />
+                        Add milestone
+                      </Button>
                     </section>
                   );
                 }}

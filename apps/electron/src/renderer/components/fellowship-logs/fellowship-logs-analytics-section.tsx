@@ -2,11 +2,23 @@ import { CatchBoundary } from "@tanstack/react-router";
 import { RefreshCwIcon, XCircleIcon } from "lucide-react";
 import { Suspense } from "react";
 
-import { Button } from "@frt/ui/button.tsx";
-import { Card, CardContent } from "@frt/ui/card.tsx";
-import { Skeleton } from "@frt/ui/skeleton.tsx";
-import { Spinner } from "@frt/ui/spinner.tsx";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@frt/ui/tooltip.tsx";
+import { Section, SectionTitle } from "@frt/ui/composites/section.tsx";
+import {
+  Stat,
+  StatLabel,
+  StatList,
+  StatValue,
+} from "@frt/ui/composites/stat-list.tsx";
+import { StatusText } from "@frt/ui/composites/status-text.tsx";
+import { Button } from "@frt/ui/primitives/button.tsx";
+import { Card, CardContent } from "@frt/ui/primitives/card.tsx";
+import { Skeleton } from "@frt/ui/primitives/skeleton.tsx";
+import { Spinner } from "@frt/ui/primitives/spinner.tsx";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@frt/ui/primitives/tooltip.tsx";
 
 import { getAnalyticsItems } from "@/renderer/api/fellowship-logs/fellowship-logs-analytics-items.ts";
 import { useFellowshipLogsAnalyticsSuspense } from "@/renderer/api/fellowship-logs/fellowship-logs-queries.ts";
@@ -23,33 +35,35 @@ const ANALYTICS_LABELS = [
 export function FellowshipLogsAnalyticsSection() {
   return (
     <Card>
-      <CardContent className="grid gap-2">
-        <CatchBoundary
-          errorComponent={AnalyticsLoadError}
-          getResetKey={() => "fellowship-logs-analytics"}
-          onCatch={logBoundaryError}
-        >
-          <Suspense fallback={<AnalyticsSkeleton />}>
-            <AnalyticsContent />
-          </Suspense>
-        </CatchBoundary>
+      <CardContent>
+        <Section>
+          <CatchBoundary
+            errorComponent={AnalyticsLoadError}
+            getResetKey={() => "fellowship-logs-analytics"}
+            onCatch={logBoundaryError}
+          >
+            <Suspense fallback={<AnalyticsSkeleton />}>
+              <AnalyticsContent />
+            </Suspense>
+          </CatchBoundary>
+        </Section>
       </CardContent>
     </Card>
   );
 }
 
 function AnalyticsTitle() {
-  return <p className="text-sm font-medium">Cache analytics</p>;
+  return <SectionTitle>Cache analytics</SectionTitle>;
 }
 
 function AnalyticsLoadError() {
   return (
     <>
       <AnalyticsTitle />
-      <div className="flex items-center gap-1.5 text-xs font-medium text-destructive">
-        <XCircleIcon className="size-3.5" />
+      <StatusText size="xs" variant="destructive">
+        <XCircleIcon />
         Failed to load cache analytics.
-      </div>
+      </StatusText>
     </>
   );
 }
@@ -63,14 +77,16 @@ function AnalyticsSkeleton() {
         aria-label="Loading cache analytics"
         aria-live="polite"
       >
-        <div aria-hidden="true" className="grid grid-cols-4 gap-4 text-sm">
+        <StatList aria-hidden="true" className="grid-cols-4">
           {ANALYTICS_LABELS.map((label) => (
-            <div key={label}>
-              <p className="text-muted-foreground">{label}</p>
-              <Skeleton className="h-5 w-12" />
-            </div>
+            <Stat key={label}>
+              <StatLabel>{label}</StatLabel>
+              <StatValue>
+                <Skeleton className="h-5 w-12" />
+              </StatValue>
+            </Stat>
           ))}
-        </div>
+        </StatList>
       </section>
     </>
   );
@@ -107,16 +123,16 @@ function AnalyticsContent() {
           <TooltipContent>Refresh</TooltipContent>
         </Tooltip>
       </div>
-      <dl className="grid grid-cols-4 gap-4 text-sm">
+      <StatList className="grid-cols-4">
         {getAnalyticsItems(summary).map(({ label, value }) => {
           return (
-            <div key={label}>
-              <dt className="text-muted-foreground">{label}</dt>
-              <dd className="font-medium tabular-nums">{value}</dd>
-            </div>
+            <Stat key={label}>
+              <StatLabel>{label}</StatLabel>
+              <StatValue>{value}</StatValue>
+            </Stat>
           );
         })}
-      </dl>
+      </StatList>
       <p className="text-xs text-muted-foreground">
         {summary.trackingSinceMilliseconds === null
           ? "Nothing tracked yet. Stats appear after your first Fellowship Logs request."

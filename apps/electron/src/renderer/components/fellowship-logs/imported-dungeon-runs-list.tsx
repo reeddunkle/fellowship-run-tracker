@@ -2,7 +2,9 @@ import { CatchBoundary } from "@tanstack/react-router";
 import { ExternalLinkIcon, Trash2Icon } from "lucide-react";
 import { Suspense } from "react";
 
-import { Button, buttonVariants } from "@frt/ui/button.tsx";
+import { EmptyState } from "@frt/ui/composites/empty-state.tsx";
+import { StatusText } from "@frt/ui/composites/status-text.tsx";
+import { Button, buttonVariants } from "@frt/ui/primitives/button.tsx";
 import {
   Item,
   ItemActions,
@@ -10,8 +12,8 @@ import {
   ItemDescription,
   ItemGroup,
   ItemTitle,
-} from "@frt/ui/item.tsx";
-import { Skeleton } from "@frt/ui/skeleton.tsx";
+} from "@frt/ui/primitives/item.tsx";
+import { Skeleton } from "@frt/ui/primitives/skeleton.tsx";
 
 import { useDeleteImportedDungeonRun } from "@/renderer/api/fellowship-logs/fellowship-logs-mutations.ts";
 import { useImportedDungeonRunsSuspense } from "@/renderer/api/fellowship-logs/fellowship-logs-queries.ts";
@@ -20,7 +22,7 @@ import { formatRelativeDateTimeFromMilliseconds } from "@/util/format-date-time.
 
 function ImportedDungeonRunsLoadError() {
   return (
-    <p className="text-sm text-destructive">Failed to load imported runs.</p>
+    <StatusText variant="destructive">Failed to load imported runs.</StatusText>
   );
 }
 
@@ -47,7 +49,7 @@ function ImportedDungeonRunsListSkeleton({
               <Skeleton className="h-4 w-64 max-w-full" />
             </ItemContent>
             <ItemActions>
-              <Skeleton className="size-8 rounded-md" />
+              <Skeleton className="size-8" />
             </ItemActions>
           </Item>
         ))}
@@ -61,11 +63,7 @@ function ImportedDungeonRunsListContent() {
   const deleteMutation = useDeleteImportedDungeonRun();
 
   if (importedDungeonRuns.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        No Fellowship Logs runs imported yet.
-      </p>
-    );
+    return <EmptyState>No Fellowship Logs runs imported yet.</EmptyState>;
   }
 
   return (
@@ -90,7 +88,8 @@ function ImportedDungeonRunsListContent() {
             <ItemActions>
               <a
                 className={buttonVariants({
-                  className: "w-fit rounded-full flex items-center",
+                  className: "w-fit",
+                  shape: "round",
                   variant: "outline",
                 })}
                 href={fellowshipLogsUrl}

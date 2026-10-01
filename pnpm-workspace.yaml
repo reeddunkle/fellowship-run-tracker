@@ -104,6 +104,7 @@ catalogs:
   tooling:
     "@changesets/cli": "^3.0.3"
     "@oxlint/plugins": ^1.83.0
+    "@shadcn/lint": "0.2.0"
     "@vercel/nft": "1.11.0"
     "jsonc-parser": ^3.3.1
     "knip": ^6.35.0

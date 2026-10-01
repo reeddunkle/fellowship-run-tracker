@@ -3,8 +3,19 @@ import { HistoryIcon } from "lucide-react";
 import { Suspense } from "react";
 
 import { type ConfigurationApiConfiguration } from "@frt/shared/configuration/configuration-api-schema.ts";
-import { Button } from "@frt/ui/button.tsx";
-import { Separator } from "@frt/ui/separator.tsx";
+import {
+  PageDescription,
+  PageHeader,
+  PageTitle,
+} from "@frt/ui/composites/page.tsx";
+import {
+  Section,
+  SectionHeader,
+  SectionTitle,
+} from "@frt/ui/composites/section.tsx";
+import { StatusText } from "@frt/ui/composites/status-text.tsx";
+import { Button } from "@frt/ui/primitives/button.tsx";
+import { Separator } from "@frt/ui/primitives/separator.tsx";
 
 import { useDeleteDungeonRunHistory } from "@/renderer/api/dungeon-run/dungeon-run-mutations.ts";
 import { useDungeonRunHistorySuspense } from "@/renderer/api/dungeon-run/dungeon-run-queries.ts";
@@ -30,13 +41,13 @@ export function HistoryPageContent() {
   const dungeonsById = useFellowshipDataStore((state) => state.dungeonsById);
   if (selectedConfiguration === undefined) {
     return (
-      <section className="grid gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">History</h1>
-        <p className="text-sm text-muted-foreground">
+      <PageHeader>
+        <PageTitle>History</PageTitle>
+        <PageDescription>
           Select a saved configuration from the sidebar to view its historical
           data.
-        </p>
-      </section>
+        </PageDescription>
+      </PageHeader>
     );
   }
 
@@ -46,13 +57,13 @@ export function HistoryPageContent() {
 
   return (
     <section className="grid gap-6">
-      <header className="grid gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">History</h1>
+      <PageHeader>
+        <PageTitle>History</PageTitle>
         <p className="text-sm font-medium">{selectedConfiguration.label}</p>
-        <p className="text-sm text-muted-foreground">
+        <PageDescription>
           {dungeonName} · Eternal {selectedConfiguration.dungeonLevel}
-        </p>
-      </header>
+        </PageDescription>
+      </PageHeader>
       <CatchBoundary
         errorComponent={HistoryLoadError}
         getResetKey={() =>
@@ -74,7 +85,7 @@ export function HistoryPageContent() {
 }
 
 function HistoryLoadError() {
-  return <p className="text-sm text-destructive">Failed to load history.</p>;
+  return <StatusText variant="destructive">Failed to load history.</StatusText>;
 }
 
 type HistoryDataContentProps = {
@@ -97,21 +108,21 @@ function HistoryPageContentSkeleton({
     >
       <div aria-hidden="true" className="grid gap-4 sm:grid-cols-2">
         {["My historical data", "Comparison data"].map((title) => (
-          <section className="grid gap-3 rounded-lg border p-4" key={title}>
-            <div className="grid gap-1">
-              <h2 className="text-sm font-medium">{title}</h2>
+          <Section key={title} variant="outline">
+            <SectionHeader>
+              <SectionTitle>{title}</SectionTitle>
               <HistorySummaryMessageSkeleton />
-            </div>
-          </section>
+            </SectionHeader>
+          </Section>
         ))}
       </div>
       {rows.length > 0 ? (
         <>
           <Separator />
-          <div aria-hidden="true" className="grid gap-2">
-            <h2 className="text-sm font-medium">Checkpoint comparison</h2>
+          <Section aria-hidden="true">
+            <SectionTitle>Checkpoint comparison</SectionTitle>
             <HistoryComparisonTableSkeleton rows={rows} />
-          </div>
+          </Section>
         </>
       ) : null}
     </section>
@@ -140,15 +151,15 @@ function HistoryDataContent({ configuration }: HistoryDataContentProps) {
   return (
     <>
       <div className="grid gap-4 sm:grid-cols-2">
-        <section className="grid gap-3 rounded-lg border p-4">
-          <div className="grid gap-1">
-            <h2 className="text-sm font-medium">My historical data</h2>
+        <Section variant="outline">
+          <SectionHeader>
+            <SectionTitle>My historical data</SectionTitle>
             <HistorySummaryMessage
               emptyMessage="No historical timing data is available for this configuration."
               runCount={ownSummary.runCount}
               sampleCount={ownSummary.sampleCount}
             />
-          </div>
+          </SectionHeader>
           {ownSummary.runCount > 0 ? (
             <div>
               <Button
@@ -162,25 +173,25 @@ function HistoryDataContent({ configuration }: HistoryDataContentProps) {
               </Button>
             </div>
           ) : null}
-        </section>
-        <section className="grid gap-3 rounded-lg border p-4">
-          <div className="grid gap-1">
-            <h2 className="text-sm font-medium">Comparison data</h2>
+        </Section>
+        <Section variant="outline">
+          <SectionHeader>
+            <SectionTitle>Comparison data</SectionTitle>
             <HistorySummaryMessage
               emptyMessage="No comparison data yet. Import a Fellowship Logs run that isn't marked as yours to compare against."
               runCount={comparisonSummary.runCount}
               sampleCount={comparisonSummary.sampleCount}
             />
-          </div>
-        </section>
+          </SectionHeader>
+        </Section>
       </div>
       {comparisonRows.length > 0 ? (
         <>
           <Separator />
-          <div className="grid gap-2">
-            <h2 className="text-sm font-medium">Checkpoint comparison</h2>
+          <Section>
+            <SectionTitle>Checkpoint comparison</SectionTitle>
             <HistoryComparisonTable rows={comparisonRows} />
-          </div>
+          </Section>
         </>
       ) : null}
     </>

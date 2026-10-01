@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 
-import { navigationMenuTriggerStyle } from "@frt/ui/navigation-menu.tsx";
+import { navigationMenuTriggerStyle } from "@frt/ui/primitives/navigation-menu.tsx";
 
 export function NavMenu() {
   return (

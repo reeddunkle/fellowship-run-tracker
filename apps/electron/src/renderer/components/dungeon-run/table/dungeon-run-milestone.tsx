@@ -2,8 +2,13 @@ import * as A from "effect/Array";
 import { ChevronRightIcon } from "lucide-react";
 
 import { getRequirementTargetLabel } from "@frt/shared/fellowship/requirements/requirement-target-label.ts";
-import { Button } from "@frt/ui/button.tsx";
-import { cn } from "@frt/ui/class-names.ts";
+import {
+  TimingTableBody,
+  TimingTableLabelCell,
+  TimingTableRow,
+  TimingTableRowToggle,
+} from "@frt/ui/composites/timing-table.tsx";
+import { cn } from "@frt/ui/styles/class-names.ts";
 
 import {
   type DungeonRunComparisonElapsedMilliseconds,
@@ -11,11 +16,7 @@ import {
 } from "@/renderer/components/dungeon-run/helpers/dungeon-run-milestone-rows.ts";
 import { type DungeonRunTableMilestoneRow } from "@/renderer/components/dungeon-run/helpers/dungeon-run-table-row.ts";
 import { getObservationComparisonElapsedMilliseconds } from "@/renderer/components/dungeon-run/helpers/dungeon-run-time.ts";
-import {
-  DungeonRunTableLabelCell,
-  DungeonRunTableTimeCells,
-  DungeonRunTableTr,
-} from "@/renderer/components/dungeon-run/table/dungeon-run-table.tsx";
+import { DungeonRunTableTimeCells } from "@/renderer/components/dungeon-run/table/dungeon-run-table.tsx";
 import { useDungeonRunDisplayState } from "@/renderer/stores/dungeon-run/dungeon-run-provider.tsx";
 import { useFellowshipDataStore } from "@/renderer/stores/fellowship-data/fellowship-data-store.tsx";
 
@@ -24,11 +25,9 @@ type DungeonRunMilestoneProps = {
 };
 
 function RequirementRow({
-  isLast,
   requirementRow,
   segmentElapsedMilliseconds,
 }: {
-  readonly isLast: boolean;
   readonly requirementRow: DungeonRunRequirementRow;
   readonly segmentElapsedMilliseconds: number | undefined;
 }) {
@@ -77,22 +76,15 @@ function RequirementRow({
   });
 
   return (
-    <DungeonRunTableTr
-      className={cn(
-        "text-xs [&>td]:border-t [&>td:first-child]:border-l [&>td:last-child]:border-r [&>td:last-child]:pr-3",
-        "[&>td+td]:border-l [&>td+td]:border-border/50",
-        isLast &&
-          "[&>td]:border-b [&>td:first-child]:rounded-bl-md [&>td:last-child]:rounded-br-md",
-      )}
-    >
-      <DungeonRunTableLabelCell className="py-1.5 pr-2 pl-8">
+    <TimingTableRow variant="item">
+      <TimingTableLabelCell inset>
         <div className="truncate text-muted-foreground">
           {targetLabel}
           <span className="px-1">·</span>
           {requirementRow.requirement.type}
         </div>
         {requirementRow.requirement.type === "UNIT_DEATH" ? (
-          <div className="truncate text-[10px] text-muted-foreground/70">
+          <div className="truncate text-2xs text-muted-foreground/70">
             occurrence {requirementRow.requirement.startOccurrence}
             {requirementRow.requirement.requiredCount > 1 &&
               `–${
@@ -102,13 +94,13 @@ function RequirementRow({
               }`}
           </div>
         ) : null}
-      </DungeonRunTableLabelCell>
+      </TimingTableLabelCell>
       <DungeonRunTableTimeCells
         comparisonElapsedMilliseconds={comparisonElapsedMilliseconds}
         segmentMilliseconds={segmentElapsedMilliseconds}
         totalMilliseconds={observation?.elapsedFromStartMilliseconds}
       />
-    </DungeonRunTableTr>
+    </TimingTableRow>
   );
 }
 
@@ -123,26 +115,14 @@ export function DungeonRunMilestone({ row }: DungeonRunMilestoneProps) {
   const hasExpandedRequirements = isOpen && subRows.length > 0;
 
   return (
-    <tbody className="bg-card">
-      <DungeonRunTableTr
-        className={cn(
-          "text-sm transition-colors hover:bg-muted/40 dark:hover:bg-muted/20",
-          "[&>td]:border-t [&>td:first-child]:border-l [&>td:last-child]:border-r [&>td:last-child]:pr-3",
-          "[&>td+td]:border-l [&>td+td]:border-border/50",
-          "[&>td:first-child]:rounded-tl-md [&>td:last-child]:rounded-tr-md",
-          !hasExpandedRequirements &&
-            "[&>td]:border-b [&>td:first-child]:rounded-bl-md [&>td:last-child]:rounded-br-md",
-        )}
-      >
-        <DungeonRunTableLabelCell className="p-0">
-          <Button
+    <TimingTableBody>
+      <TimingTableRow>
+        <TimingTableLabelCell>
+          <TimingTableRowToggle
             aria-expanded={isOpen}
-            className="h-full w-full min-w-0 justify-start gap-1.5 rounded-none px-3 py-2 text-left hover:bg-transparent aria-expanded:bg-transparent dark:hover:bg-transparent"
             onClick={() => {
               setMilestoneExpanded(milestoneKey, !isOpen);
             }}
-            type="button"
-            variant="ghost"
           >
             <ChevronRightIcon
               className={cn(
@@ -158,8 +138,8 @@ export function DungeonRunMilestone({ row }: DungeonRunMilestoneProps) {
             >
               {milestone.milestone.label}
             </span>
-          </Button>
-        </DungeonRunTableLabelCell>
+          </TimingTableRowToggle>
+        </TimingTableLabelCell>
         <DungeonRunTableTimeCells
           comparisonElapsedMilliseconds={
             milestone.comparisonElapsedMilliseconds
@@ -167,15 +147,12 @@ export function DungeonRunMilestone({ row }: DungeonRunMilestoneProps) {
           segmentMilliseconds={milestone.segmentElapsedMilliseconds}
           totalMilliseconds={milestone.elapsedMilliseconds}
         />
-      </DungeonRunTableTr>
+      </TimingTableRow>
       {hasExpandedRequirements
         ? A.map(subRows, (requirementTableRow, requirementIndex) => {
             const requirementRow = requirementTableRow.requirementRow;
-            const isLast = requirementIndex === subRows.length - 1;
-
             return (
               <RequirementRow
-                isLast={isLast}
                 key={`${requirementRow.requirement.type}:${requirementRow.requirement.targetId}:${requirementIndex}`}
                 requirementRow={requirementRow}
                 segmentElapsedMilliseconds={
@@ -185,6 +162,6 @@ export function DungeonRunMilestone({ row }: DungeonRunMilestoneProps) {
             );
           })
         : null}
-    </tbody>
+    </TimingTableBody>
   );
 }

@@ -1,7 +1,7 @@
 import { CircleIcon } from "lucide-react";
 
 import { type LiveSplitApiStatus } from "@frt/shared/live-split/live-split-api-schema.ts";
-import { cn } from "@frt/ui/class-names.ts";
+import { cn } from "@frt/ui/styles/class-names.ts";
 
 import {
   API_EVENT_CONNECTION_STATE,
@@ -90,15 +90,17 @@ export function LiveSplitStatus() {
     <div className="flex items-center gap-2">
       <CircleIcon
         className={cn("size-3 fill-current", {
-          "text-green-600": status === API_EVENT_CONNECTION_STATE.CONNECTED,
-          "text-red-600": status === API_EVENT_CONNECTION_STATE.ERROR,
+          "text-destructive": status === API_EVENT_CONNECTION_STATE.ERROR,
+          "text-success": status === API_EVENT_CONNECTION_STATE.CONNECTED,
         })}
       />
       <div className="flex flex-col">
         <span className="text-sm font-medium">LiveSplit</span>
         <span className="text-sm text-muted-foreground">{statusLabel}</span>
         {error !== undefined && (
-          <span className="text-sm text-red-600">{getErrorMessage(error)}</span>
+          <span className="text-sm text-destructive">
+            {getErrorMessage(error)}
+          </span>
         )}
       </div>
     </div>

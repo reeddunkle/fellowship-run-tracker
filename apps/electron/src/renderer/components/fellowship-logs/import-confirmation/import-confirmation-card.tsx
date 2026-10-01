@@ -10,11 +10,23 @@ import {
   type FellowshipLogsApiDungeonRunReference,
 } from "@frt/shared/fellowship-logs/fellowship-logs-api-schema.ts";
 import { getErrorTag } from "@frt/shared/util/get-error-tag.ts";
-import { Button } from "@frt/ui/button.tsx";
-import { Card, CardContent, CardHeader, CardTitle } from "@frt/ui/card.tsx";
-import { Checkbox } from "@frt/ui/checkbox.tsx";
-import { Field, FieldLabel } from "@frt/ui/field.tsx";
-import { Spinner } from "@frt/ui/spinner.tsx";
+import {
+  Stat,
+  StatLabel,
+  StatList,
+  StatValue,
+} from "@frt/ui/composites/stat-list.tsx";
+import { StatusText } from "@frt/ui/composites/status-text.tsx";
+import { Button } from "@frt/ui/primitives/button.tsx";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@frt/ui/primitives/card.tsx";
+import { Checkbox } from "@frt/ui/primitives/checkbox.tsx";
+import { Field, FieldLabel } from "@frt/ui/primitives/field.tsx";
+import { Spinner } from "@frt/ui/primitives/spinner.tsx";
 
 import { useFellowshipDataStore } from "@/renderer/stores/fellowship-data/fellowship-data-store.tsx";
 
@@ -75,45 +87,45 @@ export function ImportConfirmationCard({
       <CardHeader>
         <CardTitle>Confirm import</CardTitle>
       </CardHeader>
-      <CardContent className="grid gap-4">
-        <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
-          <div>
-            <dt className="text-muted-foreground">Dungeon</dt>
-            <dd className="font-medium">{dungeonName}</dd>
-          </div>
-          <div>
-            <dt className="text-muted-foreground">Level</dt>
-            <dd className="font-medium">{metadata.dungeonLevel}</dd>
-          </div>
-          <div>
-            <dt className="text-muted-foreground">Duration</dt>
-            <dd className="font-medium">
+      <CardContent>
+        <StatList className="grid-cols-2 sm:grid-cols-4">
+          <Stat>
+            <StatLabel>Dungeon</StatLabel>
+            <StatValue>{dungeonName}</StatValue>
+          </Stat>
+          <Stat>
+            <StatLabel>Level</StatLabel>
+            <StatValue>{metadata.dungeonLevel}</StatValue>
+          </Stat>
+          <Stat>
+            <StatLabel>Duration</StatLabel>
+            <StatValue>
               {formatDuration(
                 metadata.startedAtMilliseconds,
                 metadata.endedAtMilliseconds,
               )}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-muted-foreground">Report / fight</dt>
-            <dd className="font-medium">
+            </StatValue>
+          </Stat>
+          <Stat>
+            <StatLabel>Report / fight</StatLabel>
+            <StatValue>
               {reference.reportCode} / {reference.fightId}
-            </dd>
-          </div>
-        </dl>
+            </StatValue>
+          </Stat>
+        </StatList>
         {metadata.isInProgress ? (
-          <p className="flex items-center gap-2 text-sm text-warning">
-            <AlertTriangleIcon aria-hidden="true" className="size-4 shrink-0" />
+          <StatusText variant="warning">
+            <AlertTriangleIcon aria-hidden="true" />
             This fight is still in progress. It will be imported as it is now,
             and its data won't be cached, so importing it again will use points
             again.
-          </p>
+          </StatusText>
         ) : null}
         {notice === undefined ? null : (
-          <p className="flex items-center gap-2 text-sm text-muted-foreground">
-            <ClockIcon aria-hidden="true" className="size-4" />
+          <StatusText>
+            <ClockIcon aria-hidden="true" />
             {notice}
-          </p>
+          </StatusText>
         )}
         <form
           id={IMPORT_CONFIRMATION_FORM_DOM_ID}
@@ -161,9 +173,9 @@ export function ImportConfirmationCard({
             Cancel
           </Button>
           {error !== undefined ? (
-            <p className="text-sm text-destructive">
+            <StatusText variant="destructive">
               {getQueueErrorMessage(error)}
-            </p>
+            </StatusText>
           ) : null}
         </div>
       </CardContent>

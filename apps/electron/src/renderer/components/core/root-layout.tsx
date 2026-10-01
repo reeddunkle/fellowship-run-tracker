@@ -1,7 +1,7 @@
 import { getRouteApi, Outlet } from "@tanstack/react-router";
 
-import { Toaster } from "@frt/ui/toast.tsx";
-import { TooltipProvider } from "@frt/ui/tooltip.tsx";
+import { Toaster } from "@frt/ui/primitives/toast.tsx";
+import { TooltipProvider } from "@frt/ui/primitives/tooltip.tsx";
 
 import { BackgroundJobToasts } from "@/renderer/components/background-jobs/background-job-toasts.tsx";
 import { SettingsProvider } from "@/renderer/components/providers/settings-provider.tsx";

@@ -53,7 +53,7 @@
     // not the app uses it yet, so unused exports aren't reported (or removed
     // by `knip:fix`). Unused files still are.
     "packages/ui": {
-      "project": ["src/**/*.{ts,tsx}"]
+      "project": ["src/**/*.{ts,tsx,css}"]
     },
     "tools/dev-scripts": {
       // Standalone scripts, run from package.json scripts or by hand.

@@ -4,8 +4,8 @@ import { useState } from "react";
 
 import { FELLOWSHIP_EVENT } from "@frt/shared/fellowship/constants/fellowship-event.ts";
 import { type RequirementEventType } from "@frt/shared/fellowship/validation/requirement-event-type-schema.ts";
-import { Field, FieldError, FieldLabel } from "@frt/ui/field.tsx";
-import { Input } from "@frt/ui/input.tsx";
+import { Field, FieldError, FieldLabel } from "@frt/ui/primitives/field.tsx";
+import { Input } from "@frt/ui/primitives/input.tsx";
 
 import { useConfigurationEditor } from "@/renderer/components/configuration/configuration-editor-provider.tsx";
 import { type ConfigurationFormApi } from "@/renderer/components/configuration/form/configuration-form.ts";

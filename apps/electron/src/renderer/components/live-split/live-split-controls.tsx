@@ -1,6 +1,6 @@
 import { LinkIcon, UnlinkIcon } from "lucide-react";
 
-import { Button } from "@frt/ui/button.tsx";
+import { Button } from "@frt/ui/primitives/button.tsx";
 
 import { API_EVENT_CONNECTION_STATE } from "@/renderer/api/common.ts";
 import {

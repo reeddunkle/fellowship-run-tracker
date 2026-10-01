@@ -1,3 +1,10 @@
+import {
+  PageDescription,
+  PageHeader,
+  PageShell,
+  PageTitle,
+} from "@frt/ui/composites/page.tsx";
+
 import { AppLayout } from "@/renderer/components/core/app-layout.tsx";
 import { AppearanceSettings } from "@/renderer/components/settings/appearance-settings.tsx";
 import { DiagnosticsSettings } from "@/renderer/components/settings/diagnostics-settings.tsx";
@@ -6,17 +13,17 @@ import { SettingsEditor } from "@/renderer/components/settings/settings-editor.t
 export function SettingsPage() {
   return (
     <AppLayout>
-      <main className="mx-auto grid w-full max-w-5xl gap-6 p-6">
-        <div className="grid gap-1">
-          <h1 className="text-2xl font-semibold">Settings</h1>
-          <p className="text-sm text-muted-foreground">
+      <PageShell>
+        <PageHeader>
+          <PageTitle>Settings</PageTitle>
+          <PageDescription>
             Configure LiveSplit and Fellowship integration settings.
-          </p>
-        </div>
+          </PageDescription>
+        </PageHeader>
         <SettingsEditor />
         <AppearanceSettings />
         <DiagnosticsSettings />
-      </main>
+      </PageShell>
     </AppLayout>
   );
 }

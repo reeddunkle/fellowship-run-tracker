@@ -7,15 +7,18 @@ import {
   makeSimulatedImportReportCode,
   type SimulatedImportOutcome,
 } from "@frt/shared/fellowship-logs/simulated-import-report-code.ts";
-import { Button } from "@frt/ui/button.tsx";
+import { Button } from "@frt/ui/primitives/button.tsx";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@frt/ui/card.tsx";
-import { NativeSelect, NativeSelectOption } from "@frt/ui/native-select.tsx";
+} from "@frt/ui/primitives/card.tsx";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@frt/ui/primitives/native-select.tsx";
 
 import { useQueueDungeonRunImport } from "@/renderer/api/fellowship-logs/fellowship-logs-mutations.ts";
 import { useFellowshipDataStore } from "@/renderer/stores/fellowship-data/fellowship-data-store.tsx";
@@ -69,58 +72,60 @@ export function SimulatedImportPanel() {
           queue without contacting Fellowship Logs.
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-wrap items-center gap-2">
-        <NativeSelect
-          aria-label="Simulated import duration"
-          onChange={(event) => {
-            setDurationSeconds(Number(event.target.value));
-          }}
-          value={durationSeconds}
-        >
-          {DURATION_SECONDS_OPTIONS.map((seconds) => (
-            <NativeSelectOption key={seconds} value={seconds}>
-              {seconds} seconds
-            </NativeSelectOption>
-          ))}
-        </NativeSelect>
-        <Button
-          onClick={() => {
-            queueSimulatedImport("success");
-          }}
-          type="button"
-          variant="outline"
-        >
-          Queue success
-        </Button>
-        <Button
-          onClick={() => {
-            queueSimulatedImport("failure");
-          }}
-          type="button"
-          variant="outline"
-        >
-          Queue failure
-        </Button>
-        <Button
-          onClick={() => {
-            queueSimulatedImport("rate-limited");
-          }}
-          type="button"
-          variant="outline"
-        >
-          Queue rate-limited
-        </Button>
-        <Button
-          onClick={() => {
-            MIXED_OUTCOMES.forEach((outcome) => {
-              queueSimulatedImport(outcome);
-            });
-          }}
-          type="button"
-          variant="outline"
-        >
-          Queue 3 mixed
-        </Button>
+      <CardContent>
+        <div className="flex flex-wrap items-center gap-2">
+          <NativeSelect
+            aria-label="Simulated import duration"
+            onChange={(event) => {
+              setDurationSeconds(Number(event.target.value));
+            }}
+            value={durationSeconds}
+          >
+            {DURATION_SECONDS_OPTIONS.map((seconds) => (
+              <NativeSelectOption key={seconds} value={seconds}>
+                {seconds} seconds
+              </NativeSelectOption>
+            ))}
+          </NativeSelect>
+          <Button
+            onClick={() => {
+              queueSimulatedImport("success");
+            }}
+            type="button"
+            variant="outline"
+          >
+            Queue success
+          </Button>
+          <Button
+            onClick={() => {
+              queueSimulatedImport("failure");
+            }}
+            type="button"
+            variant="outline"
+          >
+            Queue failure
+          </Button>
+          <Button
+            onClick={() => {
+              queueSimulatedImport("rate-limited");
+            }}
+            type="button"
+            variant="outline"
+          >
+            Queue rate-limited
+          </Button>
+          <Button
+            onClick={() => {
+              MIXED_OUTCOMES.forEach((outcome) => {
+                queueSimulatedImport(outcome);
+              });
+            }}
+            type="button"
+            variant="outline"
+          >
+            Queue 3 mixed
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
