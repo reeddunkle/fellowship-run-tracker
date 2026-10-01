@@ -4,6 +4,7 @@ import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
 import { type BackgroundJobDAOShape } from "@frt/db/daos/background-job/background-job-dao.ts";
+import { reclaimFreePages } from "@frt/db/databases/reclaim-free-pages.ts";
 import { StateDatabase } from "@frt/db/databases/state-database.ts";
 import { BackgroundJobDAOError } from "@frt/db/errors/background-job-dao-error.ts";
 import {
@@ -492,10 +493,7 @@ export const makeBackgroundJobDAO = E.gen(function* () {
   };
 
   const incrementalVacuum: BackgroundJobDAOShape["incrementalVacuum"] = () => {
-    return sql`PRAGMA incremental_vacuum`.pipe(
-      E.asVoid,
-      E.mapError(mapBackgroundJobDAOError),
-    );
+    return reclaimFreePages(sql).pipe(E.mapError(mapBackgroundJobDAOError));
   };
 
   const list: BackgroundJobDAOShape["list"] = ({ queues }) => {

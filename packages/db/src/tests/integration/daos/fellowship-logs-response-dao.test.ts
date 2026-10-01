@@ -6,6 +6,7 @@ import { describe, expect, test } from "vitest";
 
 import { FellowshipLogsResponseDAO } from "@frt/db/daos/fellowship-logs-response/fellowship-logs-response-dao.ts";
 import { FellowshipLogsCacheDatabase } from "@frt/db/databases/fellowship-logs-cache-database.ts";
+import { countFreePages } from "@frt/db/tests/common/count-free-pages.ts";
 import { makeDatabasePersistenceTestLayer } from "@frt/db/tests/common/layers/database-persistence-test-layer.ts";
 import { runTest } from "@frt/db/tests/common/run-test.ts";
 import { FellowshipLogsFightIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
@@ -73,16 +74,6 @@ const listKeys = E.gen(function* () {
   return rows.map((row) => {
     return row.requestKey;
   });
-});
-
-const countFreePages = E.gen(function* () {
-  const sql = yield* FellowshipLogsCacheDatabase;
-
-  const [row] = yield* sql<{ readonly freelistCount: number }>`
-    PRAGMA freelist_count
-  `;
-
-  return Option.getOrThrow(Option.fromUndefinedOr(row)).freelistCount;
 });
 
 describe("FellowshipLogsResponseDAO", () => {
@@ -216,26 +207,27 @@ describe("FellowshipLogsResponseDAO", () => {
     expect(keys).toEqual(["used"]);
   });
 
-  test("incrementalVacuum gives back pages freed by removed responses", async () => {
+  test("incrementalVacuum gives back every page freed by removed responses", async () => {
     const { freePagesAfterDelete, freePagesAfterVacuum } = await E.gen(
       function* () {
         const responseDAO = yield* FellowshipLogsResponseDAO;
+        const sql = yield* FellowshipLogsCacheDatabase;
 
         yield* putResponse("key", { byteSize: 100_000 });
         yield* responseDAO.delete({ key: "key" });
 
-        const afterDelete = yield* countFreePages;
+        const afterDelete = yield* countFreePages(sql);
 
         yield* responseDAO.incrementalVacuum();
 
         return {
           freePagesAfterDelete: afterDelete,
-          freePagesAfterVacuum: yield* countFreePages,
+          freePagesAfterVacuum: yield* countFreePages(sql),
         };
       },
     ).pipe(E.provide(makeDatabasePersistenceTestLayer()), runTest);
 
     expect(freePagesAfterDelete).toBeGreaterThan(0);
-    expect(freePagesAfterVacuum).toBeLessThan(freePagesAfterDelete);
+    expect(freePagesAfterVacuum).toBe(0);
   });
 });

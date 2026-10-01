@@ -5,6 +5,7 @@ import * as Schema from "effect/Schema";
 
 import { type FellowshipLogsResponseDAOShape } from "@frt/db/daos/fellowship-logs-response/fellowship-logs-response-dao.ts";
 import { FellowshipLogsCacheDatabase } from "@frt/db/databases/fellowship-logs-cache-database.ts";
+import { reclaimFreePages } from "@frt/db/databases/reclaim-free-pages.ts";
 import { FellowshipLogsResponseDAOError } from "@frt/db/errors/fellowship-logs-response-dao-error.ts";
 import { UnexpectedDatabaseError } from "@frt/db/errors/unexpected-database-error.ts";
 import { FellowshipLogsResponseModel } from "@frt/db/models/fellowship-logs-response-model.ts";
@@ -208,8 +209,7 @@ export const makeFellowshipLogsResponseDAO = E.gen(function* () {
 
   const incrementalVacuum: FellowshipLogsResponseDAOShape["incrementalVacuum"] =
     () => {
-      return sql`PRAGMA incremental_vacuum`.pipe(
-        E.asVoid,
+      return reclaimFreePages(sql).pipe(
         E.mapError(mapFellowshipLogsResponseDAOError),
       );
     };

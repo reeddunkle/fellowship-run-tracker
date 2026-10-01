@@ -4,7 +4,9 @@ import * as Option from "effect/Option";
 import { describe, expect, test } from "vitest";
 
 import { BackgroundJobDAO } from "@frt/db/daos/background-job/background-job-dao.ts";
+import { StateDatabase } from "@frt/db/databases/state-database.ts";
 import { BackgroundJobDAOError } from "@frt/db/errors/background-job-dao-error.ts";
+import { countFreePages } from "@frt/db/tests/common/count-free-pages.ts";
 import { getSome } from "@frt/db/tests/common/get-some.ts";
 import { makeDatabasePersistenceTestLayer } from "@frt/db/tests/common/layers/database-persistence-test-layer.ts";
 import { runTest } from "@frt/db/tests/common/run-test.ts";
@@ -374,5 +376,35 @@ describe("BackgroundJobDAO", () => {
     }).pipe(E.provide(makeDatabasePersistenceTestLayer()));
 
     await runTest(program);
+  });
+  test("incrementalVacuum gives back every page freed by removed jobs", async () => {
+    const { freePagesAfterDelete, freePagesAfterVacuum } = await E.gen(
+      function* () {
+        const backgroundJobDAO = yield* BackgroundJobDAO;
+        const sql = yield* StateDatabase;
+
+        const { job } = yield* backgroundJobDAO.insert({
+          idempotencyKey: null,
+          kind: "TestJob",
+          payload: { value: "x".repeat(100_000) },
+          queue: QUEUE,
+          traceparent: null,
+        });
+
+        yield* backgroundJobDAO.delete({ id: job.id, statuses: ["QUEUED"] });
+
+        const afterDelete = yield* countFreePages(sql);
+
+        yield* backgroundJobDAO.incrementalVacuum();
+
+        return {
+          freePagesAfterDelete: afterDelete,
+          freePagesAfterVacuum: yield* countFreePages(sql),
+        };
+      },
+    ).pipe(E.provide(makeDatabasePersistenceTestLayer()), runTest);
+
+    expect(freePagesAfterDelete).toBeGreaterThan(1);
+    expect(freePagesAfterVacuum).toBe(0);
   });
 });
