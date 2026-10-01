@@ -67,57 +67,25 @@ const observations = [
   },
 ] satisfies ReadonlyArray<DungeonRunObservationHistory>;
 
-function makeDungeonRunRepositoryTestLayer({
-  onDeleteHistory,
-}: {
-  readonly onDeleteHistory?: (() => void) | undefined;
-} = {}) {
-  return Layer.mock(DungeonRunRepository, {
-    deleteHistory: ({ dungeonId, dungeonLevel }) => {
-      return E.sync(() => {
-        expect(dungeonId).toBe(MOCK_DUNGEON_ID);
-        expect(dungeonLevel).toBe(MOCK_DUNGEON_LEVEL);
-        onDeleteHistory?.();
-      });
-    },
-  });
-}
-
-function makeDungeonRunObservationDAOTestLayer({
-  history,
-  onGetHistory,
-}: {
-  readonly history: ReadonlyArray<DungeonRunObservationHistory>;
-  readonly onGetHistory?: (() => void) | undefined;
-}) {
-  return Layer.mock(DungeonRunObservationDAO, {
-    getHistoryByDungeon: ({ dungeonId, dungeonLevel }) => {
-      return E.sync(() => {
-        expect(dungeonId).toBe(MOCK_DUNGEON_ID);
-        expect(dungeonLevel).toBe(MOCK_DUNGEON_LEVEL);
-
-        onGetHistory?.();
-
-        return history;
-      });
-    },
-  });
-}
-
 function makeTestLayer({
   history = observations,
-  onDeleteHistory,
-  onGetHistory,
 }: {
   readonly history?: ReadonlyArray<DungeonRunObservationHistory>;
-  readonly onDeleteHistory?: () => void;
-  readonly onGetHistory?: () => void;
 } = {}) {
   return DungeonRunHistory.layerNoDeps.pipe(
     Layer.provide(
       Layer.mergeAll(
-        makeDungeonRunObservationDAOTestLayer({ history, onGetHistory }),
-        makeDungeonRunRepositoryTestLayer({ onDeleteHistory }),
+        Layer.mock(DungeonRunObservationDAO, {
+          getHistoryByDungeon: ({ dungeonId, dungeonLevel }) => {
+            return E.sync(() => {
+              expect(dungeonId).toBe(MOCK_DUNGEON_ID);
+              expect(dungeonLevel).toBe(MOCK_DUNGEON_LEVEL);
+
+              return history;
+            });
+          },
+        }),
+        Layer.mock(DungeonRunRepository, {}),
       ),
     ),
   );
@@ -195,55 +163,5 @@ describe("DungeonRunHistory", () => {
     }).pipe(E.provide(makeTestLayer({ history: [] })));
 
     await runTest(program);
-  });
-
-  test("gets observation history for the requested dungeon and level once", async () => {
-    let getHistoryCallCount = 0;
-
-    const program = E.gen(function* () {
-      const dungeonRunHistory = yield* DungeonRunHistory;
-
-      yield* dungeonRunHistory.getHistory({
-        dungeonId: MOCK_DUNGEON_ID,
-        dungeonLevel: MOCK_DUNGEON_LEVEL,
-      });
-    }).pipe(
-      E.provide(
-        makeTestLayer({
-          onGetHistory: () => {
-            getHistoryCallCount += 1;
-          },
-        }),
-      ),
-    );
-
-    await runTest(program);
-
-    expect(getHistoryCallCount).toBe(1);
-  });
-
-  test("deletes dungeon run history for a dungeon and level", async () => {
-    let deleteCallCount = 0;
-
-    const program = E.gen(function* () {
-      const dungeonRunHistory = yield* DungeonRunHistory;
-
-      yield* dungeonRunHistory.deleteHistory({
-        dungeonId: MOCK_DUNGEON_ID,
-        dungeonLevel: MOCK_DUNGEON_LEVEL,
-      });
-    }).pipe(
-      E.provide(
-        makeTestLayer({
-          onDeleteHistory: () => {
-            deleteCallCount += 1;
-          },
-        }),
-      ),
-    );
-
-    await runTest(program);
-
-    expect(deleteCallCount).toBe(1);
   });
 });

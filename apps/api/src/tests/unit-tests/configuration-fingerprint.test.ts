@@ -37,157 +37,137 @@ const configuration = {
   milestones: [firstDesecratorMilestone, secondDesecratorMilestone],
 } satisfies FellowshipMilestoneConfiguration;
 
+function createFingerprints(
+  first: FellowshipMilestoneConfiguration,
+  second: FellowshipMilestoneConfiguration,
+) {
+  return E.gen(function* () {
+    return {
+      first: yield* createConfigurationFingerprint(first),
+      second: yield* createConfigurationFingerprint(second),
+    };
+  }).pipe(runTest);
+}
+
 describe("createConfigurationFingerprint", () => {
-  test("creates the same fingerprint when labels change", async () => {
-    const renamedConfiguration = {
-      ...configuration,
-      milestones: [
-        {
-          ...firstDesecratorMilestone,
-          label: "A Different Label",
-        },
-        {
-          ...secondDesecratorMilestone,
-          label: "Another Different Label",
-        },
-      ],
-    } satisfies FellowshipMilestoneConfiguration;
-
-    const program = E.gen(function* () {
-      const first = yield* createConfigurationFingerprint(configuration);
-
-      const second =
-        yield* createConfigurationFingerprint(renamedConfiguration);
-
-      expect(second.fingerprint).toBe(first.fingerprint);
-      expect(second.canonicalJson).toBe(first.canonicalJson);
-    });
-
-    await runTest(program);
-  });
-
-  test("creates the same fingerprint when milestone order changes", async () => {
-    const reorderedConfiguration = {
-      ...configuration,
-      milestones: [secondDesecratorMilestone, firstDesecratorMilestone],
-    } satisfies FellowshipMilestoneConfiguration;
-
-    const program = E.gen(function* () {
-      const first = yield* createConfigurationFingerprint(configuration);
-
-      const second = yield* createConfigurationFingerprint(
-        reorderedConfiguration,
+  describe("creates the same fingerprint", () => {
+    async function expectSameFingerprint(
+      firstConfiguration: FellowshipMilestoneConfiguration,
+      secondConfiguration: FellowshipMilestoneConfiguration,
+    ) {
+      const { first, second } = await createFingerprints(
+        firstConfiguration,
+        secondConfiguration,
       );
 
       expect(second.fingerprint).toBe(first.fingerprint);
       expect(second.canonicalJson).toBe(first.canonicalJson);
+    }
+
+    test("when labels change", async () => {
+      await expectSameFingerprint(configuration, {
+        ...configuration,
+        milestones: [
+          {
+            ...firstDesecratorMilestone,
+            label: "A Different Label",
+          },
+          {
+            ...secondDesecratorMilestone,
+            label: "Another Different Label",
+          },
+        ],
+      });
     });
 
-    await runTest(program);
-  });
-
-  test("creates the same fingerprint when requirement order changes", async () => {
-    const unitDeathRequirement = {
-      requiredCount: 1,
-      startOccurrence: 1,
-      type: "UNIT_DEATH",
-      unitTypeId: "42",
-    } satisfies FellowshipMilestoneConfiguration["milestones"][number]["requirements"][number];
-
-    const encounterStartRequirement = {
-      encounterId: "30",
-      requiredCount: 1,
-      startOccurrence: 1,
-      type: "ENCOUNTER_START",
-    } satisfies FellowshipMilestoneConfiguration["milestones"][number]["requirements"][number];
-
-    const configurationWithMultipleRequirements = {
-      dungeonId: "11",
-      dungeonLevel: 1,
-      milestones: [
-        {
-          comparisonTime: null,
-          label: "Combined Milestone",
-          requirements: [unitDeathRequirement, encounterStartRequirement],
-        },
-      ],
-    } satisfies FellowshipMilestoneConfiguration;
-
-    const reorderedConfiguration = {
-      dungeonId: "11",
-      dungeonLevel: 1,
-      milestones: [
-        {
-          comparisonTime: null,
-          label: "Combined Milestone",
-          requirements: [encounterStartRequirement, unitDeathRequirement],
-        },
-      ],
-    } satisfies FellowshipMilestoneConfiguration;
-
-    const program = E.gen(function* () {
-      const first = yield* createConfigurationFingerprint(
-        configurationWithMultipleRequirements,
-      );
-
-      const second = yield* createConfigurationFingerprint(
-        reorderedConfiguration,
-      );
-
-      expect(second.fingerprint).toBe(first.fingerprint);
-      expect(second.canonicalJson).toBe(first.canonicalJson);
+    test("when milestone order changes", async () => {
+      await expectSameFingerprint(configuration, {
+        ...configuration,
+        milestones: [secondDesecratorMilestone, firstDesecratorMilestone],
+      });
     });
 
-    await runTest(program);
-  });
+    test("when requirement order changes", async () => {
+      const unitDeathRequirement = {
+        requiredCount: 1,
+        startOccurrence: 1,
+        type: "UNIT_DEATH",
+        unitTypeId: "42",
+      } satisfies FellowshipMilestoneConfiguration["milestones"][number]["requirements"][number];
 
-  test("creates a different fingerprint when requirement semantics change", async () => {
-    const changedConfiguration = {
-      ...configuration,
-      milestones: [
-        firstDesecratorMilestone,
+      const encounterStartRequirement = {
+        encounterId: "30",
+        requiredCount: 1,
+        startOccurrence: 1,
+        type: "ENCOUNTER_START",
+      } satisfies FellowshipMilestoneConfiguration["milestones"][number]["requirements"][number];
+
+      await expectSameFingerprint(
         {
-          ...secondDesecratorMilestone,
-          requirements: [
+          dungeonId: "11",
+          dungeonLevel: 1,
+          milestones: [
             {
-              requiredCount: 2,
-              startOccurrence: 2,
-              type: "UNIT_DEATH",
-              unitTypeId: "42",
+              comparisonTime: null,
+              label: "Combined Milestone",
+              requirements: [unitDeathRequirement, encounterStartRequirement],
             },
           ],
         },
-      ],
-    } satisfies FellowshipMilestoneConfiguration;
+        {
+          dungeonId: "11",
+          dungeonLevel: 1,
+          milestones: [
+            {
+              comparisonTime: null,
+              label: "Combined Milestone",
+              requirements: [encounterStartRequirement, unitDeathRequirement],
+            },
+          ],
+        },
+      );
+    });
+  });
 
-    const program = E.gen(function* () {
-      const first = yield* createConfigurationFingerprint(configuration);
-
-      const second =
-        yield* createConfigurationFingerprint(changedConfiguration);
+  describe("creates a different fingerprint", () => {
+    async function expectDifferentFingerprint(
+      firstConfiguration: FellowshipMilestoneConfiguration,
+      secondConfiguration: FellowshipMilestoneConfiguration,
+    ) {
+      const { first, second } = await createFingerprints(
+        firstConfiguration,
+        secondConfiguration,
+      );
 
       expect(second.fingerprint).not.toBe(first.fingerprint);
       expect(second.canonicalJson).not.toBe(first.canonicalJson);
+    }
+
+    test("when requirement semantics change", async () => {
+      await expectDifferentFingerprint(configuration, {
+        ...configuration,
+        milestones: [
+          firstDesecratorMilestone,
+          {
+            ...secondDesecratorMilestone,
+            requirements: [
+              {
+                requiredCount: 2,
+                startOccurrence: 2,
+                type: "UNIT_DEATH",
+                unitTypeId: "42",
+              },
+            ],
+          },
+        ],
+      });
     });
 
-    await runTest(program);
-  });
-
-  test("creates a different fingerprint for a different dungeon", async () => {
-    const changedConfiguration = {
-      ...configuration,
-      dungeonId: "7",
-    } satisfies FellowshipMilestoneConfiguration;
-
-    const program = E.gen(function* () {
-      const first = yield* createConfigurationFingerprint(configuration);
-
-      const second =
-        yield* createConfigurationFingerprint(changedConfiguration);
-
-      expect(second.fingerprint).not.toBe(first.fingerprint);
+    test("for a different dungeon", async () => {
+      await expectDifferentFingerprint(configuration, {
+        ...configuration,
+        dungeonId: "7",
+      });
     });
-
-    await runTest(program);
   });
 });

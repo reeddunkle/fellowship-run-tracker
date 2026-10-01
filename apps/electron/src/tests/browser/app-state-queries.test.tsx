@@ -1,43 +1,87 @@
 import { QueryClient } from "@tanstack/react-query";
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 
-import { DEFAULT_APP_STATE } from "@frt/shared/app-state/app-state-schema.ts";
+import { MOCK_CONFIGURATION_ID } from "@frt/db/tests/common/fixtures/configuration-fixtures.ts";
+import {
+  type AppStateValue,
+  DUNGEON_RUN_TIME_COLUMN,
+} from "@frt/shared/app-state/app-state-schema.ts";
 
-import { primeAppStateQueries } from "@/renderer/api/app-state/app-state-queries.ts";
+import {
+  getDungeonRunComparisonGroupQueryOptions,
+  getDungeonRunTimeColumnsQueryOptions,
+  getSelectedConfigurationIdQueryOptions,
+  getSidebarOpenQueryOptions,
+  getThemeQueryOptions,
+  primeAppStateQueries,
+} from "@/renderer/api/app-state/app-state-queries.ts";
+
+const STORED_APP_STATE: AppStateValue = {
+  dungeonRun: {
+    comparisonGroup: "COMPARISON",
+    timeColumns: [
+      {
+        column: DUNGEON_RUN_TIME_COLUMN.TOTAL,
+        displayOrder: 0,
+        isVisible: false,
+      },
+    ],
+  },
+  selectedConfigurationId: MOCK_CONFIGURATION_ID,
+  sidebarOpen: false,
+  theme: "light",
+};
 
 describe("app-state queries", () => {
-  test("primes renderer state with granular requests", async () => {
-    const request = vi.fn((input: { readonly _tag: string }) => {
-      const responses: Record<string, unknown> = {
-        GetDungeonRunComparisonGroup:
-          DEFAULT_APP_STATE.dungeonRun.comparisonGroup,
-        GetDungeonRunTimeColumns: DEFAULT_APP_STATE.dungeonRun.timeColumns,
-        GetSelectedConfigurationId: DEFAULT_APP_STATE.selectedConfigurationId,
-        GetSidebarOpen: DEFAULT_APP_STATE.sidebarOpen,
-        GetTheme: DEFAULT_APP_STATE.theme,
-      };
-
-      return Promise.resolve(responses[input._tag]);
-    });
+  test("primes each renderer state query with its stored value", async () => {
+    const responses: Record<string, unknown> = {
+      GetDungeonRunComparisonGroup: STORED_APP_STATE.dungeonRun.comparisonGroup,
+      GetDungeonRunTimeColumns: STORED_APP_STATE.dungeonRun.timeColumns,
+      GetSelectedConfigurationId: STORED_APP_STATE.selectedConfigurationId,
+      GetSidebarOpen: STORED_APP_STATE.sidebarOpen,
+      GetTheme: STORED_APP_STATE.theme,
+    };
     const originalElectronApi = Object.getOwnPropertyDescriptor(
       window,
       "electronAPI",
     );
     Object.defineProperty(window, "electronAPI", {
       configurable: true,
-      value: { appState: { request } },
+      value: {
+        appState: {
+          request: (input: { readonly _tag: string }) => {
+            return Promise.resolve(responses[input._tag]);
+          },
+        },
+      },
     });
 
     try {
-      await primeAppStateQueries(new QueryClient());
+      const queryClient = new QueryClient();
 
-      expect(request.mock.calls.map(([input]) => input._tag).sort()).toEqual([
-        "GetDungeonRunComparisonGroup",
-        "GetDungeonRunTimeColumns",
-        "GetSelectedConfigurationId",
-        "GetSidebarOpen",
-        "GetTheme",
-      ]);
+      await primeAppStateQueries(queryClient);
+
+      expect(queryClient.getQueryData(getThemeQueryOptions().queryKey)).toBe(
+        STORED_APP_STATE.theme,
+      );
+      expect(
+        queryClient.getQueryData(getSidebarOpenQueryOptions().queryKey),
+      ).toBe(STORED_APP_STATE.sidebarOpen);
+      expect(
+        queryClient.getQueryData(
+          getSelectedConfigurationIdQueryOptions().queryKey,
+        ),
+      ).toBe(STORED_APP_STATE.selectedConfigurationId);
+      expect(
+        queryClient.getQueryData(
+          getDungeonRunTimeColumnsQueryOptions().queryKey,
+        ),
+      ).toEqual(STORED_APP_STATE.dungeonRun.timeColumns);
+      expect(
+        queryClient.getQueryData(
+          getDungeonRunComparisonGroupQueryOptions().queryKey,
+        ),
+      ).toBe(STORED_APP_STATE.dungeonRun.comparisonGroup);
     } finally {
       if (originalElectronApi === undefined) {
         Reflect.deleteProperty(window, "electronAPI");

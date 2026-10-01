@@ -6,6 +6,7 @@ import {
   FellowshipLogsRequestDAO,
   type FellowshipLogsRequestEvent,
 } from "@frt/db/daos/fellowship-logs-request/fellowship-logs-request-dao.ts";
+import { FellowshipLogsRequestDAOError } from "@frt/db/errors/fellowship-logs-request-dao-error.ts";
 import { makeDatabasePersistenceTestLayer } from "@frt/db/tests/common/layers/database-persistence-test-layer.ts";
 import { runTest } from "@frt/db/tests/common/run-test.ts";
 
@@ -46,6 +47,36 @@ describe("FellowshipLogsRequestDAO", () => {
     );
 
     expect(summary.cacheHitCount).toBe(eventCount);
+  });
+
+  test("saves none of the events when a later batch fails", async () => {
+    const validEvents = Array.from({ length: 1_500 }, () => {
+      return makeEvent({
+        operation: "REPORT_PAGE",
+        pointsSpent: null,
+        source: "CACHE",
+      });
+    });
+
+    const invalidEvent = makeEvent({
+      operation: "REPORT_PAGE",
+      pointsSpent: 1,
+      source: "CACHE",
+    });
+
+    const { error, summary } = await E.gen(function* () {
+      const requestDAO = yield* FellowshipLogsRequestDAO;
+
+      return {
+        error: yield* requestDAO
+          .insertMany([...validEvents, invalidEvent])
+          .pipe(E.flip),
+        summary: yield* requestDAO.getSummary(),
+      };
+    }).pipe(E.provide(makeDatabasePersistenceTestLayer()), runTest);
+
+    expect(error).toBeInstanceOf(FellowshipLogsRequestDAOError);
+    expect(summary.cacheHitCount).toBe(0);
   });
 
   test("summarizes nothing when no requests were recorded", async () => {

@@ -5,22 +5,28 @@ import { describe, expect, test } from "vitest";
 import { makeEncryptionHarness } from "@frt/api/tests/common/harnesses/encryption-harness.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 
+function roundTrip(plaintext: string) {
+  return E.gen(function* () {
+    const { encryption } = yield* makeEncryptionHarness();
+
+    const encryptedValue = yield* encryption.encrypt(Redacted.make(plaintext));
+    const decryptedValue = yield* encryption.decrypt(encryptedValue);
+
+    return Redacted.value(decryptedValue);
+  }).pipe(E.scoped, runTest);
+}
+
 describe("Encryption", () => {
-  test("encrypts and decrypts a value", async () => {
-    const program = E.scoped(
-      E.gen(function* () {
-        const { encryption } = yield* makeEncryptionHarness();
+  describe("round trip", () => {
+    test("encrypts and decrypts a value", async () => {
+      expect(await roundTrip("secret-value")).toBe("secret-value");
+    });
 
-        const value = Redacted.make("secret-value");
-
-        const encryptedValue = yield* encryption.encrypt(value);
-        const decryptedValue = yield* encryption.decrypt(encryptedValue);
-
-        expect(Redacted.value(decryptedValue)).toBe("secret-value");
-      }),
-    );
-
-    await runTest(program);
+    test("encrypts and decrypts unicode text", async () => {
+      expect(await roundTrip("Fellowship 🔐 日本語")).toBe(
+        "Fellowship 🔐 日本語",
+      );
+    });
   });
 
   test("produces different encrypted values for the same plaintext", async () => {
@@ -34,23 +40,6 @@ describe("Encryption", () => {
         const secondEncryptedValue = yield* encryption.encrypt(value);
 
         expect(firstEncryptedValue).not.toBe(secondEncryptedValue);
-      }),
-    );
-
-    await runTest(program);
-  });
-
-  test("encrypts and decrypts unicode text", async () => {
-    const program = E.scoped(
-      E.gen(function* () {
-        const { encryption } = yield* makeEncryptionHarness();
-
-        const value = Redacted.make("Fellowship 🔐 日本語");
-
-        const encryptedValue = yield* encryption.encrypt(value);
-        const decryptedValue = yield* encryption.decrypt(encryptedValue);
-
-        expect(Redacted.value(decryptedValue)).toBe("Fellowship 🔐 日本語");
       }),
     );
 

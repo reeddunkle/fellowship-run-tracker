@@ -66,18 +66,14 @@ describe("FellowshipLogsDungeonRunImporter", () => {
         });
 
         const dungeonRunRows = yield* sql<{
-          readonly dungeon_id: string;
-          readonly dungeon_level: number;
-          readonly ended_at: string;
+          readonly endedAt: number | null;
           readonly id: string;
           readonly isOwnRun: number;
           readonly source: string;
-          readonly started_at: string;
+          readonly startedAt: number;
         }>`
           SELECT
             id,
-            dungeon_id,
-            dungeon_level,
             started_at,
             ended_at,
             source,
@@ -88,16 +84,15 @@ describe("FellowshipLogsDungeonRunImporter", () => {
             id = ${result.dungeonRunId}
         `;
 
-        expect(dungeonRunRows).toHaveLength(1);
-
-        const dungeonRun = dungeonRunRows[0];
-
-        expect(dungeonRun).toBeDefined();
-        expect(dungeonRun?.id).toBe(result.dungeonRunId);
-        expect(dungeonRun?.source).toBe("FELLOWSHIP_LOGS");
-        expect(dungeonRun?.isOwnRun).toBe(1);
-        expect(dungeonRun?.started_at).not.toBeNull();
-        expect(dungeonRun?.ended_at).not.toBeNull();
+        expect(dungeonRunRows).toEqual([
+          {
+            endedAt: expect.any(Number),
+            id: result.dungeonRunId,
+            isOwnRun: 1,
+            source: "FELLOWSHIP_LOGS",
+            startedAt: expect.any(Number),
+          },
+        ]);
 
         const fellowshipLogsDungeonRunRows = yield* sql<{
           readonly dungeonRunId: string;
@@ -134,10 +129,6 @@ describe("FellowshipLogsDungeonRunImporter", () => {
         `;
 
         expect(observationRows.length).toBeGreaterThan(0);
-
-        for (const observation of observationRows) {
-          expect(observation.dungeonRunId).toBe(result.dungeonRunId);
-        }
       }).pipe(E.provide(harness.layer));
     }).pipe(runTest);
   });

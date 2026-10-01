@@ -3,14 +3,8 @@ import * as Schema from "effect/Schema";
 import * as Stream from "effect/Stream";
 import { describe, expect, test, vi } from "vitest";
 
-import {
-  type BackgroundJobApiSnapshot,
-  type ImportFellowshipLogsDungeonRunBackgroundJobApiItem,
-} from "@frt/shared/background-job/background-job-api-schema.ts";
-import { BackgroundJobIdSchema } from "@frt/shared/background-job/background-job-id-schema.ts";
+import { type BackgroundJobApiSnapshot } from "@frt/shared/background-job/background-job-api-schema.ts";
 import { DungeonRunIdSchema } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
-import { FellowshipLogsFightIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
-import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
 import { type BackgroundJobEventStreamEvent } from "@/renderer/api/background-job/background-job-event-stream.ts";
 import { getBackgroundJobsQueryOptions } from "@/renderer/api/background-job/background-job-queries.ts";
@@ -20,32 +14,11 @@ import {
   getFellowshipLogsLastKnownRateLimitDataQueryOptions,
 } from "@/renderer/api/fellowship-logs/fellowship-logs-queries.ts";
 import { makeBackgroundJobEventStore } from "@/renderer/stores/background-job/background-job-event-store.ts";
+import { makeImportJob } from "@/tests/common/fixtures/background-job-fixtures.ts";
 
-const QUEUED_JOB: ImportFellowshipLogsDungeonRunBackgroundJobApiItem = {
-  attempts: 0,
-  availableAtMilliseconds: null,
-  createdAtMilliseconds: 0,
-  error: null,
-  finishedAtMilliseconds: null,
-  id: Schema.decodeSync(BackgroundJobIdSchema)("job-1"),
-  kind: "ImportFellowshipLogsDungeonRun",
-  payload: {
-    dungeonId: "dungeon",
-    dungeonLevel: 10,
-    fightId: Schema.decodeSync(FellowshipLogsFightIdSchema)(15),
-    isOwnRun: true,
-    reportCode: Schema.decodeSync(FellowshipLogsReportCodeSchema)(
-      "XdfFZzgHBJNr6m3v",
-    ),
-  },
-  progress: null,
-  result: null,
-  startedAtMilliseconds: null,
-  status: "QUEUED",
-};
+const QUEUED_JOB = makeImportJob("job-1", "QUEUED");
 
-const SUCCEEDED_JOB: ImportFellowshipLogsDungeonRunBackgroundJobApiItem = {
-  ...QUEUED_JOB,
+const SUCCEEDED_JOB = makeImportJob("job-1", "SUCCEEDED", {
   attempts: 1,
   finishedAtMilliseconds: 2,
   result: {
@@ -53,8 +26,7 @@ const SUCCEEDED_JOB: ImportFellowshipLogsDungeonRunBackgroundJobApiItem = {
     dungeonRunId: Schema.decodeSync(DungeonRunIdSchema)("dungeon-run-1"),
   },
   startedAtMilliseconds: 1,
-  status: "SUCCEEDED",
-};
+});
 
 function makeSnapshot(
   overrides: Partial<BackgroundJobApiSnapshot>,

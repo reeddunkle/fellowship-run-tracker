@@ -73,11 +73,47 @@ describe("DungeonRunHistory with Fellowship Logs import", () => {
         dungeonLevel: dungeonRun.dungeonLevel,
       });
 
-      expect(result.observations.length).toBeGreaterThan(0);
+      const [observationCount] = yield* sql<{
+        readonly count: number;
+      }>`
+        SELECT
+          COUNT(*) AS count
+        FROM
+          dungeon_run_observation
+        WHERE
+          dungeon_run_id = ${importResult.dungeonRunId}
+      `;
 
-      for (const observation of result.observations) {
-        expect(observation.sampleCount).toBeGreaterThan(0);
-      }
+      const ownObservations = result.observations.filter((observation) => {
+        return observation.comparisonGroup === "OWN";
+      });
+
+      const allObservations = result.observations.filter((observation) => {
+        return observation.comparisonGroup === "ALL";
+      });
+
+      expect(observationCount?.count).toBeGreaterThan(0);
+
+      expect(result).toMatchObject({
+        comparisonRunCount: 0,
+        comparisonSampleCount: 0,
+        ownRunCount: 1,
+        ownSampleCount: observationCount?.count,
+      });
+
+      expect(result.observations).toHaveLength(
+        ownObservations.length + allObservations.length,
+      );
+
+      expect(ownObservations).toHaveLength(observationCount?.count ?? 0);
+      expect(allObservations).toEqual(
+        ownObservations.map((observation) => {
+          return {
+            ...observation,
+            comparisonGroup: "ALL",
+          };
+        }),
+      );
     }).pipe(E.provide(TestLive));
 
     await runTest(program);

@@ -6,6 +6,7 @@ import * as Schema from "effect/Schema";
 import { describe, expect, test } from "vitest";
 
 import { FellowshipTracker } from "@frt/api/application/fellowship-tracker/fellowship-tracker-service.ts";
+import { expectDungeonRunObservations } from "@frt/api/tests/common/expect-dungeon-run-observations.ts";
 import { makeFellowshipTrackerIntegrationTestHarness } from "@frt/api/tests/common/harnesses/fellowship-tracker-integration-test-harness.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { DungeonRunApiMessageSchema } from "@frt/api-contract/websocket/dungeon-run/dungeon-run-api-message-schema.ts";
@@ -39,8 +40,6 @@ describe("FellowshipTracker dungeon run WebSocket messages", () => {
 
         const firstMessage = messages[0];
 
-        expect(firstMessage).toBeDefined();
-
         const decodedFirstMessage = yield* Schema.decodeUnknownEffect(
           DungeonRunApiMessageSchema,
         )(firstMessage);
@@ -72,104 +71,40 @@ describe("FellowshipTracker dungeon run WebSocket messages", () => {
           startedAtMilliseconds: expect.any(Number),
         });
 
-        const unitDeath42Observations =
-          decodedFinalMessage.state.observations.filter((observation) => {
-            return (
-              observation.type === "UNIT_DEATH" && observation.targetId === "42"
-            );
-          });
+        expectDungeonRunObservations({
+          count: 2,
+          observations: decodedFinalMessage.state.observations,
+          targetId: "42",
+          type: "UNIT_DEATH",
+        });
 
-        expect(unitDeath42Observations).toHaveLength(2);
+        expectDungeonRunObservations({
+          count: 2,
+          observations: decodedFinalMessage.state.observations,
+          targetId: "41",
+          type: "UNIT_DEATH",
+        });
 
-        expect(unitDeath42Observations).toEqual([
-          {
-            targetId: "42",
-            timestampMilliseconds: expect.any(Number),
-            type: "UNIT_DEATH",
-          },
-          {
-            targetId: "42",
-            timestampMilliseconds: expect.any(Number),
-            type: "UNIT_DEATH",
-          },
-        ]);
+        expectDungeonRunObservations({
+          count: 2,
+          observations: decodedFinalMessage.state.observations,
+          targetId: "274",
+          type: "UNIT_DEATH",
+        });
 
-        const unitDeath41Observations =
-          decodedFinalMessage.state.observations.filter((observation) => {
-            return (
-              observation.type === "UNIT_DEATH" && observation.targetId === "41"
-            );
-          });
+        expectDungeonRunObservations({
+          count: 1,
+          observations: decodedFinalMessage.state.observations,
+          targetId: "30",
+          type: "ENCOUNTER_START",
+        });
 
-        expect(unitDeath41Observations).toHaveLength(2);
-
-        expect(unitDeath41Observations).toEqual([
-          {
-            targetId: "41",
-            timestampMilliseconds: expect.any(Number),
-            type: "UNIT_DEATH",
-          },
-          {
-            targetId: "41",
-            timestampMilliseconds: expect.any(Number),
-            type: "UNIT_DEATH",
-          },
-        ]);
-
-        const unitDeath274Observations =
-          decodedFinalMessage.state.observations.filter((observation) => {
-            return (
-              observation.type === "UNIT_DEATH" &&
-              observation.targetId === "274"
-            );
-          });
-
-        expect(unitDeath274Observations).toHaveLength(2);
-
-        expect(unitDeath274Observations).toEqual([
-          {
-            targetId: "274",
-            timestampMilliseconds: expect.any(Number),
-            type: "UNIT_DEATH",
-          },
-          {
-            targetId: "274",
-            timestampMilliseconds: expect.any(Number),
-            type: "UNIT_DEATH",
-          },
-        ]);
-
-        const bossPullObservations =
-          decodedFinalMessage.state.observations.filter((observation) => {
-            return (
-              observation.type === "ENCOUNTER_START" &&
-              observation.targetId === "30"
-            );
-          });
-
-        expect(bossPullObservations).toEqual([
-          {
-            targetId: "30",
-            timestampMilliseconds: expect.any(Number),
-            type: "ENCOUNTER_START",
-          },
-        ]);
-
-        const bossKillObservations =
-          decodedFinalMessage.state.observations.filter((observation) => {
-            return (
-              observation.type === "ENCOUNTER_END" &&
-              observation.targetId === "30"
-            );
-          });
-
-        expect(bossKillObservations).toEqual([
-          {
-            targetId: "30",
-            timestampMilliseconds: expect.any(Number),
-            type: "ENCOUNTER_END",
-          },
-        ]);
+        expectDungeonRunObservations({
+          count: 1,
+          observations: decodedFinalMessage.state.observations,
+          targetId: "30",
+          type: "ENCOUNTER_END",
+        });
       }),
     ).pipe(E.provide(NodePath.layer));
 

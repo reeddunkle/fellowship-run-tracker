@@ -5,6 +5,7 @@ import { describe, expect, test } from "vitest";
 
 import { BackgroundJobDAO } from "@frt/db/daos/background-job/background-job-dao.ts";
 import { BackgroundJobDAOError } from "@frt/db/errors/background-job-dao-error.ts";
+import { getSome } from "@frt/db/tests/common/get-some.ts";
 import { makeDatabasePersistenceTestLayer } from "@frt/db/tests/common/layers/database-persistence-test-layer.ts";
 import { runTest } from "@frt/db/tests/common/run-test.ts";
 
@@ -29,14 +30,6 @@ const insertJob = E.fn("test.insert-background-job")(function* (options?: {
     traceparent: null,
   });
 });
-
-function getSome<T>(option: Option.Option<T>): T {
-  if (Option.isNone(option)) {
-    throw new Error("Expected a value.");
-  }
-
-  return option.value;
-}
 
 describe("BackgroundJobDAO", () => {
   test("inserts a queued job", async () => {
@@ -328,7 +321,7 @@ describe("BackgroundJobDAO", () => {
     await runTest(program);
   });
 
-  test("deletes finished jobs before a cutoff", async () => {
+  test("deletes finished jobs before a cutoff and keeps those finished at or after it", async () => {
     const program = E.gen(function* () {
       const backgroundJobDAO = yield* BackgroundJobDAO;
 
@@ -344,17 +337,40 @@ describe("BackgroundJobDAO", () => {
         result: null,
       });
 
-      const future = DateTime.add(yield* DateTime.now, { minutes: 1 });
+      const finished = getSome(
+        yield* backgroundJobDAO.getById({ id: succeeded.job.id }),
+      );
+      const finishedAt = getSome(Option.fromNullOr(finished.finishedAt));
 
-      const deletedCount = yield* backgroundJobDAO.deleteFinishedBefore({
-        finishedBefore: future,
-        statuses: ["SUCCEEDED"],
+      const deletedAtCutoffCount = yield* backgroundJobDAO.deleteFinishedBefore(
+        {
+          finishedBefore: finishedAt,
+          statuses: ["SUCCEEDED"],
+        },
+      );
+
+      const remainingAtCutoff = yield* backgroundJobDAO.list({
+        queues: [QUEUE],
       });
 
-      const remaining = yield* backgroundJobDAO.list({ queues: [QUEUE] });
+      const deletedAfterCutoffCount =
+        yield* backgroundJobDAO.deleteFinishedBefore({
+          finishedBefore: DateTime.add(finishedAt, { milliseconds: 1 }),
+          statuses: ["SUCCEEDED"],
+        });
 
-      expect(deletedCount).toBe(1);
-      expect(remaining.map((job) => job.id)).toEqual([queued.job.id]);
+      const remainingAfterCutoff = yield* backgroundJobDAO.list({
+        queues: [QUEUE],
+      });
+
+      expect(deletedAtCutoffCount).toBe(0);
+      expect(remainingAtCutoff.map((job) => job.id)).toEqual(
+        expect.arrayContaining([succeeded.job.id, queued.job.id]),
+      );
+      expect(deletedAfterCutoffCount).toBe(1);
+      expect(remainingAfterCutoff.map((job) => job.id)).toEqual([
+        queued.job.id,
+      ]);
     }).pipe(E.provide(makeDatabasePersistenceTestLayer()));
 
     await runTest(program);

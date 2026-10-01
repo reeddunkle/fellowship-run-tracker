@@ -7,12 +7,15 @@ import type * as HttpClientResponse from "effect/http/HttpClientResponse";
 import * as HttpServer from "effect/http/HttpServer";
 import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Layer from "effect/Layer";
-import * as NetAddress from "effect/net/NetAddress";
 import * as Schema from "effect/Schema";
 import { describe, expect, test } from "vitest";
 
+import { getBaseUrl } from "@frt/api/tests/common/get-base-url.ts";
 import { makeApiServerTestLayerWith } from "@frt/api/tests/common/layers/api-server-test-layer.ts";
-import { makeConfigurationLibraryMock } from "@frt/api/tests/common/mocks/configuration-library-mock.ts";
+import {
+  type MakeConfigurationLibraryMockOptions,
+  makeConfigurationLibraryMock,
+} from "@frt/api/tests/common/mocks/configuration-library-mock.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
 import { ConfigurationDAOError } from "@frt/db/errors/configuration-dao-error.ts";
@@ -64,7 +67,16 @@ type RequestOptions = {
   readonly method?: HttpClientRequest.HttpClientRequest["method"];
 };
 
+type ConfigurationRouteContext = {
+  readonly baseUrl: string;
+  readonly urls: HttpApiClient.UrlBuilder<typeof AppHttpApi>;
+};
+
 const UnknownFromJsonStringSchema = Schema.fromJsonString(Schema.Unknown);
+
+const INVALID_REQUEST_BODY = {
+  invalid: true,
+};
 
 function parseResponseJson(
   response: HttpClientResponse.HttpClientResponse,
@@ -87,18 +99,6 @@ function parseResponseJson(
       },
     });
   });
-}
-
-function getHttpUrl(address: NetAddress.SocketAddress): string {
-  if (NetAddress.isUnixPathAddress(address)) {
-    throw new Error("HTTP test does not support Unix socket addresses.");
-  }
-
-  const hostAddress = NetAddress.isUnspecified(address.address)
-    ? NetAddress.inetAddressUnsafe(NetAddress.ipv4Loopback, address.port)
-    : address;
-
-  return NetAddress.formatUrlUnsafe(hostAddress);
 }
 
 function request(
@@ -135,282 +135,164 @@ function request(
   });
 }
 
-describe("configuration routes", () => {
-  test("GET /configurations returns all configurations", async () => {
-    const configurationLibraryMock = makeConfigurationLibraryMock({
-      getAll: () => {
-        return E.succeed([MOCK_CONFIGURATION]);
-      },
+function requestWithDecodedBody<A>(
+  url: string,
+  schema: Schema.Decoder<A>,
+  options: RequestOptions = {},
+) {
+  return E.gen(function* () {
+    const response = yield* request(url, options);
+    const json = yield* parseResponseJson(response);
+    const body = yield* Schema.decodeUnknownEffect(schema)(json);
+
+    return {
+      body,
+      status: response.status,
+    };
+  });
+}
+
+function requestWithTextBody(url: string, options: RequestOptions = {}) {
+  return E.gen(function* () {
+    const response = yield* request(url, options);
+    const text = yield* response.text;
+
+    return {
+      status: response.status,
+      text,
+    };
+  });
+}
+
+function runWithConfigurationLibrary<A, Error>(
+  serviceOptions: MakeConfigurationLibraryMockOptions,
+  program: (
+    context: ConfigurationRouteContext,
+  ) => E.Effect<A, Error, HttpClient.HttpClient>,
+) {
+  return E.gen(function* () {
+    const httpServer = yield* HttpServer.HttpServer;
+    const baseUrl = getBaseUrl(httpServer.address);
+
+    const urls = HttpApiClient.urlBuilder(AppHttpApi, {
+      baseUrl,
     });
 
-    const program = E.scoped(
-      E.gen(function* () {
-        const httpServer = yield* HttpServer.HttpServer;
-        const baseUrl = getHttpUrl(httpServer.address);
-
-        const urls = HttpApiClient.urlBuilder(AppHttpApi, {
-          baseUrl,
-        });
-
-        const response = yield* request(
-          urls.configurations.getConfigurations(),
-        );
-
-        const json = yield* parseResponseJson(response);
-
-        const body = yield* Schema.decodeUnknownEffect(
-          ConfigurationApiConfigurationListSchema,
-        )(json);
-
-        expect(response.status).toBe(200);
-        expect(body).toEqual([MOCK_CONFIGURATION]);
-      }).pipe(
-        E.provide(
-          Layer.mergeAll(
-            makeApiServerTestLayerWith(configurationLibraryMock),
-            FetchHttpClient.layer,
-          ),
+    return yield* program({
+      baseUrl,
+      urls,
+    });
+  }).pipe(
+    E.scoped,
+    E.provide(
+      Layer.mergeAll(
+        makeApiServerTestLayerWith(
+          makeConfigurationLibraryMock(serviceOptions),
         ),
+        FetchHttpClient.layer,
       ),
+    ),
+    runTest,
+  );
+}
+
+describe("configuration routes", () => {
+  test("GET /configurations returns all configurations", async () => {
+    const { body, status } = await runWithConfigurationLibrary(
+      {
+        getAll: () => {
+          return E.succeed([MOCK_CONFIGURATION]);
+        },
+      },
+      ({ urls }) => {
+        return requestWithDecodedBody(
+          urls.configurations.getConfigurations(),
+          ConfigurationApiConfigurationListSchema,
+        );
+      },
     );
 
-    await runTest(program);
+    expect(status).toBe(200);
+    expect(body).toEqual([MOCK_CONFIGURATION]);
   });
 
   test("GET /configurations/:id returns a configuration", async () => {
-    const configurationLibraryMock = makeConfigurationLibraryMock({
-      getById: ({ id }) => {
-        if (id === MOCK_CONFIGURATION_ID) {
-          return E.succeedSome(MOCK_CONFIGURATION);
-        }
+    const { body, status } = await runWithConfigurationLibrary(
+      {
+        getById: ({ id }) => {
+          if (id === MOCK_CONFIGURATION_ID) {
+            return E.succeedSome(MOCK_CONFIGURATION);
+          }
 
-        return E.succeedNone;
+          return E.succeedNone;
+        },
       },
-    });
-
-    const program = E.scoped(
-      E.gen(function* () {
-        const httpServer = yield* HttpServer.HttpServer;
-        const baseUrl = getHttpUrl(httpServer.address);
-
-        const urls = HttpApiClient.urlBuilder(AppHttpApi, {
-          baseUrl,
-        });
-
-        const response = yield* request(
+      ({ urls }) => {
+        return requestWithDecodedBody(
           urls.configurations.getConfiguration({
             params: {
               id: MOCK_CONFIGURATION_ID,
             },
           }),
-        );
-
-        const json = yield* parseResponseJson(response);
-
-        const body = yield* Schema.decodeUnknownEffect(
           ConfigurationApiConfigurationSchema,
-        )(json);
-
-        expect(response.status).toBe(200);
-        expect(body).toEqual(MOCK_CONFIGURATION);
-      }).pipe(
-        E.provide(
-          Layer.mergeAll(
-            makeApiServerTestLayerWith(configurationLibraryMock),
-            FetchHttpClient.layer,
-          ),
-        ),
-      ),
+        );
+      },
     );
 
-    await runTest(program);
+    expect(status).toBe(200);
+    expect(body).toEqual(MOCK_CONFIGURATION);
   });
 
   test("GET /configurations/:id returns 404 when the configuration does not exist", async () => {
-    const configurationLibraryMock = makeConfigurationLibraryMock();
-
-    const program = E.scoped(
-      E.gen(function* () {
-        const httpServer = yield* HttpServer.HttpServer;
-        const baseUrl = getHttpUrl(httpServer.address);
-
-        const urls = HttpApiClient.urlBuilder(AppHttpApi, {
-          baseUrl,
-        });
-
-        const response = yield* request(
+    const { status, text } = await runWithConfigurationLibrary(
+      {},
+      ({ urls }) => {
+        return requestWithTextBody(
           urls.configurations.getConfiguration({
             params: {
               id: MOCK_UNKNOWN_CONFIGURATION_ID,
             },
           }),
         );
-
-        expect(response.status).toBe(404);
-        expect(yield* response.text).toBe("");
-      }).pipe(
-        E.provide(
-          Layer.mergeAll(
-            makeApiServerTestLayerWith(configurationLibraryMock),
-            FetchHttpClient.layer,
-          ),
-        ),
-      ),
+      },
     );
 
-    await runTest(program);
+    expect(status).toBe(404);
+    expect(text).toBe("");
   });
 
   test("POST /configurations saves a configuration", async () => {
-    const configurationLibraryMock = makeConfigurationLibraryMock({
-      save: ({ configuration: savedConfiguration, label }) => {
-        expect(savedConfiguration).toEqual({
-          dungeonId: MOCK_SAVE_CONFIGURATION_REQUEST.configuration.dungeonId,
-          dungeonLevel:
-            MOCK_SAVE_CONFIGURATION_REQUEST.configuration.dungeonLevel,
-          milestones: MOCK_SAVE_CONFIGURATION_REQUEST.configuration.milestones,
-        });
+    const { body, status } = await runWithConfigurationLibrary(
+      {
+        save: ({ configuration: savedConfiguration, label }) => {
+          expect(savedConfiguration).toEqual({
+            dungeonId: MOCK_SAVE_CONFIGURATION_REQUEST.configuration.dungeonId,
+            dungeonLevel:
+              MOCK_SAVE_CONFIGURATION_REQUEST.configuration.dungeonLevel,
+            milestones:
+              MOCK_SAVE_CONFIGURATION_REQUEST.configuration.milestones,
+          });
 
-        expect(label).toBe(MOCK_CONFIGURATION_LABEL);
+          expect(label).toBe(MOCK_CONFIGURATION_LABEL);
 
-        return E.succeed(MOCK_CONFIGURATION);
+          return E.succeed(MOCK_CONFIGURATION);
+        },
       },
-    });
-
-    const program = E.scoped(
-      E.gen(function* () {
-        const httpServer = yield* HttpServer.HttpServer;
-        const baseUrl = getHttpUrl(httpServer.address);
-
-        const urls = HttpApiClient.urlBuilder(AppHttpApi, {
-          baseUrl,
-        });
-
-        const response = yield* request(
+      ({ urls }) => {
+        return requestWithDecodedBody(
           urls.configurations.saveConfiguration(),
+          ConfigurationApiConfigurationSchema,
           {
             body: MOCK_SAVE_CONFIGURATION_REQUEST,
             method: "POST",
           },
         );
-
-        const json = yield* parseResponseJson(response);
-
-        const body = yield* Schema.decodeUnknownEffect(
-          ConfigurationApiConfigurationSchema,
-        )(json);
-
-        expect(response.status).toBe(201);
-        expect(body).toEqual(MOCK_CONFIGURATION);
-        expect(body.fingerprint).toBe(MOCK_CONFIGURATION_FINGERPRINT);
-      }).pipe(
-        E.provide(
-          Layer.mergeAll(
-            makeApiServerTestLayerWith(configurationLibraryMock),
-            FetchHttpClient.layer,
-          ),
-        ),
-      ),
-    );
-
-    await runTest(program);
-  });
-
-  test("POST /configurations updates a semantically duplicate configuration", async () => {
-    const updatedConfiguration = {
-      ...MOCK_CONFIGURATION,
-      label: MOCK_UPDATED_CONFIGURATION_LABEL,
-    } satisfies ConfigurationApiConfiguration;
-
-    const updatedRequest = {
-      ...MOCK_SAVE_CONFIGURATION_REQUEST,
-      label: MOCK_UPDATED_CONFIGURATION_LABEL,
-    } as const;
-
-    const configurationLibraryMock = makeConfigurationLibraryMock({
-      save: ({ configuration: savedConfiguration, label }) => {
-        expect(savedConfiguration).toEqual(updatedRequest.configuration);
-        expect(label).toBe(MOCK_UPDATED_CONFIGURATION_LABEL);
-
-        return E.succeed(updatedConfiguration);
       },
-    });
-
-    const program = E.scoped(
-      E.gen(function* () {
-        const httpServer = yield* HttpServer.HttpServer;
-        const baseUrl = getHttpUrl(httpServer.address);
-
-        const urls = HttpApiClient.urlBuilder(AppHttpApi, {
-          baseUrl,
-        });
-
-        const response = yield* request(
-          urls.configurations.saveConfiguration(),
-          {
-            body: updatedRequest,
-            method: "POST",
-          },
-        );
-
-        const json = yield* parseResponseJson(response);
-
-        const body = yield* Schema.decodeUnknownEffect(
-          ConfigurationApiConfigurationSchema,
-        )(json);
-
-        expect(response.status).toBe(201);
-        expect(body.id).toBe(MOCK_CONFIGURATION_ID);
-        expect(body.fingerprint).toBe(MOCK_CONFIGURATION_FINGERPRINT);
-        expect(body.label).toBe(MOCK_UPDATED_CONFIGURATION_LABEL);
-      }).pipe(
-        E.provide(
-          Layer.mergeAll(
-            makeApiServerTestLayerWith(configurationLibraryMock),
-            FetchHttpClient.layer,
-          ),
-        ),
-      ),
     );
 
-    await runTest(program);
-  });
-
-  test("POST /configurations returns 400 for an invalid request body", async () => {
-    const configurationLibraryMock = makeConfigurationLibraryMock();
-
-    const program = E.scoped(
-      E.gen(function* () {
-        const httpServer = yield* HttpServer.HttpServer;
-        const baseUrl = getHttpUrl(httpServer.address);
-
-        const urls = HttpApiClient.urlBuilder(AppHttpApi, {
-          baseUrl,
-        });
-
-        const response = yield* request(
-          urls.configurations.saveConfiguration(),
-          {
-            body: {
-              invalid: true,
-            },
-            method: "POST",
-          },
-        );
-
-        expect(response.status).toBe(400);
-        expect(yield* response.text).toBe("");
-      }).pipe(
-        E.provide(
-          Layer.mergeAll(
-            makeApiServerTestLayerWith(configurationLibraryMock),
-            FetchHttpClient.layer,
-          ),
-        ),
-      ),
-    );
-
-    await runTest(program);
+    expect(status).toBe(201);
+    expect(body).toEqual(MOCK_CONFIGURATION);
+    expect(body.fingerprint).toBe(MOCK_CONFIGURATION_FINGERPRINT);
   });
 
   test("PUT /configurations/:id updates a configuration", async () => {
@@ -424,122 +306,49 @@ describe("configuration routes", () => {
       label: MOCK_UPDATED_CONFIGURATION_LABEL,
     } as const;
 
-    const configurationLibraryMock = makeConfigurationLibraryMock({
-      update: ({ configuration, id, label }) => {
-        expect(id).toBe(MOCK_CONFIGURATION_ID);
-        expect(configuration).toEqual(updatedRequest.configuration);
-        expect(label).toBe(MOCK_UPDATED_CONFIGURATION_LABEL);
+    const { body, status } = await runWithConfigurationLibrary(
+      {
+        update: ({ configuration, id, label }) => {
+          expect(id).toBe(MOCK_CONFIGURATION_ID);
+          expect(configuration).toEqual(updatedRequest.configuration);
+          expect(label).toBe(MOCK_UPDATED_CONFIGURATION_LABEL);
 
-        return E.succeed(updatedConfiguration);
+          return E.succeed(updatedConfiguration);
+        },
       },
-    });
-
-    const program = E.scoped(
-      E.gen(function* () {
-        const httpServer = yield* HttpServer.HttpServer;
-        const baseUrl = getHttpUrl(httpServer.address);
-
-        const urls = HttpApiClient.urlBuilder(AppHttpApi, {
-          baseUrl,
-        });
-
-        const response = yield* request(
+      ({ urls }) => {
+        return requestWithDecodedBody(
           urls.configurations.updateConfiguration({
             params: {
               id: MOCK_CONFIGURATION_ID,
             },
           }),
+          ConfigurationApiConfigurationSchema,
           {
             body: updatedRequest,
             method: "PUT",
           },
         );
-
-        const json = yield* parseResponseJson(response);
-
-        const body = yield* Schema.decodeUnknownEffect(
-          ConfigurationApiConfigurationSchema,
-        )(json);
-
-        expect(response.status).toBe(200);
-        expect(body).toEqual(updatedConfiguration);
-        expect(body.id).toBe(MOCK_CONFIGURATION_ID);
-        expect(body.label).toBe(MOCK_UPDATED_CONFIGURATION_LABEL);
-      }).pipe(
-        E.provide(
-          Layer.mergeAll(
-            makeApiServerTestLayerWith(configurationLibraryMock),
-            FetchHttpClient.layer,
-          ),
-        ),
-      ),
+      },
     );
 
-    await runTest(program);
-  });
-
-  test("PUT /configurations/:id returns 400 for an invalid request body", async () => {
-    const configurationLibraryMock = makeConfigurationLibraryMock();
-
-    const program = E.scoped(
-      E.gen(function* () {
-        const httpServer = yield* HttpServer.HttpServer;
-        const baseUrl = getHttpUrl(httpServer.address);
-
-        const urls = HttpApiClient.urlBuilder(AppHttpApi, {
-          baseUrl,
-        });
-
-        const response = yield* request(
-          urls.configurations.updateConfiguration({
-            params: {
-              id: MOCK_CONFIGURATION_ID,
-            },
-          }),
-          {
-            body: {
-              invalid: true,
-            },
-            method: "PUT",
-          },
-        );
-
-        expect(response.status).toBe(400);
-        expect(yield* response.text).toBe("");
-      }).pipe(
-        E.provide(
-          Layer.mergeAll(
-            makeApiServerTestLayerWith(configurationLibraryMock),
-            FetchHttpClient.layer,
-          ),
-        ),
-      ),
-    );
-
-    await runTest(program);
+    expect(status).toBe(200);
+    expect(body).toEqual(updatedConfiguration);
   });
 
   test("DELETE /configurations/:id deletes a configuration", async () => {
     let deletedConfigurationId: string | undefined;
 
-    const configurationLibraryMock = makeConfigurationLibraryMock({
-      delete: ({ id }) => {
-        deletedConfigurationId = id;
+    const { status, text } = await runWithConfigurationLibrary(
+      {
+        delete: ({ id }) => {
+          deletedConfigurationId = id;
 
-        return E.void;
+          return E.void;
+        },
       },
-    });
-
-    const program = E.scoped(
-      E.gen(function* () {
-        const httpServer = yield* HttpServer.HttpServer;
-        const baseUrl = getHttpUrl(httpServer.address);
-
-        const urls = HttpApiClient.urlBuilder(AppHttpApi, {
-          baseUrl,
-        });
-
-        const response = yield* request(
+      ({ urls }) => {
+        return requestWithTextBody(
           urls.configurations.deleteConfiguration({
             params: {
               id: MOCK_CONFIGURATION_ID,
@@ -549,119 +358,81 @@ describe("configuration routes", () => {
             method: "DELETE",
           },
         );
-
-        expect(response.status).toBe(204);
-        expect(deletedConfigurationId).toBe(MOCK_CONFIGURATION_ID);
-        expect(yield* response.text).toBe("");
-      }).pipe(
-        E.provide(
-          Layer.mergeAll(
-            makeApiServerTestLayerWith(configurationLibraryMock),
-            FetchHttpClient.layer,
-          ),
-        ),
-      ),
+      },
     );
 
-    await runTest(program);
+    expect(status).toBe(204);
+    expect(deletedConfigurationId).toBe(MOCK_CONFIGURATION_ID);
+    expect(text).toBe("");
+  });
+
+  describe("invalid request bodies", () => {
+    function sendInvalidBody(
+      getUrl: (urls: ConfigurationRouteContext["urls"]) => string,
+      method: HttpClientRequest.HttpClientRequest["method"],
+    ) {
+      return runWithConfigurationLibrary({}, ({ urls }) => {
+        return requestWithTextBody(getUrl(urls), {
+          body: INVALID_REQUEST_BODY,
+          method,
+        });
+      });
+    }
+
+    test("POST /configurations returns 400", async () => {
+      const { status, text } = await sendInvalidBody((urls) => {
+        return urls.configurations.saveConfiguration();
+      }, "POST");
+
+      expect(status).toBe(400);
+      expect(text).toBe("");
+    });
+
+    test("PUT /configurations/:id returns 400", async () => {
+      const { status, text } = await sendInvalidBody((urls) => {
+        return urls.configurations.updateConfiguration({
+          params: {
+            id: MOCK_CONFIGURATION_ID,
+          },
+        });
+      }, "PUT");
+
+      expect(status).toBe(400);
+      expect(text).toBe("");
+    });
   });
 
   test("returns 400 for a malformed configuration id", async () => {
-    const configurationLibraryMock = makeConfigurationLibraryMock();
-
-    const program = E.scoped(
-      E.gen(function* () {
-        const httpServer = yield* HttpServer.HttpServer;
-        const baseUrl = getHttpUrl(httpServer.address);
-
-        const response = yield* request(`${baseUrl}/configurations/not-a-uuid`);
-
-        expect(response.status).toBe(400);
-        expect(yield* response.text).toBe("");
-      }).pipe(
-        E.provide(
-          Layer.mergeAll(
-            makeApiServerTestLayerWith(configurationLibraryMock),
-            FetchHttpClient.layer,
-          ),
-        ),
-      ),
+    const { status, text } = await runWithConfigurationLibrary(
+      {},
+      ({ baseUrl }) => {
+        return requestWithTextBody(`${baseUrl}/configurations/not-a-uuid`);
+      },
     );
 
-    await runTest(program);
-  });
-
-  test("returns 404 for an unsupported method", async () => {
-    const configurationLibraryMock = makeConfigurationLibraryMock();
-
-    const program = E.scoped(
-      E.gen(function* () {
-        const httpServer = yield* HttpServer.HttpServer;
-        const baseUrl = getHttpUrl(httpServer.address);
-
-        const urls = HttpApiClient.urlBuilder(AppHttpApi, {
-          baseUrl,
-        });
-
-        const response = yield* request(
-          urls.configurations.getConfigurations(),
-          {
-            method: "PATCH",
-          },
-        );
-
-        expect(response.status).toBe(404);
-      }).pipe(
-        E.provide(
-          Layer.mergeAll(
-            makeApiServerTestLayerWith(configurationLibraryMock),
-            FetchHttpClient.layer,
-          ),
-        ),
-      ),
-    );
-
-    await runTest(program);
+    expect(status).toBe(400);
+    expect(text).toBe("");
   });
 
   test("returns 500 when loading configurations fails", async () => {
-    const configurationLibraryMock = makeConfigurationLibraryMock({
-      getAll: () => {
-        return E.fail(
-          new ConfigurationDAOError({
-            reason: new UnexpectedDatabaseError({
-              cause: new Error("Database failure."),
+    const { status, text } = await runWithConfigurationLibrary(
+      {
+        getAll: () => {
+          return E.fail(
+            new ConfigurationDAOError({
+              reason: new UnexpectedDatabaseError({
+                cause: new Error("Database failure."),
+              }),
             }),
-          }),
-        );
+          );
+        },
       },
-    });
-
-    const program = E.scoped(
-      E.gen(function* () {
-        const httpServer = yield* HttpServer.HttpServer;
-        const baseUrl = getHttpUrl(httpServer.address);
-
-        const urls = HttpApiClient.urlBuilder(AppHttpApi, {
-          baseUrl,
-        });
-
-        const response = yield* request(
-          urls.configurations.getConfigurations(),
-        );
-
-        expect(response.status).toBe(500);
-        expect(yield* response.text).toBe("");
-      }).pipe(
-        E.provide(
-          Layer.mergeAll(
-            makeApiServerTestLayerWith(configurationLibraryMock),
-            FetchHttpClient.layer,
-          ),
-        ),
-      ),
+      ({ urls }) => {
+        return requestWithTextBody(urls.configurations.getConfigurations());
+      },
     );
 
-    await runTest(program);
+    expect(status).toBe(500);
+    expect(text).toBe("");
   });
 });

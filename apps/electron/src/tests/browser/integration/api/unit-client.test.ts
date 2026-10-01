@@ -1,15 +1,13 @@
 import * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
-import * as Layer from "effect/Layer";
 import { describe, expect, test } from "vitest";
 
 import { makeApiServerTestLayerWith } from "@frt/api/tests/common/layers/api-server-test-layer.ts";
 import { makeUnitCatalogMock } from "@frt/api/tests/common/mocks/unit-catalog-mock.ts";
-import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { type UnitApiUnit } from "@frt/shared/unit/unit-api-schema.ts";
 
 import { getUnit, getUnits } from "@/renderer/api/unit/unit-client.ts";
-import { TestAppApiClientTestLive } from "@/tests/browser/common/layers/app-api-client-test-layer.ts";
+import { runWithTestApiServer } from "@/tests/browser/common/run-with-test-api-server.ts";
 
 const UNIT_ID = "42";
 const UNKNOWN_UNIT_ID = "999999";
@@ -28,91 +26,39 @@ const unit = {
   variant: null,
 } satisfies UnitApiUnit;
 
+const ApiServerTestLive = makeApiServerTestLayerWith(
+  makeUnitCatalogMock({
+    getAll: () => {
+      return E.succeed([unit]);
+    },
+    getById: ({ id }) => {
+      return id === UNIT_ID ? E.succeedSome(unit) : E.succeedNone;
+    },
+  }),
+);
+
 describe("unit client", () => {
   test("gets all units", async () => {
-    const unitCatalogMock = makeUnitCatalogMock({
-      getAll: () => {
-        return E.succeed([unit]);
-      },
-    });
+    const units = await runWithTestApiServer(getUnits(), ApiServerTestLive);
 
-    const ApiServerTestLive = makeApiServerTestLayerWith(unitCatalogMock);
-
-    const TestLive = TestAppApiClientTestLive.pipe(
-      Layer.provide(ApiServerTestLive),
-    );
-
-    const program = E.scoped(
-      getUnits().pipe(
-        E.tap((units) => {
-          return E.sync(() => {
-            expect(units).toEqual([unit]);
-          });
-        }),
-        E.provide(TestLive),
-      ),
-    );
-
-    await runTest(program);
+    expect(units).toEqual([unit]);
   });
 
   test("gets a unit", async () => {
-    const unitCatalogMock = makeUnitCatalogMock({
-      getById: ({ id }) => {
-        if (id === UNIT_ID) {
-          return E.succeedSome(unit);
-        }
-
-        return E.succeedNone;
-      },
-    });
-
-    const ApiServerTestLive = makeApiServerTestLayerWith(unitCatalogMock);
-
-    const TestLive = TestAppApiClientTestLive.pipe(
-      Layer.provide(ApiServerTestLive),
+    const result = await runWithTestApiServer(
+      getUnit({ id: UNIT_ID }),
+      ApiServerTestLive,
     );
 
-    const program = E.scoped(
-      getUnit({
-        id: UNIT_ID,
-      }).pipe(
-        E.tap((result) => {
-          return E.sync(() => {
-            expect(result).toEqual(unit);
-          });
-        }),
-        E.provide(TestLive),
-      ),
-    );
-
-    await runTest(program);
+    expect(result).toEqual(unit);
   });
 
   test("returns NotFound when a unit does not exist", async () => {
-    const unitCatalogMock = makeUnitCatalogMock();
-
-    const ApiServerTestLive = makeApiServerTestLayerWith(unitCatalogMock);
-
-    const TestLive = TestAppApiClientTestLive.pipe(
-      Layer.provide(ApiServerTestLive),
+    const error = await runWithTestApiServer(
+      getUnit({ id: UNKNOWN_UNIT_ID }).pipe(E.flip),
+      ApiServerTestLive,
     );
 
-    const program = E.scoped(
-      E.gen(function* () {
-        const wasNotFound = yield* getUnit({
-          id: UNKNOWN_UNIT_ID,
-        }).pipe(
-          E.as(false),
-          E.catchTag("NotFound", () => {
-            return E.succeed(true);
-          }),
-        );
-
-        expect(wasNotFound).toBe(true);
-      }).pipe(E.provide(TestLive)),
-    );
-
-    await runTest(program);
+    expect(error._tag).toBe("NotFound");
   });
 });

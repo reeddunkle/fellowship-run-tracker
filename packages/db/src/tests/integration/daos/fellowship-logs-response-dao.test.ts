@@ -75,6 +75,16 @@ const listKeys = E.gen(function* () {
   });
 });
 
+const countFreePages = E.gen(function* () {
+  const sql = yield* FellowshipLogsCacheDatabase;
+
+  const [row] = yield* sql<{ readonly freelistCount: number }>`
+    PRAGMA freelist_count
+  `;
+
+  return Option.getOrThrow(Option.fromUndefinedOr(row)).freelistCount;
+});
+
 describe("FellowshipLogsResponseDAO", () => {
   test("saves a response and reads it back", async () => {
     const response = await E.gen(function* () {
@@ -206,13 +216,26 @@ describe("FellowshipLogsResponseDAO", () => {
     expect(keys).toEqual(["used"]);
   });
 
-  test("incrementalVacuum runs after responses are removed", async () => {
-    await E.gen(function* () {
-      const responseDAO = yield* FellowshipLogsResponseDAO;
+  test("incrementalVacuum gives back pages freed by removed responses", async () => {
+    const { freePagesAfterDelete, freePagesAfterVacuum } = await E.gen(
+      function* () {
+        const responseDAO = yield* FellowshipLogsResponseDAO;
 
-      yield* putResponse("key", { byteSize: 100_000 });
-      yield* responseDAO.delete({ key: "key" });
-      yield* responseDAO.incrementalVacuum();
-    }).pipe(E.provide(makeDatabasePersistenceTestLayer()), runTest);
+        yield* putResponse("key", { byteSize: 100_000 });
+        yield* responseDAO.delete({ key: "key" });
+
+        const afterDelete = yield* countFreePages;
+
+        yield* responseDAO.incrementalVacuum();
+
+        return {
+          freePagesAfterDelete: afterDelete,
+          freePagesAfterVacuum: yield* countFreePages,
+        };
+      },
+    ).pipe(E.provide(makeDatabasePersistenceTestLayer()), runTest);
+
+    expect(freePagesAfterDelete).toBeGreaterThan(0);
+    expect(freePagesAfterVacuum).toBeLessThan(freePagesAfterDelete);
   });
 });

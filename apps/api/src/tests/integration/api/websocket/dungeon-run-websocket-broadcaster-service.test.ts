@@ -21,22 +21,7 @@ function collectMessages(messages: Stream.Stream<string>, count: number) {
 }
 
 describe("DungeonRunWebSocketBroadcaster", () => {
-  test("replays the latest published message to a new subscriber", async () => {
-    const program = E.gen(function* () {
-      const webSocketBroadcaster = yield* DungeonRunWebSocketBroadcaster;
-
-      yield* webSocketBroadcaster.publish("first");
-      yield* webSocketBroadcaster.publish("second");
-
-      const messages = yield* collectMessages(webSocketBroadcaster.messages, 1);
-
-      expect(messages).toEqual(["second"]);
-    }).pipe(E.provide(DungeonRunWebSocketBroadcaster.layer));
-
-    await runTest(program);
-  });
-
-  test("delivers messages published after subscribing", async () => {
+  test("delivers the replayed message followed by messages published after subscribing", async () => {
     const program = E.scoped(
       E.gen(function* () {
         const webSocketBroadcaster = yield* DungeonRunWebSocketBroadcaster;

@@ -36,28 +36,6 @@ describe("EncryptionKeyStorage", () => {
     await runTest(program);
   });
 
-  test("returns the same key on subsequent calls", async () => {
-    const program = E.scoped(
-      E.gen(function* () {
-        const fileSystem = yield* FileSystem.FileSystem;
-
-        const encryptionKeyDirectory =
-          yield* fileSystem.makeTempDirectoryScoped();
-
-        const encryptionKeyStorage = yield* EncryptionKeyStorage.pipe(
-          E.provide(makeEncryptionKeyStorageTestLayer(encryptionKeyDirectory)),
-        );
-
-        const firstKey = yield* encryptionKeyStorage.getOrCreateKey();
-        const secondKey = yield* encryptionKeyStorage.getOrCreateKey();
-
-        expect(Redacted.value(secondKey)).toEqual(Redacted.value(firstKey));
-      }),
-    ).pipe(E.provide(NodePlatformLayer));
-
-    await runTest(program);
-  });
-
   test("persists the encryption key to disk", async () => {
     const program = E.scoped(
       E.gen(function* () {

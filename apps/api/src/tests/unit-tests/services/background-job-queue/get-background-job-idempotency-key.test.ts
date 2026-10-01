@@ -67,14 +67,12 @@ describe("getBackgroundJobIdempotencyKey", () => {
   test("gives every PruneFellowshipLogsCache job the same key", () => {
     expect(
       getBackgroundJobIdempotencyKey({ _tag: "PruneFellowshipLogsCache" }),
-    ).toBe(
-      getBackgroundJobIdempotencyKey({ _tag: "PruneFellowshipLogsCache" }),
-    );
+    ).toBe("prune-fellowship-logs-cache");
   });
 
   test("gives every PruneLogFiles job the same key", () => {
     expect(getBackgroundJobIdempotencyKey({ _tag: "PruneLogFiles" })).toBe(
-      getBackgroundJobIdempotencyKey({ _tag: "PruneLogFiles" }),
+      "prune-log-files",
     );
   });
 });

@@ -99,29 +99,7 @@ describe("makeConnectionManager", () => {
     await runTest(program);
   });
 
-  test("reports Disconnected when the connection becomes unavailable", async () => {
-    const program = E.scoped(
-      E.gen(function* () {
-        const { connectionManager } = yield* makeTestConnectionManager();
-
-        yield* connectionManager.connect();
-
-        const connection = Option.getOrThrow(
-          yield* connectionManager.connection,
-        );
-
-        yield* Deferred.succeed(connection.unavailable, undefined);
-
-        expect(yield* waitForDisconnected(connectionManager)).toEqual(
-          Option.some({ _tag: "Disconnected" }),
-        );
-      }),
-    );
-
-    await runTest(program);
-  });
-
-  test("releases the connection when it becomes unavailable", async () => {
+  test("reports Disconnected and releases the connection when it becomes unavailable", async () => {
     const program = E.scoped(
       E.gen(function* () {
         const { connectionManager, releasedCount } =
@@ -135,8 +113,9 @@ describe("makeConnectionManager", () => {
 
         yield* Deferred.succeed(connection.unavailable, undefined);
 
-        yield* waitForDisconnected(connectionManager);
-
+        expect(yield* waitForDisconnected(connectionManager)).toEqual(
+          Option.some({ _tag: "Disconnected" }),
+        );
         expect(Option.isNone(yield* connectionManager.connection)).toBe(true);
         expect(yield* Ref.get(releasedCount)).toBe(1);
       }),

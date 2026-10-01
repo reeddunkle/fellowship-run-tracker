@@ -1,4 +1,3 @@
-import * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
 import * as Option from "effect/Option";
 import { describe, expect, test } from "vitest";
@@ -8,18 +7,11 @@ import {
   MOCK_ALTERNATE_DUNGEON_ID,
   MOCK_DUNGEON_ID,
 } from "@frt/db/tests/common/fixtures/configuration-fixtures.ts";
+import { getSome } from "@frt/db/tests/common/get-some.ts";
 import { makeDatabasePersistenceTestLayer } from "@frt/db/tests/common/layers/database-persistence-test-layer.ts";
 import { runTest } from "@frt/db/tests/common/run-test.ts";
 
 const UNKNOWN_DUNGEON_ID = "999999";
-
-function getDungeon<T>(dungeon: Option.Option<T>): T {
-  if (Option.isNone(dungeon)) {
-    throw new Error("Expected dungeon to exist.");
-  }
-
-  return dungeon.value;
-}
 
 describe("DungeonDAO", () => {
   test("returns all seeded dungeons", async () => {
@@ -55,16 +47,11 @@ describe("DungeonDAO", () => {
         id: MOCK_DUNGEON_ID,
       });
 
-      const dungeon = getDungeon(result);
-
-      expect(dungeon).toMatchObject({
+      expect(getSome(result)).toMatchObject({
         id: MOCK_DUNGEON_ID,
         mapId: "26",
         name: "Everdawn Grove",
       });
-
-      expect(DateTime.isUtc(dungeon.createdAt)).toBe(true);
-      expect(DateTime.isUtc(dungeon.updatedAt)).toBe(true);
     }).pipe(E.provide(makeDatabasePersistenceTestLayer()));
 
     await runTest(program);

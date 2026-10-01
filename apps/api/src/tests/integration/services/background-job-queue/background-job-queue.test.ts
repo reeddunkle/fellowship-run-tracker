@@ -6,10 +6,10 @@ import * as Layer from "effect/Layer";
 import * as Logger from "effect/Logger";
 import * as Option from "effect/Option";
 import * as Path from "effect/Path";
-import * as Schedule from "effect/Schedule";
 import * as Schema from "effect/Schema";
 import * as Stream from "effect/Stream";
 import type * as Tracer from "effect/Tracer";
+import * as TestClock from "effect/testing/TestClock";
 import { describe, expect, test } from "vitest";
 
 import {
@@ -107,13 +107,15 @@ function waitForJob(
   id: BackgroundJobId,
   predicate: (job: Option.Option<BackgroundJobModel>) => boolean,
 ) {
-  return getJob(id).pipe(
-    E.repeat({
-      schedule: Schedule.spaced("10 millis"),
-      until: predicate,
-    }),
-    E.timeout("5 seconds"),
-  );
+  return BackgroundJobQueue.use((backgroundJobQueue) => {
+    return backgroundJobQueue.changes.pipe(
+      Stream.mapEffect(() => {
+        return getJob(id);
+      }),
+      Stream.filter(predicate),
+      Stream.runHead,
+    );
+  }).pipe(E.map(Option.flatten), E.timeout("5 seconds"));
 }
 
 function hasStatus(status: BackgroundJobModel["status"]) {
@@ -152,11 +154,9 @@ describe("BackgroundJobQueue", () => {
           dungeonLevel: MOCK_DUNGEON_LEVEL,
         });
 
-        yield* E.sleep("5 millis");
-
         const { job } = yield* backgroundJobQueue.offer({
           _tag: "InterruptUnfinishedDungeonRuns",
-          createdBefore: yield* DateTime.now,
+          createdBefore: DateTime.add(yield* DateTime.now, { milliseconds: 1 }),
         });
 
         const settled = yield* waitForJob(job.id, hasStatus("SUCCEEDED"));
@@ -706,6 +706,16 @@ describe("BackgroundJobQueue", () => {
     const job = await withTempDatabase((databaseFilename) => {
       let claims = 0;
 
+      const workerFailed = Deferred.makeUnsafe<void>();
+
+      const WorkerFailureLoggerLive = Logger.layer([
+        Logger.make(({ logLevel }) => {
+          if (logLevel === "Error") {
+            Deferred.doneUnsafe(workerFailed, E.void);
+          }
+        }),
+      ]);
+
       const FlakyBackgroundJobDAOLive = Layer.effect(
         BackgroundJobDAO,
         E.gen(function* () {
@@ -738,19 +748,36 @@ describe("BackgroundJobQueue", () => {
           ),
         ),
         Layer.provide(NodePlatformLayer),
+        Layer.provide(WorkerFailureLoggerLive),
       );
 
       return E.gen(function* () {
         const backgroundJobQueue = yield* BackgroundJobQueue;
 
+        yield* Deferred.await(workerFailed).pipe(
+          E.timeout("5 seconds"),
+          TestClock.withLive,
+        );
+
         const { job: offered } = yield* backgroundJobQueue.offer(
           makeImportJob(),
         );
 
-        const settled = yield* waitForJob(offered.id, hasStatus("SUCCEEDED"));
+        yield* TestClock.adjust("1 second");
+
+        const settled = yield* waitForJob(
+          offered.id,
+          hasStatus("SUCCEEDED"),
+        ).pipe(TestClock.withLive);
 
         return Option.getOrThrow(settled);
-      }).pipe(E.provide(BackgroundJobQueueTestLive));
+      }).pipe(
+        E.provide(
+          BackgroundJobQueueTestLive.pipe(
+            Layer.provideMerge(TestClock.layer()),
+          ),
+        ),
+      );
     });
 
     expect(job.status).toBe("SUCCEEDED");

@@ -29,7 +29,7 @@ import { type DungeonRunEventStreamEvent } from "@/renderer/api/dungeon-run/dung
 import { makeApiEventStream } from "@/renderer/api/make-api-event-stream.ts";
 
 const MOCK_TIMEOUT = "1 second";
-const MOCK_RECONNECT_DELAY = "10 millis";
+const MOCK_RECONNECT_DELAY = "0 millis";
 const NORMAL_CLOSE_ROUTE = "/normal-close";
 
 const DungeonRunApiMessageFromJsonStringSchema = Schema.fromJsonString(

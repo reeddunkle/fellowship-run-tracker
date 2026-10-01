@@ -4,8 +4,9 @@ import * as FileSystem from "effect/FileSystem";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Path from "effect/Path";
-import * as Schedule from "effect/Schedule";
 import * as Schema from "effect/Schema";
+import * as Stream from "effect/Stream";
+import * as TestClock from "effect/testing/TestClock";
 import { describe, expect, test } from "vitest";
 
 import {
@@ -20,6 +21,7 @@ import {
   type FellowshipLogsFetchControl,
   makeControlledFellowshipLogsFixtureLayer,
   makeFellowshipLogsFetchControl,
+  RECORDED_FIGHT_PAGE_COUNT,
 } from "@frt/api/tests/common/layers/controlled-fellowship-logs-fixture-layer.ts";
 import { makePersistenceTestLayer } from "@frt/api/tests/common/layers/persistence-test-layer.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
@@ -111,18 +113,52 @@ function getJob(id: BackgroundJobId) {
   });
 }
 
+const WAIT_TIMEOUT = "5 seconds";
+
+const CLOCK_STEP = "100 millis";
+
+const NO_EARLY_RESUME_WINDOW = "100 millis";
+
 function waitForJob(
   id: BackgroundJobId,
   predicate: (job: Option.Option<BackgroundJobModel>) => boolean,
 ) {
-  return getJob(id).pipe(
-    E.repeat({
-      schedule: Schedule.spaced("10 millis"),
-      until: predicate,
+  return BackgroundJobQueue.use((backgroundJobQueue) => {
+    return backgroundJobQueue.changes.pipe(
+      Stream.mapEffect(() => {
+        return getJob(id);
+      }),
+      Stream.filter(predicate),
+      Stream.runHead,
+    );
+  }).pipe(
+    E.map((job) => {
+      return job.pipe(Option.flatten, Option.getOrThrow);
     }),
-    E.timeout("5 seconds"),
-    E.map(Option.getOrThrow),
+    E.timeout(WAIT_TIMEOUT),
+    TestClock.withLive,
   );
+}
+
+function advanceClockUntilJob(
+  id: BackgroundJobId,
+  predicate: (job: Option.Option<BackgroundJobModel>) => boolean,
+) {
+  return TestClock.testClockWith((testClock) => {
+    return testClock
+      .adjust(CLOCK_STEP)
+      .pipe(
+        E.andThen(getJob(id)),
+        E.repeat({ until: predicate }),
+        E.map(Option.getOrThrow),
+        E.timeout(WAIT_TIMEOUT),
+        testClock.withLive,
+      );
+  });
+}
+
+function giveWorkerAChanceToResumeEarly() {
+  return E.sleep(NO_EARLY_RESUME_WINDOW).pipe(TestClock.withLive);
 }
 
 function hasStatus(status: BackgroundJobModel["status"]) {
@@ -141,7 +177,11 @@ function withTempDatabase<A, Error>(
     const directory = yield* fileSystem.makeTempDirectoryScoped();
 
     return yield* program(path.join(directory, "database.db"));
-  }).pipe(E.scoped, E.provide(NodePlatformLayer), runTest);
+  }).pipe(
+    E.scoped,
+    E.provide(Layer.merge(NodePlatformLayer, TestClock.layer())),
+    runTest,
+  );
 }
 
 const succeed: FellowshipLogsDungeonRunImporterShape["importReport"] = () => {
@@ -207,18 +247,18 @@ describe("BackgroundJobQueue waiting jobs", () => {
           );
 
           // Give the worker a chance to (wrongly) move on to the next import.
-          yield* E.sleep("100 millis");
+          yield* giveWorkerAChanceToResumeEarly();
 
           const secondWhileWaiting = yield* getJob(offeredSecond.job.id);
           const callsSoFar = [...calls];
 
           return {
             callsWhileWaiting: callsSoFar,
-            first: yield* waitForJob(
+            first: yield* advanceClockUntilJob(
               offeredFirst.job.id,
               hasStatus("SUCCEEDED"),
             ),
-            second: yield* waitForJob(
+            second: yield* advanceClockUntilJob(
               offeredSecond.job.id,
               hasStatus("SUCCEEDED"),
             ),
@@ -325,11 +365,14 @@ describe("BackgroundJobQueue waiting jobs", () => {
 
           return yield* E.gen(function* () {
             // Let the new session's recovery and worker start up.
-            yield* E.sleep("100 millis");
+            yield* giveWorkerAChanceToResumeEarly();
 
             return {
               afterRestart: Option.getOrThrow(yield* getJob(jobId)),
-              finished: yield* waitForJob(jobId, hasStatus("SUCCEEDED")),
+              finished: yield* advanceClockUntilJob(
+                jobId,
+                hasStatus("SUCCEEDED"),
+              ),
             };
           }).pipe(
             E.provide(
@@ -363,7 +406,7 @@ describe("BackgroundJobQueue waiting jobs", () => {
 
         control.failAfterPages = undefined;
 
-        return yield* waitForJob(job.id, hasStatus("SUCCEEDED"));
+        return yield* advanceClockUntilJob(job.id, hasStatus("SUCCEEDED"));
       }).pipe(
         E.provide(makeFixtureImportTestLayer({ control, databaseFilename })),
       );
@@ -371,7 +414,7 @@ describe("BackgroundJobQueue waiting jobs", () => {
 
     // The pages fetched before running out came from the cache the second
     // time, so each page was fetched once.
-    expect(control.pagesFetched).toBe(13);
+    expect(control.pagesFetched).toBe(RECORDED_FIGHT_PAGE_COUNT);
     expect(finished.result).toMatchObject({
       dungeonRunId: expect.any(String),
     });

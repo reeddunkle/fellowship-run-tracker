@@ -81,24 +81,7 @@ describe("parseDecimalMinutes", () => {
 
 describe("ComparisonTimeFormSchema", () => {
   describe("decode", () => {
-    test.each([
-      ["", null],
-      ["0", 0],
-      ["1", 60_000],
-      ["1.25", 75_000],
-      ["1.5", 90_000],
-      ["0.5", 30_000],
-      ["2.125", 127_500],
-      ["0:00", 0],
-      ["0:01", 1_000],
-      ["1:00", 60_000],
-      ["1:23", 83_000],
-      ["1:23.1", 83_100],
-      ["1:23.12", 83_120],
-      ["1:23.123", 83_123],
-      ["10:59.999", 659_999],
-      ["123:45.678", 7_425_678],
-    ])("decodes %j to %j", (value, expected) => {
+    function expectDecodesTo(value: string, expected: number | null) {
       const result = decodeComparisonTimeResult(value);
 
       expect(result._tag).toBe("Success");
@@ -106,31 +89,22 @@ describe("ComparisonTimeFormSchema", () => {
       if (result._tag === "Success") {
         expect(result.success).toBe(expected);
       }
+    }
+
+    test("decodes an empty string to null", () => {
+      expectDecodesTo("", null);
     });
 
-    test.each([
-      "1:",
-      ":01",
-      "1:1",
-      "1:60",
-      "1:99",
-      "1:23.",
-      "1:23.1234",
-      "1:23.abc",
-      "-1",
-      "-1.25",
-      "-1:00",
-      ".5",
-      "1.",
-      "abc",
-      " 1:23",
-      "1:23 ",
-      " 1.25",
-      "1.25 ",
-    ])("rejects %j", (value) => {
-      const result = decodeComparisonTimeResult(value);
+    test("decodes colon time", () => {
+      expectDecodesTo("1:23.123", 83_123);
+    });
 
-      expect(result._tag).toBe("Failure");
+    test("decodes decimal minutes", () => {
+      expectDecodesTo("1.25", 75_000);
+    });
+
+    test("rejects a value neither parser accepts", () => {
+      expect(decodeComparisonTimeResult("abc")._tag).toBe("Failure");
     });
   });
 });

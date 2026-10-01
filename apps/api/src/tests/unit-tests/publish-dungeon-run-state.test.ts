@@ -49,196 +49,141 @@ function createDungeonRunProcessingState({
   };
 }
 
+function publishAndGetMessages(state: DungeonRunProcessingState) {
+  return E.gen(function* () {
+    const webSocketBroadcasterHarness =
+      yield* makeWebSocketBroadcasterTestHarness();
+
+    yield* publishDungeonRunState({
+      state,
+    }).pipe(
+      E.provideService(
+        DungeonRunWebSocketBroadcaster,
+        webSocketBroadcasterHarness.webSocketBroadcaster,
+      ),
+    );
+
+    return yield* webSocketBroadcasterHarness.getParsedMessages();
+  }).pipe(runTest);
+}
+
 describe("publishDungeonRunState", () => {
   test("publishes an active run state", async () => {
-    const program = E.gen(function* () {
-      const webSocketBroadcasterHarness =
-        yield* makeWebSocketBroadcasterTestHarness();
-
-      const state = createDungeonRunProcessingState({
-        configuredRun: createConfiguredDungeonRunProcessingState({
-          dungeonRun: {
-            startedAt: DateTime.makeUnsafe(1_000),
-            status: "ACTIVE",
-          },
-        }),
-      });
-
-      yield* publishDungeonRunState({
-        state,
-      }).pipe(
-        E.provideService(
-          DungeonRunWebSocketBroadcaster,
-          webSocketBroadcasterHarness.webSocketBroadcaster,
-        ),
-      );
-
-      const messages = yield* webSocketBroadcasterHarness.getParsedMessages();
-
-      expect(messages).toEqual([
-        {
-          state: {
-            dungeonRun: {
-              endedAtMilliseconds: null,
-              startedAtMilliseconds: 1_000,
-              status: "ACTIVE",
-            },
-            observations: [],
-          },
-          version: 1,
+    const state = createDungeonRunProcessingState({
+      configuredRun: createConfiguredDungeonRunProcessingState({
+        dungeonRun: {
+          startedAt: DateTime.makeUnsafe(1_000),
+          status: "ACTIVE",
         },
-      ]);
+      }),
     });
 
-    await runTest(program);
+    expect(await publishAndGetMessages(state)).toEqual([
+      {
+        state: {
+          dungeonRun: {
+            endedAtMilliseconds: null,
+            startedAtMilliseconds: 1_000,
+            status: "ACTIVE",
+          },
+          observations: [],
+        },
+        version: 1,
+      },
+    ]);
   });
 
   test("publishes requirement observations", async () => {
-    const program = E.gen(function* () {
-      const webSocketBroadcasterHarness =
-        yield* makeWebSocketBroadcasterTestHarness();
+    const requirementTimestamp = DateTime.makeUnsafe(13_345);
 
-      const requirementTimestamp = DateTime.makeUnsafe(13_345);
-
-      const observationsByTargetId: RequirementObservationsByTargetId =
-        HashMap.make([
-          "42",
-          {
-            observations: [
-              {
-                timestamp: requirementTimestamp,
-              },
-            ],
-          },
-        ]);
-
-      const requirementObservations = HashMap.set(
-        HashMap.empty<
-          RequirementEventType,
-          RequirementObservationsByTargetId
-        >(),
-        "UNIT_DEATH",
-        observationsByTargetId,
-      );
-
-      const state = createDungeonRunProcessingState({
-        configuredRun: createConfiguredDungeonRunProcessingState({
-          dungeonRun: {
-            startedAt: DateTime.makeUnsafe(1_000),
-            status: "ACTIVE",
-          },
-          requirementProcessor: {
-            requirementObservations,
-          },
-        }),
-      });
-
-      yield* publishDungeonRunState({
-        state,
-      }).pipe(
-        E.provideService(
-          DungeonRunWebSocketBroadcaster,
-          webSocketBroadcasterHarness.webSocketBroadcaster,
-        ),
-      );
-
-      const messages = yield* webSocketBroadcasterHarness.getParsedMessages();
-
-      expect(messages).toEqual([
+    const observationsByTargetId: RequirementObservationsByTargetId =
+      HashMap.make([
+        "42",
         {
-          state: {
-            dungeonRun: {
-              endedAtMilliseconds: null,
-              startedAtMilliseconds: 1_000,
-              status: "ACTIVE",
+          observations: [
+            {
+              timestamp: requirementTimestamp,
             },
-            observations: [
-              {
-                targetId: "42",
-                timestampMilliseconds: 13_345,
-                type: "UNIT_DEATH",
-              },
-            ],
-          },
-          version: 1,
+          ],
         },
       ]);
+
+    const requirementObservations = HashMap.set(
+      HashMap.empty<RequirementEventType, RequirementObservationsByTargetId>(),
+      "UNIT_DEATH",
+      observationsByTargetId,
+    );
+
+    const state = createDungeonRunProcessingState({
+      configuredRun: createConfiguredDungeonRunProcessingState({
+        dungeonRun: {
+          startedAt: DateTime.makeUnsafe(1_000),
+          status: "ACTIVE",
+        },
+        requirementProcessor: {
+          requirementObservations,
+        },
+      }),
     });
 
-    await runTest(program);
+    expect(await publishAndGetMessages(state)).toEqual([
+      {
+        state: {
+          dungeonRun: {
+            endedAtMilliseconds: null,
+            startedAtMilliseconds: 1_000,
+            status: "ACTIVE",
+          },
+          observations: [
+            {
+              targetId: "42",
+              timestampMilliseconds: 13_345,
+              type: "UNIT_DEATH",
+            },
+          ],
+        },
+        version: 1,
+      },
+    ]);
   });
 
   test("publishes a completed run state", async () => {
-    const program = E.gen(function* () {
-      const webSocketBroadcasterHarness =
-        yield* makeWebSocketBroadcasterTestHarness();
-
-      const state = createDungeonRunProcessingState({
-        configuredRun: createConfiguredDungeonRunProcessingState({
-          dungeonRun: {
-            endedAt: DateTime.makeUnsafe(13_345),
-            startedAt: DateTime.makeUnsafe(1_000),
-            status: "COMPLETED",
-          },
-        }),
-      });
-
-      yield* publishDungeonRunState({
-        state,
-      }).pipe(
-        E.provideService(
-          DungeonRunWebSocketBroadcaster,
-          webSocketBroadcasterHarness.webSocketBroadcaster,
-        ),
-      );
-
-      const messages = yield* webSocketBroadcasterHarness.getParsedMessages();
-
-      expect(messages).toEqual([
-        {
-          state: {
-            dungeonRun: {
-              endedAtMilliseconds: 13_345,
-              startedAtMilliseconds: 1_000,
-              status: "COMPLETED",
-            },
-            observations: [],
-          },
-          version: 1,
+    const state = createDungeonRunProcessingState({
+      configuredRun: createConfiguredDungeonRunProcessingState({
+        dungeonRun: {
+          endedAt: DateTime.makeUnsafe(13_345),
+          startedAt: DateTime.makeUnsafe(1_000),
+          status: "COMPLETED",
         },
-      ]);
+      }),
     });
 
-    await runTest(program);
+    expect(await publishAndGetMessages(state)).toEqual([
+      {
+        state: {
+          dungeonRun: {
+            endedAtMilliseconds: 13_345,
+            startedAtMilliseconds: 1_000,
+            status: "COMPLETED",
+          },
+          observations: [],
+        },
+        version: 1,
+      },
+    ]);
   });
 
   test("publishes an idle run state", async () => {
-    const program = E.gen(function* () {
-      const webSocketBroadcasterHarness =
-        yield* makeWebSocketBroadcasterTestHarness();
-
-      yield* publishDungeonRunState({
-        state: createDungeonRunProcessingState(),
-      }).pipe(
-        E.provideService(
-          DungeonRunWebSocketBroadcaster,
-          webSocketBroadcasterHarness.webSocketBroadcaster,
-        ),
-      );
-
-      const messages = yield* webSocketBroadcasterHarness.getParsedMessages();
-
-      expect(messages).toEqual([
-        {
-          state: {
-            dungeonRun: null,
-            observations: [],
-          },
-          version: 1,
+    expect(
+      await publishAndGetMessages(createDungeonRunProcessingState()),
+    ).toEqual([
+      {
+        state: {
+          dungeonRun: null,
+          observations: [],
         },
-      ]);
-    });
-
-    await runTest(program);
+        version: 1,
+      },
+    ]);
   });
 });

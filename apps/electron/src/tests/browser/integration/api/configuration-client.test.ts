@@ -151,49 +151,6 @@ describe("configuration client", () => {
     await runTest(program);
   });
 
-  test("saves a semantically duplicate configuration as an update", async () => {
-    const updatedConfiguration = {
-      ...MOCK_CONFIGURATION,
-      label: MOCK_UPDATED_CONFIGURATION_LABEL,
-    } satisfies ConfigurationApiConfiguration;
-
-    const updatedRequest = {
-      ...MOCK_SAVE_CONFIGURATION_REQUEST,
-      label: MOCK_UPDATED_CONFIGURATION_LABEL,
-    } as const;
-
-    const configurationLibraryMock = makeConfigurationLibraryMock({
-      save: ({ configuration: savedConfiguration, label }) => {
-        expect(savedConfiguration).toEqual(updatedRequest.configuration);
-        expect(label).toBe(MOCK_UPDATED_CONFIGURATION_LABEL);
-
-        return E.succeed(updatedConfiguration);
-      },
-    });
-
-    const ApiServerTestLive = makeApiServerTestLayerWith(
-      configurationLibraryMock,
-    );
-
-    const TestLive = TestAppApiClientTestLive.pipe(
-      Layer.provide(ApiServerTestLive),
-    );
-
-    const program = E.scoped(
-      E.gen(function* () {
-        const result = yield* saveConfiguration({
-          request: updatedRequest,
-        });
-
-        expect(result.id).toBe(MOCK_CONFIGURATION_ID);
-        expect(result.fingerprint).toBe(MOCK_CONFIGURATION_FINGERPRINT);
-        expect(result.label).toBe(MOCK_UPDATED_CONFIGURATION_LABEL);
-      }).pipe(E.provide(TestLive)),
-    );
-
-    await runTest(program);
-  });
-
   test("updates a configuration", async () => {
     const updatedConfiguration = {
       ...MOCK_CONFIGURATION,

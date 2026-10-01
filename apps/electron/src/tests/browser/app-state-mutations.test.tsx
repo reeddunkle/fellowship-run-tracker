@@ -9,58 +9,55 @@ import {
 describe("app-state mutations", () => {
   test("serializes mutations to one field without blocking other fields", async () => {
     const queryClient = new QueryClient();
-    const firstThemeMutation = setThemeMutationOptions(queryClient);
-    const secondThemeMutation = setThemeMutationOptions(queryClient);
-    const sidebarMutation = setSidebarOpenMutationOptions(queryClient);
-
-    expect(firstThemeMutation.scope).toEqual(secondThemeMutation.scope);
-    expect(firstThemeMutation.scope).not.toEqual(sidebarMutation.scope);
-
-    const starts: Array<string> = [];
-    let releaseFirst: (() => void) | undefined;
-    let releaseSecond: (() => void) | undefined;
-    // @effect-diagnostics-next-line newPromise:off
-    const firstCompletion = new Promise<void>((resolve) => {
-      releaseFirst = resolve;
-    });
-    // @effect-diagnostics-next-line newPromise:off
-    const secondCompletion = new Promise<void>((resolve) => {
-      releaseSecond = resolve;
-    });
     const mutationCache = queryClient.getMutationCache();
-    const first = mutationCache.build(queryClient, {
-      ...firstThemeMutation,
+    const starts: Array<string> = [];
+    const firstThemeGate = Promise.withResolvers<void>();
+    const secondThemeGate = Promise.withResolvers<void>();
+    const sidebarGate = Promise.withResolvers<void>();
+
+    const firstTheme = mutationCache.build(queryClient, {
+      ...setThemeMutationOptions(queryClient),
       mutationFn: () => {
-        starts.push("first");
-        return firstCompletion;
+        starts.push("first-theme");
+        return firstThemeGate.promise;
       },
     });
-    const second = mutationCache.build(queryClient, {
-      ...secondThemeMutation,
+    const secondTheme = mutationCache.build(queryClient, {
+      ...setThemeMutationOptions(queryClient),
       mutationFn: () => {
-        starts.push("second");
-        return secondCompletion;
+        starts.push("second-theme");
+        return secondThemeGate.promise;
+      },
+    });
+    const sidebar = mutationCache.build(queryClient, {
+      ...setSidebarOpenMutationOptions(queryClient),
+      mutationFn: () => {
+        starts.push("sidebar");
+        return sidebarGate.promise;
       },
     });
 
-    const firstResult = first.execute("light");
-    const secondResult = second.execute("dark");
+    const firstThemeResult = firstTheme.execute("light");
+    const secondThemeResult = secondTheme.execute("dark");
+    const sidebarResult = sidebar.execute(false);
+
     await vi.waitFor(() => {
-      expect(starts).toEqual(["first"]);
+      expect(starts.toSorted()).toEqual(["first-theme", "sidebar"]);
     });
 
-    if (releaseFirst === undefined || releaseSecond === undefined) {
-      throw new Error(
-        "Expected mutation completion controls to be initialized",
-      );
-    }
+    sidebarGate.resolve();
+    await sidebarResult;
 
-    releaseFirst();
-    await firstResult;
+    expect(sidebar.state.status).toBe("success");
+    expect(starts).not.toContain("second-theme");
+
+    firstThemeGate.resolve();
+    await firstThemeResult;
     await vi.waitFor(() => {
-      expect(starts).toEqual(["first", "second"]);
+      expect(starts).toContain("second-theme");
     });
-    releaseSecond();
-    await secondResult;
+
+    secondThemeGate.resolve();
+    await secondThemeResult;
   });
 });

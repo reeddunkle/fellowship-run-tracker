@@ -1,18 +1,16 @@
 import * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
-import * as Layer from "effect/Layer";
 import { describe, expect, test } from "vitest";
 
 import { makeApiServerTestLayerWith } from "@frt/api/tests/common/layers/api-server-test-layer.ts";
 import { makeEncounterCatalogMock } from "@frt/api/tests/common/mocks/encounter-catalog-mock.ts";
-import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { type EncounterApiEncounter } from "@frt/shared/encounter/encounter-api-schema.ts";
 
 import {
   getEncounter,
   getEncounters,
 } from "@/renderer/api/encounter/encounter-client.ts";
-import { TestAppApiClientTestLive } from "@/tests/browser/common/layers/app-api-client-test-layer.ts";
+import { runWithTestApiServer } from "@/tests/browser/common/run-with-test-api-server.ts";
 
 const DUNGEON_ID = "24";
 const ENCOUNTER_ID = "33";
@@ -29,87 +27,46 @@ const encounter = {
   updatedAt: MOCK_UPDATED_AT,
 } satisfies EncounterApiEncounter;
 
+const ApiServerTestLive = makeApiServerTestLayerWith(
+  makeEncounterCatalogMock({
+    getAll: () => {
+      return E.succeed([encounter]);
+    },
+    getById: ({ dungeonId, id }) => {
+      return dungeonId === DUNGEON_ID && id === ENCOUNTER_ID
+        ? E.succeedSome(encounter)
+        : E.succeedNone;
+    },
+  }),
+);
+
 describe("encounter client", () => {
   test("gets all encounters", async () => {
-    const encounterCatalogMock = makeEncounterCatalogMock({
-      getAll: () => {
-        return E.succeed([encounter]);
-      },
-    });
-
-    const ApiServerTestLive = makeApiServerTestLayerWith(encounterCatalogMock);
-
-    const TestLive = TestAppApiClientTestLive.pipe(
-      Layer.provide(ApiServerTestLive),
+    const encounters = await runWithTestApiServer(
+      getEncounters(),
+      ApiServerTestLive,
     );
 
-    const program = E.scoped(
-      E.gen(function* () {
-        const encounters = yield* getEncounters();
-
-        expect(encounters).toEqual([encounter]);
-      }).pipe(E.provide(TestLive)),
-    );
-
-    await runTest(program);
+    expect(encounters).toEqual([encounter]);
   });
 
   test("gets an encounter", async () => {
-    const encounterCatalogMock = makeEncounterCatalogMock({
-      getById: ({ dungeonId, id }) => {
-        if (dungeonId === DUNGEON_ID && id === ENCOUNTER_ID) {
-          return E.succeedSome(encounter);
-        }
-
-        return E.succeedNone;
-      },
-    });
-
-    const ApiServerTestLive = makeApiServerTestLayerWith(encounterCatalogMock);
-
-    const TestLive = TestAppApiClientTestLive.pipe(
-      Layer.provide(ApiServerTestLive),
+    const result = await runWithTestApiServer(
+      getEncounter({ dungeonId: DUNGEON_ID, id: ENCOUNTER_ID }),
+      ApiServerTestLive,
     );
 
-    const program = E.scoped(
-      E.gen(function* () {
-        const result = yield* getEncounter({
-          dungeonId: DUNGEON_ID,
-          id: ENCOUNTER_ID,
-        });
-
-        expect(result).toEqual(encounter);
-      }).pipe(E.provide(TestLive)),
-    );
-
-    await runTest(program);
+    expect(result).toEqual(encounter);
   });
 
   test("returns NotFound when an encounter does not exist", async () => {
-    const encounterCatalogMock = makeEncounterCatalogMock();
-
-    const ApiServerTestLive = makeApiServerTestLayerWith(encounterCatalogMock);
-
-    const TestLive = TestAppApiClientTestLive.pipe(
-      Layer.provide(ApiServerTestLive),
+    const error = await runWithTestApiServer(
+      getEncounter({ dungeonId: DUNGEON_ID, id: UNKNOWN_ENCOUNTER_ID }).pipe(
+        E.flip,
+      ),
+      ApiServerTestLive,
     );
 
-    const program = E.scoped(
-      E.gen(function* () {
-        const wasNotFound = yield* getEncounter({
-          dungeonId: DUNGEON_ID,
-          id: UNKNOWN_ENCOUNTER_ID,
-        }).pipe(
-          E.as(false),
-          E.catchTag("NotFound", () => {
-            return E.succeed(true);
-          }),
-        );
-
-        expect(wasNotFound).toBe(true);
-      }).pipe(E.provide(TestLive)),
-    );
-
-    await runTest(program);
+    expect(error._tag).toBe("NotFound");
   });
 });

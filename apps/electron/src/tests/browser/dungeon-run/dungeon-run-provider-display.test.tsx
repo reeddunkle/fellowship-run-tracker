@@ -20,7 +20,6 @@ function DungeonRunDisplayConsumer() {
       <div data-testid="milestone-1">
         {isMilestoneExpanded("1") ? "Expanded" : "Collapsed"}
       </div>
-
       <button
         onClick={() => {
           setMilestoneExpanded("1", true);
@@ -29,11 +28,9 @@ function DungeonRunDisplayConsumer() {
       >
         Expand milestone
       </button>
-
       <button onClick={expandAllMilestones} type="button">
         Expand all
       </button>
-
       <button onClick={collapseAllMilestones} type="button">
         Collapse all
       </button>
@@ -42,7 +39,7 @@ function DungeonRunDisplayConsumer() {
 }
 
 describe("DungeonRunProvider display state", () => {
-  test("starts milestones collapsed", async () => {
+  test("starts milestones collapsed and updates their expansion state", async () => {
     const eventStore = makeDungeonRunEventStore({
       makeEventStream: () => {
         return Stream.never;
@@ -58,20 +55,6 @@ describe("DungeonRunProvider display state", () => {
     await expect
       .element(screen.getByTestId("milestone-1"))
       .toHaveTextContent("Collapsed");
-  });
-
-  test("updates milestone expansion state", async () => {
-    const eventStore = makeDungeonRunEventStore({
-      makeEventStream: () => {
-        return Stream.never;
-      },
-    });
-
-    const screen = await render(
-      <TestDungeonRunProvider eventStore={eventStore}>
-        <DungeonRunDisplayConsumer />
-      </TestDungeonRunProvider>,
-    );
 
     await screen.getByRole("button", { name: "Expand milestone" }).click();
 

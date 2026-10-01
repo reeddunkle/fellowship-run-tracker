@@ -1,5 +1,4 @@
 import * as E from "effect/Effect";
-import * as Result from "effect/Result";
 import { describe, expect, test } from "vitest";
 
 import { ConfigurationDAO } from "@frt/db/daos/configuration/configuration-dao.ts";
@@ -71,19 +70,22 @@ describe("ConfigurationDAO identity", () => {
     const program = E.gen(function* () {
       const configurationDAO = yield* ConfigurationDAO;
 
-      yield* configurationDAO.save({
+      const existing = yield* configurationDAO.save({
         configuration: MOCK_FELLOWSHIP_CONFIGURATION,
         label: MOCK_CONFIGURATION_LABEL,
       });
 
-      const result = yield* configurationDAO
+      const error = yield* configurationDAO
         .save({
           configuration: duplicateConfiguration,
           label: MOCK_UPDATED_CONFIGURATION_LABEL,
         })
-        .pipe(E.result);
+        .pipe(E.flip);
 
-      expect(Result.isFailure(result)).toBe(true);
+      expect(error.reason).toMatchObject({
+        _tag: "ConfigurationDuplicateError",
+        configurationId: existing.id,
+      });
 
       const persistedConfigurations = yield* configurationDAO.getAll();
 
@@ -319,14 +321,17 @@ describe("ConfigurationDAO identity", () => {
         label: MOCK_CONFIGURATION_LABEL,
       });
 
-      const result = yield* configurationDAO
+      const error = yield* configurationDAO
         .saveReplacingDungeonAndLevel({
           configuration: duplicateRetainedConfiguration,
           label: MOCK_UPDATED_CONFIGURATION_LABEL,
         })
-        .pipe(E.result);
+        .pipe(E.flip);
 
-      expect(Result.isFailure(result)).toBe(true);
+      expect(error.reason).toMatchObject({
+        _tag: "ConfigurationDuplicateError",
+        configurationId: retained.id,
+      });
 
       const persistedConfigurations = yield* configurationDAO.getAll();
       const persistedIds = persistedConfigurations.map((persisted) => {

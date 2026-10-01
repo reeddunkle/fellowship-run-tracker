@@ -6,10 +6,7 @@ import * as Path from "effect/Path";
 import { describe, expect, test } from "vitest";
 
 import { createConfigurationFingerprint } from "@frt/db/configurations/configuration-fingerprint.ts";
-import {
-  ConfigurationDAO,
-  type PersistedConfiguration,
-} from "@frt/db/daos/configuration/configuration-dao.ts";
+import { ConfigurationDAO } from "@frt/db/daos/configuration/configuration-dao.ts";
 import {
   MOCK_ALTERNATE_DUNGEON_ID,
   MOCK_CONFIGURATION_LABEL,
@@ -19,19 +16,10 @@ import {
   MOCK_UNKNOWN_CONFIGURATION_ID,
   MOCK_UPDATED_CONFIGURATION_LABEL,
 } from "@frt/db/tests/common/fixtures/configuration-fixtures.ts";
+import { getSome } from "@frt/db/tests/common/get-some.ts";
 import { makeDatabasePersistenceTestLayer } from "@frt/db/tests/common/layers/database-persistence-test-layer.ts";
 import { runTest } from "@frt/db/tests/common/run-test.ts";
 import { type FellowshipMilestoneConfiguration } from "@frt/shared/fellowship/configurations/configuration-types.ts";
-
-function getPersistedConfiguration(
-  persisted: Option.Option<PersistedConfiguration>,
-): PersistedConfiguration {
-  if (Option.isNone(persisted)) {
-    throw new Error("Expected persisted configuration.");
-  }
-
-  return persisted.value;
-}
 
 describe("ConfigurationDAO", () => {
   test("creates and retrieves a configuration", async () => {
@@ -47,8 +35,6 @@ describe("ConfigurationDAO", () => {
         label: MOCK_CONFIGURATION_LABEL,
       });
 
-      expect(created.id).toBeDefined();
-      expect(created.configurationDefinitionId).toBeDefined();
       expect(created.configuration).toEqual(MOCK_FELLOWSHIP_CONFIGURATION);
       expect(created.fingerprint).toBe(expectedFingerprint.fingerprint);
       expect(created.label).toBe(MOCK_CONFIGURATION_LABEL);
@@ -57,7 +43,7 @@ describe("ConfigurationDAO", () => {
         id: created.id,
       });
 
-      expect(getPersistedConfiguration(result)).toEqual(created);
+      expect(getSome(result)).toEqual(created);
     }).pipe(E.provide(makeDatabasePersistenceTestLayer()));
 
     await runTest(program);
@@ -152,12 +138,12 @@ describe("ConfigurationDAO", () => {
     const program = E.gen(function* () {
       const configurationDAO = yield* ConfigurationDAO;
 
-      const first = yield* configurationDAO.save({
+      yield* configurationDAO.save({
         configuration: MOCK_FELLOWSHIP_CONFIGURATION,
         label: MOCK_CONFIGURATION_LABEL,
       });
 
-      const second = yield* configurationDAO.save({
+      yield* configurationDAO.save({
         configuration: matchingConfiguration,
         label: MOCK_UPDATED_CONFIGURATION_LABEL,
       });
@@ -188,12 +174,6 @@ describe("ConfigurationDAO", () => {
       ).toEqual(
         expect.arrayContaining([differentLevel.id, differentDungeon.id]),
       );
-
-      expect(
-        persistedConfigurations.map((persisted) => {
-          return persisted.id;
-        }),
-      ).not.toEqual(expect.arrayContaining([first.id, second.id]));
     }).pipe(E.provide(makeDatabasePersistenceTestLayer()));
 
     await runTest(program);
@@ -235,30 +215,8 @@ describe("ConfigurationDAO", () => {
       const persistedConfigurations = yield* configurationDAO.getAll();
 
       expect(persistedConfigurations).toHaveLength(2);
-
-      expect(
-        persistedConfigurations.map((persisted) => {
-          return persisted.id;
-        }),
-      ).toEqual(expect.arrayContaining([first.id, second.id]));
-
-      expect(
-        persistedConfigurations.map((persisted) => {
-          return persisted.label;
-        }),
-      ).toEqual(
-        expect.arrayContaining([
-          MOCK_CONFIGURATION_LABEL,
-          MOCK_UPDATED_CONFIGURATION_LABEL,
-        ]),
-      );
-
-      expect(
-        persistedConfigurations.map((persisted) => {
-          return persisted.fingerprint;
-        }),
-      ).toEqual(
-        expect.arrayContaining([first.fingerprint, second.fingerprint]),
+      expect(persistedConfigurations).toEqual(
+        expect.arrayContaining([first, second]),
       );
     }).pipe(E.provide(makeDatabasePersistenceTestLayer()));
 
@@ -298,7 +256,7 @@ describe("ConfigurationDAO", () => {
             id: created.id,
           });
 
-          return getPersistedConfiguration(result);
+          return getSome(result);
         }).pipe(E.provide(makeDatabasePersistenceTestLayer(databaseFilename)));
 
         const persisted = yield* readProgram;

@@ -1,4 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
+import * as Deferred from "effect/Deferred";
 import * as E from "effect/Effect";
 import * as Stream from "effect/Stream";
 import { describe, expect, test, vi } from "vitest";
@@ -241,12 +242,21 @@ describe("DungeonRunEventStore", () => {
   });
 
   test("stops the restarted event stream after a quick stop and restart", async () => {
+    let startedStreamCount = 0;
     let endedStreamCount = 0;
+    const releaseFirstStreamFinalizer = Deferred.makeUnsafe<void>();
 
-    const makeEventStream = vi.fn(() => {
+    const makeEventStream = () => {
+      startedStreamCount += 1;
+
+      const awaitRelease =
+        startedStreamCount === 1
+          ? Deferred.await(releaseFirstStreamFinalizer)
+          : E.void;
+
       return Stream.never.pipe(
         Stream.ensuring(
-          E.sleep("5 millis").pipe(
+          awaitRelease.pipe(
             E.andThen(
               E.sync(() => {
                 endedStreamCount += 1;
@@ -255,7 +265,7 @@ describe("DungeonRunEventStore", () => {
           ),
         ),
       );
-    });
+    };
 
     const store = makeDungeonRunEventStore({
       makeEventStream,
@@ -265,11 +275,13 @@ describe("DungeonRunEventStore", () => {
     store.stop();
     store.start();
 
+    expect(startedStreamCount).toBe(2);
+
+    Deferred.doneUnsafe(releaseFirstStreamFinalizer, E.void);
+
     await vi.waitFor(() => {
       expect(endedStreamCount).toBe(1);
     });
-
-    await E.runPromise(E.sleep("1 millis"));
 
     store.stop();
 

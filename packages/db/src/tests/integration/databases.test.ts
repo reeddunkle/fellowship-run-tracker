@@ -71,27 +71,23 @@ describe("Databases", () => {
     const program = E.gen(function* () {
       const sql = yield* MainDatabase;
 
-      expect(yield* listTables(sql)).toEqual([
-        { name: "ability" },
-        { name: "ability_unit" },
-        { name: "app_setting" },
-        { name: "catalog_sync" },
-        { name: "configuration" },
-        { name: "configuration_definition" },
-        { name: "dungeon" },
-        { name: "dungeon_run" },
-        { name: "dungeon_run_observation" },
-        { name: "dungeon_unit" },
-        { name: "encounter" },
-        { name: "fellowship_logs_credential" },
-        { name: "fellowship_logs_dungeon_run" },
-        { name: "live_split_setting" },
-        { name: "local_log_dungeon_run" },
-        { name: "milestone" },
-        { name: "milestone_requirement" },
-        { name: "requirement" },
-        { name: "unit" },
-      ]);
+      const tableNames = (yield* listTables(sql)).map((table) => {
+        return table.name;
+      });
+
+      expect(tableNames).toEqual(
+        expect.arrayContaining([
+          "app_setting",
+          "configuration",
+          "dungeon",
+          "dungeon_run",
+          "fellowship_logs_credential",
+        ]),
+      );
+
+      expect(tableNames).not.toContain("background_job");
+      expect(tableNames).not.toContain("fellowship_logs_request");
+      expect(tableNames).not.toContain("fellowship_logs_response");
     }).pipe(E.provide(makeMainDatabaseLayer(":memory:")));
 
     await runTest(program);

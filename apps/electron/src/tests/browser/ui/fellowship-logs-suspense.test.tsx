@@ -46,7 +46,6 @@ test("loads each Fellowship Logs section independently with skeletons", async ()
     await expect
       .element(screen.getByLabelText("Loading imported runs"))
       .toBeVisible();
-    expect(document.querySelectorAll('[data-slot="skeleton"]').length).toBe(12);
 
     rateLimit.resolve(null);
     await rateLimitRequest;

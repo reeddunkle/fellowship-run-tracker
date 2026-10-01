@@ -6,6 +6,7 @@ import { describe, expect, test } from "vitest";
 import { DungeonRunDAO } from "@frt/db/daos/dungeon-run/dungeon-run-dao.ts";
 import { DungeonRunObservationDAO } from "@frt/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
 import { DungeonRunObservationDAOError } from "@frt/db/errors/dungeon-run-observation-dao-error.ts";
+import { createDungeonRun } from "@frt/db/tests/common/create-dungeon-run.ts";
 import {
   MOCK_DUNGEON_ID,
   MOCK_DUNGEON_LEVEL,
@@ -25,21 +26,6 @@ const THIRD_OBSERVED_AT = DateTime.makeUnsafe("2026-09-05T16:00:30.000Z");
 const SECOND_RUN_STARTED_AT = DateTime.makeUnsafe("2026-09-05T17:00:00.000Z");
 
 const SECOND_RUN_OBSERVED_AT = DateTime.makeUnsafe("2026-09-05T17:00:15.000Z");
-
-const createDungeonRun = E.fn("test.create-dungeon-run")(function* (options?: {
-  readonly isOwnRun?: boolean;
-}) {
-  const dungeonRunDAO = yield* DungeonRunDAO;
-
-  return yield* dungeonRunDAO.create({
-    dungeonId: MOCK_DUNGEON_ID,
-    dungeonLevel: MOCK_DUNGEON_LEVEL,
-    endedAt: null,
-    isOwnRun: options?.isOwnRun ?? true,
-    source: "LOCAL_LOG",
-    startedAt: null,
-  });
-});
 
 const makeDungeonRunObservationTestContext = E.gen(function* () {
   const dungeonRun = yield* createDungeonRun();
@@ -92,11 +78,6 @@ describe("DungeonRunObservationDAO", () => {
         targetId: "42",
         type: "UNIT_DEATH",
       });
-
-      expect(observations[0]?.id).toBeDefined();
-      expect(observations[0]?.createdAt).toBeDefined();
-      expect(observations[1]?.id).toBeDefined();
-      expect(observations[1]?.createdAt).toBeDefined();
     }).pipe(E.provide(makeDatabasePersistenceTestLayer()));
 
     await runTest(program);

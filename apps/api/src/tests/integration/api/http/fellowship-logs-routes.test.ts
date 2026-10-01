@@ -6,7 +6,6 @@ import * as HttpClientRequest from "effect/http/HttpClientRequest";
 import * as HttpServer from "effect/http/HttpServer";
 import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Layer from "effect/Layer";
-import * as NetAddress from "effect/net/NetAddress";
 import * as Schema from "effect/Schema";
 import { describe, expect, test } from "vitest";
 
@@ -15,6 +14,7 @@ import {
   FellowshipLogsGatewayGraphQLResponseError,
   FellowshipLogsGatewayRateLimitExceededError,
 } from "@frt/api/errors/fellowship-logs-gateway-error.ts";
+import { getBaseUrl } from "@frt/api/tests/common/get-base-url.ts";
 import { makeApiServerTestLayerWith } from "@frt/api/tests/common/layers/api-server-test-layer.ts";
 import {
   type MakeFellowshipLogsMockOptions,
@@ -46,18 +46,6 @@ const QUEUE_PAYLOAD = {
 const MOCK_DUNGEON_RUN_ID = Schema.decodeSync(DungeonRunIdSchema)(
   "00000000-0000-7000-8000-000000000000",
 );
-
-function getBaseUrl(address: NetAddress.SocketAddress) {
-  if (NetAddress.isUnixPathAddress(address)) {
-    throw new Error("HTTP test does not support Unix socket addresses.");
-  }
-
-  const hostAddress = NetAddress.isUnspecified(address.address)
-    ? NetAddress.inetAddressUnsafe(NetAddress.ipv4Loopback, address.port)
-    : address;
-
-  return NetAddress.formatUrlUnsafe(hostAddress);
-}
 
 function postJson(url: string, body: unknown) {
   return E.gen(function* () {

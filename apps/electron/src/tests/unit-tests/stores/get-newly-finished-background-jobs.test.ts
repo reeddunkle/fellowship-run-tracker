@@ -1,46 +1,15 @@
-import * as Schema from "effect/Schema";
 import { describe, expect, test } from "vitest";
 
 import {
   type BackgroundJobApiSnapshot,
   type ImportFellowshipLogsDungeonRunBackgroundJobApiItem,
 } from "@frt/shared/background-job/background-job-api-schema.ts";
-import { BackgroundJobIdSchema } from "@frt/shared/background-job/background-job-id-schema.ts";
-import { FellowshipLogsFightIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
-import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
 import {
   getNewlyFinishedBackgroundJobs,
   getNewlyWaitingBackgroundJobs,
 } from "@/renderer/stores/background-job/get-newly-finished-background-jobs.ts";
-
-function makeImportJob(
-  id: string,
-  status: ImportFellowshipLogsDungeonRunBackgroundJobApiItem["status"],
-): ImportFellowshipLogsDungeonRunBackgroundJobApiItem {
-  return {
-    attempts: 0,
-    availableAtMilliseconds: status === "WAITING" ? 60_000 : null,
-    createdAtMilliseconds: 0,
-    error: null,
-    finishedAtMilliseconds: null,
-    id: Schema.decodeSync(BackgroundJobIdSchema)(id),
-    kind: "ImportFellowshipLogsDungeonRun",
-    payload: {
-      dungeonId: "100006",
-      dungeonLevel: 12,
-      fightId: Schema.decodeSync(FellowshipLogsFightIdSchema)(15),
-      isOwnRun: true,
-      reportCode: Schema.decodeSync(FellowshipLogsReportCodeSchema)(
-        "XdfFZzgHBJNr6m3v",
-      ),
-    },
-    progress: null,
-    result: null,
-    startedAtMilliseconds: null,
-    status,
-  };
-}
+import { makeImportJob } from "@/tests/common/fixtures/background-job-fixtures.ts";
 
 function makeSnapshot(
   jobs: ReadonlyArray<ImportFellowshipLogsDungeonRunBackgroundJobApiItem>,
@@ -62,6 +31,27 @@ describe("getNewlyWaitingBackgroundJobs", () => {
     expect(
       getNewlyWaitingBackgroundJobs(previous, next).map((job) => job.id),
     ).toEqual(["job-1"]);
+  });
+});
+
+describe("getNewlyFinishedBackgroundJobs", () => {
+  test("finds jobs that just succeeded or failed", () => {
+    const previous = makeSnapshot([
+      makeImportJob("succeeded", "RUNNING"),
+      makeImportJob("failed", "RUNNING"),
+      makeImportJob("already-finished", "SUCCEEDED"),
+      makeImportJob("still-running", "RUNNING"),
+    ]);
+    const next = makeSnapshot([
+      makeImportJob("succeeded", "SUCCEEDED"),
+      makeImportJob("failed", "FAILED"),
+      makeImportJob("already-finished", "SUCCEEDED"),
+      makeImportJob("still-running", "RUNNING"),
+    ]);
+
+    expect(
+      getNewlyFinishedBackgroundJobs(previous, next).map((job) => job.id),
+    ).toEqual(["succeeded", "failed"]);
   });
 
   test("doesn't count waiting jobs as finished", () => {

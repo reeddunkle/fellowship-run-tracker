@@ -55,12 +55,6 @@ describe("FellowshipTracker LiveSplit", () => {
         ];
 
         expect(commands).toEqual(expectedCommands);
-
-        expect(
-          commands.filter((command) => {
-            return command === splitCommand;
-          }),
-        ).toHaveLength(configuration.milestones.length);
       }),
     ).pipe(E.provide(NodePath.layer));
 

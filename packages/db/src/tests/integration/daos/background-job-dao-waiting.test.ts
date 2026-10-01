@@ -4,6 +4,7 @@ import * as Option from "effect/Option";
 import { describe, expect, test } from "vitest";
 
 import { BackgroundJobDAO } from "@frt/db/daos/background-job/background-job-dao.ts";
+import { getSome } from "@frt/db/tests/common/get-some.ts";
 import { makeDatabasePersistenceTestLayer } from "@frt/db/tests/common/layers/database-persistence-test-layer.ts";
 import { runTest } from "@frt/db/tests/common/run-test.ts";
 
@@ -54,14 +55,6 @@ const claimAndPark = E.fn("test.claim-and-park-background-job")(function* (
 
   return job;
 });
-
-function getSome<T>(option: Option.Option<T>): T {
-  if (Option.isNone(option)) {
-    throw new Error("Expected a value.");
-  }
-
-  return option.value;
-}
 
 function fromNow(minutes: number) {
   return DateTime.add(DateTime.nowUnsafe(), { minutes });

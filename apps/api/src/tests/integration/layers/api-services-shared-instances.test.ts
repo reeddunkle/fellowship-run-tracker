@@ -4,8 +4,8 @@ import * as FileSystem from "effect/FileSystem";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Path from "effect/Path";
-import * as Schedule from "effect/Schedule";
 import * as Schema from "effect/Schema";
+import * as Stream from "effect/Stream";
 import { describe, expect, test } from "vitest";
 
 import { ApiServicesLayer } from "@frt/api/layers/api-services-layer.ts";
@@ -70,15 +70,16 @@ describe("API services layer", () => {
           reportCode,
         });
 
-        yield* BackgroundJobDAO.use((dao) => {
-          return dao.getById({ id: job.id });
-        }).pipe(
-          E.repeat({
-            schedule: Schedule.spaced("10 millis"),
-            until: (row) => {
-              return Option.isSome(row) && row.value.status === "SUCCEEDED";
-            },
+        yield* backgroundJobQueue.changes.pipe(
+          Stream.mapEffect(() => {
+            return BackgroundJobDAO.use((dao) => {
+              return dao.getById({ id: job.id });
+            });
           }),
+          Stream.filter((row) => {
+            return Option.isSome(row) && row.value.status === "SUCCEEDED";
+          }),
+          Stream.runHead,
           E.timeout("10 seconds"),
         );
 

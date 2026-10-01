@@ -3,217 +3,121 @@ import { describe, expect, test } from "vitest";
 
 import { makePersistenceLayer } from "@frt/api/layers/persistence-layer.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
+import { FELLOWSHIP_ABILITY } from "@frt/db/catalogs/ability/fellowship-ability-catalog.ts";
+import { FELLOWSHIP_DUNGEON } from "@frt/db/catalogs/dungeon/fellowship-dungeon-catalog.ts";
+import { FELLOWSHIP_ENCOUNTER } from "@frt/db/catalogs/encounter/fellowship-encounter-catalog.ts";
+import { CATALOG_CHECKSUMS } from "@frt/db/catalogs/generated/catalog-checksums.ts";
+import { loadFellowshipUnitCatalog } from "@frt/db/catalogs/unit/load-fellowship-unit-catalog.ts";
 import { MainDatabase } from "@frt/db/databases/main-database.ts";
 import { makeTestDatabaseOptions } from "@frt/db/tests/common/make-test-database-options.ts";
 
 describe("PersistenceLayer", () => {
-  test("syncs catalog tables", async () => {
+  test("syncs every catalog table from its source catalog", async () => {
     const program = E.gen(function* () {
       const sql = yield* MainDatabase;
+      const unitCatalog = yield* loadFellowshipUnitCatalog();
 
-      const dungeons = yield* sql<{
-        readonly createdAt: number;
-        readonly id: string;
-        readonly mapId: string;
-        readonly name: string;
-        readonly updatedAt: number;
+      const [counts] = yield* sql<{
+        readonly abilityCount: number;
+        readonly abilityUnitCount: number;
+        readonly dungeonCount: number;
+        readonly dungeonUnitCount: number;
+        readonly encounterCount: number;
+        readonly inactiveUnitCount: number;
+        readonly unitCount: number;
       }>`
         SELECT
-          created_at,
-          id,
-          map_id,
-          name,
-          updated_at
-        FROM
-          dungeon
-        WHERE
-          id = '11'
+          (
+            SELECT
+              COUNT(*)
+            FROM
+              ability
+          ) AS ability_count,
+          (
+            SELECT
+              COUNT(*)
+            FROM
+              ability_unit
+          ) AS ability_unit_count,
+          (
+            SELECT
+              COUNT(*)
+            FROM
+              dungeon
+          ) AS dungeon_count,
+          (
+            SELECT
+              COUNT(*)
+            FROM
+              dungeon_unit
+          ) AS dungeon_unit_count,
+          (
+            SELECT
+              COUNT(*)
+            FROM
+              encounter
+          ) AS encounter_count,
+          (
+            SELECT
+              COUNT(*)
+            FROM
+              unit
+            WHERE
+              status = 'INACTIVE'
+          ) AS inactive_unit_count,
+          (
+            SELECT
+              COUNT(*)
+            FROM
+              unit
+          ) AS unit_count
       `;
 
-      const abilities = yield* sql<{
-        readonly createdAt: number;
-        readonly id: string;
-        readonly name: string;
-        readonly updatedAt: number;
+      const catalogSyncs = yield* sql<{
+        readonly catalog: string;
+        readonly checksum: string;
       }>`
         SELECT
-          created_at,
-          id,
-          name,
-          updated_at
-        FROM
-          ability
-        WHERE
-          id = '634'
-      `;
-
-      const abilityUnits = yield* sql<{
-        readonly abilityId: string;
-        readonly createdAt: number;
-        readonly unitId: string;
-        readonly updatedAt: number;
-      }>`
-        SELECT
-          ability_id,
-          created_at,
-          unit_id,
-          updated_at
-        FROM
-          ability_unit
-        WHERE
-          ability_id = '634'
-      `;
-
-      const encounters = yield* sql<{
-        readonly createdAt: number;
-        readonly dungeonId: string;
-        readonly id: string;
-        readonly name: string;
-        readonly updatedAt: number;
-      }>`
-        SELECT
-          created_at,
-          dungeon_id,
-          id,
-          name,
-          updated_at
-        FROM
-          encounter
-        WHERE
-          dungeon_id = '24'
-          AND id = '33'
-      `;
-
-      const chicken = yield* sql<{
-        readonly createdAt: number;
-        readonly groupKey: string | null;
-        readonly id: string;
-        readonly name: string;
-        readonly status: string;
-        readonly updatedAt: number;
-        readonly variant: string | null;
-      }>`
-        SELECT
-          created_at,
-          group_key,
-          id,
-          name,
-          status,
-          updated_at,
-          variant
-        FROM
-          unit
-        WHERE
-          id = '276'
-      `;
-
-      const inactiveUnit = yield* sql<{
-        readonly id: string;
-        readonly status: string;
-      }>`
-        SELECT
-          id,
-          status
-        FROM
-          unit
-        WHERE
-          id = '282'
-      `;
-
-      const unitCount = yield* sql<{ readonly count: number }>`
-        SELECT
-          COUNT(*) AS count
-        FROM
-          unit
-      `;
-
-      const dungeonUnitCount = yield* sql<{ readonly count: number }>`
-        SELECT
-          COUNT(*) AS count
-        FROM
-          dungeon_unit
-      `;
-
-      const abilityUnitCount = yield* sql<{ readonly count: number }>`
-        SELECT
-          COUNT(*) AS count
-        FROM
-          ability_unit
-      `;
-
-      const catalogSyncCount = yield* sql<{ readonly count: number }>`
-        SELECT
-          COUNT(*) AS count
+          catalog,
+          checksum
         FROM
           catalog_sync
+        ORDER BY
+          catalog
       `;
 
-      expect(dungeons).toEqual([
-        {
-          createdAt: expect.any(Number),
-          id: "11",
-          mapId: "26",
-          name: "Everdawn Grove",
-          updatedAt: expect.any(Number),
-        },
-      ]);
+      const abilities = Object.values(FELLOWSHIP_ABILITY);
 
-      expect(abilities).toEqual([
-        {
-          createdAt: expect.any(Number),
-          id: "634",
-          name: "Stormy Retreat",
-          updatedAt: expect.any(Number),
-        },
-      ]);
+      const dungeonUnitCount = unitCatalog.reduce((total, unit) => {
+        return total + unit.dungeonIds.length;
+      }, 0);
 
-      expect(abilityUnits).toEqual([
-        {
-          abilityId: "634",
-          createdAt: expect.any(Number),
-          unitId: "133",
-          updatedAt: expect.any(Number),
-        },
-      ]);
+      const inactiveUnitCount = unitCatalog.filter((unit) => {
+        return unit.status === "INACTIVE";
+      }).length;
 
-      expect(encounters).toEqual([
-        {
-          createdAt: expect.any(Number),
-          dungeonId: "24",
-          id: "33",
-          name: "Vexira",
-          updatedAt: expect.any(Number),
-        },
-      ]);
+      const expectedCatalogSyncs = Object.entries(CATALOG_CHECKSUMS)
+        .map(([catalog, checksum]) => {
+          return {
+            catalog: catalog.toUpperCase(),
+            checksum,
+          };
+        })
+        .toSorted((left, right) => {
+          return left.catalog.localeCompare(right.catalog);
+        });
 
-      expect(chicken).toEqual([
-        {
-          createdAt: expect.any(Number),
-          groupKey: "CHICKEN",
-          id: "276",
-          name: "Chicken",
-          status: "ACTIVE",
-          updatedAt: expect.any(Number),
-          variant: "Small",
-        },
-      ]);
+      expect(counts).toEqual({
+        abilityCount: abilities.length,
+        abilityUnitCount: abilities.length,
+        dungeonCount: Object.keys(FELLOWSHIP_DUNGEON).length,
+        dungeonUnitCount,
+        encounterCount: Object.keys(FELLOWSHIP_ENCOUNTER).length,
+        inactiveUnitCount,
+        unitCount: unitCatalog.length,
+      });
 
-      expect(inactiveUnit).toEqual([
-        {
-          id: "282",
-          status: "INACTIVE",
-        },
-      ]);
-
-      expect(unitCount[0]?.count).toBeGreaterThan(0);
-      expect(dungeonUnitCount[0]?.count).toBeGreaterThan(0);
-      expect(abilityUnitCount[0]?.count).toBeGreaterThan(0);
-
-      expect(catalogSyncCount).toEqual([
-        {
-          count: 4,
-        },
-      ]);
+      expect(catalogSyncs).toEqual(expectedCatalogSyncs);
     }).pipe(E.provide(makePersistenceLayer(makeTestDatabaseOptions())));
 
     await runTest(program);

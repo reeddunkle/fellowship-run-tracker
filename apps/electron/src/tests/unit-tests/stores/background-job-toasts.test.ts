@@ -1,10 +1,7 @@
 import * as Schema from "effect/Schema";
 import { describe, expect, test, vi } from "vitest";
 
-import { type ImportFellowshipLogsDungeonRunBackgroundJobApiItem } from "@frt/shared/background-job/background-job-api-schema.ts";
 import { BackgroundJobIdSchema } from "@frt/shared/background-job/background-job-id-schema.ts";
-import { FellowshipLogsFightIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
-import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
 import {
   BACKGROUND_JOB_TOAST_LINGER_MILLISECONDS,
@@ -18,40 +15,11 @@ import {
   sortBackgroundJobsForToasts,
   syncBackgroundJobToasts,
 } from "@/renderer/stores/background-job/sync-background-job-toasts.ts";
+import { makeImportJob } from "@/tests/common/fixtures/background-job-fixtures.ts";
 
 const NOW = 100_000;
 
 const toJobId = Schema.decodeSync(BackgroundJobIdSchema);
-
-function makeImportJob(
-  id: string,
-  status: ImportFellowshipLogsDungeonRunBackgroundJobApiItem["status"],
-  finishedAtMilliseconds: number | null = null,
-  createdAtMilliseconds = 0,
-): ImportFellowshipLogsDungeonRunBackgroundJobApiItem {
-  return {
-    attempts: 0,
-    availableAtMilliseconds: null,
-    createdAtMilliseconds,
-    error: null,
-    finishedAtMilliseconds,
-    id: toJobId(id),
-    kind: "ImportFellowshipLogsDungeonRun",
-    payload: {
-      dungeonId: "100006",
-      dungeonLevel: 12,
-      fightId: Schema.decodeSync(FellowshipLogsFightIdSchema)(15),
-      isOwnRun: true,
-      reportCode: Schema.decodeSync(FellowshipLogsReportCodeSchema)(
-        "XdfFZzgHBJNr6m3v",
-      ),
-    },
-    progress: null,
-    result: null,
-    startedAtMilliseconds: null,
-    status,
-  };
-}
 
 function getIds(jobs: ReadonlyArray<{ readonly id: string }>) {
   return jobs.map((job) => {
@@ -65,12 +33,12 @@ describe("getToastVisibleBackgroundJobs", () => {
       makeImportJob("queued", "QUEUED"),
       makeImportJob("running", "RUNNING"),
       makeImportJob("waiting", "WAITING"),
-      makeImportJob("recent", "SUCCEEDED", NOW - 1_000),
-      makeImportJob(
-        "expired",
-        "FAILED",
-        NOW - BACKGROUND_JOB_TOAST_LINGER_MILLISECONDS,
-      ),
+      makeImportJob("recent", "SUCCEEDED", {
+        finishedAtMilliseconds: NOW - 1_000,
+      }),
+      makeImportJob("expired", "FAILED", {
+        finishedAtMilliseconds: NOW - BACKGROUND_JOB_TOAST_LINGER_MILLISECONDS,
+      }),
       makeImportJob("unknown-finish", "SUCCEEDED"),
     ];
 
@@ -87,9 +55,15 @@ describe("getNextToastExpiryMilliseconds", () => {
   test("returns the soonest upcoming expiry", () => {
     const jobs = [
       makeImportJob("running", "RUNNING"),
-      makeImportJob("later", "SUCCEEDED", NOW - 1_000),
-      makeImportJob("sooner", "FAILED", NOW - 3_000),
-      makeImportJob("expired", "SUCCEEDED", NOW - 10_000),
+      makeImportJob("later", "SUCCEEDED", {
+        finishedAtMilliseconds: NOW - 1_000,
+      }),
+      makeImportJob("sooner", "FAILED", {
+        finishedAtMilliseconds: NOW - 3_000,
+      }),
+      makeImportJob("expired", "SUCCEEDED", {
+        finishedAtMilliseconds: NOW - 10_000,
+      }),
     ];
 
     expect(getNextToastExpiryMilliseconds(jobs, NOW)).toBe(
@@ -115,11 +89,15 @@ describe("getBackgroundJobToastType", () => {
     expect(getBackgroundJobToastType(makeImportJob("w", "WAITING"))).toBe(
       "loading",
     );
-    expect(getBackgroundJobToastType(makeImportJob("f", "FAILED", NOW))).toBe(
-      "error",
-    );
     expect(
-      getBackgroundJobToastType(makeImportJob("s", "SUCCEEDED", NOW)),
+      getBackgroundJobToastType(
+        makeImportJob("f", "FAILED", { finishedAtMilliseconds: NOW }),
+      ),
+    ).toBe("error");
+    expect(
+      getBackgroundJobToastType(
+        makeImportJob("s", "SUCCEEDED", { finishedAtMilliseconds: NOW }),
+      ),
     ).toBe("success");
   });
 });
@@ -136,7 +114,7 @@ describe("dismissed toasts", () => {
     ).toBe(true);
     expect(
       isBackgroundJobToastDismissed(
-        makeImportJob("job-1", "SUCCEEDED", NOW),
+        makeImportJob("job-1", "SUCCEEDED", { finishedAtMilliseconds: NOW }),
         dismissed,
       ),
     ).toBe(true);
@@ -153,7 +131,7 @@ describe("dismissed toasts", () => {
 
     expect(
       isBackgroundJobToastDismissed(
-        makeImportJob("job-1", "FAILED", NOW),
+        makeImportJob("job-1", "FAILED", { finishedAtMilliseconds: NOW }),
         dismissed,
       ),
     ).toBe(true);
@@ -216,10 +194,25 @@ describe("syncBackgroundJobToasts", () => {
 describe("sortBackgroundJobsForToasts", () => {
   test("puts the current job first, then the queue in order, then finished jobs", () => {
     const entries = [
-      { job: makeImportJob("queued-later", "QUEUED", null, 4) },
-      { job: makeImportJob("succeeded", "SUCCEEDED", NOW, 1) },
-      { job: makeImportJob("queued-sooner", "QUEUED", null, 3) },
-      { job: makeImportJob("running", "RUNNING", null, 2) },
+      {
+        job: makeImportJob("queued-later", "QUEUED", {
+          createdAtMilliseconds: 4,
+        }),
+      },
+      {
+        job: makeImportJob("succeeded", "SUCCEEDED", {
+          createdAtMilliseconds: 1,
+          finishedAtMilliseconds: NOW,
+        }),
+      },
+      {
+        job: makeImportJob("queued-sooner", "QUEUED", {
+          createdAtMilliseconds: 3,
+        }),
+      },
+      {
+        job: makeImportJob("running", "RUNNING", { createdAtMilliseconds: 2 }),
+      },
     ];
 
     expect(
