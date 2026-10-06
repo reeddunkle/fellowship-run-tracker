@@ -10,9 +10,9 @@ type LogDungeonRunProcessingEventOptions = {
   readonly processingEvent: DungeonRunProcessingEvent;
 };
 
-export const logDungeonRunProcessingEvent = E.fn(function* ({
-  processingEvent,
-}: LogDungeonRunProcessingEventOptions) {
+export const logDungeonRunProcessingEvent = E.fn(
+  "logDungeonRunProcessingEvent",
+)(function* ({ processingEvent }: LogDungeonRunProcessingEventOptions) {
   yield* Match.value(processingEvent).pipe(
     Match.when(
       {

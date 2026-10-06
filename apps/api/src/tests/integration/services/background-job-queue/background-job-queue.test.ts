@@ -513,15 +513,13 @@ describe("BackgroundJobQueue", () => {
           const release = yield* Deferred.make<void>();
 
           const importReport: FellowshipLogsDungeonRunImporterShape["importReport"] =
-            ({ onProgress }) => {
-              return E.gen(function* () {
-                yield* onProgress?.(0.5) ?? E.void;
-                yield* Deferred.succeed(reported, undefined);
-                yield* Deferred.await(release);
+            E.fn("test.importReport")(function* ({ onProgress }) {
+              yield* onProgress?.(0.5) ?? E.void;
+              yield* Deferred.succeed(reported, undefined);
+              yield* Deferred.await(release);
 
-                return { dungeonRunId: STUB_DUNGEON_RUN_ID };
-              });
-            };
+              return { dungeonRunId: STUB_DUNGEON_RUN_ID };
+            });
 
           return yield* E.gen(function* () {
             const backgroundJobQueue = yield* BackgroundJobQueue;
@@ -565,14 +563,12 @@ describe("BackgroundJobQueue", () => {
           const reported = yield* Deferred.make<void>();
 
           const importReport: FellowshipLogsDungeonRunImporterShape["importReport"] =
-            ({ onProgress }) => {
-              return E.gen(function* () {
-                yield* onProgress?.(0.25) ?? E.void;
-                yield* Deferred.succeed(reported, undefined);
+            E.fn("test.importReport")(function* ({ onProgress }) {
+              yield* onProgress?.(0.25) ?? E.void;
+              yield* Deferred.succeed(reported, undefined);
 
-                return yield* E.never;
-              });
-            };
+              return yield* E.never;
+            });
 
           return yield* E.gen(function* () {
             const backgroundJobQueue = yield* BackgroundJobQueue;

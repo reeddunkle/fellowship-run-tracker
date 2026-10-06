@@ -199,26 +199,24 @@ const makeRecordedFightQuery = E.fn("test.makeRecordedFightQuery")(function* (
     }
   };
 
-  const query: Query = (request, responseSchema) => {
-    return E.gen(function* () {
-      const queryName = getQueryName(request.query);
+  const query: Query = E.fn("test.query")(function* (request, responseSchema) {
+    const queryName = getQueryName(request.query);
 
-      control.requests.push(queryName);
+    control.requests.push(queryName);
 
-      const body = yield* getBody(queryName, request.variables);
+    const body = yield* getBody(queryName, request.variables);
 
-      return yield* Schema.decodeEffect(
-        makeFellowshipLogsGatewayGraphQLResponseSchema(responseSchema),
-      )(body).pipe(
-        E.mapError((cause) => {
-          return new FellowshipLogsGatewayRequestError({
-            cause,
-            operation: "Query",
-          });
-        }),
-      );
-    });
-  };
+    return yield* Schema.decodeEffect(
+      makeFellowshipLogsGatewayGraphQLResponseSchema(responseSchema),
+    )(body).pipe(
+      E.mapError((cause) => {
+        return new FellowshipLogsGatewayRequestError({
+          cause,
+          operation: "Query",
+        });
+      }),
+    );
+  });
 
   return query;
 });

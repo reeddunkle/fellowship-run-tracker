@@ -348,7 +348,9 @@ export const makeBackgroundJobQueue = E.gen(function* () {
     },
   );
 
-  const awaitWork = E.fn(function* (queue: BackgroundJobQueueName) {
+  const awaitWork = E.fn("BackgroundJobQueue.awaitWork")(function* (
+    queue: BackgroundJobQueueName,
+  ) {
     const { holdWhileWaiting } = BACKGROUND_JOB_QUEUES[queue];
     const nextAvailableAt = yield* backgroundJobDAO.getNextAvailableAt({
       holdWhileWaiting,
@@ -371,7 +373,9 @@ export const makeBackgroundJobQueue = E.gen(function* () {
     );
   });
 
-  const runWorker = E.fn(function* (queue: BackgroundJobQueueName) {
+  const runWorker = E.fn("BackgroundJobQueue.runWorker")(function* (
+    queue: BackgroundJobQueueName,
+  ) {
     const latch = latches[queue];
     const { holdWhileWaiting } = BACKGROUND_JOB_QUEUES[queue];
 
@@ -496,8 +500,10 @@ export const makeBackgroundJobQueue = E.gen(function* () {
     }),
   );
 
-  const cancel: BackgroundJobQueueShape["cancel"] = ({ id }) => {
-    return E.gen(function* () {
+  const cancel: BackgroundJobQueueShape["cancel"] = E.fn(
+    "BackgroundJobQueue.cancel",
+  )(
+    function* ({ id }) {
       const fiberToInterrupt = yield* stateLock.withPermit(
         E.gen(function* () {
           const job = yield* backgroundJobDAO.getById({ id });
@@ -565,14 +571,13 @@ export const makeBackgroundJobQueue = E.gen(function* () {
       if (fiberToInterrupt !== undefined) {
         yield* Fiber.interrupt(fiberToInterrupt);
       }
-    }).pipe(
-      E.mapError((cause) => {
-        return cause instanceof BackgroundJobQueueNotFoundError
-          ? cause
-          : new BackgroundJobQueueError({ cause, operation: "Cancel" });
-      }),
-    );
-  };
+    },
+    E.mapError((cause) => {
+      return cause instanceof BackgroundJobQueueNotFoundError
+        ? cause
+        : new BackgroundJobQueueError({ cause, operation: "Cancel" });
+    }),
+  );
 
   const dismiss: BackgroundJobQueueShape["dismiss"] = ({ id }) => {
     return backgroundJobDAO

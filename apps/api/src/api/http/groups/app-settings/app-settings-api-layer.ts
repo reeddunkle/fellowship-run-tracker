@@ -22,7 +22,7 @@ function mapAppSettingsApiError(
 const AppSettingsApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "appSettings",
-  E.fn(function* (handlers) {
+  E.fn("AppSettingsApi.handlers")(function* (handlers) {
     const appSettings = yield* AppSettings;
 
     return handlers

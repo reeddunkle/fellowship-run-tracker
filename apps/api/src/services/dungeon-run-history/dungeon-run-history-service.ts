@@ -47,27 +47,24 @@ const makeDungeonRunHistory = E.gen(function* () {
     });
   };
 
-  const getHistory: DungeonRunHistoryShape["getHistory"] = ({
-    dungeonId,
-    dungeonLevel,
-  }) => {
-    return E.gen(function* () {
-      const observations = yield* dungeonRunObservationDAO.getHistoryByDungeon({
-        dungeonId,
-        dungeonLevel,
-      });
-
-      return yield* createDungeonRunApiResponse({
-        observations,
-      }).pipe(
-        E.mapError((cause) => {
-          return new DungeonRunApiResponseError({
-            cause,
-          });
-        }),
-      );
+  const getHistory: DungeonRunHistoryShape["getHistory"] = E.fn(
+    "DungeonRunHistory.getHistory",
+  )(function* ({ dungeonId, dungeonLevel }) {
+    const observations = yield* dungeonRunObservationDAO.getHistoryByDungeon({
+      dungeonId,
+      dungeonLevel,
     });
-  };
+
+    return yield* createDungeonRunApiResponse({
+      observations,
+    }).pipe(
+      E.mapError((cause) => {
+        return new DungeonRunApiResponseError({
+          cause,
+        });
+      }),
+    );
+  });
 
   return {
     deleteHistory,

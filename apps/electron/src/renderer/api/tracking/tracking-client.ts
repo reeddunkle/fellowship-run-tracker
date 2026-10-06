@@ -4,15 +4,15 @@ import { type StartTrackingApiRequest } from "@frt/api-contract/application/fell
 
 import { AppApiClient } from "@/renderer/services/app-api-client/app-api-client";
 
-export function startTracking(request: StartTrackingApiRequest) {
-  return E.gen(function* () {
-    const client = yield* AppApiClient;
+export const startTracking = E.fn("startTracking")(function* (
+  request: StartTrackingApiRequest,
+) {
+  const client = yield* AppApiClient;
 
-    return yield* client.tracking.startTracking({
-      payload: request,
-    });
+  return yield* client.tracking.startTracking({
+    payload: request,
   });
-}
+});
 
 export function stopTracking() {
   return E.gen(function* () {

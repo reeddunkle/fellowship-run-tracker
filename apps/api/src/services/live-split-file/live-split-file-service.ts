@@ -43,27 +43,25 @@ function makeLiveSplitFile(): LiveSplitFileShape {
     });
   };
 
-  const writeLSSFile = ({
+  const writeLSSFile = E.fn("LiveSplitFile.writeLSSFile")(function* ({
     configuration,
     dungeonName,
     filePath,
-  }: WriteLSSFileOptions) => {
-    return E.gen(function* () {
-      const fileSystem = yield* FileSystem.FileSystem;
-      const path = yield* Path.Path;
+  }: WriteLSSFileOptions) {
+    const fileSystem = yield* FileSystem.FileSystem;
+    const path = yield* Path.Path;
 
-      const contents = createLSS({
-        configuration,
-        dungeonName,
-      });
-
-      yield* fileSystem.makeDirectory(path.dirname(filePath), {
-        recursive: true,
-      });
-
-      yield* fileSystem.writeFileString(filePath, contents);
+    const contents = createLSS({
+      configuration,
+      dungeonName,
     });
-  };
+
+    yield* fileSystem.makeDirectory(path.dirname(filePath), {
+      recursive: true,
+    });
+
+    yield* fileSystem.writeFileString(filePath, contents);
+  });
 
   return {
     createLSS,

@@ -34,15 +34,12 @@ export const makeLiveSplitSettingDAO = E.gen(function* () {
     });
   };
 
-  const insert: LiveSplitSettingDAOShape["insert"] = ({
-    host,
-    isEnabled,
-    port,
-  }) => {
-    return E.gen(function* () {
-      const timestamp = DateTime.toEpochMillis(yield* DateTime.now);
+  const insert: LiveSplitSettingDAOShape["insert"] = E.fn(
+    "LiveSplitSettingDAO.insert",
+  )(function* ({ host, isEnabled, port }) {
+    const timestamp = DateTime.toEpochMillis(yield* DateTime.now);
 
-      yield* sql`
+    yield* sql`
         INSERT INTO
           live_split_setting (
             id,
@@ -62,18 +59,14 @@ export const makeLiveSplitSettingDAO = E.gen(function* () {
             ${timestamp}
           )
       `;
-    });
-  };
+  });
 
-  const update: LiveSplitSettingDAOShape["update"] = ({
-    host,
-    isEnabled,
-    port,
-  }) => {
-    return E.gen(function* () {
-      const timestamp = DateTime.toEpochMillis(yield* DateTime.now);
+  const update: LiveSplitSettingDAOShape["update"] = E.fn(
+    "LiveSplitSettingDAO.update",
+  )(function* ({ host, isEnabled, port }) {
+    const timestamp = DateTime.toEpochMillis(yield* DateTime.now);
 
-      yield* sql`
+    yield* sql`
         UPDATE live_split_setting
         SET
           host = ${host},
@@ -83,8 +76,7 @@ export const makeLiveSplitSettingDAO = E.gen(function* () {
         WHERE
           id = 1
       `;
-    });
-  };
+  });
 
   return {
     get,

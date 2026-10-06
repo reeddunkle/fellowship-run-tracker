@@ -57,8 +57,8 @@ function waitForWebSocketOpen(
   });
 }
 
-function makeWebSocketMessageAwaiter(websocket: WebSocket) {
-  return E.gen(function* () {
+const makeWebSocketMessageAwaiter = E.fn("test.makeWebSocketMessageAwaiter")(
+  function* (websocket: WebSocket) {
     const messageDeferred = yield* Deferred.make<
       string,
       WebSocketMessageError
@@ -101,8 +101,8 @@ function makeWebSocketMessageAwaiter(websocket: WebSocket) {
     // while the caller waits for the message after publishing.
     // @effect-diagnostics-next-line returnEffectInGen:off
     return Deferred.await(messageDeferred);
-  });
-}
+  },
+);
 
 function closeWebSocket(websocket: WebSocket): E.Effect<void> {
   return E.callback<void>((resume) => {

@@ -27,11 +27,12 @@ const nowMillis = DateTime.now.pipe(E.map(DateTime.toEpochMillis));
 export const makeFellowshipLogsResponseDAO = E.gen(function* () {
   const sql = yield* FellowshipLogsCacheDatabase;
 
-  const get: FellowshipLogsResponseDAOShape["get"] = ({ key }) => {
-    return E.gen(function* () {
-      const now = yield* nowMillis;
+  const get: FellowshipLogsResponseDAOShape["get"] = E.fn(
+    "FellowshipLogsResponseDAO.get",
+  )(function* ({ key }) {
+    const now = yield* nowMillis;
 
-      const rows = yield* sql`
+    const rows = yield* sql`
         SELECT
           request_key,
           operation,
@@ -53,15 +54,16 @@ export const makeFellowshipLogsResponseDAO = E.gen(function* () {
           )
       `;
 
-      const [response] = yield* Schema.decodeUnknownEffect(
-        Schema.Array(FellowshipLogsResponseModel),
-      )(rows);
+    const [response] = yield* Schema.decodeUnknownEffect(
+      Schema.Array(FellowshipLogsResponseModel),
+    )(rows);
 
-      return Option.fromUndefinedOr(response);
-    }).pipe(E.mapError(mapFellowshipLogsResponseDAOError));
-  };
+    return Option.fromUndefinedOr(response);
+  }, E.mapError(mapFellowshipLogsResponseDAOError));
 
-  const put: FellowshipLogsResponseDAOShape["put"] = ({
+  const put: FellowshipLogsResponseDAOShape["put"] = E.fn(
+    "FellowshipLogsResponseDAO.put",
+  )(function* ({
     body,
     expiresAt,
     fightId,
@@ -69,13 +71,12 @@ export const makeFellowshipLogsResponseDAO = E.gen(function* () {
     operation,
     reportCode,
     reportRevision,
-  }) => {
-    return E.gen(function* () {
-      const now = yield* nowMillis;
-      const encodedExpiresAt =
-        expiresAt === null ? null : DateTime.toEpochMillis(expiresAt);
+  }) {
+    const now = yield* nowMillis;
+    const encodedExpiresAt =
+      expiresAt === null ? null : DateTime.toEpochMillis(expiresAt);
 
-      yield* sql`
+    yield* sql`
         INSERT INTO
           fellowship_logs_response (
             request_key,
@@ -114,22 +115,21 @@ export const makeFellowshipLogsResponseDAO = E.gen(function* () {
           created_at = excluded.created_at,
           last_accessed_at = excluded.last_accessed_at
       `;
-    }).pipe(E.mapError(mapFellowshipLogsResponseDAOError));
-  };
+  }, E.mapError(mapFellowshipLogsResponseDAOError));
 
-  const touch: FellowshipLogsResponseDAOShape["touch"] = ({ key }) => {
-    return E.gen(function* () {
-      const now = yield* nowMillis;
+  const touch: FellowshipLogsResponseDAOShape["touch"] = E.fn(
+    "FellowshipLogsResponseDAO.touch",
+  )(function* ({ key }) {
+    const now = yield* nowMillis;
 
-      yield* sql`
+    yield* sql`
         UPDATE fellowship_logs_response
         SET
           last_accessed_at = ${now}
         WHERE
           request_key = ${key}
       `;
-    }).pipe(E.mapError(mapFellowshipLogsResponseDAOError));
-  };
+  }, E.mapError(mapFellowshipLogsResponseDAOError));
 
   const delete_: FellowshipLogsResponseDAOShape["delete"] = ({ key }) => {
     return sql`

@@ -33,14 +33,12 @@ export const makeFellowshipLogsCredentialDAO = E.gen(function* () {
     });
   };
 
-  const insert: FellowshipLogsCredentialDAOShape["insert"] = ({
-    clientId,
-    clientSecret,
-  }) => {
-    return E.gen(function* () {
-      const timestamp = DateTime.toEpochMillis(yield* DateTime.now);
+  const insert: FellowshipLogsCredentialDAOShape["insert"] = E.fn(
+    "FellowshipLogsCredentialDAO.insert",
+  )(function* ({ clientId, clientSecret }) {
+    const timestamp = DateTime.toEpochMillis(yield* DateTime.now);
 
-      yield* sql`
+    yield* sql`
         INSERT INTO
           fellowship_logs_credential (
             id,
@@ -58,17 +56,14 @@ export const makeFellowshipLogsCredentialDAO = E.gen(function* () {
             ${timestamp}
           )
       `;
-    });
-  };
+  });
 
-  const update: FellowshipLogsCredentialDAOShape["update"] = ({
-    clientId,
-    clientSecret,
-  }) => {
-    return E.gen(function* () {
-      const timestamp = DateTime.toEpochMillis(yield* DateTime.now);
+  const update: FellowshipLogsCredentialDAOShape["update"] = E.fn(
+    "FellowshipLogsCredentialDAO.update",
+  )(function* ({ clientId, clientSecret }) {
+    const timestamp = DateTime.toEpochMillis(yield* DateTime.now);
 
-      yield* sql`
+    yield* sql`
         UPDATE fellowship_logs_credential
         SET
           client_id = ${clientId},
@@ -77,8 +72,7 @@ export const makeFellowshipLogsCredentialDAO = E.gen(function* () {
         WHERE
           id = 1
       `;
-    });
-  };
+  });
 
   return {
     get,

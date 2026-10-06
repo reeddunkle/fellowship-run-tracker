@@ -43,54 +43,54 @@ function runSession<A, Error>(
   return program.pipe(E.provide(makePersistenceTestLayer(databaseFilename)));
 }
 
-function startLocalRun(observedAts: ReadonlyArray<DateTime.Utc>) {
-  return E.gen(function* () {
-    const dungeonRunRepository = yield* DungeonRunRepository;
-    const dungeonRunObservationDAO = yield* DungeonRunObservationDAO;
+const startLocalRun = E.fn("test.startLocalRun")(function* (
+  observedAts: ReadonlyArray<DateTime.Utc>,
+) {
+  const dungeonRunRepository = yield* DungeonRunRepository;
+  const dungeonRunObservationDAO = yield* DungeonRunObservationDAO;
 
-    const dungeonRun = yield* dungeonRunRepository.createLocal({
-      dungeonId: MOCK_DUNGEON_ID,
-      dungeonLevel: MOCK_DUNGEON_LEVEL,
-    });
-
-    yield* dungeonRunRepository.startLocal({
-      dungeonRunId: dungeonRun.id,
-      startedAt: STARTED_AT,
-    });
-
-    yield* E.forEach(
-      observedAts,
-      (observedAt, index) => {
-        return dungeonRunObservationDAO.observe({
-          dungeonRunId: dungeonRun.id,
-          observedAt,
-          targetId: String(index + 1),
-          type: "UNIT_DEATH",
-        });
-      },
-      { discard: true },
-    );
-
-    return dungeonRun.id;
+  const dungeonRun = yield* dungeonRunRepository.createLocal({
+    dungeonId: MOCK_DUNGEON_ID,
+    dungeonLevel: MOCK_DUNGEON_LEVEL,
   });
-}
 
-function getLocalRun(dungeonRunId: DungeonRunId) {
-  return E.gen(function* () {
-    const dungeonRun = yield* DungeonRunDAO.use((dao) => {
-      return dao.getById({ id: dungeonRunId });
-    });
-
-    const localLogDungeonRun = yield* LocalLogDungeonRunDAO.use((dao) => {
-      return dao.getByDungeonRunId({ dungeonRunId });
-    });
-
-    return {
-      endedAt: Option.getOrThrow(dungeonRun).endedAt,
-      status: Option.getOrThrow(localLogDungeonRun).status,
-    };
+  yield* dungeonRunRepository.startLocal({
+    dungeonRunId: dungeonRun.id,
+    startedAt: STARTED_AT,
   });
-}
+
+  yield* E.forEach(
+    observedAts,
+    (observedAt, index) => {
+      return dungeonRunObservationDAO.observe({
+        dungeonRunId: dungeonRun.id,
+        observedAt,
+        targetId: String(index + 1),
+        type: "UNIT_DEATH",
+      });
+    },
+    { discard: true },
+  );
+
+  return dungeonRun.id;
+});
+
+const getLocalRun = E.fn("test.getLocalRun")(function* (
+  dungeonRunId: DungeonRunId,
+) {
+  const dungeonRun = yield* DungeonRunDAO.use((dao) => {
+    return dao.getById({ id: dungeonRunId });
+  });
+
+  const localLogDungeonRun = yield* LocalLogDungeonRunDAO.use((dao) => {
+    return dao.getByDungeonRunId({ dungeonRunId });
+  });
+
+  return {
+    endedAt: Option.getOrThrow(dungeonRun).endedAt,
+    status: Option.getOrThrow(localLogDungeonRun).status,
+  };
+});
 
 function runJobAfterRestart({
   duringNextSession = E.succeed([]),

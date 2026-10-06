@@ -23,7 +23,7 @@ function mapAbilityApiError(
 const AbilitiesApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "abilities",
-  E.fn(function* (handlers) {
+  E.fn("AbilitiesApi.handlers")(function* (handlers) {
     const abilityCatalog = yield* AbilityCatalog;
 
     return handlers

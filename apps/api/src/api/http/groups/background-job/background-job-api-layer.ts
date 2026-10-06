@@ -37,7 +37,7 @@ function mapBackgroundJobCommandError(
 const BackgroundJobApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "backgroundJob",
-  E.fn(function* (handlers) {
+  E.fn("BackgroundJobApi.handlers")(function* (handlers) {
     const backgroundJob = yield* BackgroundJob;
 
     return handlers

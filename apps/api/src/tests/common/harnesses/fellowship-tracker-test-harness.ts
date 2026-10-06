@@ -76,217 +76,215 @@ export const MOCK_DUNGEON_RUN_ID = Schema.decodeSync(DungeonRunIdSchema)(
   "0198d56c-9999-7abc-8def-1234567890ab",
 );
 
-export function makeFellowshipTrackerTestHarness(
-  options: MakeFellowshipTrackerTestHarnessOptions = {},
-) {
-  return E.gen(function* () {
-    const configurationDefinitionId =
-      options.configurationDefinitionId ?? MOCK_CONFIGURATION_DEFINITION_ID;
+export const makeFellowshipTrackerTestHarness = E.fn(
+  "test.makeFellowshipTrackerTestHarness",
+)(function* (options: MakeFellowshipTrackerTestHarnessOptions = {}) {
+  const configurationDefinitionId =
+    options.configurationDefinitionId ?? MOCK_CONFIGURATION_DEFINITION_ID;
 
-    const configurationId = options.configurationId ?? MOCK_CONFIGURATION_ID;
+  const configurationId = options.configurationId ?? MOCK_CONFIGURATION_ID;
 
-    const configuration = options.configuration ?? DEFAULT_CONFIGURATION;
+  const configuration = options.configuration ?? DEFAULT_CONFIGURATION;
 
-    const configurationLabel =
-      options.configurationLabel ?? MOCK_CONFIGURATION_LABEL;
+  const configurationLabel =
+    options.configurationLabel ?? MOCK_CONFIGURATION_LABEL;
 
-    const persistedConfiguration = {
-      configuration,
-      configurationDefinitionId,
-      createdAt: MOCK_CREATED_AT,
-      fingerprint: MOCK_CONFIGURATION_FINGERPRINT,
-      id: configurationId,
-      label: configurationLabel,
-      updatedAt: MOCK_UPDATED_AT,
-    } satisfies PersistedConfiguration;
+  const persistedConfiguration = {
+    configuration,
+    configurationDefinitionId,
+    createdAt: MOCK_CREATED_AT,
+    fingerprint: MOCK_CONFIGURATION_FINGERPRINT,
+    id: configurationId,
+    label: configurationLabel,
+    updatedAt: MOCK_UPDATED_AT,
+  } satisfies PersistedConfiguration;
 
-    const trackingStarted = yield* Deferred.make<void>();
-    const trackingInterrupted = yield* Deferred.make<void>();
+  const trackingStarted = yield* Deferred.make<void>();
+  const trackingInterrupted = yield* Deferred.make<void>();
 
-    const defaultLiveEvents = Stream.fromEffect(
-      Deferred.succeed(trackingStarted, undefined).pipe(
-        E.andThen(E.never),
-        E.ensuring(Deferred.succeed(trackingInterrupted, undefined)),
-      ),
+  const defaultLiveEvents = Stream.fromEffect(
+    Deferred.succeed(trackingStarted, undefined).pipe(
+      E.andThen(E.never),
+      E.ensuring(Deferred.succeed(trackingInterrupted, undefined)),
+    ),
+  );
+
+  const fellowshipHarness = makeFellowshipTestHarness({
+    liveEvents: options.liveEvents ?? defaultLiveEvents,
+    liveStatus: options.liveStatus ?? Stream.never,
+    replayEvents: options.replayEvents ?? Stream.empty,
+  });
+
+  const dungeonRunWebSocketBroadcasterHarness =
+    yield* makeWebSocketBroadcasterTestHarness();
+
+  const interruptedDungeonRunIds = yield* Ref.make<ReadonlyArray<DungeonRunId>>(
+    [],
+  );
+
+  const getInterruptedDungeonRunIds = Ref.get(interruptedDungeonRunIds);
+
+  const getLastBroadcastMessage = dungeonRunWebSocketBroadcasterHarness
+    .getParsedMessages()
+    .pipe(
+      E.map((messages) => {
+        return messages.at(-1);
+      }),
     );
 
-    const fellowshipHarness = makeFellowshipTestHarness({
-      liveEvents: options.liveEvents ?? defaultLiveEvents,
-      liveStatus: options.liveStatus ?? Stream.never,
-      replayEvents: options.replayEvents ?? Stream.empty,
-    });
+  const configurationDAO = {
+    delete: () => {
+      return E.void;
+    },
+    deleteByDungeonAndLevel: () => {
+      return E.void;
+    },
+    getAll: () => {
+      return E.succeed([persistedConfiguration]);
+    },
+    getById: ({ id }) => {
+      return id === configurationId
+        ? E.succeedSome(persistedConfiguration)
+        : E.succeedNone;
+    },
+    save: () => {
+      return E.succeed(persistedConfiguration);
+    },
+    saveReplacingDungeonAndLevel: () => {
+      return E.succeed(persistedConfiguration);
+    },
+    update: () => {
+      return E.succeed(persistedConfiguration);
+    },
+  } satisfies ConfigurationDAOShape;
 
-    const dungeonRunWebSocketBroadcasterHarness =
-      yield* makeWebSocketBroadcasterTestHarness();
-
-    const interruptedDungeonRunIds = yield* Ref.make<
-      ReadonlyArray<DungeonRunId>
-    >([]);
-
-    const getInterruptedDungeonRunIds = Ref.get(interruptedDungeonRunIds);
-
-    const getLastBroadcastMessage = dungeonRunWebSocketBroadcasterHarness
-      .getParsedMessages()
-      .pipe(
-        E.map((messages) => {
-          return messages.at(-1);
-        }),
-      );
-
-    const configurationDAO = {
-      delete: () => {
-        return E.void;
-      },
-      deleteByDungeonAndLevel: () => {
-        return E.void;
-      },
-      getAll: () => {
-        return E.succeed([persistedConfiguration]);
-      },
-      getById: ({ id }) => {
-        return id === configurationId
-          ? E.succeedSome(persistedConfiguration)
-          : E.succeedNone;
-      },
-      save: () => {
-        return E.succeed(persistedConfiguration);
-      },
-      saveReplacingDungeonAndLevel: () => {
-        return E.succeed(persistedConfiguration);
-      },
-      update: () => {
-        return E.succeed(persistedConfiguration);
-      },
-    } satisfies ConfigurationDAOShape;
-
-    const dungeonRunRepository = {
-      completeLocal: () => {
-        return E.void;
-      },
-      createFellowshipLogsDungeonRun: ({
+  const dungeonRunRepository = {
+    completeLocal: () => {
+      return E.void;
+    },
+    createFellowshipLogsDungeonRun: ({
+      dungeonId,
+      dungeonLevel,
+      endedAt,
+      isOwnRun,
+      startedAt,
+    }) => {
+      return E.succeed({
+        createdAt: MOCK_CREATED_AT,
         dungeonId,
         dungeonLevel,
         endedAt,
+        id: MOCK_DUNGEON_RUN_ID,
         isOwnRun,
+        source: "FELLOWSHIP_LOGS",
         startedAt,
-      }) => {
-        return E.succeed({
-          createdAt: MOCK_CREATED_AT,
-          dungeonId,
-          dungeonLevel,
-          endedAt,
-          id: MOCK_DUNGEON_RUN_ID,
-          isOwnRun,
-          source: "FELLOWSHIP_LOGS",
-          startedAt,
-          updatedAt: MOCK_UPDATED_AT,
-        } satisfies DungeonRunModel);
-      },
-      createLocal: ({ dungeonId, dungeonLevel }) => {
-        return E.succeed({
-          createdAt: MOCK_CREATED_AT,
-          dungeonId,
-          dungeonLevel,
-          endedAt: null,
-          id: MOCK_DUNGEON_RUN_ID,
-          isOwnRun: true,
-          source: "LOCAL_LOG",
-          startedAt: null,
-          updatedAt: MOCK_UPDATED_AT,
-        } satisfies DungeonRunModel);
-      },
-      delete: () => {
+        updatedAt: MOCK_UPDATED_AT,
+      } satisfies DungeonRunModel);
+    },
+    createLocal: ({ dungeonId, dungeonLevel }) => {
+      return E.succeed({
+        createdAt: MOCK_CREATED_AT,
+        dungeonId,
+        dungeonLevel,
+        endedAt: null,
+        id: MOCK_DUNGEON_RUN_ID,
+        isOwnRun: true,
+        source: "LOCAL_LOG",
+        startedAt: null,
+        updatedAt: MOCK_UPDATED_AT,
+      } satisfies DungeonRunModel);
+    },
+    delete: () => {
+      return E.void;
+    },
+    deleteHistory: () => {
+      return E.void;
+    },
+    exitLocal: () => {
+      return E.void;
+    },
+    getFellowshipLogsDungeonRun: () => {
+      return E.succeedNone;
+    },
+    interruptLocal: ({ dungeonRunId }) => {
+      return Ref.update(interruptedDungeonRunIds, (dungeonRunIds) => {
+        return [...dungeonRunIds, dungeonRunId];
+      });
+    },
+    interruptUnfinishedLocal: () => {
+      return E.succeed([]);
+    },
+    listFellowshipLogsDungeonRuns: () => {
+      return E.succeed([]);
+    },
+    startLocal: () => {
+      return E.void;
+    },
+  } satisfies DungeonRunRepositoryShape;
+
+  const dungeonRunObservationDAO = {
+    getByDungeonRunId: () => {
+      return E.succeed([]);
+    },
+    getHistoryByDungeon: () => {
+      return E.succeed([]);
+    },
+    observe: () => {
+      return E.void;
+    },
+  } satisfies DungeonRunObservationDAOShape;
+
+  const liveSplitStatus = {
+    status: "Disconnected",
+  } as const;
+
+  const liveSplit = {
+    connect: () => {
+      return E.succeed(liveSplitStatus);
+    },
+    disconnect: () => {
+      return E.succeed(liveSplitStatus);
+    },
+    getStatus: () => {
+      return E.succeed(liveSplitStatus);
+    },
+    handleRunEvent:
+      options.handleRunEvent ??
+      (() => {
         return E.void;
-      },
-      deleteHistory: () => {
-        return E.void;
-      },
-      exitLocal: () => {
-        return E.void;
-      },
-      getFellowshipLogsDungeonRun: () => {
-        return E.succeedNone;
-      },
-      interruptLocal: ({ dungeonRunId }) => {
-        return Ref.update(interruptedDungeonRunIds, (dungeonRunIds) => {
-          return [...dungeonRunIds, dungeonRunId];
-        });
-      },
-      interruptUnfinishedLocal: () => {
-        return E.succeed([]);
-      },
-      listFellowshipLogsDungeonRuns: () => {
-        return E.succeed([]);
-      },
-      startLocal: () => {
-        return E.void;
-      },
-    } satisfies DungeonRunRepositoryShape;
+      }),
+    statusChanges: Stream.make(liveSplitStatus),
+  } satisfies LiveSplitShape;
 
-    const dungeonRunObservationDAO = {
-      getByDungeonRunId: () => {
-        return E.succeed([]);
-      },
-      getHistoryByDungeon: () => {
-        return E.succeed([]);
-      },
-      observe: () => {
-        return E.void;
-      },
-    } satisfies DungeonRunObservationDAOShape;
+  const FellowshipTrackerDependenciesTestLive = Layer.mergeAll(
+    Layer.succeed(ConfigurationDAO, configurationDAO),
+    Layer.succeed(DungeonRunObservationDAO, dungeonRunObservationDAO),
+    Layer.succeed(DungeonRunRepository, dungeonRunRepository),
+    Layer.succeed(Fellowship, fellowshipHarness.fellowship),
+    Layer.succeed(LiveSplit, liveSplit),
+    Layer.succeed(
+      DungeonRunWebSocketBroadcaster,
+      dungeonRunWebSocketBroadcasterHarness.webSocketBroadcaster,
+    ),
+  );
 
-    const liveSplitStatus = {
-      status: "Disconnected",
-    } as const;
+  const FellowshipTrackerTestLive = FellowshipTracker.layerNoDeps.pipe(
+    Layer.provide(FellowshipTrackerDependenciesTestLive),
+  );
 
-    const liveSplit = {
-      connect: () => {
-        return E.succeed(liveSplitStatus);
-      },
-      disconnect: () => {
-        return E.succeed(liveSplitStatus);
-      },
-      getStatus: () => {
-        return E.succeed(liveSplitStatus);
-      },
-      handleRunEvent:
-        options.handleRunEvent ??
-        (() => {
-          return E.void;
-        }),
-      statusChanges: Stream.make(liveSplitStatus),
-    } satisfies LiveSplitShape;
-
-    const FellowshipTrackerDependenciesTestLive = Layer.mergeAll(
-      Layer.succeed(ConfigurationDAO, configurationDAO),
-      Layer.succeed(DungeonRunObservationDAO, dungeonRunObservationDAO),
-      Layer.succeed(DungeonRunRepository, dungeonRunRepository),
-      Layer.succeed(Fellowship, fellowshipHarness.fellowship),
-      Layer.succeed(LiveSplit, liveSplit),
-      Layer.succeed(
-        DungeonRunWebSocketBroadcaster,
-        dungeonRunWebSocketBroadcasterHarness.webSocketBroadcaster,
-      ),
-    );
-
-    const FellowshipTrackerTestLive = FellowshipTracker.layerNoDeps.pipe(
-      Layer.provide(FellowshipTrackerDependenciesTestLive),
-    );
-
-    return {
-      configuration,
-      configurationDefinitionId,
-      configurationId,
-      configurationLabel,
-      dungeonRunRepository,
-      dungeonRunWebSocketBroadcasterHarness,
-      fellowshipHarness,
-      getInterruptedDungeonRunIds,
-      getLastBroadcastMessage,
-      layer: FellowshipTrackerTestLive,
-      liveSplit,
-      trackingInterrupted,
-      trackingStarted,
-    };
-  });
-}
+  return {
+    configuration,
+    configurationDefinitionId,
+    configurationId,
+    configurationLabel,
+    dungeonRunRepository,
+    dungeonRunWebSocketBroadcasterHarness,
+    fellowshipHarness,
+    getInterruptedDungeonRunIds,
+    getLastBroadcastMessage,
+    layer: FellowshipTrackerTestLive,
+    liveSplit,
+    trackingInterrupted,
+    trackingStarted,
+  };
+});

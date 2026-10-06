@@ -63,7 +63,9 @@ const makeFileMonitorSource = E.gen(function* () {
 
   const serviceScope = yield* E.scope;
 
-  const lookupDirectoryWatcher = E.fn(function* (directoryPath: string) {
+  const lookupDirectoryWatcher = E.fn(
+    "FileMonitorSource.lookupDirectoryWatcher",
+  )(function* (directoryPath: string) {
     const events = yield* E.acquireRelease(
       PubSub.unbounded<FileSystem.WatchEvent>(),
       PubSub.shutdown,
@@ -114,57 +116,52 @@ const makeFileMonitorSource = E.gen(function* () {
       lookup: lookupDirectoryWatcher,
     });
 
-  const findLatestFile: FileMonitorSourceShape["findLatestFile"] = ({
-    directoryPath,
-    matches,
-  }) => {
-    return E.gen(function* () {
-      const entries = yield* fileSystem.readDirectory(directoryPath);
+  const findLatestFile: FileMonitorSourceShape["findLatestFile"] = E.fn(
+    "FileMonitorSource.findLatestFile",
+  )(function* ({ directoryPath, matches }) {
+    const entries = yield* fileSystem.readDirectory(directoryPath);
 
-      const candidates = yield* E.forEach(entries, (entry) => {
-        return E.gen(function* () {
-          if (!matches(entry)) {
-            return undefined;
-          }
+    const candidates = yield* E.forEach(entries, (entry) => {
+      return E.gen(function* () {
+        if (!matches(entry)) {
+          return undefined;
+        }
 
-          const filePath = path.join(directoryPath, entry);
-          const info = yield* fileSystem.stat(filePath);
+        const filePath = path.join(directoryPath, entry);
+        const info = yield* fileSystem.stat(filePath);
 
-          if (info.type !== "File") {
-            return undefined;
-          }
+        if (info.type !== "File") {
+          return undefined;
+        }
 
-          return {
-            createdAtEpochMilliseconds: getDateEpochMilliseconds(
-              info.birthtime,
-            ),
-            fileId: getFileId({
-              filePath,
-              info,
-            }),
+        return {
+          createdAtEpochMilliseconds: getDateEpochMilliseconds(info.birthtime),
+          fileId: getFileId({
             filePath,
-            modifiedAtEpochMilliseconds: getDateEpochMilliseconds(info.mtime),
-            size: info.size,
-          } satisfies FileData;
-        });
+            info,
+          }),
+          filePath,
+          modifiedAtEpochMilliseconds: getDateEpochMilliseconds(info.mtime),
+          size: info.size,
+        } satisfies FileData;
       });
-
-      const latestFile = candidates
-        .filter((candidate): candidate is FileData => {
-          return candidate !== undefined;
-        })
-        .toSorted(compareFiles)
-        .at(0);
-
-      if (latestFile === undefined) {
-        return yield* new FileNotFoundError({
-          directoryPath,
-        });
-      }
-
-      return latestFile;
     });
-  };
+
+    const latestFile = candidates
+      .filter((candidate): candidate is FileData => {
+        return candidate !== undefined;
+      })
+      .toSorted(compareFiles)
+      .at(0);
+
+    if (latestFile === undefined) {
+      return yield* new FileNotFoundError({
+        directoryPath,
+      });
+    }
+
+    return latestFile;
+  });
 
   const getLatestFileOption = (
     options: FindLatestFileOptions,
@@ -185,10 +182,10 @@ const makeFileMonitorSource = E.gen(function* () {
     );
   };
 
-  const streamLatestFile: FileMonitorSourceShape["streamLatestFile"] = (
-    options,
-  ) => {
-    return E.gen(function* () {
+  const streamLatestFile: FileMonitorSourceShape["streamLatestFile"] = E.fn(
+    "FileMonitorSource.streamLatestFile",
+  )(
+    function* (options) {
       const directoryWatcher = yield* RcMap.get(
         directoryWatchers,
         options.directoryPath,
@@ -210,8 +207,10 @@ const makeFileMonitorSource = E.gen(function* () {
         Stream.succeed(initialLatestFile),
         latestFileChanges,
       );
-    }).pipe(Stream.unwrap, Stream.scoped);
-  };
+    },
+    Stream.unwrap,
+    Stream.scoped,
+  );
 
   const streamStatus: FileMonitorSourceShape["streamStatus"] = (options) => {
     return streamLatestFile(options).pipe(

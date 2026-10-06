@@ -51,10 +51,10 @@ function makeRunNotFoundOrInactiveError(
 export const makeLocalLogDungeonRunDAO = E.gen(function* () {
   const sql = yield* MainDatabase;
 
-  const getByDungeonRunId: LocalLogDungeonRunDAOShape["getByDungeonRunId"] = ({
-    dungeonRunId,
-  }) => {
-    return E.gen(function* () {
+  const getByDungeonRunId: LocalLogDungeonRunDAOShape["getByDungeonRunId"] =
+    E.fn("LocalLogDungeonRunDAO.getByDungeonRunId")(function* ({
+      dungeonRunId,
+    }) {
       const rows = yield* sql`
         SELECT
           dungeon_run_id,
@@ -76,23 +76,23 @@ export const makeLocalLogDungeonRunDAO = E.gen(function* () {
       return localLogDungeonRun === undefined
         ? Option.none<LocalLogDungeonRunModel>()
         : Option.some(localLogDungeonRun);
-    }).pipe(E.mapError(mapLocalLogDungeonRunDAOError));
-  };
+    }, E.mapError(mapLocalLogDungeonRunDAOError));
 
-  const create: LocalLogDungeonRunDAOShape["create"] = ({ dungeonRunId }) => {
-    return E.gen(function* () {
-      const localLogDungeonRun = yield* LocalLogDungeonRunModel.insert
-        .makeEffect({
-          dungeonRunId,
-          status: "ACTIVE",
-        })
-        .pipe(E.mapError(mapLocalLogDungeonRunDAOError));
+  const create: LocalLogDungeonRunDAOShape["create"] = E.fn(
+    "LocalLogDungeonRunDAO.create",
+  )(function* ({ dungeonRunId }) {
+    const localLogDungeonRun = yield* LocalLogDungeonRunModel.insert
+      .makeEffect({
+        dungeonRunId,
+        status: "ACTIVE",
+      })
+      .pipe(E.mapError(mapLocalLogDungeonRunDAOError));
 
-      const insert = yield* Schema.encodeEffect(LocalLogDungeonRunModel.insert)(
-        localLogDungeonRun,
-      ).pipe(E.mapError(mapLocalLogDungeonRunDAOError));
+    const insert = yield* Schema.encodeEffect(LocalLogDungeonRunModel.insert)(
+      localLogDungeonRun,
+    ).pipe(E.mapError(mapLocalLogDungeonRunDAOError));
 
-      const rows = yield* sql`
+    const rows = yield* sql`
         INSERT INTO
           local_log_dungeon_run (dungeon_run_id, status, created_at, updated_at)
         VALUES
@@ -109,19 +109,18 @@ export const makeLocalLogDungeonRunDAO = E.gen(function* () {
           updated_at
       `;
 
-      const localLogDungeonRuns = yield* decodeLocalLogDungeonRunRows(rows);
+    const localLogDungeonRuns = yield* decodeLocalLogDungeonRunRows(rows);
 
-      const persistedLocalLogDungeonRun = localLogDungeonRuns[0];
+    const persistedLocalLogDungeonRun = localLogDungeonRuns[0];
 
-      if (persistedLocalLogDungeonRun === undefined) {
-        return yield* new LocalLogDungeonRunDAOError({
-          reason: new DungeonRunNotReturnedAfterInsertError({ dungeonRunId }),
-        });
-      }
+    if (persistedLocalLogDungeonRun === undefined) {
+      return yield* new LocalLogDungeonRunDAOError({
+        reason: new DungeonRunNotReturnedAfterInsertError({ dungeonRunId }),
+      });
+    }
 
-      return persistedLocalLogDungeonRun;
-    }).pipe(E.mapError(mapLocalLogDungeonRunDAOError));
-  };
+    return persistedLocalLogDungeonRun;
+  }, E.mapError(mapLocalLogDungeonRunDAOError));
 
   const finishRun = ({
     dungeonRunId,
@@ -171,15 +170,14 @@ export const makeLocalLogDungeonRunDAO = E.gen(function* () {
     });
   };
 
-  const listActive: LocalLogDungeonRunDAOShape["listActive"] = ({
-    createdBefore,
-  }) => {
-    return E.gen(function* () {
-      const encodedCreatedBefore = yield* Schema.encodeEffect(
-        Schema.DateTimeUtcFromMillis,
-      )(createdBefore);
+  const listActive: LocalLogDungeonRunDAOShape["listActive"] = E.fn(
+    "LocalLogDungeonRunDAO.listActive",
+  )(function* ({ createdBefore }) {
+    const encodedCreatedBefore = yield* Schema.encodeEffect(
+      Schema.DateTimeUtcFromMillis,
+    )(createdBefore);
 
-      const rows = yield* sql`
+    const rows = yield* sql`
         SELECT
           dungeon_run_id,
           status,
@@ -192,9 +190,8 @@ export const makeLocalLogDungeonRunDAO = E.gen(function* () {
           AND created_at < ${encodedCreatedBefore}
       `;
 
-      return yield* decodeLocalLogDungeonRunRows(rows);
-    }).pipe(E.mapError(mapLocalLogDungeonRunDAOError));
-  };
+    return yield* decodeLocalLogDungeonRunRows(rows);
+  }, E.mapError(mapLocalLogDungeonRunDAOError));
 
   const interrupt: LocalLogDungeonRunDAOShape["interrupt"] = ({
     dungeonRunId,

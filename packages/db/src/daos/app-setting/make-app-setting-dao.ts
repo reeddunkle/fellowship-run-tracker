@@ -32,8 +32,8 @@ export const makeAppSettingDAO = E.gen(function* () {
     });
   };
 
-  const insert: AppSettingDAOShape["insert"] = ({ fellowshipLogDirectory }) => {
-    return E.gen(function* () {
+  const insert: AppSettingDAOShape["insert"] = E.fn("AppSettingDAO.insert")(
+    function* ({ fellowshipLogDirectory }) {
       const timestamp = DateTime.toEpochMillis(yield* DateTime.now);
 
       yield* sql`
@@ -52,11 +52,11 @@ export const makeAppSettingDAO = E.gen(function* () {
             ${timestamp}
           )
       `;
-    });
-  };
+    },
+  );
 
-  const update: AppSettingDAOShape["update"] = ({ fellowshipLogDirectory }) => {
-    return E.gen(function* () {
+  const update: AppSettingDAOShape["update"] = E.fn("AppSettingDAO.update")(
+    function* ({ fellowshipLogDirectory }) {
       const timestamp = DateTime.toEpochMillis(yield* DateTime.now);
 
       yield* sql`
@@ -67,8 +67,8 @@ export const makeAppSettingDAO = E.gen(function* () {
         WHERE
           id = 1
       `;
-    });
-  };
+    },
+  );
 
   return {
     get,

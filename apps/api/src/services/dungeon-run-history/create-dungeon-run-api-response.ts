@@ -53,10 +53,8 @@ type CreateDungeonRunApiResponseOptions = {
   readonly observations: ReadonlyArray<DungeonRunObservationHistory>;
 };
 
-export function createDungeonRunApiResponse({
-  observations,
-}: CreateDungeonRunApiResponseOptions) {
-  return E.gen(function* () {
+export const createDungeonRunApiResponse = E.fn("createDungeonRunApiResponse")(
+  function* ({ observations }: CreateDungeonRunApiResponseOptions) {
     const observationsByIdentity = new Map<
       string,
       Array<DungeonRunObservationHistory>
@@ -160,5 +158,5 @@ export function createDungeonRunApiResponse({
       ownRunCount: countDistinctRuns(ownObservations),
       ownSampleCount: sumSampleCounts(ownStatistics),
     } satisfies DungeonRunApiHistory;
-  });
-}
+  },
+);

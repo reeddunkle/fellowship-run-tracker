@@ -8,7 +8,7 @@ import { getRelativePathBaseDirectory } from "@frt/api/helpers/get-app-data-dire
 import { DatabaseFilenameSchema } from "@frt/api/validation/env-schema.ts";
 import { type DatabaseOptions } from "@frt/db/types/database-options.ts";
 
-const getDatabaseFilename = E.fn(function* (
+const getDatabaseFilename = E.fn("getDatabaseFilename")(function* (
   name: string,
   defaultFilename: string,
 ) {
@@ -27,7 +27,7 @@ const getDatabaseFilename = E.fn(function* (
   });
 });
 
-export const getDatabaseOptions = E.fn(function* () {
+export const getDatabaseOptions = E.fn("getDatabaseOptions")(function* () {
   return {
     analyticsDatabaseFilename: yield* getDatabaseFilename(
       "ANALYTICS_DATABASE_FILENAME",

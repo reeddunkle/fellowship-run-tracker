@@ -23,7 +23,7 @@ function mapDungeonApiError(
 const DungeonsApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "dungeons",
-  E.fn(function* (handlers) {
+  E.fn("DungeonsApi.handlers")(function* (handlers) {
     const dungeonCatalog = yield* DungeonCatalog;
 
     return handlers

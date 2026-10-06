@@ -26,49 +26,50 @@ export function getConfigurations() {
   });
 }
 
-export function getConfiguration({ id }: ConfigurationIdArgs) {
-  return E.gen(function* () {
-    const client = yield* AppApiClient;
+export const getConfiguration = E.fn("getConfiguration")(function* ({
+  id,
+}: ConfigurationIdArgs) {
+  const client = yield* AppApiClient;
 
-    return yield* client.configurations.getConfiguration({
-      params: {
-        id,
-      },
-    });
+  return yield* client.configurations.getConfiguration({
+    params: {
+      id,
+    },
   });
-}
+});
 
-export function saveConfiguration({ request }: SaveConfigurationArgs) {
-  return E.gen(function* () {
-    const client = yield* AppApiClient;
+export const saveConfiguration = E.fn("saveConfiguration")(function* ({
+  request,
+}: SaveConfigurationArgs) {
+  const client = yield* AppApiClient;
 
-    return yield* client.configurations.saveConfiguration({
-      payload: request,
-    });
+  return yield* client.configurations.saveConfiguration({
+    payload: request,
   });
-}
+});
 
-export function updateConfiguration({ id, request }: UpdateConfigurationArgs) {
-  return E.gen(function* () {
-    const client = yield* AppApiClient;
+export const updateConfiguration = E.fn("updateConfiguration")(function* ({
+  id,
+  request,
+}: UpdateConfigurationArgs) {
+  const client = yield* AppApiClient;
 
-    return yield* client.configurations.updateConfiguration({
-      params: {
-        id,
-      },
-      payload: request,
-    });
+  return yield* client.configurations.updateConfiguration({
+    params: {
+      id,
+    },
+    payload: request,
   });
-}
+});
 
-export function deleteConfiguration({ id }: ConfigurationIdArgs) {
-  return E.gen(function* () {
-    const client = yield* AppApiClient;
+export const deleteConfiguration = E.fn("deleteConfiguration")(function* ({
+  id,
+}: ConfigurationIdArgs) {
+  const client = yield* AppApiClient;
 
-    yield* client.configurations.deleteConfiguration({
-      params: {
-        id,
-      },
-    });
+  yield* client.configurations.deleteConfiguration({
+    params: {
+      id,
+    },
   });
-}
+});

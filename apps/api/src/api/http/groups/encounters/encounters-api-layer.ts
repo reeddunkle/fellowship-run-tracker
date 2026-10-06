@@ -23,7 +23,7 @@ function mapEncounterApiError(
 const EncountersApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "encounters",
-  E.fn(function* (handlers) {
+  E.fn("EncountersApi.handlers")(function* (handlers) {
     const encounterCatalog = yield* EncounterCatalog;
 
     return handlers

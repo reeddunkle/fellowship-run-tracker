@@ -106,9 +106,10 @@ export const makeUnitDAO = E.gen(function* () {
     });
   };
 
-  const getById: UnitDAOShape["getById"] = ({ id }) => {
-    return E.gen(function* () {
-      const rows = yield* sql`
+  const getById: UnitDAOShape["getById"] = E.fn("UnitDAO.getById")(function* ({
+    id,
+  }) {
+    const rows = yield* sql`
         SELECT
           unit.created_at AS createdAt,
           unit.id,
@@ -126,12 +127,11 @@ export const makeUnitDAO = E.gen(function* () {
           AND unit.status = 'ACTIVE'
       `;
 
-      const unitRows = yield* decodeUnitRows(rows);
-      const unit = createUnitModels(unitRows)[0];
+    const unitRows = yield* decodeUnitRows(rows);
+    const unit = createUnitModels(unitRows)[0];
 
-      return unit === undefined ? Option.none<UnitModel>() : Option.some(unit);
-    });
-  };
+    return unit === undefined ? Option.none<UnitModel>() : Option.some(unit);
+  });
 
   return {
     getAll,

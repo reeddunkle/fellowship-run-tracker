@@ -108,26 +108,24 @@ export function makeFileMonitorTestHarness() {
       });
     };
 
-    const emitSourceValue = (value: FileMonitorSourceValue) => {
-      return E.gen(function* () {
-        yield* Ref.set(latestSourceValueRef, value);
+    const emitSourceValue = E.fn("test.emitSourceValue")(function* (
+      value: FileMonitorSourceValue,
+    ) {
+      yield* Ref.set(latestSourceValueRef, value);
 
-        yield* Queue.offer(sourceSignals, {
-          _tag: "VALUE",
-          value,
-        });
+      yield* Queue.offer(sourceSignals, {
+        _tag: "VALUE",
+        value,
       });
-    };
+    });
 
-    const emitFile = (fileName: string) => {
-      return E.gen(function* () {
-        const file = yield* getFileData(fileName);
+    const emitFile = E.fn("test.emitFile")(function* (fileName: string) {
+      const file = yield* getFileData(fileName);
 
-        yield* emitSourceValue(Option.some(file));
+      yield* emitSourceValue(Option.some(file));
 
-        return file;
-      });
-    };
+      return file;
+    });
 
     const emitNoFile = emitSourceValue(Option.none());
 

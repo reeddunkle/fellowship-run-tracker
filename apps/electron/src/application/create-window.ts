@@ -38,94 +38,92 @@ function getZoomFactor(savedWindowState: Option.Option<MainWindowStateValue>) {
   });
 }
 
-export function createWindow({
+export const createWindow = E.fn("createWindow")(function* ({
   currentDirectoryPath,
   rendererDevServerUrl,
 }: CreateWindowOptions) {
-  return E.gen(function* () {
-    const path = yield* Path.Path;
-    const windowState = yield* WindowState;
-    const savedWindowState = yield* windowState.getMainWindowState;
-    const runPromise = E.runPromiseWith(yield* E.context<WindowState>());
+  const path = yield* Path.Path;
+  const windowState = yield* WindowState;
+  const savedWindowState = yield* windowState.getMainWindowState;
+  const runPromise = E.runPromiseWith(yield* E.context<WindowState>());
 
-    const preloadPath = path.join(currentDirectoryPath, "preload.cjs");
+  const preloadPath = path.join(currentDirectoryPath, "preload.cjs");
 
-    const window = yield* E.sync(() => {
-      const defaultWorkArea = screen.getDisplayNearestPoint(
-        screen.getCursorScreenPoint(),
-      ).workArea;
-      const initialBounds = resolveInitialWindowBounds({
-        defaultWorkArea,
-        savedBounds: Option.getOrUndefined(savedWindowState)?.bounds,
-        workAreas: screen.getAllDisplays().map((display) => {
-          return display.workArea;
-        }),
-      });
-      const minimumSize = getMinimumWindowSize(defaultWorkArea);
-
-      const createdWindow = new BrowserWindow({
-        ...initialBounds,
-        backgroundColor: getWindowBackgroundColor(),
-        minHeight: minimumSize.height,
-        minWidth: minimumSize.width,
-        show: false,
-        webPreferences: {
-          contextIsolation: true,
-          nodeIntegration: false,
-          preload: preloadPath,
-          sandbox: true,
-          zoomFactor: getZoomFactor(savedWindowState),
-        },
-      });
-
-      createdWindow.once("ready-to-show", () => {
-        if (
-          Option.isSome(savedWindowState) &&
-          savedWindowState.value.isMaximized
-        ) {
-          createdWindow.maximize();
-        }
-
-        createdWindow.show();
-      });
-
-      trackWindowStateSaves({
-        getSnapshot: () => {
-          return getMainWindowStateSnapshot(createdWindow);
-        },
-        save: (state) => {
-          return runPromise(windowState.setMainWindowState(state));
-        },
-        subscribe: (scheduleSave) => {
-          createdWindow.on("maximize", scheduleSave);
-          createdWindow.on("move", scheduleSave);
-          createdWindow.on("resize", scheduleSave);
-          createdWindow.on("unmaximize", scheduleSave);
-          createdWindow.webContents.on("zoom-changed", scheduleSave);
-        },
-        window: createdWindow,
-      });
-
-      return createdWindow;
+  const window = yield* E.sync(() => {
+    const defaultWorkArea = screen.getDisplayNearestPoint(
+      screen.getCursorScreenPoint(),
+    ).workArea;
+    const initialBounds = resolveInitialWindowBounds({
+      defaultWorkArea,
+      savedBounds: Option.getOrUndefined(savedWindowState)?.bounds,
+      workAreas: screen.getAllDisplays().map((display) => {
+        return display.workArea;
+      }),
     });
+    const minimumSize = getMinimumWindowSize(defaultWorkArea);
 
-    yield* E.tryPromise({
-      catch: (cause) => {
-        return new ElectronWindowCreationError({
-          cause,
-        });
-      },
-      try: () => {
-        if (rendererDevServerUrl !== undefined) {
-          return window.loadURL(rendererDevServerUrl);
-        }
-
-        return window.loadFile(
-          path.join(currentDirectoryPath, "renderer/index.html"),
-        );
+    const createdWindow = new BrowserWindow({
+      ...initialBounds,
+      backgroundColor: getWindowBackgroundColor(),
+      minHeight: minimumSize.height,
+      minWidth: minimumSize.width,
+      show: false,
+      webPreferences: {
+        contextIsolation: true,
+        nodeIntegration: false,
+        preload: preloadPath,
+        sandbox: true,
+        zoomFactor: getZoomFactor(savedWindowState),
       },
     });
 
-    return window;
+    createdWindow.once("ready-to-show", () => {
+      if (
+        Option.isSome(savedWindowState) &&
+        savedWindowState.value.isMaximized
+      ) {
+        createdWindow.maximize();
+      }
+
+      createdWindow.show();
+    });
+
+    trackWindowStateSaves({
+      getSnapshot: () => {
+        return getMainWindowStateSnapshot(createdWindow);
+      },
+      save: (state) => {
+        return runPromise(windowState.setMainWindowState(state));
+      },
+      subscribe: (scheduleSave) => {
+        createdWindow.on("maximize", scheduleSave);
+        createdWindow.on("move", scheduleSave);
+        createdWindow.on("resize", scheduleSave);
+        createdWindow.on("unmaximize", scheduleSave);
+        createdWindow.webContents.on("zoom-changed", scheduleSave);
+      },
+      window: createdWindow,
+    });
+
+    return createdWindow;
   });
-}
+
+  yield* E.tryPromise({
+    catch: (cause) => {
+      return new ElectronWindowCreationError({
+        cause,
+      });
+    },
+    try: () => {
+      if (rendererDevServerUrl !== undefined) {
+        return window.loadURL(rendererDevServerUrl);
+      }
+
+      return window.loadFile(
+        path.join(currentDirectoryPath, "renderer/index.html"),
+      );
+    },
+  });
+
+  return window;
+});

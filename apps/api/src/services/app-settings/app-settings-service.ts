@@ -28,8 +28,8 @@ const makeAppSettings = E.gen(function* () {
     return appSettingsStore.get().pipe(E.map(createAppSettingsApiResponse));
   };
 
-  const set: AppSettingsShape["set"] = (appSettings) => {
-    return E.gen(function* () {
+  const set: AppSettingsShape["set"] = E.fn("AppSettings.set")(
+    function* (appSettings) {
       const currentAppSettings = yield* appSettingsStore.get();
 
       const fellowshipLogsClientSecret =
@@ -51,8 +51,8 @@ const makeAppSettings = E.gen(function* () {
       yield* appSettingsStore.set(updatedAppSettings);
 
       return createAppSettingsApiResponse(updatedAppSettings);
-    });
-  };
+    },
+  );
 
   return {
     get,

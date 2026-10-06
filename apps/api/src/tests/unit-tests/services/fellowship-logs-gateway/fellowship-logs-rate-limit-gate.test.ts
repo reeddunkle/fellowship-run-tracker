@@ -85,35 +85,33 @@ function makeStubQuery(responses: ReadonlyArray<StubResponse>) {
   const remaining = [...responses];
   const sent = { count: 0 };
 
-  const query: Query = (_request, responseSchema) => {
-    return E.gen(function* () {
-      sent.count += 1;
+  const query: Query = E.fn("test.query")(function* (_request, responseSchema) {
+    sent.count += 1;
 
-      const response = remaining.shift();
+    const response = remaining.shift();
 
-      if (response === undefined) {
-        return yield* new FellowshipLogsGatewayRequestError({
-          cause: new Error("No stub response left."),
+    if (response === undefined) {
+      return yield* new FellowshipLogsGatewayRequestError({
+        cause: new Error("No stub response left."),
+        operation: "Query",
+      });
+    }
+
+    if (response._tag === "Rejected") {
+      return yield* new FellowshipLogsGatewayRateLimitRejectedError();
+    }
+
+    return yield* Schema.decodeUnknownEffect(
+      makeFellowshipLogsGatewayGraphQLResponseSchema(responseSchema),
+    )(response.body).pipe(
+      E.mapError((cause) => {
+        return new FellowshipLogsGatewayRequestError({
+          cause,
           operation: "Query",
         });
-      }
-
-      if (response._tag === "Rejected") {
-        return yield* new FellowshipLogsGatewayRateLimitRejectedError();
-      }
-
-      return yield* Schema.decodeUnknownEffect(
-        makeFellowshipLogsGatewayGraphQLResponseSchema(responseSchema),
-      )(response.body).pipe(
-        E.mapError((cause) => {
-          return new FellowshipLogsGatewayRequestError({
-            cause,
-            operation: "Query",
-          });
-        }),
-      );
-    });
-  };
+      }),
+    );
+  });
 
   return { query, sent };
 }

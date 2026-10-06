@@ -9,7 +9,7 @@ import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
 const MetaApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "meta",
-  E.fn(function* (handlers) {
+  E.fn("MetaApi.handlers")(function* (handlers) {
     const appVersion = yield* AppVersion;
 
     return handlers.handle("getMeta", () => {

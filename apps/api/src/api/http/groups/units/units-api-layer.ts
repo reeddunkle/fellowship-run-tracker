@@ -23,7 +23,7 @@ function mapUnitApiError(
 const UnitsApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "units",
-  E.fn(function* (handlers) {
+  E.fn("UnitsApi.handlers")(function* (handlers) {
     const unitCatalog = yield* UnitCatalog;
 
     return handlers

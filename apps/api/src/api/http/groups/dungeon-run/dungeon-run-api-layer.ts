@@ -24,7 +24,7 @@ function mapDungeonRunApiError(
 const DungeonRunApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "dungeonRun",
-  E.fn(function* (handlers) {
+  E.fn("DungeonRunApi.handlers")(function* (handlers) {
     const dungeonRunHistory = yield* DungeonRunHistory;
 
     return handlers

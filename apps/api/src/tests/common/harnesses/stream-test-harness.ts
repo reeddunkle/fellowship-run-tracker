@@ -2,10 +2,10 @@ import * as E from "effect/Effect";
 import * as Queue from "effect/Queue";
 import * as Stream from "effect/Stream";
 
-export function makeStreamTestHarness<Value, Error, Requirements>(
-  stream: Stream.Stream<Value, Error, Requirements>,
-) {
-  return E.gen(function* () {
+export const makeStreamTestHarness = E.fn("test.makeStreamTestHarness")(
+  function* <Value, Error, Requirements>(
+    stream: Stream.Stream<Value, Error, Requirements>,
+  ) {
     const values = yield* Queue.make<Value>();
 
     yield* stream.pipe(
@@ -18,5 +18,5 @@ export function makeStreamTestHarness<Value, Error, Requirements>(
     return {
       take: Queue.take(values),
     };
-  });
-}
+  },
+);

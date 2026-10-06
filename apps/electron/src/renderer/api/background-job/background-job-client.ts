@@ -16,32 +16,32 @@ export function getBackgroundJobs() {
   });
 }
 
-export function cancelBackgroundJob({ id }: BackgroundJobCommandArgs) {
-  return E.gen(function* () {
-    const client = yield* AppApiClient;
+export const cancelBackgroundJob = E.fn("cancelBackgroundJob")(function* ({
+  id,
+}: BackgroundJobCommandArgs) {
+  const client = yield* AppApiClient;
 
-    yield* client.backgroundJob.cancelBackgroundJob({
-      params: { jobId: id },
-    });
+  yield* client.backgroundJob.cancelBackgroundJob({
+    params: { jobId: id },
   });
-}
+});
 
-export function retryBackgroundJob({ id }: BackgroundJobCommandArgs) {
-  return E.gen(function* () {
-    const client = yield* AppApiClient;
+export const retryBackgroundJob = E.fn("retryBackgroundJob")(function* ({
+  id,
+}: BackgroundJobCommandArgs) {
+  const client = yield* AppApiClient;
 
-    yield* client.backgroundJob.retryBackgroundJob({
-      params: { jobId: id },
-    });
+  yield* client.backgroundJob.retryBackgroundJob({
+    params: { jobId: id },
   });
-}
+});
 
-export function dismissBackgroundJob({ id }: BackgroundJobCommandArgs) {
-  return E.gen(function* () {
-    const client = yield* AppApiClient;
+export const dismissBackgroundJob = E.fn("dismissBackgroundJob")(function* ({
+  id,
+}: BackgroundJobCommandArgs) {
+  const client = yield* AppApiClient;
 
-    yield* client.backgroundJob.dismissBackgroundJob({
-      params: { jobId: id },
-    });
+  yield* client.backgroundJob.dismissBackgroundJob({
+    params: { jobId: id },
   });
-}
+});

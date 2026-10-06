@@ -74,7 +74,9 @@ export const makeLocalLogDungeonRunPersistence = E.fn(
 
   const dungeonRunIdSemaphore = yield* Semaphore.make(1);
 
-  const getOrCreateDungeonRunId = E.fn(function* () {
+  const getOrCreateDungeonRunId = E.fn(
+    "LocalLogDungeonRunPersistence.getOrCreateDungeonRunId",
+  )(function* () {
     return yield* dungeonRunIdSemaphore.withPermit(
       E.gen(function* () {
         const dungeonRunId = yield* Ref.get(dungeonRunIdRef);
@@ -150,10 +152,9 @@ export const makeLocalLogDungeonRunPersistence = E.fn(
     );
   });
 
-  const persist: LocalLogDungeonRunPersistence["persist"] = E.fn(function* ({
-    observation,
-    processingEvents,
-  }) {
+  const persist: LocalLogDungeonRunPersistence["persist"] = E.fn(
+    "LocalLogDungeonRunPersistence.persist",
+  )(function* ({ observation, processingEvents }) {
     const lifecycleEvents = processingEvents.filter(
       isLocalLogDungeonRunLifecycleEvent,
     );

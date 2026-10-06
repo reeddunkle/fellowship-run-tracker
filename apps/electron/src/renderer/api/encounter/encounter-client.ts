@@ -17,15 +17,16 @@ export function getEncounters() {
   });
 }
 
-export function getEncounter({ dungeonId, id }: EncounterIdArgs) {
-  return E.gen(function* () {
-    const client = yield* AppApiClient;
+export const getEncounter = E.fn("getEncounter")(function* ({
+  dungeonId,
+  id,
+}: EncounterIdArgs) {
+  const client = yield* AppApiClient;
 
-    return yield* client.encounters.getEncounter({
-      params: {
-        dungeonId,
-        id,
-      },
-    });
+  return yield* client.encounters.getEncounter({
+    params: {
+      dungeonId,
+      id,
+    },
   });
-}
+});

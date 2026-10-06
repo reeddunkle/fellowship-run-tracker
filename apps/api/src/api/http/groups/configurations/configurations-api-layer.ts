@@ -24,7 +24,7 @@ function mapConfigurationError(
 const ConfigurationsApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "configurations",
-  E.fn(function* (handlers) {
+  E.fn("ConfigurationsApi.handlers")(function* (handlers) {
     const configurationLibrary = yield* ConfigurationLibrary;
 
     return handlers

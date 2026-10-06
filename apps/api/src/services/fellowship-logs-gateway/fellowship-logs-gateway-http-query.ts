@@ -128,8 +128,8 @@ export function makeFellowshipLogsGatewayHttpQuery(
       },
     );
 
-    const query: Query = (request, responseSchema) => {
-      return E.gen(function* () {
+    const query: Query = E.fn("FellowshipLogsGatewayHttpQuery.query")(
+      function* (request, responseSchema) {
         const accessToken = yield* getAccessToken();
 
         const httpRequest = yield* HttpClientRequest.post(
@@ -155,22 +155,21 @@ export function makeFellowshipLogsGatewayHttpQuery(
         return yield* HttpClientResponse.schemaBodyJson(
           makeFellowshipLogsGatewayGraphQLResponseSchema(responseSchema),
         )(okResponse).pipe(E.timeout(REQUEST_TIMEOUT));
-      }).pipe(
-        E.mapError((error) => {
-          if (
-            error instanceof FellowshipLogsGatewayRequestError ||
-            error instanceof FellowshipLogsGatewayRateLimitRejectedError
-          ) {
-            return error;
-          }
+      },
+      E.mapError((error) => {
+        if (
+          error instanceof FellowshipLogsGatewayRequestError ||
+          error instanceof FellowshipLogsGatewayRateLimitRejectedError
+        ) {
+          return error;
+        }
 
-          return new FellowshipLogsGatewayRequestError({
-            cause: error,
-            operation: "Query",
-          });
-        }),
-      );
-    };
+        return new FellowshipLogsGatewayRequestError({
+          cause: error,
+          operation: "Query",
+        });
+      }),
+    );
 
     return query;
   });

@@ -76,9 +76,10 @@ export const makeBackgroundJobDAO = E.gen(function* () {
     updated_at
   `);
 
-  const getById: BackgroundJobDAOShape["getById"] = ({ id }) => {
-    return E.gen(function* () {
-      const rows = yield* sql`
+  const getById: BackgroundJobDAOShape["getById"] = E.fn(
+    "BackgroundJobDAO.getById",
+  )(function* ({ id }) {
+    const rows = yield* sql`
         SELECT
           ${columns}
         FROM
@@ -89,21 +90,21 @@ export const makeBackgroundJobDAO = E.gen(function* () {
           1
       `;
 
-      const jobs = yield* decodeBackgroundJobRows(rows);
+    const jobs = yield* decodeBackgroundJobRows(rows);
 
-      return Option.fromUndefinedOr(jobs[0]);
-    }).pipe(E.mapError(mapBackgroundJobDAOError));
-  };
+    return Option.fromUndefinedOr(jobs[0]);
+  }, E.mapError(mapBackgroundJobDAOError));
 
-  const getActiveByIdempotencyKey = ({
+  const getActiveByIdempotencyKey = E.fn(
+    "BackgroundJobDAO.getActiveByIdempotencyKey",
+  )(function* ({
     idempotencyKey,
     queue,
   }: {
     readonly idempotencyKey: string;
     readonly queue: string;
-  }) => {
-    return E.gen(function* () {
-      const rows = yield* sql`
+  }) {
+    const rows = yield* sql`
         SELECT
           ${columns}
         FROM
@@ -116,42 +117,34 @@ export const makeBackgroundJobDAO = E.gen(function* () {
           1
       `;
 
-      const jobs = yield* decodeBackgroundJobRows(rows);
+    const jobs = yield* decodeBackgroundJobRows(rows);
 
-      return Option.fromUndefinedOr(jobs[0]);
+    return Option.fromUndefinedOr(jobs[0]);
+  });
+
+  const insert: BackgroundJobDAOShape["insert"] = E.fn(
+    "BackgroundJobDAO.insert",
+  )(function* ({ idempotencyKey, kind, payload, queue, traceparent }) {
+    const job = yield* BackgroundJobModel.insert.makeEffect({
+      attempts: 0,
+      availableAt: null,
+      error: null,
+      finishedAt: null,
+      idempotencyKey,
+      kind,
+      payload,
+      queue,
+      result: null,
+      startedAt: null,
+      status: "QUEUED",
+      traceparent,
     });
-  };
 
-  const insert: BackgroundJobDAOShape["insert"] = ({
-    idempotencyKey,
-    kind,
-    payload,
-    queue,
-    traceparent,
-  }) => {
-    return E.gen(function* () {
-      const job = yield* BackgroundJobModel.insert.makeEffect({
-        attempts: 0,
-        availableAt: null,
-        error: null,
-        finishedAt: null,
-        idempotencyKey,
-        kind,
-        payload,
-        queue,
-        result: null,
-        startedAt: null,
-        status: "QUEUED",
-        traceparent,
-      });
+    const encoded = yield* Schema.encodeEffect(BackgroundJobModel.insert)(job);
 
-      const encoded = yield* Schema.encodeEffect(BackgroundJobModel.insert)(
-        job,
-      );
-
-      // [KEEP] The partial unique index on (queue, idempotency_key) makes this a
-      // no-op when an equivalent job is already queued or running.
-      const rows = yield* sql`
+    // [KEEP] The partial unique index on (queue, idempotency_key) makes this a
+    // no-op when an equivalent job is already queued or running.
+    const rows = yield* sql`
         INSERT INTO
           background_job (
             id,
@@ -193,35 +186,32 @@ export const makeBackgroundJobDAO = E.gen(function* () {
           ${columns}
       `;
 
-      const inserted = (yield* decodeBackgroundJobRows(rows))[0];
+    const inserted = (yield* decodeBackgroundJobRows(rows))[0];
 
-      if (inserted !== undefined) {
-        return { job: inserted, wasInserted: true };
-      }
+    if (inserted !== undefined) {
+      return { job: inserted, wasInserted: true };
+    }
 
-      const existing =
-        idempotencyKey === null
-          ? Option.none<BackgroundJobModel>()
-          : yield* getActiveByIdempotencyKey({ idempotencyKey, queue });
+    const existing =
+      idempotencyKey === null
+        ? Option.none<BackgroundJobModel>()
+        : yield* getActiveByIdempotencyKey({ idempotencyKey, queue });
 
-      if (Option.isNone(existing)) {
-        return yield* new BackgroundJobDAOError({
-          reason: new BackgroundJobNotReturnedAfterInsertError({ id: job.id }),
-        });
-      }
+    if (Option.isNone(existing)) {
+      return yield* new BackgroundJobDAOError({
+        reason: new BackgroundJobNotReturnedAfterInsertError({ id: job.id }),
+      });
+    }
 
-      return { job: existing.value, wasInserted: false };
-    }).pipe(E.mapError(mapBackgroundJobDAOError));
-  };
+    return { job: existing.value, wasInserted: false };
+  }, E.mapError(mapBackgroundJobDAOError));
 
-  const claimNext: BackgroundJobDAOShape["claimNext"] = ({
-    holdWhileWaiting,
-    queue,
-  }) => {
-    return E.gen(function* () {
-      const now = yield* encodeNow;
+  const claimNext: BackgroundJobDAOShape["claimNext"] = E.fn(
+    "BackgroundJobDAO.claimNext",
+  )(function* ({ holdWhileWaiting, queue }) {
+    const now = yield* encodeNow;
 
-      const rows = yield* sql`
+    const rows = yield* sql`
         UPDATE background_job
         SET
           status = 'RUNNING',
@@ -269,27 +259,23 @@ export const makeBackgroundJobDAO = E.gen(function* () {
           ${columns}
       `;
 
-      const jobs = yield* decodeBackgroundJobRows(rows);
+    const jobs = yield* decodeBackgroundJobRows(rows);
 
-      return Option.fromUndefinedOr(jobs[0]);
-    }).pipe(E.mapError(mapBackgroundJobDAOError));
-  };
+    return Option.fromUndefinedOr(jobs[0]);
+  }, E.mapError(mapBackgroundJobDAOError));
 
-  const markWaiting: BackgroundJobDAOShape["markWaiting"] = ({
-    availableAt,
-    id,
-    reason,
-  }) => {
-    return E.gen(function* () {
-      const now = yield* encodeNow;
-      const encodedAvailableAt = yield* Schema.encodeEffect(
-        Schema.DateTimeUtcFromMillis,
-      )(availableAt);
-      const encodedReason = yield* Schema.encodeEffect(
-        BackgroundJobFailureFromJsonString,
-      )(reason);
+  const markWaiting: BackgroundJobDAOShape["markWaiting"] = E.fn(
+    "BackgroundJobDAO.markWaiting",
+  )(function* ({ availableAt, id, reason }) {
+    const now = yield* encodeNow;
+    const encodedAvailableAt = yield* Schema.encodeEffect(
+      Schema.DateTimeUtcFromMillis,
+    )(availableAt);
+    const encodedReason = yield* Schema.encodeEffect(
+      BackgroundJobFailureFromJsonString,
+    )(reason);
 
-      const rows = yield* sql`
+    const rows = yield* sql`
         UPDATE background_job
         SET
           status = 'WAITING',
@@ -305,19 +291,16 @@ export const makeBackgroundJobDAO = E.gen(function* () {
           id
       `;
 
-      if (rows[0] === undefined) {
-        return yield* makeJobNotFoundError(id);
-      }
-    }).pipe(E.mapError(mapBackgroundJobDAOError));
-  };
+    if (rows[0] === undefined) {
+      return yield* makeJobNotFoundError(id);
+    }
+  }, E.mapError(mapBackgroundJobDAOError));
 
-  const getNextAvailableAt: BackgroundJobDAOShape["getNextAvailableAt"] = ({
-    holdWhileWaiting,
-    queue,
-  }) => {
-    return E.gen(function* () {
-      const rows = holdWhileWaiting
-        ? yield* sql`
+  const getNextAvailableAt: BackgroundJobDAOShape["getNextAvailableAt"] = E.fn(
+    "BackgroundJobDAO.getNextAvailableAt",
+  )(function* ({ holdWhileWaiting, queue }) {
+    const rows = holdWhileWaiting
+      ? yield* sql`
             SELECT
               MAX(available_at) AS available_at
             FROM
@@ -326,7 +309,7 @@ export const makeBackgroundJobDAO = E.gen(function* () {
               queue = ${queue}
               AND status = 'WAITING'
           `
-        : yield* sql`
+      : yield* sql`
             SELECT
               MIN(available_at) AS available_at
             FROM
@@ -336,23 +319,20 @@ export const makeBackgroundJobDAO = E.gen(function* () {
               AND status = 'WAITING'
           `;
 
-      const [row] = yield* Schema.decodeUnknownEffect(
-        Schema.Array(NextAvailableAtRowSchema),
-      )(rows);
+    const [row] = yield* Schema.decodeUnknownEffect(
+      Schema.Array(NextAvailableAtRowSchema),
+    )(rows);
 
-      return Option.fromNullishOr(row?.availableAt);
-    }).pipe(E.mapError(mapBackgroundJobDAOError));
-  };
+    return Option.fromNullishOr(row?.availableAt);
+  }, E.mapError(mapBackgroundJobDAOError));
 
-  const markSucceeded: BackgroundJobDAOShape["markSucceeded"] = ({
-    id,
-    result,
-  }) => {
-    return E.gen(function* () {
-      const now = yield* encodeNow;
-      const encodedResult = yield* Schema.encodeEffect(JsonFromString)(result);
+  const markSucceeded: BackgroundJobDAOShape["markSucceeded"] = E.fn(
+    "BackgroundJobDAO.markSucceeded",
+  )(function* ({ id, result }) {
+    const now = yield* encodeNow;
+    const encodedResult = yield* Schema.encodeEffect(JsonFromString)(result);
 
-      const rows = yield* sql`
+    const rows = yield* sql`
         UPDATE background_job
         SET
           status = 'SUCCEEDED',
@@ -367,20 +347,20 @@ export const makeBackgroundJobDAO = E.gen(function* () {
           id
       `;
 
-      if (rows[0] === undefined) {
-        return yield* makeJobNotFoundError(id);
-      }
-    }).pipe(E.mapError(mapBackgroundJobDAOError));
-  };
+    if (rows[0] === undefined) {
+      return yield* makeJobNotFoundError(id);
+    }
+  }, E.mapError(mapBackgroundJobDAOError));
 
-  const markFailed: BackgroundJobDAOShape["markFailed"] = ({ error, id }) => {
-    return E.gen(function* () {
-      const now = yield* encodeNow;
-      const encodedError = yield* Schema.encodeEffect(
-        BackgroundJobFailureFromJsonString,
-      )(error);
+  const markFailed: BackgroundJobDAOShape["markFailed"] = E.fn(
+    "BackgroundJobDAO.markFailed",
+  )(function* ({ error, id }) {
+    const now = yield* encodeNow;
+    const encodedError = yield* Schema.encodeEffect(
+      BackgroundJobFailureFromJsonString,
+    )(error);
 
-      const rows = yield* sql`
+    const rows = yield* sql`
         UPDATE background_job
         SET
           status = 'FAILED',
@@ -394,14 +374,13 @@ export const makeBackgroundJobDAO = E.gen(function* () {
           id
       `;
 
-      if (rows[0] === undefined) {
-        return yield* makeJobNotFoundError(id);
-      }
-    }).pipe(E.mapError(mapBackgroundJobDAOError));
-  };
+    if (rows[0] === undefined) {
+      return yield* makeJobNotFoundError(id);
+    }
+  }, E.mapError(mapBackgroundJobDAOError));
 
-  const retry: BackgroundJobDAOShape["retry"] = ({ id }) => {
-    return E.gen(function* () {
+  const retry: BackgroundJobDAOShape["retry"] = E.fn("BackgroundJobDAO.retry")(
+    function* ({ id }) {
       const now = yield* encodeNow;
 
       const rows = yield* sql`
@@ -438,12 +417,14 @@ export const makeBackgroundJobDAO = E.gen(function* () {
       }
 
       return job;
-    }).pipe(E.mapError(mapBackgroundJobDAOError));
-  };
+    },
+    E.mapError(mapBackgroundJobDAOError),
+  );
 
-  const delete_: BackgroundJobDAOShape["delete"] = ({ id, statuses }) => {
-    return E.gen(function* () {
-      const rows = yield* sql`
+  const delete_: BackgroundJobDAOShape["delete"] = E.fn(
+    "BackgroundJobDAO.delete",
+  )(function* ({ id, statuses }) {
+    const rows = yield* sql`
         DELETE FROM background_job
         WHERE
           id = ${id}
@@ -452,18 +433,17 @@ export const makeBackgroundJobDAO = E.gen(function* () {
           id
       `;
 
-      if (rows[0] === undefined) {
-        return yield* makeJobNotFoundError(id);
-      }
-    }).pipe(E.mapError(mapBackgroundJobDAOError));
-  };
+    if (rows[0] === undefined) {
+      return yield* makeJobNotFoundError(id);
+    }
+  }, E.mapError(mapBackgroundJobDAOError));
 
-  const deleteFinishedBefore: BackgroundJobDAOShape["deleteFinishedBefore"] = ({
-    finishedBefore,
-    queues,
-    statuses,
-  }) => {
-    return E.gen(function* () {
+  const deleteFinishedBefore: BackgroundJobDAOShape["deleteFinishedBefore"] =
+    E.fn("BackgroundJobDAO.deleteFinishedBefore")(function* ({
+      finishedBefore,
+      queues,
+      statuses,
+    }) {
       const encodedFinishedBefore = yield* Schema.encodeEffect(
         Schema.DateTimeUtcFromMillis,
       )(finishedBefore);
@@ -489,15 +469,14 @@ export const makeBackgroundJobDAO = E.gen(function* () {
             `;
 
       return rows.length;
-    }).pipe(E.mapError(mapBackgroundJobDAOError));
-  };
+    }, E.mapError(mapBackgroundJobDAOError));
 
   const incrementalVacuum: BackgroundJobDAOShape["incrementalVacuum"] = () => {
     return reclaimFreePages(sql).pipe(E.mapError(mapBackgroundJobDAOError));
   };
 
-  const list: BackgroundJobDAOShape["list"] = ({ queues }) => {
-    return E.gen(function* () {
+  const list: BackgroundJobDAOShape["list"] = E.fn("BackgroundJobDAO.list")(
+    function* ({ queues }) {
       const rows = yield* sql`
         SELECT
           ${columns}
@@ -511,23 +490,21 @@ export const makeBackgroundJobDAO = E.gen(function* () {
       `;
 
       return yield* decodeBackgroundJobRows(rows);
-    }).pipe(E.mapError(mapBackgroundJobDAOError));
-  };
+    },
+    E.mapError(mapBackgroundJobDAOError),
+  );
 
-  const recoverRunning: BackgroundJobDAOShape["recoverRunning"] = ({
-    exhaustedError,
-    maxAttempts,
-    queue,
-  }) => {
-    return E.gen(function* () {
-      const now = yield* encodeNow;
-      const encodedExhaustedError = yield* Schema.encodeEffect(
-        BackgroundJobFailureFromJsonString,
-      )(exhaustedError);
+  const recoverRunning: BackgroundJobDAOShape["recoverRunning"] = E.fn(
+    "BackgroundJobDAO.recoverRunning",
+  )(function* ({ exhaustedError, maxAttempts, queue }) {
+    const now = yield* encodeNow;
+    const encodedExhaustedError = yield* Schema.encodeEffect(
+      BackgroundJobFailureFromJsonString,
+    )(exhaustedError);
 
-      yield* sql.withTransaction(
-        E.gen(function* () {
-          yield* sql`
+    yield* sql.withTransaction(
+      E.gen(function* () {
+        yield* sql`
             UPDATE background_job
             SET
               status = 'FAILED',
@@ -540,7 +517,7 @@ export const makeBackgroundJobDAO = E.gen(function* () {
               AND attempts >= ${maxAttempts}
           `;
 
-          yield* sql`
+        yield* sql`
             UPDATE background_job
             SET
               status = 'QUEUED',
@@ -550,10 +527,9 @@ export const makeBackgroundJobDAO = E.gen(function* () {
               queue = ${queue}
               AND status = 'RUNNING'
           `;
-        }),
-      );
-    }).pipe(E.mapError(mapBackgroundJobDAOError));
-  };
+      }),
+    );
+  }, E.mapError(mapBackgroundJobDAOError));
 
   return {
     claimNext,

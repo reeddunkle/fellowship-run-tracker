@@ -63,89 +63,18 @@ type GetReportPageOptions = {
   readonly startTime: number;
 };
 
-export function makeFellowshipLogsGatewayFromQuery(query: Query) {
-  return E.gen(function* () {
-    const responseCache = yield* FellowshipLogsGatewayResponseCache;
-    const rateLimitTracker =
-      yield* makeFellowshipLogsGatewayRateLimitDataTracker();
-    const trackedQuery = makeTrackedQuery(query, rateLimitTracker);
+export const makeFellowshipLogsGatewayFromQuery = E.fn(
+  "makeFellowshipLogsGatewayFromQuery",
+)(function* (query: Query) {
+  const responseCache = yield* FellowshipLogsGatewayResponseCache;
+  const rateLimitTracker =
+    yield* makeFellowshipLogsGatewayRateLimitDataTracker();
+  const trackedQuery = makeTrackedQuery(query, rateLimitTracker);
 
-    const getDungeonRunMetadata: FellowshipLogsGatewayShape["getDungeonRunMetadata"] =
-      E.fn("FellowshipLogsGateway.getDungeonRunMetadata")(function* ({
-        fightId,
-        reportCode,
-      }) {
-        const responseData = yield* responseCache.cached(
-          {
-            fightId,
-            getExpiresAt: (data, now) => {
-              return getFightResponseExpiresAt({ data, fightId, now });
-            },
-            key: makeFellowshipLogsGatewayResponseKey("DUNGEON_RUN_METADATA", [
-              reportCode,
-              fightId,
-            ]),
-            operation: "DUNGEON_RUN_METADATA",
-            reportCode,
-            schema: FellowshipLogsGatewayDungeonRunMetadataResponseDataSchema,
-          },
-          trackedQuery(
-            {
-              query: makeQuery({
-                name: "GetDungeonRunMetadata",
-                selections: [
-                  DUNGEON_RUN_METADATA_SELECTION,
-                  RATE_LIMIT_DATA_SELECTION,
-                ],
-                variables: DUNGEON_RUN_METADATA_VARIABLES,
-              }),
-              variables: {
-                fightId,
-                reportCode,
-              },
-            },
-            FellowshipLogsGatewayDungeonRunMetadataResponseDataSchema,
-            { operation: "DUNGEON_RUN_METADATA" },
-          ),
-        );
-
-        const metadata = yield* deriveDungeonRunMetadata({
-          fightId,
-          reportCode,
-          responseData,
-        });
-
-        return {
-          dungeonId: metadata.dungeonId,
-          dungeonLevel: metadata.dungeonLevel,
-          endedAt: DateTime.makeUnsafe(metadata.endedAtMilliseconds),
-          isInProgress: metadata.isInProgress,
-          startedAt: DateTime.makeUnsafe(metadata.startedAtMilliseconds),
-        };
-      });
-
-    const getRateLimitData: FellowshipLogsGatewayShape["getRateLimitData"] = (
-      options,
-    ) => {
-      if (options?.force !== true) {
-        return rateLimitTracker.getLastKnown();
-      }
-
-      return trackedQuery(
-        {
-          query: RATE_LIMIT_DATA_QUERY,
-        },
-        FellowshipLogsRateLimitResponseDataSchema,
-        { operation: "RATE_LIMIT_DATA", skipCapacityCheck: true },
-      ).pipe(E.andThen(rateLimitTracker.getLastKnown()));
-    };
-
-    const getFight = E.fn("FellowshipLogsGateway.getFight")(function* ({
+  const getDungeonRunMetadata: FellowshipLogsGatewayShape["getDungeonRunMetadata"] =
+    E.fn("FellowshipLogsGateway.getDungeonRunMetadata")(function* ({
       fightId,
       reportCode,
-    }: {
-      readonly fightId: FellowshipLogsFightId;
-      readonly reportCode: FellowshipLogsReportCode;
     }) {
       const responseData = yield* responseCache.cached(
         {
@@ -153,235 +82,297 @@ export function makeFellowshipLogsGatewayFromQuery(query: Query) {
           getExpiresAt: (data, now) => {
             return getFightResponseExpiresAt({ data, fightId, now });
           },
-          key: makeFellowshipLogsGatewayResponseKey("FIGHT", [
+          key: makeFellowshipLogsGatewayResponseKey("DUNGEON_RUN_METADATA", [
             reportCode,
             fightId,
           ]),
-          operation: "FIGHT",
+          operation: "DUNGEON_RUN_METADATA",
           reportCode,
-          schema: FellowshipLogsGatewayFightResponseDataSchema,
+          schema: FellowshipLogsGatewayDungeonRunMetadataResponseDataSchema,
         },
         trackedQuery(
           {
-            query: GET_FIGHT_QUERY,
+            query: makeQuery({
+              name: "GetDungeonRunMetadata",
+              selections: [
+                DUNGEON_RUN_METADATA_SELECTION,
+                RATE_LIMIT_DATA_SELECTION,
+              ],
+              variables: DUNGEON_RUN_METADATA_VARIABLES,
+            }),
             variables: {
               fightId,
               reportCode,
             },
           },
-          FellowshipLogsGatewayFightResponseDataSchema,
-          { operation: "FIGHT" },
+          FellowshipLogsGatewayDungeonRunMetadataResponseDataSchema,
+          { operation: "DUNGEON_RUN_METADATA" },
         ),
       );
 
-      const report = yield* getReportOrFail({
-        report: responseData.reportData.report,
+      const metadata = yield* deriveDungeonRunMetadata({
+        fightId,
         reportCode,
+        responseData,
       });
 
-      return yield* findFightOrFail({
-        fightId,
-        fights: report.fights,
-        reportCode,
-      });
+      return {
+        dungeonId: metadata.dungeonId,
+        dungeonLevel: metadata.dungeonLevel,
+        endedAt: DateTime.makeUnsafe(metadata.endedAtMilliseconds),
+        isInProgress: metadata.isInProgress,
+        startedAt: DateTime.makeUnsafe(metadata.startedAtMilliseconds),
+      };
     });
 
-    const getReportPage = E.fn("FellowshipLogsGateway.getReportPage")(
-      function* ({
-        endTime,
+  const getRateLimitData: FellowshipLogsGatewayShape["getRateLimitData"] = (
+    options,
+  ) => {
+    if (options?.force !== true) {
+      return rateLimitTracker.getLastKnown();
+    }
+
+    return trackedQuery(
+      {
+        query: RATE_LIMIT_DATA_QUERY,
+      },
+      FellowshipLogsRateLimitResponseDataSchema,
+      { operation: "RATE_LIMIT_DATA", skipCapacityCheck: true },
+    ).pipe(E.andThen(rateLimitTracker.getLastKnown()));
+  };
+
+  const getFight = E.fn("FellowshipLogsGateway.getFight")(function* ({
+    fightId,
+    reportCode,
+  }: {
+    readonly fightId: FellowshipLogsFightId;
+    readonly reportCode: FellowshipLogsReportCode;
+  }) {
+    const responseData = yield* responseCache.cached(
+      {
         fightId,
-        isCacheable,
+        getExpiresAt: (data, now) => {
+          return getFightResponseExpiresAt({ data, fightId, now });
+        },
+        key: makeFellowshipLogsGatewayResponseKey("FIGHT", [
+          reportCode,
+          fightId,
+        ]),
+        operation: "FIGHT",
         reportCode,
-        startTime,
-      }: GetReportPageOptions) {
-        const fetchReportPage = trackedQuery(
+        schema: FellowshipLogsGatewayFightResponseDataSchema,
+      },
+      trackedQuery(
+        {
+          query: GET_FIGHT_QUERY,
+          variables: {
+            fightId,
+            reportCode,
+          },
+        },
+        FellowshipLogsGatewayFightResponseDataSchema,
+        { operation: "FIGHT" },
+      ),
+    );
+
+    const report = yield* getReportOrFail({
+      report: responseData.reportData.report,
+      reportCode,
+    });
+
+    return yield* findFightOrFail({
+      fightId,
+      fights: report.fights,
+      reportCode,
+    });
+  });
+
+  const getReportPage = E.fn("FellowshipLogsGateway.getReportPage")(function* ({
+    endTime,
+    fightId,
+    isCacheable,
+    reportCode,
+    startTime,
+  }: GetReportPageOptions) {
+    const fetchReportPage = trackedQuery(
+      {
+        query: makeQuery({
+          name: "GetDungeonRunReport",
+          selections: [REPORT_SELECTION, RATE_LIMIT_DATA_SELECTION],
+          variables: REPORT_VARIABLES,
+        }),
+        variables: {
+          endTime,
+          reportCode,
+          startTime,
+        },
+      },
+      FellowshipLogsGatewayReportResponseDataSchema,
+      { operation: "REPORT_PAGE" },
+    );
+
+    const responseData = isCacheable
+      ? yield* responseCache.cached(
           {
-            query: makeQuery({
-              name: "GetDungeonRunReport",
-              selections: [REPORT_SELECTION, RATE_LIMIT_DATA_SELECTION],
-              variables: REPORT_VARIABLES,
-            }),
-            variables: {
-              endTime,
+            fightId,
+            getExpiresAt: getReportPageResponseExpiresAt,
+            getReportRevision: (data) => {
+              return data.reportData.report?.revision ?? null;
+            },
+            key: makeFellowshipLogsGatewayResponseKey("REPORT_PAGE", [
               reportCode,
               startTime,
-            },
+              endTime,
+            ]),
+            operation: "REPORT_PAGE",
+            reportCode,
+            schema: FellowshipLogsGatewayReportResponseDataSchema,
           },
-          FellowshipLogsGatewayReportResponseDataSchema,
-          { operation: "REPORT_PAGE" },
-        );
+          fetchReportPage,
+        )
+      : yield* fetchReportPage;
 
-        const responseData = isCacheable
-          ? yield* responseCache.cached(
-              {
-                fightId,
-                getExpiresAt: getReportPageResponseExpiresAt,
-                getReportRevision: (data) => {
-                  return data.reportData.report?.revision ?? null;
-                },
-                key: makeFellowshipLogsGatewayResponseKey("REPORT_PAGE", [
-                  reportCode,
-                  startTime,
-                  endTime,
-                ]),
-                operation: "REPORT_PAGE",
-                reportCode,
-                schema: FellowshipLogsGatewayReportResponseDataSchema,
-              },
-              fetchReportPage,
-            )
-          : yield* fetchReportPage;
+    const report = yield* getReportOrFail({
+      report: responseData.reportData.report,
+      reportCode,
+    });
 
-        const report = yield* getReportOrFail({
-          report: responseData.reportData.report,
+    const pageAttributes = {
+      "fellowship_logs.event_count": report.events.data.length,
+      "fellowship_logs.next_page_timestamp": report.events.nextPageTimestamp,
+      "fellowship_logs.page_end_time": endTime,
+      "fellowship_logs.page_start_time": startTime,
+      "fellowship_logs.report_code": reportCode,
+    };
+
+    yield* E.annotateCurrentSpan(pageAttributes);
+
+    yield* E.logDebug("Fetched Fellowship Logs report page.", pageAttributes);
+
+    return report;
+  });
+
+  const streamReportPages: FellowshipLogsGatewayShape["streamReportPages"] = ({
+    fightId,
+    onProgress,
+    reportCode,
+  }) => {
+    return Stream.unwrap(
+      E.gen(function* () {
+        const fight = yield* getFight({
+          fightId,
           reportCode,
         });
 
-        const pageAttributes = {
-          "fellowship_logs.event_count": report.events.data.length,
-          "fellowship_logs.next_page_timestamp":
-            report.events.nextPageTimestamp,
-          "fellowship_logs.page_end_time": endTime,
-          "fellowship_logs.page_start_time": startTime,
-          "fellowship_logs.report_code": reportCode,
+        const firstRevisionRef = yield* Ref.make(Option.none<number>());
+
+        const checkRevision = (revision: number) => {
+          if (!fight.inProgress) {
+            return E.void;
+          }
+
+          return Ref.modify(firstRevisionRef, (firstRevision) => {
+            return Option.match(firstRevision, {
+              onNone: () => [true, Option.some(revision)] as const,
+              onSome: (first) => [first === revision, firstRevision] as const,
+            });
+          }).pipe(
+            E.flatMap((isUnchanged) => {
+              return isUnchanged
+                ? E.void
+                : E.fail(
+                    new FellowshipLogsGatewayReportChangedError({
+                      fightId,
+                      reportCode,
+                    }),
+                  );
+            }),
+          );
         };
 
-        yield* E.annotateCurrentSpan(pageAttributes);
-
-        yield* E.logDebug(
-          "Fetched Fellowship Logs report page.",
-          pageAttributes,
-        );
-
-        return report;
-      },
-    );
-
-    const streamReportPages: FellowshipLogsGatewayShape["streamReportPages"] =
-      ({ fightId, onProgress, reportCode }) => {
-        return Stream.unwrap(
-          E.gen(function* () {
-            const fight = yield* getFight({
-              fightId,
-              reportCode,
-            });
-
-            const firstRevisionRef = yield* Ref.make(Option.none<number>());
-
-            const checkRevision = (revision: number) => {
-              if (!fight.inProgress) {
-                return E.void;
-              }
-
-              return Ref.modify(firstRevisionRef, (firstRevision) => {
-                return Option.match(firstRevision, {
-                  onNone: () => [true, Option.some(revision)] as const,
-                  onSome: (first) =>
-                    [first === revision, firstRevision] as const,
-                });
-              }).pipe(
-                E.flatMap((isUnchanged) => {
-                  return isUnchanged
-                    ? E.void
-                    : E.fail(
-                        new FellowshipLogsGatewayReportChangedError({
-                          fightId,
-                          reportCode,
-                        }),
-                      );
-                }),
-              );
-            };
-
-            return Stream.paginate(fight.startTime, (startTime) => {
-              return getReportPage({
-                endTime: fight.endTime,
-                fightId,
-                isCacheable: !fight.inProgress,
-                reportCode,
-                startTime,
-              }).pipe(
-                E.tap((reportPage) => {
-                  return checkRevision(reportPage.revision);
-                }),
-                E.tap((reportPage) => {
-                  return onProgress === undefined
-                    ? E.void
-                    : onProgress(
-                        getReportPageProgress({
-                          endTime: fight.endTime,
-                          nextPageTimestamp:
-                            reportPage.events.nextPageTimestamp,
-                          startTime: fight.startTime,
-                        }),
-                      );
-                }),
-                E.map((reportPage) => {
-                  return [
-                    [reportPage],
-                    Option.fromNullishOr(reportPage.events.nextPageTimestamp),
-                  ] as const;
-                }),
-              );
-            });
-          }),
-        );
-      };
-
-    const getReport: FellowshipLogsGatewayShape["getReport"] = (options) => {
-      return E.gen(function* () {
-        const reportPages = yield* Stream.runCollect(
-          streamReportPages(options),
-        );
-
-        const firstReportPage = reportPages[0];
-
-        if (firstReportPage === undefined) {
-          return yield* new FellowshipLogsGatewayGraphQLResponseError({
-            errors: [],
-            reason: "MissingReportPages",
-          });
-        }
-
-        const events = reportPages.flatMap((reportPage) => {
-          return reportPage.events.data;
+        return Stream.paginate(fight.startTime, (startTime) => {
+          return getReportPage({
+            endTime: fight.endTime,
+            fightId,
+            isCacheable: !fight.inProgress,
+            reportCode,
+            startTime,
+          }).pipe(
+            E.tap((reportPage) => {
+              return checkRevision(reportPage.revision);
+            }),
+            E.tap((reportPage) => {
+              return onProgress === undefined
+                ? E.void
+                : onProgress(
+                    getReportPageProgress({
+                      endTime: fight.endTime,
+                      nextPageTimestamp: reportPage.events.nextPageTimestamp,
+                      startTime: fight.startTime,
+                    }),
+                  );
+            }),
+            E.map((reportPage) => {
+              return [
+                [reportPage],
+                Option.fromNullishOr(reportPage.events.nextPageTimestamp),
+              ] as const;
+            }),
+          );
         });
+      }),
+    );
+  };
 
-        return {
-          ...firstReportPage,
-          events: {
-            data: events,
-            nextPageTimestamp: null,
-          },
-        };
+  const getReport: FellowshipLogsGatewayShape["getReport"] = E.fn(
+    "FellowshipLogsGateway.getReport",
+  )(function* (options) {
+    const reportPages = yield* Stream.runCollect(streamReportPages(options));
+
+    const firstReportPage = reportPages[0];
+
+    if (firstReportPage === undefined) {
+      return yield* new FellowshipLogsGatewayGraphQLResponseError({
+        errors: [],
+        reason: "MissingReportPages",
       });
-    };
+    }
 
-    const streamEvents: FellowshipLogsGatewayShape["streamEvents"] = (
-      options,
-    ) => {
-      return streamFellowshipLogsGatewayEvents(streamReportPages(options));
-    };
+    const events = reportPages.flatMap((reportPage) => {
+      return reportPage.events.data;
+    });
 
     return {
-      getDungeonRunMetadata,
-      getRateLimitData,
-      getReport,
-      streamEvents,
-      streamReportPages,
-    } satisfies FellowshipLogsGatewayShape;
+      ...firstReportPage,
+      events: {
+        data: events,
+        nextPageTimestamp: null,
+      },
+    };
   });
-}
 
-function makeFellowshipLogsGatewayFromCredentials(
-  getCredentials: GetCredentials,
-) {
-  return E.gen(function* () {
-    const query = yield* makeFellowshipLogsGatewayHttpQuery(getCredentials);
+  const streamEvents: FellowshipLogsGatewayShape["streamEvents"] = (
+    options,
+  ) => {
+    return streamFellowshipLogsGatewayEvents(streamReportPages(options));
+  };
 
-    return yield* makeFellowshipLogsGatewayFromQuery(query);
-  });
-}
+  return {
+    getDungeonRunMetadata,
+    getRateLimitData,
+    getReport,
+    streamEvents,
+    streamReportPages,
+  } satisfies FellowshipLogsGatewayShape;
+});
+
+const makeFellowshipLogsGatewayFromCredentials = E.fn(
+  "makeFellowshipLogsGatewayFromCredentials",
+)(function* (getCredentials: GetCredentials) {
+  const query = yield* makeFellowshipLogsGatewayHttpQuery(getCredentials);
+
+  return yield* makeFellowshipLogsGatewayFromQuery(query);
+});
 
 export const makeFellowshipLogsGateway = E.gen(function* () {
   const appSettingsStore = yield* AppSettingsStore;

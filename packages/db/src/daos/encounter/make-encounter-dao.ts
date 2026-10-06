@@ -35,8 +35,8 @@ export const makeEncounterDAO = E.gen(function* () {
     });
   };
 
-  const getById: EncounterDAOShape["getById"] = ({ dungeonId, id }) => {
-    return E.gen(function* () {
+  const getById: EncounterDAOShape["getById"] = E.fn("EncounterDAO.getById")(
+    function* ({ dungeonId, id }) {
       const rows = yield* sql`
         SELECT
           created_at AS createdAt,
@@ -59,8 +59,8 @@ export const makeEncounterDAO = E.gen(function* () {
       return encounter === undefined
         ? Option.none<EncounterModel>()
         : Option.some(encounter);
-    });
-  };
+    },
+  );
 
   return {
     getAll,

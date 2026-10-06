@@ -37,9 +37,10 @@ export const makeFellowshipLogsDungeonRunDAO = E.gen(function* () {
   const sql = yield* MainDatabase;
 
   const getByDungeonRunId: FellowshipLogsDungeonRunDAOShape["getByDungeonRunId"] =
-    ({ dungeonRunId }) => {
-      return E.gen(function* () {
-        const rows = yield* sql`
+    E.fn("FellowshipLogsDungeonRunDAO.getByDungeonRunId")(function* ({
+      dungeonRunId,
+    }) {
+      const rows = yield* sql`
           SELECT
             dungeon_run_id,
             report_code,
@@ -53,21 +54,22 @@ export const makeFellowshipLogsDungeonRunDAO = E.gen(function* () {
             1
         `;
 
-        const fellowshipLogsDungeonRuns =
-          yield* decodeFellowshipLogsDungeonRunRows(rows);
+      const fellowshipLogsDungeonRuns =
+        yield* decodeFellowshipLogsDungeonRunRows(rows);
 
-        const fellowshipLogsDungeonRun = fellowshipLogsDungeonRuns[0];
+      const fellowshipLogsDungeonRun = fellowshipLogsDungeonRuns[0];
 
-        return fellowshipLogsDungeonRun === undefined
-          ? Option.none<FellowshipLogsDungeonRunModel>()
-          : Option.some(fellowshipLogsDungeonRun);
-      }).pipe(E.mapError(mapFellowshipLogsDungeonRunDAOError));
-    };
+      return fellowshipLogsDungeonRun === undefined
+        ? Option.none<FellowshipLogsDungeonRunModel>()
+        : Option.some(fellowshipLogsDungeonRun);
+    }, E.mapError(mapFellowshipLogsDungeonRunDAOError));
 
   const getByReportFight: FellowshipLogsDungeonRunDAOShape["getByReportFight"] =
-    ({ fightId, reportCode }) => {
-      return E.gen(function* () {
-        const rows = yield* sql`
+    E.fn("FellowshipLogsDungeonRunDAO.getByReportFight")(function* ({
+      fightId,
+      reportCode,
+    }) {
+      const rows = yield* sql`
           SELECT
             dungeon_run_id,
             report_code,
@@ -82,39 +84,34 @@ export const makeFellowshipLogsDungeonRunDAO = E.gen(function* () {
             1
         `;
 
-        const fellowshipLogsDungeonRuns =
-          yield* decodeFellowshipLogsDungeonRunRows(rows);
+      const fellowshipLogsDungeonRuns =
+        yield* decodeFellowshipLogsDungeonRunRows(rows);
 
-        const fellowshipLogsDungeonRun = fellowshipLogsDungeonRuns[0];
+      const fellowshipLogsDungeonRun = fellowshipLogsDungeonRuns[0];
 
-        return fellowshipLogsDungeonRun === undefined
-          ? Option.none<FellowshipLogsDungeonRunModel>()
-          : Option.some(fellowshipLogsDungeonRun);
-      }).pipe(E.mapError(mapFellowshipLogsDungeonRunDAOError));
-    };
+      return fellowshipLogsDungeonRun === undefined
+        ? Option.none<FellowshipLogsDungeonRunModel>()
+        : Option.some(fellowshipLogsDungeonRun);
+    }, E.mapError(mapFellowshipLogsDungeonRunDAOError));
 
-  const create: FellowshipLogsDungeonRunDAOShape["create"] = ({
-    dungeonRunId,
-    fightId,
-    reportCode,
-  }) => {
-    return E.gen(function* () {
-      const fellowshipLogsDungeonRun =
-        yield* FellowshipLogsDungeonRunModel.insert
-          .makeEffect({
-            dungeonRunId,
-            fightId,
-            reportCode,
-          })
-          .pipe(E.mapError(mapFellowshipLogsDungeonRunDAOError));
+  const create: FellowshipLogsDungeonRunDAOShape["create"] = E.fn(
+    "FellowshipLogsDungeonRunDAO.create",
+  )(function* ({ dungeonRunId, fightId, reportCode }) {
+    const fellowshipLogsDungeonRun = yield* FellowshipLogsDungeonRunModel.insert
+      .makeEffect({
+        dungeonRunId,
+        fightId,
+        reportCode,
+      })
+      .pipe(E.mapError(mapFellowshipLogsDungeonRunDAOError));
 
-      const insert = yield* Schema.encodeEffect(
-        FellowshipLogsDungeonRunModel.insert,
-      )(fellowshipLogsDungeonRun).pipe(
-        E.mapError(mapFellowshipLogsDungeonRunDAOError),
-      );
+    const insert = yield* Schema.encodeEffect(
+      FellowshipLogsDungeonRunModel.insert,
+    )(fellowshipLogsDungeonRun).pipe(
+      E.mapError(mapFellowshipLogsDungeonRunDAOError),
+    );
 
-      const rows = yield* sql`
+    const rows = yield* sql`
         INSERT INTO
           fellowship_logs_dungeon_run (dungeon_run_id, report_code, fight_id, created_at)
         VALUES
@@ -131,20 +128,19 @@ export const makeFellowshipLogsDungeonRunDAO = E.gen(function* () {
           created_at
       `;
 
-      const fellowshipLogsDungeonRuns =
-        yield* decodeFellowshipLogsDungeonRunRows(rows);
+    const fellowshipLogsDungeonRuns =
+      yield* decodeFellowshipLogsDungeonRunRows(rows);
 
-      const persistedFellowshipLogsDungeonRun = fellowshipLogsDungeonRuns[0];
+    const persistedFellowshipLogsDungeonRun = fellowshipLogsDungeonRuns[0];
 
-      if (persistedFellowshipLogsDungeonRun === undefined) {
-        return yield* new FellowshipLogsDungeonRunDAOError({
-          reason: new DungeonRunNotReturnedAfterInsertError({ dungeonRunId }),
-        });
-      }
+    if (persistedFellowshipLogsDungeonRun === undefined) {
+      return yield* new FellowshipLogsDungeonRunDAOError({
+        reason: new DungeonRunNotReturnedAfterInsertError({ dungeonRunId }),
+      });
+    }
 
-      return persistedFellowshipLogsDungeonRun;
-    }).pipe(E.mapError(mapFellowshipLogsDungeonRunDAOError));
-  };
+    return persistedFellowshipLogsDungeonRun;
+  }, E.mapError(mapFellowshipLogsDungeonRunDAOError));
 
   const listImported: FellowshipLogsDungeonRunDAOShape["listImported"] = () => {
     return E.gen(function* () {

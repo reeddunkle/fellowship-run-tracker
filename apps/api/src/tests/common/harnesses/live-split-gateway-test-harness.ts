@@ -45,15 +45,15 @@ export function makeLiveSplitGatewayTransportTestHarness() {
       } satisfies LiveSplitGatewayTransportFactoryShape,
     );
 
-    const start = <A, Error>(effect: E.Effect<A, Error>) => {
-      return E.gen(function* () {
-        const fiber = yield* effect.pipe(E.forkScoped);
+    const start = E.fn("test.start")(function* <A, Error>(
+      effect: E.Effect<A, Error>,
+    ) {
+      const fiber = yield* effect.pipe(E.forkScoped);
 
-        return {
-          join: Fiber.join(fiber),
-        };
-      });
-    };
+      return {
+        join: Fiber.join(fiber),
+      };
+    });
 
     const takeCommand = () => {
       return Queue.take(writtenData);

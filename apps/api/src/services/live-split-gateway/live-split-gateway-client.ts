@@ -83,12 +83,8 @@ export type LiveSplitGatewayClient = {
   readonly unavailability: Stream.Stream<LiveSplitGatewayClientUnavailabilityCause>;
 };
 
-export function makeLiveSplitGatewayClient({
-  transport,
-}: {
-  readonly transport: LiveSplitGatewayTransport;
-}) {
-  return E.gen(function* () {
+export const makeLiveSplitGatewayClient = E.fn("makeLiveSplitGatewayClient")(
+  function* ({ transport }: { readonly transport: LiveSplitGatewayTransport }) {
     const responseQueue =
       yield* Queue.unbounded<LiveSplitGatewayResponseQueueItem>();
 
@@ -354,5 +350,5 @@ export function makeLiveSplitGatewayClient({
 
       unavailability,
     } satisfies LiveSplitGatewayClient;
-  });
-}
+  },
+);

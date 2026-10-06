@@ -10,7 +10,7 @@ type ServeWebSocketClientOptions = {
   readonly messages: Stream.Stream<string>;
 };
 
-export const serveWebSocketClient = E.fn(function* ({
+export const serveWebSocketClient = E.fn("serveWebSocketClient")(function* ({
   label,
   messages,
 }: ServeWebSocketClientOptions) {

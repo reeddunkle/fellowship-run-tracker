@@ -36,8 +36,8 @@ export const makeAbilityDAO = E.gen(function* () {
     });
   };
 
-  const getById: AbilityDAOShape["getById"] = ({ id }) => {
-    return E.gen(function* () {
+  const getById: AbilityDAOShape["getById"] = E.fn("AbilityDAO.getById")(
+    function* ({ id }) {
       const rows = yield* sql`
         SELECT
           ability.created_at AS createdAt,
@@ -60,8 +60,8 @@ export const makeAbilityDAO = E.gen(function* () {
       return ability === undefined
         ? Option.none<AbilityModel>()
         : Option.some(ability);
-    });
-  };
+    },
+  );
 
   return {
     getAll,

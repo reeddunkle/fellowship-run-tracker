@@ -136,7 +136,7 @@ function mapDeleteFellowshipLogsDungeonRunError(
 const FellowshipLogsApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "fellowshipLogs",
-  E.fn(function* (handlers) {
+  E.fn("FellowshipLogsApi.handlers")(function* (handlers) {
     const fellowshipLogs = yield* FellowshipLogs;
 
     return handlers

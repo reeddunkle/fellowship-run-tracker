@@ -12,12 +12,12 @@ export function getAppSettings() {
   });
 }
 
-export function putAppSettings(appSettings: AppSettingsApiUpdate) {
-  return E.gen(function* () {
-    const client = yield* AppApiClient;
+export const putAppSettings = E.fn("putAppSettings")(function* (
+  appSettings: AppSettingsApiUpdate,
+) {
+  const client = yield* AppApiClient;
 
-    return yield* client.appSettings.putAppSettings({
-      payload: appSettings,
-    });
+  return yield* client.appSettings.putAppSettings({
+    payload: appSettings,
   });
-}
+});

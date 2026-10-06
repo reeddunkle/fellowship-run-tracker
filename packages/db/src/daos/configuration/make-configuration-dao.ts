@@ -241,9 +241,10 @@ export const makeConfigurationDAO = E.gen(function* () {
     });
   };
 
-  const getById: ConfigurationDAOShape["getById"] = ({ id }) => {
-    return E.gen(function* () {
-      const rows = yield* sql`
+  const getById: ConfigurationDAOShape["getById"] = E.fn(
+    "ConfigurationDAO.getById",
+  )(function* ({ id }) {
+    const rows = yield* sql`
         SELECT
           id,
           configuration_definition_id,
@@ -260,16 +261,15 @@ export const makeConfigurationDAO = E.gen(function* () {
           1
       `;
 
-      const configurations = yield* decodeConfigurationRows(rows);
-      const configuration = configurations[0];
+    const configurations = yield* decodeConfigurationRows(rows);
+    const configuration = configurations[0];
 
-      if (configuration === undefined) {
-        return Option.none<PersistedConfiguration>();
-      }
+    if (configuration === undefined) {
+      return Option.none<PersistedConfiguration>();
+    }
 
-      return Option.some(yield* hydrateConfiguration(configuration));
-    }).pipe(E.mapError(mapConfigurationDAOError));
-  };
+    return Option.some(yield* hydrateConfiguration(configuration));
+  }, E.mapError(mapConfigurationDAOError));
 
   const getAll: ConfigurationDAOShape["getAll"] = () => {
     return E.gen(function* () {

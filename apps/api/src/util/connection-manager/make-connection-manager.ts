@@ -72,22 +72,22 @@ export function makeConnectionManager<Connection, AcquireError>({
       yield* E.logInfo(`${name} connection status changed to Disconnected.`);
     });
 
-    const releaseUnavailableConnection = (connection: Connection) => {
-      return E.gen(function* () {
-        const currentConnection = yield* ScopedRef.get(connectionRef);
+    const releaseUnavailableConnection = E.fn(
+      "ConnectionManager.releaseUnavailableConnection",
+    )(function* (connection: Connection) {
+      const currentConnection = yield* ScopedRef.get(connectionRef);
 
-        if (
-          Option.isNone(currentConnection) ||
-          currentConnection.value !== connection
-        ) {
-          return;
-        }
+      if (
+        Option.isNone(currentConnection) ||
+        currentConnection.value !== connection
+      ) {
+        return;
+      }
 
-        yield* ScopedRef.set(connectionRef, E.succeedNone);
+      yield* ScopedRef.set(connectionRef, E.succeedNone);
 
-        yield* setDisconnected;
-      }).pipe(connectionLock.withPermit);
-    };
+      yield* setDisconnected;
+    }, connectionLock.withPermit);
 
     const acquireConnection = E.gen(function* () {
       const connection = yield* acquire;

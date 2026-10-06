@@ -22,34 +22,32 @@ const decodeResizeWindowToContentArgs = Schema.decodeUnknownEffect(
   ResizeWindowToContentArgsSchema,
 );
 
-export function resizeWindowToContent(
+export const resizeWindowToContent = E.fn("resizeWindowToContent")(function* (
   sender: Electron.WebContents,
   input: unknown,
 ) {
-  return E.gen(function* () {
-    const window = BrowserWindow.fromWebContents(sender);
+  const window = BrowserWindow.fromWebContents(sender);
 
-    if (window === null) {
-      return;
-    }
+  if (window === null) {
+    return;
+  }
 
-    const { height, width } = yield* decodeResizeWindowToContentArgs(input);
+  const { height, width } = yield* decodeResizeWindowToContentArgs(input);
 
-    const windowBounds = window.getBounds();
-    const contentBounds = window.getContentBounds();
-    const display = screen.getDisplayMatching(windowBounds);
+  const windowBounds = window.getBounds();
+  const contentBounds = window.getContentBounds();
+  const display = screen.getDisplayMatching(windowBounds);
 
-    const maxHeight = display.workAreaSize.height - WINDOW_VERTICAL_MARGIN;
-    const maxWidth = display.workAreaSize.width - WINDOW_HORIZONTAL_MARGIN;
+  const maxHeight = display.workAreaSize.height - WINDOW_VERTICAL_MARGIN;
+  const maxWidth = display.workAreaSize.width - WINDOW_HORIZONTAL_MARGIN;
 
-    const frameHeight = windowBounds.height - contentBounds.height;
-    const frameWidth = windowBounds.width - contentBounds.width;
+  const frameHeight = windowBounds.height - contentBounds.height;
+  const frameWidth = windowBounds.width - contentBounds.width;
 
-    window.setBounds(
-      resolveDetachedWindowBounds(window, {
-        height: Math.min(Math.ceil(height), maxHeight) + frameHeight,
-        width: Math.min(Math.ceil(width), maxWidth) + frameWidth,
-      }),
-    );
-  });
-}
+  window.setBounds(
+    resolveDetachedWindowBounds(window, {
+      height: Math.min(Math.ceil(height), maxHeight) + frameHeight,
+      width: Math.min(Math.ceil(width), maxWidth) + frameWidth,
+    }),
+  );
+});

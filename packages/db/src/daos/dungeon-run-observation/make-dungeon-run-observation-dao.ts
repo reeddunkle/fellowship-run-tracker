@@ -65,9 +65,10 @@ export const makeDungeonRunObservationDAO = E.gen(function* () {
   const sql = yield* MainDatabase;
 
   const getByDungeonRunId: DungeonRunObservationDAOShape["getByDungeonRunId"] =
-    ({ dungeonRunId }) => {
-      return E.gen(function* () {
-        const rows = yield* sql`
+    E.fn("DungeonRunObservationDAO.getByDungeonRunId")(function* ({
+      dungeonRunId,
+    }) {
+      const rows = yield* sql`
           SELECT
             id,
             dungeon_run_id,
@@ -84,14 +85,15 @@ export const makeDungeonRunObservationDAO = E.gen(function* () {
             id
         `;
 
-        return yield* decodeDungeonRunObservationRows(rows);
-      }).pipe(E.mapError(mapDungeonRunObservationDAOError));
-    };
+      return yield* decodeDungeonRunObservationRows(rows);
+    }, E.mapError(mapDungeonRunObservationDAOError));
 
   const getHistoryByDungeon: DungeonRunObservationDAOShape["getHistoryByDungeon"] =
-    ({ dungeonId, dungeonLevel }) => {
-      return E.gen(function* () {
-        const rows = yield* sql`
+    E.fn("DungeonRunObservationDAO.getHistoryByDungeon")(function* ({
+      dungeonId,
+      dungeonLevel,
+    }) {
+      const rows = yield* sql`
           WITH
             observations AS (
               SELECT
@@ -136,31 +138,26 @@ export const makeDungeonRunObservationDAO = E.gen(function* () {
             elapsed_milliseconds
         `;
 
-        return yield* decodeDungeonRunObservationHistoryRows(rows);
-      }).pipe(E.mapError(mapDungeonRunObservationDAOError));
-    };
+      return yield* decodeDungeonRunObservationHistoryRows(rows);
+    }, E.mapError(mapDungeonRunObservationDAOError));
 
-  const observe: DungeonRunObservationDAOShape["observe"] = ({
-    dungeonRunId,
-    observedAt,
-    targetId,
-    type,
-  }) => {
-    return E.gen(function* () {
-      const observation = yield* DungeonRunObservationModel.insert
-        .makeEffect({
-          dungeonRunId,
-          observedAt,
-          targetId,
-          type,
-        })
-        .pipe(E.mapError(mapDungeonRunObservationDAOError));
+  const observe: DungeonRunObservationDAOShape["observe"] = E.fn(
+    "DungeonRunObservationDAO.observe",
+  )(function* ({ dungeonRunId, observedAt, targetId, type }) {
+    const observation = yield* DungeonRunObservationModel.insert
+      .makeEffect({
+        dungeonRunId,
+        observedAt,
+        targetId,
+        type,
+      })
+      .pipe(E.mapError(mapDungeonRunObservationDAOError));
 
-      const insert = yield* Schema.encodeEffect(
-        DungeonRunObservationModel.insert,
-      )(observation).pipe(E.mapError(mapDungeonRunObservationDAOError));
+    const insert = yield* Schema.encodeEffect(
+      DungeonRunObservationModel.insert,
+    )(observation).pipe(E.mapError(mapDungeonRunObservationDAOError));
 
-      const rows = yield* sql`
+    const rows = yield* sql`
         INSERT INTO
           dungeon_run_observation (
             id,
@@ -185,15 +182,14 @@ export const makeDungeonRunObservationDAO = E.gen(function* () {
           id
       `;
 
-      if (rows[0] !== undefined) {
-        return;
-      }
+    if (rows[0] !== undefined) {
+      return;
+    }
 
-      return yield* new DungeonRunObservationDAOError({
-        reason: new DungeonRunNotFoundError({ dungeonRunId }),
-      });
-    }).pipe(E.mapError(mapDungeonRunObservationDAOError));
-  };
+    return yield* new DungeonRunObservationDAOError({
+      reason: new DungeonRunNotFoundError({ dungeonRunId }),
+    });
+  }, E.mapError(mapDungeonRunObservationDAOError));
 
   return {
     getByDungeonRunId,

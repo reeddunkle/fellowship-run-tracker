@@ -234,28 +234,27 @@ export const makeAppStateStore = E.gen(function* () {
 
   const queue = yield* Queue.unbounded<AppStateUpdateRequest, Cause.Done>();
 
-  const processRequests = (requests: ReadonlyArray<AppStateUpdateRequest>) => {
-    return E.gen(function* () {
-      const result = yield* E.result(
-        E.gen(function* () {
-          const state = yield* readState;
-          const updatedState = requests.reduce((currentState, request) => {
-            return applyAppStateUpdate(currentState, request.update);
-          }, state);
+  const processRequests = E.fn("AppStateStore.processRequests")(function* (
+    requests: ReadonlyArray<AppStateUpdateRequest>,
+  ) {
+    const result = yield* E.result(
+      E.gen(function* () {
+        const state = yield* readState;
+        const updatedState = requests.reduce((currentState, request) => {
+          return applyAppStateUpdate(currentState, request.update);
+        }, state);
 
-          yield* write(updatedState);
-        }),
-      );
+        yield* write(updatedState);
+      }),
+    );
 
-      yield* E.forEach(requests, ({ deferred }) => {
-        return Result.match(result, {
-          onFailure: (failure) =>
-            Deferred.fail(deferred, failure).pipe(E.asVoid),
-          onSuccess: () => Deferred.succeed(deferred, undefined).pipe(E.asVoid),
-        });
+    yield* E.forEach(requests, ({ deferred }) => {
+      return Result.match(result, {
+        onFailure: (failure) => Deferred.fail(deferred, failure).pipe(E.asVoid),
+        onSuccess: () => Deferred.succeed(deferred, undefined).pipe(E.asVoid),
       });
     });
-  };
+  });
 
   const processBatch = E.uninterruptibleMask((restore) => {
     return restore(Queue.takeAll(queue)).pipe(E.flatMap(processRequests));
@@ -276,22 +275,22 @@ export const makeAppStateStore = E.gen(function* () {
 
   yield* processLoop.pipe(E.tapCause(E.logError), E.forkScoped);
 
-  const update = (appStateUpdate: AppStateUpdate) => {
-    return E.gen(function* () {
-      const deferred = yield* Deferred.make<void, AppStateStoreError>();
+  const update = E.fn("AppStateStore.update")(function* (
+    appStateUpdate: AppStateUpdate,
+  ) {
+    const deferred = yield* Deferred.make<void, AppStateStoreError>();
 
-      const wasOffered = yield* Queue.offer(queue, {
-        deferred,
-        update: appStateUpdate,
-      });
-
-      if (!wasOffered) {
-        return yield* new AppStateStoreClosedError();
-      }
-
-      yield* Deferred.await(deferred);
+    const wasOffered = yield* Queue.offer(queue, {
+      deferred,
+      update: appStateUpdate,
     });
-  };
+
+    if (!wasOffered) {
+      return yield* new AppStateStoreClosedError();
+    }
+
+    yield* Deferred.await(deferred);
+  });
 
   const setDungeonRunComparisonGroup: AppStateStoreShape["setDungeonRunComparisonGroup"] =
     (comparisonGroup) => {

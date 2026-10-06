@@ -12,28 +12,26 @@ const FellowshipLogsGatewayPointsSpent =
     },
   );
 
-export function addFellowshipLogsGatewayPointsSpent(points: number) {
-  return E.gen(function* () {
-    const pointsSpent = yield* FellowshipLogsGatewayPointsSpent;
+export const addFellowshipLogsGatewayPointsSpent = E.fn(
+  "addFellowshipLogsGatewayPointsSpent",
+)(function* (points: number) {
+  const pointsSpent = yield* FellowshipLogsGatewayPointsSpent;
 
-    if (pointsSpent !== null) {
-      yield* Ref.update(pointsSpent, (total) => {
-        return total + points;
-      });
-    }
-  });
-}
+  if (pointsSpent !== null) {
+    yield* Ref.update(pointsSpent, (total) => {
+      return total + points;
+    });
+  }
+});
 
-export function withFellowshipLogsGatewayPointsSpent<A, Err, Requirements>(
-  effect: E.Effect<A, Err, Requirements>,
-) {
-  return E.gen(function* () {
-    const pointsSpent = yield* Ref.make(0);
+export const withFellowshipLogsGatewayPointsSpent = E.fn(
+  "withFellowshipLogsGatewayPointsSpent",
+)(function* <A, Err, Requirements>(effect: E.Effect<A, Err, Requirements>) {
+  const pointsSpent = yield* Ref.make(0);
 
-    const result = yield* effect.pipe(
-      E.provideService(FellowshipLogsGatewayPointsSpent, pointsSpent),
-    );
+  const result = yield* effect.pipe(
+    E.provideService(FellowshipLogsGatewayPointsSpent, pointsSpent),
+  );
 
-    return [result, yield* Ref.get(pointsSpent)] as const;
-  });
-}
+  return [result, yield* Ref.get(pointsSpent)] as const;
+});

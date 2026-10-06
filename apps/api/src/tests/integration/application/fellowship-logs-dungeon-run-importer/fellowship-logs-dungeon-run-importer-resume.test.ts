@@ -37,17 +37,17 @@ const importReport = FellowshipLogsDungeonRunImporter.use((importer) => {
 });
 
 /** Deletes an imported run, so the fight can be imported again. */
-function deleteRun(dungeonRunId: DungeonRunId) {
-  return E.gen(function* () {
-    const sql = yield* MainDatabase;
+const deleteRun = E.fn("test.deleteRun")(function* (
+  dungeonRunId: DungeonRunId,
+) {
+  const sql = yield* MainDatabase;
 
-    yield* sql`
+  yield* sql`
       DELETE FROM dungeon_run
       WHERE
         id = ${dungeonRunId}
     `;
-  });
-}
+});
 
 const countCachedResponses = E.gen(function* () {
   const sql = yield* FellowshipLogsCacheDatabase;
@@ -75,11 +75,12 @@ const countCachedResponses = E.gen(function* () {
 });
 
 /** What an import produced, minus generated ids and timestamps. */
-function getImportedRun(dungeonRunId: DungeonRunId) {
-  return E.gen(function* () {
-    const sql = yield* MainDatabase;
+const getImportedRun = E.fn("test.getImportedRun")(function* (
+  dungeonRunId: DungeonRunId,
+) {
+  const sql = yield* MainDatabase;
 
-    const runs = yield* sql`
+  const runs = yield* sql`
       SELECT
         dungeon_id,
         dungeon_level,
@@ -91,7 +92,7 @@ function getImportedRun(dungeonRunId: DungeonRunId) {
         id = ${dungeonRunId}
     `;
 
-    const observations = yield* sql`
+  const observations = yield* sql`
       SELECT
         type,
         target_id,
@@ -106,9 +107,8 @@ function getImportedRun(dungeonRunId: DungeonRunId) {
         target_id
     `;
 
-    return { observations, run: runs[0] };
-  });
-}
+  return { observations, run: runs[0] };
+});
 
 describe("FellowshipLogsDungeonRunImporter with the Fellowship Logs cache", () => {
   test("carries on from the cached pages instead of fetching them again", async () => {

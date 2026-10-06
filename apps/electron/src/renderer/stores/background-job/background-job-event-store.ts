@@ -116,8 +116,8 @@ export function makeBackgroundJobEventStore({
     }
   });
 
-  const handleSnapshot = (next: BackgroundJobApiSnapshot) => {
-    return E.gen(function* () {
+  const handleSnapshot = E.fn("BackgroundJobEventStore.handleSnapshot")(
+    function* (next: BackgroundJobApiSnapshot) {
       const previous = queryClient.getQueryData(
         getBackgroundJobsQueryOptions().queryKey,
       );
@@ -138,8 +138,8 @@ export function makeBackgroundJobEventStore({
           );
         }),
       );
-    });
-  };
+    },
+  );
 
   const handleBackgroundJobEvent =
     Match.type<BackgroundJobEventStreamEvent>().pipe(

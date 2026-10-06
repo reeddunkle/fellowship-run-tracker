@@ -9,11 +9,8 @@ type DungeonRunHistoryArgs = {
   readonly dungeonLevel: number;
 };
 
-export function deleteDungeonRunHistory({
-  dungeonId,
-  dungeonLevel,
-}: DungeonRunHistoryArgs) {
-  return E.gen(function* () {
+export const deleteDungeonRunHistory = E.fn("deleteDungeonRunHistory")(
+  function* ({ dungeonId, dungeonLevel }: DungeonRunHistoryArgs) {
     const client = yield* AppApiClient;
 
     yield* client.dungeonRun.deleteDungeonRunHistory({
@@ -22,21 +19,19 @@ export function deleteDungeonRunHistory({
         dungeonLevel,
       },
     });
-  });
-}
+  },
+);
 
-export function getDungeonRunHistory({
+export const getDungeonRunHistory = E.fn("getDungeonRunHistory")(function* ({
   dungeonId,
   dungeonLevel,
 }: DungeonRunHistoryArgs) {
-  return E.gen(function* () {
-    const client = yield* AppApiClient;
+  const client = yield* AppApiClient;
 
-    return yield* client.dungeonRun.getDungeonRunHistory({
-      params: {
-        dungeonId,
-        dungeonLevel,
-      },
-    });
+  return yield* client.dungeonRun.getDungeonRunHistory({
+    params: {
+      dungeonId,
+      dungeonLevel,
+    },
   });
-}
+});

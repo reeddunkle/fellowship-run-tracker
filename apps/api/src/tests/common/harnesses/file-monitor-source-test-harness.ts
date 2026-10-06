@@ -58,79 +58,79 @@ type MakeWatchCountingFileMonitorSourceTestLiveOptions = {
   readonly beforeReadDirectory?: (readNumber: number) => E.Effect<void>;
 };
 
-export function makeWatchCountingFileMonitorSourceTestLive({
+export const makeWatchCountingFileMonitorSourceTestLive = E.fn(
+  "test.makeWatchCountingFileMonitorSourceTestLive",
+)(function* ({
   beforeReadDirectory,
   firstWatch,
 }: MakeWatchCountingFileMonitorSourceTestLiveOptions = {}) {
-  return E.gen(function* () {
-    const openedWatchCount = yield* Ref.make(0);
-    const closedWatchCount = yield* Ref.make(0);
-    const readDirectoryCount = yield* Ref.make(0);
+  const openedWatchCount = yield* Ref.make(0);
+  const closedWatchCount = yield* Ref.make(0);
+  const readDirectoryCount = yield* Ref.make(0);
 
-    const WatchCountingFileSystemLive = Layer.effect(
-      FileSystem.FileSystem,
-      E.gen(function* () {
-        const fileSystem = yield* FileSystem.FileSystem;
+  const WatchCountingFileSystemLive = Layer.effect(
+    FileSystem.FileSystem,
+    E.gen(function* () {
+      const fileSystem = yield* FileSystem.FileSystem;
 
-        return {
-          ...fileSystem,
-          readDirectory: (path, options) => {
-            return Ref.updateAndGet(readDirectoryCount, (count) => {
+      return {
+        ...fileSystem,
+        readDirectory: (path, options) => {
+          return Ref.updateAndGet(readDirectoryCount, (count) => {
+            return count + 1;
+          }).pipe(
+            E.flatMap((readNumber) => {
+              return beforeReadDirectory === undefined
+                ? E.void
+                : beforeReadDirectory(readNumber);
+            }),
+            E.andThen(fileSystem.readDirectory(path, options)),
+          );
+        },
+        watch: (path, options) => {
+          return Stream.unwrap(
+            Ref.updateAndGet(openedWatchCount, (count) => {
               return count + 1;
             }).pipe(
-              E.flatMap((readNumber) => {
-                return beforeReadDirectory === undefined
-                  ? E.void
-                  : beforeReadDirectory(readNumber);
+              E.map((watchNumber) => {
+                return watchNumber === 1 && firstWatch !== undefined
+                  ? firstWatch
+                  : fileSystem.watch(path, options);
               }),
-              E.andThen(fileSystem.readDirectory(path, options)),
-            );
-          },
-          watch: (path, options) => {
-            return Stream.unwrap(
-              Ref.updateAndGet(openedWatchCount, (count) => {
+            ),
+          ).pipe(
+            Stream.ensuring(
+              Ref.update(closedWatchCount, (count) => {
                 return count + 1;
-              }).pipe(
-                E.map((watchNumber) => {
-                  return watchNumber === 1 && firstWatch !== undefined
-                    ? firstWatch
-                    : fileSystem.watch(path, options);
-                }),
-              ),
-            ).pipe(
-              Stream.ensuring(
-                Ref.update(closedWatchCount, (count) => {
-                  return count + 1;
-                }),
-              ),
-            );
-          },
-        } satisfies FileSystem.FileSystem;
-      }).pipe(E.provide(NodeFileSystemLayer)),
-    );
+              }),
+            ),
+          );
+        },
+      } satisfies FileSystem.FileSystem;
+    }).pipe(E.provide(NodeFileSystemLayer)),
+  );
 
-    const WatchCountingDependenciesLive = Layer.mergeAll(
-      WatchCountingFileSystemLive,
-      NodePathLayer,
-    );
+  const WatchCountingDependenciesLive = Layer.mergeAll(
+    WatchCountingFileSystemLive,
+    NodePathLayer,
+  );
 
-    const layer = Layer.mergeAll(
-      Layer.fresh(
-        FileMonitorSource.layerNoDeps.pipe(
-          Layer.provide(WatchCountingDependenciesLive),
-        ),
+  const layer = Layer.mergeAll(
+    Layer.fresh(
+      FileMonitorSource.layerNoDeps.pipe(
+        Layer.provide(WatchCountingDependenciesLive),
       ),
-      WatchCountingDependenciesLive,
-    );
+    ),
+    WatchCountingDependenciesLive,
+  );
 
-    return {
-      closedWatchCount,
-      layer,
-      openedWatchCount,
-      readDirectoryCount,
-    };
-  });
-}
+  return {
+    closedWatchCount,
+    layer,
+    openedWatchCount,
+    readDirectoryCount,
+  };
+});
 
 export function makeFileMonitorSourceTestHarness() {
   return E.gen(function* () {

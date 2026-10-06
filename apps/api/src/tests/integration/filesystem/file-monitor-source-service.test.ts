@@ -356,13 +356,13 @@ describe("FileMonitorSource", () => {
     });
 
     describe("when the watcher stops", () => {
-      function failStreamsThenRecover(
-        firstWatch: Stream.Stream<
-          FileSystem.WatchEvent,
-          PlatformError.PlatformError
-        >,
-      ) {
-        return E.gen(function* () {
+      const failStreamsThenRecover = E.fn("test.failStreamsThenRecover")(
+        function* (
+          firstWatch: Stream.Stream<
+            FileSystem.WatchEvent,
+            PlatformError.PlatformError
+          >,
+        ) {
           const watchCounting =
             yield* makeWatchCountingFileMonitorSourceTestLive({
               firstWatch,
@@ -408,8 +408,8 @@ describe("FileMonitorSource", () => {
               };
             }),
           ).pipe(E.provide(watchCounting.layer), E.timeout("2 seconds"));
-        });
-      }
+        },
+      );
 
       test("fails every stream when the watcher fails and recovers with a fresh watcher", async () => {
         const watchError = PlatformError.systemError({

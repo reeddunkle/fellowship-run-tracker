@@ -66,8 +66,8 @@ const makeEncryption = E.gen(function* () {
     });
   });
 
-  const encrypt: EncryptionShape["encrypt"] = (value) => {
-    return E.gen(function* () {
+  const encrypt: EncryptionShape["encrypt"] = E.fn("Encryption.encrypt")(
+    function* (value) {
       const cryptoKey = yield* getCryptoKey("Encrypt");
 
       const iv = yield* E.try({
@@ -118,11 +118,11 @@ const makeEncryption = E.gen(function* () {
           });
         }),
       );
-    });
-  };
+    },
+  );
 
-  const decrypt: EncryptionShape["decrypt"] = (encryptedValue) => {
-    return E.gen(function* () {
+  const decrypt: EncryptionShape["decrypt"] = E.fn("Encryption.decrypt")(
+    function* (encryptedValue) {
       const envelope = yield* decodeEncryptedValue(encryptedValue).pipe(
         E.mapError((cause) => {
           return new EncryptionError({
@@ -169,8 +169,8 @@ const makeEncryption = E.gen(function* () {
       });
 
       return Redacted.make(new TextDecoder().decode(decrypted));
-    });
-  };
+    },
+  );
 
   return {
     decrypt,

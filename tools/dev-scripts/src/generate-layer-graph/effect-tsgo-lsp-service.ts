@@ -353,8 +353,8 @@ const make = E.gen(function* () {
         );
       };
 
-      const failPendingRequests = (error: EffectTsGoLspError) => {
-        return E.gen(function* () {
+      const failPendingRequests = E.fn("EffectTsGoLsp.failPendingRequests")(
+        function* (error: EffectTsGoLspError) {
           const currentPendingRequests = [...pendingRequests.values()];
 
           pendingRequests.clear();
@@ -368,8 +368,8 @@ const make = E.gen(function* () {
               discard: true,
             },
           );
-        });
-      };
+        },
+      );
 
       const respondToServerRequest = (serverRequest: JsonRpcRequest) => {
         return sendMessage({
@@ -489,44 +489,44 @@ const make = E.gen(function* () {
         E.forkScoped,
       );
 
-      const request: EffectTsGoLspService["request"] = (lspRequest) => {
-        return E.gen(function* () {
-          const requestId = yield* Ref.getAndUpdate(
-            nextRequestId,
-            (currentRequestId) => {
-              return currentRequestId + 1;
-            },
-          );
+      const request: EffectTsGoLspService["request"] = E.fn(
+        "EffectTsGoLsp.request",
+      )(function* (lspRequest) {
+        const requestId = yield* Ref.getAndUpdate(
+          nextRequestId,
+          (currentRequestId) => {
+            return currentRequestId + 1;
+          },
+        );
 
-          const responseDeferred = yield* Deferred.make<
-            JsonRpcResponse,
-            EffectTsGoLspError
-          >();
+        const responseDeferred = yield* Deferred.make<
+          JsonRpcResponse,
+          EffectTsGoLspError
+        >();
 
-          pendingRequests.set(requestId, responseDeferred);
+        pendingRequests.set(requestId, responseDeferred);
 
-          yield* sendMessage({
-            id: requestId,
-            jsonrpc: "2.0",
-            method: lspRequest.method,
-            params: lspRequest.params,
-          }).pipe(
-            E.tapError(() => {
-              return E.sync(() => {
-                pendingRequests.delete(requestId);
-              });
+        yield* sendMessage({
+          id: requestId,
+          jsonrpc: "2.0",
+          method: lspRequest.method,
+          params: lspRequest.params,
+        }).pipe(
+          E.tapError(() => {
+            return E.sync(() => {
+              pendingRequests.delete(requestId);
+            });
+          }),
+        );
+
+        return yield* Deferred.await(responseDeferred).pipe(
+          E.ensuring(
+            E.sync(() => {
+              pendingRequests.delete(requestId);
             }),
-          );
-
-          return yield* Deferred.await(responseDeferred).pipe(
-            E.ensuring(
-              E.sync(() => {
-                pendingRequests.delete(requestId);
-              }),
-            ),
-          );
-        });
-      };
+          ),
+        );
+      });
 
       const notify: EffectTsGoLspService["notify"] = (notification) => {
         return sendMessage({
@@ -605,31 +605,29 @@ const make = E.gen(function* () {
 
   const lspSetup = yield* setup();
 
-  const getDocumentUri: EffectTsGoLspService["getDocumentUri"] = (
-    sourceFile,
-  ) => {
-    return E.gen(function* () {
-      const absoluteSourceFile = path.resolve(lspSetup.projectRoot, sourceFile);
+  const getDocumentUri: EffectTsGoLspService["getDocumentUri"] = E.fn(
+    "EffectTsGoLsp.getDocumentUri",
+  )(function* (sourceFile) {
+    const absoluteSourceFile = path.resolve(lspSetup.projectRoot, sourceFile);
 
-      const relativeSourceFile = path.relative(
-        lspSetup.projectRoot,
-        absoluteSourceFile,
-      );
+    const relativeSourceFile = path.relative(
+      lspSetup.projectRoot,
+      absoluteSourceFile,
+    );
 
-      if (
-        relativeSourceFile === ".." ||
-        relativeSourceFile.startsWith(`..${path.sep}`)
-      ) {
-        return yield* new EffectTsGoLspSourceFileError({
-          sourceFile,
-        });
-      }
+    if (
+      relativeSourceFile === ".." ||
+      relativeSourceFile.startsWith(`..${path.sep}`)
+    ) {
+      return yield* new EffectTsGoLspSourceFileError({
+        sourceFile,
+      });
+    }
 
-      return pathToFileURL(
-        path.join(lspSetup.workspaceDirectory, relativeSourceFile),
-      ).href;
-    });
-  };
+    return pathToFileURL(
+      path.join(lspSetup.workspaceDirectory, relativeSourceFile),
+    ).href;
+  });
 
   return {
     getDocumentUri,

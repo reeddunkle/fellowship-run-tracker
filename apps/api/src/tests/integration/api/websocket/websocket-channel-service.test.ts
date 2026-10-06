@@ -26,40 +26,38 @@ type RecordingFeed = {
   readonly stops: Ref.Ref<number>;
 };
 
-function makeRecordingFeed(
+const makeRecordingFeed = E.fn("test.makeRecordingFeed")(function* (
   afterFirstStatus: (start: number) => Stream.Stream<never> = () => {
     return Stream.never;
   },
 ) {
-  return E.gen(function* () {
-    const starts = yield* Ref.make(0);
-    const stops = yield* Ref.make(0);
+  const starts = yield* Ref.make(0);
+  const stops = yield* Ref.make(0);
 
-    const statusChanges = Stream.unwrap(
-      Ref.updateAndGet(starts, (count) => {
+  const statusChanges = Stream.unwrap(
+    Ref.updateAndGet(starts, (count) => {
+      return count + 1;
+    }).pipe(
+      E.map((start) => {
+        return Stream.make(IDLE_STATUS).pipe(
+          Stream.concat(afterFirstStatus(start)),
+        );
+      }),
+    ),
+  ).pipe(
+    Stream.ensuring(
+      Ref.update(stops, (count) => {
         return count + 1;
-      }).pipe(
-        E.map((start) => {
-          return Stream.make(IDLE_STATUS).pipe(
-            Stream.concat(afterFirstStatus(start)),
-          );
-        }),
-      ),
-    ).pipe(
-      Stream.ensuring(
-        Ref.update(stops, (count) => {
-          return count + 1;
-        }),
-      ),
-    );
+      }),
+    ),
+  );
 
-    return {
-      starts,
-      statusChanges,
-      stops,
-    } satisfies RecordingFeed;
-  });
-}
+  return {
+    starts,
+    statusChanges,
+    stops,
+  } satisfies RecordingFeed;
+});
 
 function makeWebSocketChannelTestLayer({ statusChanges }: RecordingFeed) {
   return WebSocketChannel.layer.pipe(

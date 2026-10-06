@@ -14,14 +14,12 @@ export function getUnits() {
   });
 }
 
-export function getUnit({ id }: UnitIdArgs) {
-  return E.gen(function* () {
-    const client = yield* AppApiClient;
+export const getUnit = E.fn("getUnit")(function* ({ id }: UnitIdArgs) {
+  const client = yield* AppApiClient;
 
-    return yield* client.units.getUnit({
-      params: {
-        id,
-      },
-    });
+  return yield* client.units.getUnit({
+    params: {
+      id,
+    },
   });
-}
+});

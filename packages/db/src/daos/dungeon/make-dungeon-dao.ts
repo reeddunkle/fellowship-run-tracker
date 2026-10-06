@@ -35,8 +35,8 @@ export const makeDungeonDAO = E.gen(function* () {
     });
   };
 
-  const getById: DungeonDAOShape["getById"] = ({ id }) => {
-    return E.gen(function* () {
+  const getById: DungeonDAOShape["getById"] = E.fn("DungeonDAO.getById")(
+    function* ({ id }) {
       const rows = yield* sql`
         SELECT
           created_at AS createdAt,
@@ -58,8 +58,8 @@ export const makeDungeonDAO = E.gen(function* () {
       return dungeon === undefined
         ? Option.none<DungeonModel>()
         : Option.some(dungeon);
-    });
-  };
+    },
+  );
 
   return {
     getAll,

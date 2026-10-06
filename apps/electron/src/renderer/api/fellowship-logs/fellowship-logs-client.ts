@@ -32,29 +32,25 @@ export function getAnalytics() {
   });
 }
 
-export function getDungeonRunMetadata(
+export const getDungeonRunMetadata = E.fn("getDungeonRunMetadata")(function* (
   options: FellowshipLogsApiDungeonRunReference,
 ) {
-  return E.gen(function* () {
-    const client = yield* AppApiClient;
+  const client = yield* AppApiClient;
 
-    return yield* client.fellowshipLogs.getFellowshipLogsDungeonRunMetadata({
-      payload: options,
-    });
+  return yield* client.fellowshipLogs.getFellowshipLogsDungeonRunMetadata({
+    payload: options,
   });
-}
+});
 
-export function queueDungeonRunImport(
+export const queueDungeonRunImport = E.fn("queueDungeonRunImport")(function* (
   options: FellowshipLogsApiQueueDungeonRunImportOptions,
 ) {
-  return E.gen(function* () {
-    const client = yield* AppApiClient;
+  const client = yield* AppApiClient;
 
-    return yield* client.fellowshipLogs.queueFellowshipLogsDungeonRunImport({
-      payload: options,
-    });
+  return yield* client.fellowshipLogs.queueFellowshipLogsDungeonRunImport({
+    payload: options,
   });
-}
+});
 
 export function getImportedDungeonRuns() {
   return E.gen(function* () {
@@ -68,10 +64,8 @@ export type DeleteImportedDungeonRunArgs = {
   readonly dungeonRunId: DungeonRunId;
 };
 
-export function deleteImportedDungeonRun({
-  dungeonRunId,
-}: DeleteImportedDungeonRunArgs) {
-  return E.gen(function* () {
+export const deleteImportedDungeonRun = E.fn("deleteImportedDungeonRun")(
+  function* ({ dungeonRunId }: DeleteImportedDungeonRunArgs) {
     const client = yield* AppApiClient;
 
     yield* client.fellowshipLogs.deleteFellowshipLogsDungeonRun({
@@ -79,5 +73,5 @@ export function deleteImportedDungeonRun({
         dungeonRunId,
       },
     });
-  });
-}
+  },
+);

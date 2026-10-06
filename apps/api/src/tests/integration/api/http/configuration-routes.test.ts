@@ -135,34 +135,31 @@ function request(
   });
 }
 
-function requestWithDecodedBody<A>(
+const requestWithDecodedBody = E.fn("test.requestWithDecodedBody")(function* <
+  A,
+>(url: string, schema: Schema.Decoder<A>, options: RequestOptions = {}) {
+  const response = yield* request(url, options);
+  const json = yield* parseResponseJson(response);
+  const body = yield* Schema.decodeUnknownEffect(schema)(json);
+
+  return {
+    body,
+    status: response.status,
+  };
+});
+
+const requestWithTextBody = E.fn("test.requestWithTextBody")(function* (
   url: string,
-  schema: Schema.Decoder<A>,
   options: RequestOptions = {},
 ) {
-  return E.gen(function* () {
-    const response = yield* request(url, options);
-    const json = yield* parseResponseJson(response);
-    const body = yield* Schema.decodeUnknownEffect(schema)(json);
+  const response = yield* request(url, options);
+  const text = yield* response.text;
 
-    return {
-      body,
-      status: response.status,
-    };
-  });
-}
-
-function requestWithTextBody(url: string, options: RequestOptions = {}) {
-  return E.gen(function* () {
-    const response = yield* request(url, options);
-    const text = yield* response.text;
-
-    return {
-      status: response.status,
-      text,
-    };
-  });
-}
+  return {
+    status: response.status,
+    text,
+  };
+});
 
 function runWithConfigurationLibrary<A, Error>(
   serviceOptions: MakeConfigurationLibraryMockOptions,

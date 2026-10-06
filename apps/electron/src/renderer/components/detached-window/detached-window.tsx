@@ -142,14 +142,14 @@ function measureNaturalWidth(childContainer: HTMLElement) {
   return width;
 }
 
-function resizeDetachedWindowToContent({
-  childContainer,
-  childWindow,
-}: {
-  readonly childContainer: HTMLElement;
-  readonly childWindow: Window;
-}) {
-  return E.gen(function* () {
+const resizeDetachedWindowToContent = E.fn("resizeDetachedWindowToContent")(
+  function* ({
+    childContainer,
+    childWindow,
+  }: {
+    readonly childContainer: HTMLElement;
+    readonly childWindow: Window;
+  }) {
     yield* waitForAnimationFrame(childWindow);
 
     const childDocument = childWindow.document;
@@ -165,8 +165,8 @@ function resizeDetachedWindowToContent({
     yield* waitForAnimationFrame(childWindow);
 
     childDocument.documentElement.style.overflowY = "auto";
-  });
-}
+  },
+);
 
 /** [KEEP]
  * Re-measures height only (e.g. after a milestone expands/collapses),
@@ -180,31 +180,31 @@ function resizeDetachedWindowToContent({
  * reflects a manual OS-level resize, since it always matches the window's
  * actual current content width regardless of who last set it.
  */
-function resizeDetachedWindowToContentHeight({
+const resizeDetachedWindowToContentHeight = E.fn(
+  "resizeDetachedWindowToContentHeight",
+)(function* ({
   childContainer,
   childWindow,
 }: {
   readonly childContainer: HTMLElement;
   readonly childWindow: Window;
 }) {
-  return E.gen(function* () {
-    yield* waitForAnimationFrame(childWindow);
+  yield* waitForAnimationFrame(childWindow);
 
-    const childDocument = childWindow.document;
+  const childDocument = childWindow.document;
 
-    childDocument.documentElement.style.overflowY = "hidden";
+  childDocument.documentElement.style.overflowY = "hidden";
 
-    yield* windowClient.resizeWindowToContent({
-      height: childContainer.scrollHeight,
-      width: childWindow.innerWidth,
-      window: childWindow,
-    });
-
-    yield* waitForAnimationFrame(childWindow);
-
-    childDocument.documentElement.style.overflowY = "auto";
+  yield* windowClient.resizeWindowToContent({
+    height: childContainer.scrollHeight,
+    width: childWindow.innerWidth,
+    window: childWindow,
   });
-}
+
+  yield* waitForAnimationFrame(childWindow);
+
+  childDocument.documentElement.style.overflowY = "auto";
+});
 
 type DetachedWindowResizeState = {
   animationFrameId: number | undefined;

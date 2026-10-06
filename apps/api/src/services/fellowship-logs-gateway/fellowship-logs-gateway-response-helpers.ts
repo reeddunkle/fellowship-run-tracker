@@ -26,27 +26,25 @@ import {
 } from "@frt/shared/fellowship-logs/fellowship-logs-rate-limit-schema.ts";
 import { getFellowshipLogsRateLimitStatus } from "@frt/shared/fellowship-logs/get-fellowship-logs-rate-limit-status.ts";
 
-export function getGraphQLResponseData<Data>(
-  response: FellowshipLogsGatewayGraphQLResponse<Data>,
-) {
-  return E.gen(function* () {
-    if (response.errors !== undefined && response.errors.length > 0) {
-      return yield* new FellowshipLogsGatewayGraphQLResponseError({
-        errors: response.errors,
-        reason: "ErrorsReturned",
-      });
-    }
+export const getGraphQLResponseData = E.fn("getGraphQLResponseData")(function* <
+  Data,
+>(response: FellowshipLogsGatewayGraphQLResponse<Data>) {
+  if (response.errors !== undefined && response.errors.length > 0) {
+    return yield* new FellowshipLogsGatewayGraphQLResponseError({
+      errors: response.errors,
+      reason: "ErrorsReturned",
+    });
+  }
 
-    if (response.data === undefined || response.data === null) {
-      return yield* new FellowshipLogsGatewayGraphQLResponseError({
-        errors: response.errors ?? [],
-        reason: "MissingData",
-      });
-    }
+  if (response.data === undefined || response.data === null) {
+    return yield* new FellowshipLogsGatewayGraphQLResponseError({
+      errors: response.errors ?? [],
+      reason: "MissingData",
+    });
+  }
 
-    return response.data;
-  });
-}
+  return response.data;
+});
 
 type ResponseDataWithRateLimit = {
   readonly rateLimitData?: FellowshipLogsRateLimitData;
@@ -130,59 +128,53 @@ export function makeFellowshipLogsGatewayRateLimitDataTracker() {
       snapshot: null,
     });
 
-    const updateState = (
-      rateLimitData: FellowshipLogsRateLimitData,
-      costKey: string,
-    ) => {
-      return E.gen(function* () {
-        const nowMilliseconds = yield* Clock.currentTimeMillis;
+    const updateState = E.fn(
+      "FellowshipLogsGatewayRateLimitDataTracker.updateState",
+    )(function* (rateLimitData: FellowshipLogsRateLimitData, costKey: string) {
+      const nowMilliseconds = yield* Clock.currentTimeMillis;
 
-        return yield* Ref.modify(stateRef, ({ costByKey, snapshot }) => {
-          const cost = getRequestCost({
-            nowMilliseconds,
-            previous: snapshot,
-            rateLimitData,
-          });
-
-          return [
-            cost,
-            {
-              costByKey:
-                cost === null
-                  ? costByKey
-                  : {
-                      ...costByKey,
-                      [costKey]: Math.max(costByKey[costKey] ?? 0, cost),
-                    },
-              snapshot: {
-                ...rateLimitData,
-                observedAtMilliseconds: nowMilliseconds,
-              },
-            },
-          ] as const;
+      return yield* Ref.modify(stateRef, ({ costByKey, snapshot }) => {
+        const cost = getRequestCost({
+          nowMilliseconds,
+          previous: snapshot,
+          rateLimitData,
         });
+
+        return [
+          cost,
+          {
+            costByKey:
+              cost === null
+                ? costByKey
+                : {
+                    ...costByKey,
+                    [costKey]: Math.max(costByKey[costKey] ?? 0, cost),
+                  },
+            snapshot: {
+              ...rateLimitData,
+              observedAtMilliseconds: nowMilliseconds,
+            },
+          },
+        ] as const;
       });
-    };
+    });
 
-    const track: FellowshipLogsGatewayRateLimitDataTracker["track"] = (
-      rateLimitData,
-      { costKey, operation },
-    ) => {
-      return E.gen(function* () {
-        const pointsSpent =
-          rateLimitData === undefined
-            ? null
-            : yield* updateState(rateLimitData, costKey);
+    const track: FellowshipLogsGatewayRateLimitDataTracker["track"] = E.fn(
+      "FellowshipLogsGatewayRateLimitDataTracker.track",
+    )(function* (rateLimitData, { costKey, operation }) {
+      const pointsSpent =
+        rateLimitData === undefined
+          ? null
+          : yield* updateState(rateLimitData, costKey);
 
-        yield* analytics.record({ operation, pointsSpent, source: "API" });
+      yield* analytics.record({ operation, pointsSpent, source: "API" });
 
-        const { costByKey } = yield* Ref.get(stateRef);
+      const { costByKey } = yield* Ref.get(stateRef);
 
-        yield* addFellowshipLogsGatewayPointsSpent(
-          pointsSpent ?? costByKey[costKey] ?? 0,
-        );
-      });
-    };
+      yield* addFellowshipLogsGatewayPointsSpent(
+        pointsSpent ?? costByKey[costKey] ?? 0,
+      );
+    });
 
     const getLastKnown: FellowshipLogsGatewayRateLimitDataTracker["getLastKnown"] =
       () => {
@@ -388,12 +380,12 @@ type DeriveDungeonRunMetadataOptions = {
   readonly responseData: DungeonRunMetadataResponseData;
 };
 
-export function deriveDungeonRunMetadata({
-  fightId,
-  reportCode,
-  responseData,
-}: DeriveDungeonRunMetadataOptions) {
-  return E.gen(function* () {
+export const deriveDungeonRunMetadata = E.fn("deriveDungeonRunMetadata")(
+  function* ({
+    fightId,
+    reportCode,
+    responseData,
+  }: DeriveDungeonRunMetadataOptions) {
     const report = yield* getReportOrFail({
       report: responseData.reportData.report,
       reportCode,
@@ -421,5 +413,5 @@ export function deriveDungeonRunMetadata({
       isInProgress: fight.inProgress,
       startedAtMilliseconds: report.startTime + fight.startTime,
     };
-  });
-}
+  },
+);

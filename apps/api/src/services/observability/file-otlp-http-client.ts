@@ -26,72 +26,71 @@ function getRequestBodyText(request: HttpClientRequest.HttpClientRequest) {
     : undefined;
 }
 
-export const makeFileOtlpHttpClient = E.fn(function* ({
-  filePath,
-  maxBytes,
-}: FileOtlpHttpClientOptions) {
-  const fileSystem = yield* FileSystem.FileSystem;
-  const path = yield* Path.Path;
-  const writeLock = yield* Semaphore.make(1);
-  const fileName = path.basename(filePath);
+export const makeFileOtlpHttpClient = E.fn("makeFileOtlpHttpClient")(
+  function* ({ filePath, maxBytes }: FileOtlpHttpClientOptions) {
+    const fileSystem = yield* FileSystem.FileSystem;
+    const path = yield* Path.Path;
+    const writeLock = yield* Semaphore.make(1);
+    const fileName = path.basename(filePath);
 
-  const writeFailures = yield* makeRepeatedFailureLogger({
-    level: "Warn",
-    message: "Failed to write to the trace file.",
-  });
+    const writeFailures = yield* makeRepeatedFailureLogger({
+      level: "Warn",
+      message: "Failed to write to the trace file.",
+    });
 
-  let writtenBytes = 0;
-  let hasReachedLimit = false;
+    let writtenBytes = 0;
+    let hasReachedLimit = false;
 
-  yield* fileSystem.makeDirectory(path.dirname(filePath), {
-    recursive: true,
-  });
+    yield* fileSystem.makeDirectory(path.dirname(filePath), {
+      recursive: true,
+    });
 
-  const appendLine = (text: string) => {
-    return writeLock.withPermit(
-      E.gen(function* () {
-        const line = `${text}\n`;
-        const lineBytes = textEncoder.encode(line).byteLength;
+    const appendLine = (text: string) => {
+      return writeLock.withPermit(
+        E.gen(function* () {
+          const line = `${text}\n`;
+          const lineBytes = textEncoder.encode(line).byteLength;
 
-        if (writtenBytes + lineBytes > maxBytes) {
-          if (!hasReachedLimit) {
-            hasReachedLimit = true;
+          if (writtenBytes + lineBytes > maxBytes) {
+            if (!hasReachedLimit) {
+              hasReachedLimit = true;
 
-            yield* E.logWarning(
-              "The trace file reached its size limit; later spans are not recorded.",
-              { fileName, maxBytes },
-            );
+              yield* E.logWarning(
+                "The trace file reached its size limit; later spans are not recorded.",
+                { fileName, maxBytes },
+              );
+            }
+
+            return;
           }
 
-          return;
-        }
+          yield* fileSystem.writeFileString(filePath, line, { flag: "a" });
 
-        yield* fileSystem.writeFileString(filePath, line, { flag: "a" });
+          writtenBytes += lineBytes;
+        }),
+      );
+    };
 
-        writtenBytes += lineBytes;
-      }),
-    );
-  };
+    return HttpClient.make((request) => {
+      const text = getRequestBodyText(request);
 
-  return HttpClient.make((request) => {
-    const text = getRequestBodyText(request);
-
-    return (text === undefined ? E.void : appendLine(text)).pipe(
-      E.andThen(writeFailures.onSuccess),
-      E.catch((error) => {
-        return writeFailures
-          .onFailure(Cause.fail(error), { fileName })
-          .pipe(E.asVoid);
-      }),
-      E.as(
-        HttpClientResponse.fromWeb(
-          request,
-          new Response(null, { status: 200 }),
+      return (text === undefined ? E.void : appendLine(text)).pipe(
+        E.andThen(writeFailures.onSuccess),
+        E.catch((error) => {
+          return writeFailures
+            .onFailure(Cause.fail(error), { fileName })
+            .pipe(E.asVoid);
+        }),
+        E.as(
+          HttpClientResponse.fromWeb(
+            request,
+            new Response(null, { status: 200 }),
+          ),
         ),
-      ),
-    );
-  });
-});
+      );
+    });
+  },
+);
 
 export function makeFileOtlpHttpClientLayer(
   options: FileOtlpHttpClientOptions,

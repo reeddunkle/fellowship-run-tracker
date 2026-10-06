@@ -41,8 +41,8 @@ function makeRunNotFoundError(dungeonRunId: DungeonRunId): DungeonRunDAOError {
 export const makeDungeonRunDAO = E.gen(function* () {
   const sql = yield* MainDatabase;
 
-  const getById: DungeonRunDAOShape["getById"] = ({ id }) => {
-    return E.gen(function* () {
+  const getById: DungeonRunDAOShape["getById"] = E.fn("DungeonRunDAO.getById")(
+    function* ({ id }) {
       const rows = yield* sql`
         SELECT
           id,
@@ -68,18 +68,19 @@ export const makeDungeonRunDAO = E.gen(function* () {
       return dungeonRun === undefined
         ? Option.none<DungeonRunModel>()
         : Option.some(dungeonRun);
-    }).pipe(E.mapError(mapDungeonRunDAOError));
-  };
+    },
+    E.mapError(mapDungeonRunDAOError),
+  );
 
-  const create: DungeonRunDAOShape["create"] = ({
-    dungeonId,
-    dungeonLevel,
-    endedAt,
-    isOwnRun,
-    source,
-    startedAt,
-  }) => {
-    return E.gen(function* () {
+  const create: DungeonRunDAOShape["create"] = E.fn("DungeonRunDAO.create")(
+    function* ({
+      dungeonId,
+      dungeonLevel,
+      endedAt,
+      isOwnRun,
+      source,
+      startedAt,
+    }) {
       const dungeonRun = yield* DungeonRunModel.insert
         .makeEffect({
           dungeonId,
@@ -144,11 +145,12 @@ export const makeDungeonRunDAO = E.gen(function* () {
       }
 
       return persistedDungeonRun;
-    }).pipe(E.mapError(mapDungeonRunDAOError));
-  };
+    },
+    E.mapError(mapDungeonRunDAOError),
+  );
 
-  const delete_: DungeonRunDAOShape["delete"] = ({ dungeonRunId }) => {
-    return E.gen(function* () {
+  const delete_: DungeonRunDAOShape["delete"] = E.fn("DungeonRunDAO.delete")(
+    function* ({ dungeonRunId }) {
       const rows = yield* sql`
         DELETE FROM dungeon_run
         WHERE
@@ -160,8 +162,9 @@ export const makeDungeonRunDAO = E.gen(function* () {
       if (rows[0] === undefined) {
         return yield* makeRunNotFoundError(dungeonRunId);
       }
-    }).pipe(E.mapError(mapDungeonRunDAOError));
-  };
+    },
+    E.mapError(mapDungeonRunDAOError),
+  );
 
   const deleteByDungeon: DungeonRunDAOShape["deleteByDungeon"] = ({
     dungeonId,
@@ -177,8 +180,8 @@ export const makeDungeonRunDAO = E.gen(function* () {
     `.pipe(E.asVoid, E.mapError(mapDungeonRunDAOError));
   };
 
-  const start: DungeonRunDAOShape["start"] = ({ dungeonRunId, startedAt }) => {
-    return E.gen(function* () {
+  const start: DungeonRunDAOShape["start"] = E.fn("DungeonRunDAO.start")(
+    function* ({ dungeonRunId, startedAt }) {
       const encodedStartedAt = yield* Schema.encodeEffect(
         Schema.DateTimeUtcFromMillis,
       )(startedAt).pipe(E.mapError(mapDungeonRunDAOError));
@@ -203,22 +206,25 @@ export const makeDungeonRunDAO = E.gen(function* () {
       if (rows[0] === undefined) {
         return yield* makeRunNotFoundError(dungeonRunId);
       }
-    }).pipe(E.mapError(mapDungeonRunDAOError));
-  };
+    },
+    E.mapError(mapDungeonRunDAOError),
+  );
 
-  const end: DungeonRunDAOShape["end"] = ({ dungeonRunId, endedAt }) => {
-    return E.gen(function* () {
-      const encodedEndedAt = yield* Schema.encodeEffect(
-        Schema.DateTimeUtcFromMillis,
-      )(endedAt).pipe(E.mapError(mapDungeonRunDAOError));
+  const end: DungeonRunDAOShape["end"] = E.fn("DungeonRunDAO.end")(function* ({
+    dungeonRunId,
+    endedAt,
+  }) {
+    const encodedEndedAt = yield* Schema.encodeEffect(
+      Schema.DateTimeUtcFromMillis,
+    )(endedAt).pipe(E.mapError(mapDungeonRunDAOError));
 
-      const updatedAt = yield* DateTime.now;
+    const updatedAt = yield* DateTime.now;
 
-      const encodedUpdatedAt = yield* Schema.encodeEffect(
-        Schema.DateTimeUtcFromMillis,
-      )(updatedAt).pipe(E.mapError(mapDungeonRunDAOError));
+    const encodedUpdatedAt = yield* Schema.encodeEffect(
+      Schema.DateTimeUtcFromMillis,
+    )(updatedAt).pipe(E.mapError(mapDungeonRunDAOError));
 
-      const rows = yield* sql`
+    const rows = yield* sql`
         UPDATE dungeon_run
         SET
           ended_at = ${encodedEndedAt},
@@ -229,11 +235,10 @@ export const makeDungeonRunDAO = E.gen(function* () {
           id
       `;
 
-      if (rows[0] === undefined) {
-        return yield* makeRunNotFoundError(dungeonRunId);
-      }
-    }).pipe(E.mapError(mapDungeonRunDAOError));
-  };
+    if (rows[0] === undefined) {
+      return yield* makeRunNotFoundError(dungeonRunId);
+    }
+  }, E.mapError(mapDungeonRunDAOError));
 
   return {
     create,

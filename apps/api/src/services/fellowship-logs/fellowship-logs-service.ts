@@ -125,10 +125,8 @@ const makeFellowshipLogs = E.gen(function* () {
         .pipe(E.map(createFellowshipLogsRateLimitDataApiResponse));
     };
 
-  const queueDungeonRunImport: FellowshipLogsShape["queueDungeonRunImport"] = (
-    options,
-  ) => {
-    return E.gen(function* () {
+  const queueDungeonRunImport: FellowshipLogsShape["queueDungeonRunImport"] =
+    E.fn("FellowshipLogs.queueDungeonRunImport")(function* (options) {
       const existing = yield* dungeonRunRepository.getFellowshipLogsDungeonRun({
         fightId: options.fightId,
         reportCode: options.reportCode,
@@ -161,7 +159,6 @@ const makeFellowshipLogs = E.gen(function* () {
 
       return { job: item.value, wasAlreadyQueued };
     });
-  };
 
   return {
     deleteImportedDungeonRun,

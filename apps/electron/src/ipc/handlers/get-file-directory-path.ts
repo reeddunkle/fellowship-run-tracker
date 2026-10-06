@@ -10,24 +10,24 @@ const GetDirectoryPathArgsSchema = Schema.Struct({
   relativePath: FilePathSchema,
 });
 
-export function getFileDirectoryPath(input: unknown) {
-  return E.gen(function* () {
-    const path = yield* Path.Path;
+export const getFileDirectoryPath = E.fn("getFileDirectoryPath")(function* (
+  input: unknown,
+) {
+  const path = yield* Path.Path;
 
-    const { filePath, relativePath } = yield* Schema.decodeUnknownEffect(
-      GetDirectoryPathArgsSchema,
-    )(input);
+  const { filePath, relativePath } = yield* Schema.decodeUnknownEffect(
+    GetDirectoryPathArgsSchema,
+  )(input);
 
-    const relativePathParts = relativePath.split("/");
+  const relativePathParts = relativePath.split("/");
 
-    return A.reduce(
-      relativePathParts,
-      filePath,
-      (currentDirectoryPath, _relativePathPart, index) => {
-        return index === 0
-          ? currentDirectoryPath
-          : path.dirname(currentDirectoryPath);
-      },
-    );
-  });
-}
+  return A.reduce(
+    relativePathParts,
+    filePath,
+    (currentDirectoryPath, _relativePathPart, index) => {
+      return index === 0
+        ? currentDirectoryPath
+        : path.dirname(currentDirectoryPath);
+    },
+  );
+});

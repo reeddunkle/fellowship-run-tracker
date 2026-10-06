@@ -17,9 +17,10 @@ function decodeCatalogSyncRows(
 export const makeCatalogSyncDAO = E.gen(function* () {
   const sql = yield* MainDatabase;
 
-  const getByCatalog: CatalogSyncDAOShape["getByCatalog"] = ({ catalog }) => {
-    return E.gen(function* () {
-      const rows = yield* sql`
+  const getByCatalog: CatalogSyncDAOShape["getByCatalog"] = E.fn(
+    "CatalogSyncDAO.getByCatalog",
+  )(function* ({ catalog }) {
+    const rows = yield* sql`
         SELECT
           catalog,
           checksum,
@@ -33,23 +34,20 @@ export const makeCatalogSyncDAO = E.gen(function* () {
           1
       `;
 
-      const catalogSyncs = yield* decodeCatalogSyncRows(rows);
-      const catalogSync = catalogSyncs[0];
+    const catalogSyncs = yield* decodeCatalogSyncRows(rows);
+    const catalogSync = catalogSyncs[0];
 
-      return catalogSync === undefined
-        ? Option.none<CatalogSyncModel>()
-        : Option.some(catalogSync);
-    });
-  };
+    return catalogSync === undefined
+      ? Option.none<CatalogSyncModel>()
+      : Option.some(catalogSync);
+  });
 
-  const setChecksum: CatalogSyncDAOShape["setChecksum"] = ({
-    catalog,
-    checksum,
-  }) => {
-    return E.gen(function* () {
-      const now = DateTime.toEpochMillis(yield* DateTime.now);
+  const setChecksum: CatalogSyncDAOShape["setChecksum"] = E.fn(
+    "CatalogSyncDAO.setChecksum",
+  )(function* ({ catalog, checksum }) {
+    const now = DateTime.toEpochMillis(yield* DateTime.now);
 
-      yield* sql`
+    yield* sql`
         INSERT INTO
           catalog_sync (catalog, checksum, created_at, updated_at)
         VALUES
@@ -64,8 +62,7 @@ export const makeCatalogSyncDAO = E.gen(function* () {
           checksum = excluded.checksum,
           updated_at = excluded.updated_at
       `;
-    });
-  };
+  });
 
   return {
     getByCatalog,

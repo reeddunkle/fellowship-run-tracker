@@ -41,33 +41,31 @@ function simulatedReportCode(outcome: SimulatedImportOutcome) {
   );
 }
 
-function runImport(
+const runImport = E.fn("test.runImport")(function* (
   importer: FellowshipLogsDungeonRunImporterShape,
   reportCode: ReturnType<typeof toReportCode>,
 ) {
-  return E.gen(function* () {
-    const progress: Array<number> = [];
+  const progress: Array<number> = [];
 
-    const fiber = yield* importer
-      .importReport({
-        fightId: FIGHT_ID,
-        isOwnRun: true,
-        onProgress: (fraction) => {
-          return E.sync(() => {
-            progress.push(fraction);
-          });
-        },
-        reportCode,
-      })
-      .pipe(E.result, E.forkChild);
+  const fiber = yield* importer
+    .importReport({
+      fightId: FIGHT_ID,
+      isOwnRun: true,
+      onProgress: (fraction) => {
+        return E.sync(() => {
+          progress.push(fraction);
+        });
+      },
+      reportCode,
+    })
+    .pipe(E.result, E.forkChild);
 
-    yield* TestClock.adjust("20 seconds");
+  yield* TestClock.adjust("20 seconds");
 
-    const result = yield* Fiber.join(fiber);
+  const result = yield* Fiber.join(fiber);
 
-    return { progress, result };
-  });
-}
+  return { progress, result };
+});
 
 describe("simulated import report codes", () => {
   test("round-trip the outcome and duration", async () => {

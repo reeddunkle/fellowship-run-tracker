@@ -140,30 +140,27 @@ export const makeFellowshipLogsGatewayResponseCache = E.gen(function* () {
     );
   });
 
-  const cached: FellowshipLogsGatewayResponseCacheShape["cached"] = (
-    request,
-    fetch,
-  ) => {
-    return E.gen(function* () {
-      const cachedData = yield* read(request);
+  const cached: FellowshipLogsGatewayResponseCacheShape["cached"] = E.fn(
+    "FellowshipLogsGatewayResponseCache.cached",
+  )(function* (request, fetch) {
+    const cachedData = yield* read(request);
 
-      if (Option.isSome(cachedData)) {
-        yield* analytics.record({
-          operation: request.operation,
-          pointsSpent: null,
-          source: "CACHE",
-        });
+    if (Option.isSome(cachedData)) {
+      yield* analytics.record({
+        operation: request.operation,
+        pointsSpent: null,
+        source: "CACHE",
+      });
 
-        return cachedData.value;
-      }
+      return cachedData.value;
+    }
 
-      const data = yield* fetch;
+    const data = yield* fetch;
 
-      yield* write(request, data);
+    yield* write(request, data);
 
-      return data;
-    });
-  };
+    return data;
+  });
 
   return {
     cached,

@@ -14,14 +14,12 @@ export function getAbilities() {
   });
 }
 
-export function getAbility({ id }: AbilityIdArgs) {
-  return E.gen(function* () {
-    const client = yield* AppApiClient;
+export const getAbility = E.fn("getAbility")(function* ({ id }: AbilityIdArgs) {
+  const client = yield* AppApiClient;
 
-    return yield* client.abilities.getAbility({
-      params: {
-        id,
-      },
-    });
+  return yield* client.abilities.getAbility({
+    params: {
+      id,
+    },
   });
-}
+});
