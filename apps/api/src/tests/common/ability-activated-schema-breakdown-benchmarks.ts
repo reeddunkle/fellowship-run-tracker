@@ -35,9 +35,6 @@ const AbilityActivatedLogLineSchema = Schema.Tuple([
 const NestedIntegerFromStringSchema = Schema.FiniteFromString.pipe(
   Schema.decodeTo(Schema.Int),
 );
-
-const EffectfulJsonStringSchema = Schema.fromJsonString(Schema.String);
-
 const fieldIndexes = {
   finite: [12, 13, 14],
   integer: [6, 9, 10, 11],
@@ -121,13 +118,6 @@ export function describeAbilityActivatedSchemaBreakdownBenchmarks(
           "JsonStringSchema x3",
           makeDecodeAll(
             repeatTuple(JsonStringSchema, 3),
-            pickFields(fieldsByLine, fieldIndexes.jsonString),
-          ),
-        ),
-        bench(
-          "fromJsonString x3",
-          makeDecodeAll(
-            repeatTuple(EffectfulJsonStringSchema, 3),
             pickFields(fieldsByLine, fieldIndexes.jsonString),
           ),
         ),
