@@ -4,10 +4,10 @@ import { ChildProcessSpawner } from "effect/process";
 import { BiomeFixError } from "@frt/api/errors/biome-fix-error.ts";
 import { makePnpmCommand } from "@frt/api/helpers/make-pnpm-command.ts";
 
-export function fixWithBiome(
+export const fixWithBiome: (
   filePaths: ReadonlyArray<string>,
-): E.Effect<void, BiomeFixError, ChildProcessSpawner.ChildProcessSpawner> {
-  return E.gen(function* () {
+) => E.Effect<void, BiomeFixError, ChildProcessSpawner.ChildProcessSpawner> =
+  E.fn("fixWithBiome")(function* (filePaths) {
     const childProcessSpawner = yield* ChildProcessSpawner.ChildProcessSpawner;
 
     const command = yield* makePnpmCommand([
@@ -28,4 +28,3 @@ export function fixWithBiome(
       }),
     );
   });
-}

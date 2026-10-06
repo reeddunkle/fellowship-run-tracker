@@ -95,14 +95,13 @@ function decodeRequirementRows(
 export const makeConfigurationDAO = E.gen(function* () {
   const sql = yield* MainDatabase;
 
-  const getConfigurationDefinitionById = (
+  const getConfigurationDefinitionById: (
     id: ConfigurationDefinitionId,
-  ): E.Effect<
+  ) => E.Effect<
     Option.Option<ConfigurationDefinitionModel>,
     ConfigurationDAOError
-  > => {
-    return E.gen(function* () {
-      const rows = yield* sql`
+  > = E.fn("ConfigurationDAO.getConfigurationDefinitionById")(function* (id) {
+    const rows = yield* sql`
         SELECT
           id,
           dungeon_id,
@@ -119,20 +118,20 @@ export const makeConfigurationDAO = E.gen(function* () {
           1
       `;
 
-      const definitions = yield* decodeConfigurationDefinitionRows(rows);
-      const definition = definitions[0];
+    const definitions = yield* decodeConfigurationDefinitionRows(rows);
+    const definition = definitions[0];
 
-      return definition === undefined
-        ? Option.none<ConfigurationDefinitionModel>()
-        : Option.some(definition);
-    }).pipe(E.mapError(mapConfigurationDAOError));
-  };
+    return definition === undefined
+      ? Option.none<ConfigurationDefinitionModel>()
+      : Option.some(definition);
+  }, E.mapError(mapConfigurationDAOError));
 
-  const getMilestonesByConfigurationId = (
+  const getMilestonesByConfigurationId: (
     configurationId: ConfigurationId,
-  ): E.Effect<ReadonlyArray<MilestoneModel>, ConfigurationDAOError> => {
-    return E.gen(function* () {
-      const rows = yield* sql`
+  ) => E.Effect<ReadonlyArray<MilestoneModel>, ConfigurationDAOError> = E.fn(
+    "ConfigurationDAO.getMilestonesByConfigurationId",
+  )(function* (configurationId) {
+    const rows = yield* sql`
         SELECT
           id,
           configuration_id,
@@ -146,15 +145,15 @@ export const makeConfigurationDAO = E.gen(function* () {
           configuration_id = ${configurationId}
       `;
 
-      return yield* decodeMilestoneRows(rows);
-    }).pipe(E.mapError(mapConfigurationDAOError));
-  };
+    return yield* decodeMilestoneRows(rows);
+  }, E.mapError(mapConfigurationDAOError));
 
-  const getRequirementsByConfigurationDefinitionId = (
+  const getRequirementsByConfigurationDefinitionId: (
     configurationDefinitionId: ConfigurationDefinitionId,
-  ): E.Effect<ReadonlyArray<RequirementModel>, ConfigurationDAOError> => {
-    return E.gen(function* () {
-      const rows = yield* sql`
+  ) => E.Effect<ReadonlyArray<RequirementModel>, ConfigurationDAOError> = E.fn(
+    "ConfigurationDAO.getRequirementsByConfigurationDefinitionId",
+  )(function* (configurationDefinitionId) {
+    const rows = yield* sql`
         SELECT
           id,
           configuration_definition_id,
@@ -170,9 +169,8 @@ export const makeConfigurationDAO = E.gen(function* () {
           configuration_definition_id = ${configurationDefinitionId}
       `;
 
-      return yield* decodeRequirementRows(rows);
-    }).pipe(E.mapError(mapConfigurationDAOError));
-  };
+    return yield* decodeRequirementRows(rows);
+  }, E.mapError(mapConfigurationDAOError));
 
   const getMilestoneRequirementsByMilestoneIds = (
     milestoneIds: ReadonlyArray<MilestoneId>,
@@ -200,46 +198,43 @@ export const makeConfigurationDAO = E.gen(function* () {
     }).pipe(E.mapError(mapConfigurationDAOError));
   };
 
-  const hydrateConfiguration = (
+  const hydrateConfiguration: (
     configuration: ConfigurationModel,
-  ): E.Effect<PersistedConfiguration, ConfigurationDAOError> => {
-    return E.gen(function* () {
-      const definition = yield* getConfigurationDefinitionById(
-        configuration.configurationDefinitionId,
-      );
+  ) => E.Effect<PersistedConfiguration, ConfigurationDAOError> = E.fn(
+    "ConfigurationDAO.hydrateConfiguration",
+  )(function* (configuration) {
+    const definition = yield* getConfigurationDefinitionById(
+      configuration.configurationDefinitionId,
+    );
 
-      if (Option.isNone(definition)) {
-        return yield* new ConfigurationDAOError({
-          reason: new ConfigurationDefinitionNotFoundError({
-            configurationDefinitionId: configuration.configurationDefinitionId,
-          }),
-        });
-      }
+    if (Option.isNone(definition)) {
+      return yield* new ConfigurationDAOError({
+        reason: new ConfigurationDefinitionNotFoundError({
+          configurationDefinitionId: configuration.configurationDefinitionId,
+        }),
+      });
+    }
 
-      const milestones = yield* getMilestonesByConfigurationId(
-        configuration.id,
-      );
+    const milestones = yield* getMilestonesByConfigurationId(configuration.id);
 
-      const requirements = yield* getRequirementsByConfigurationDefinitionId(
-        definition.value.id,
-      );
+    const requirements = yield* getRequirementsByConfigurationDefinitionId(
+      definition.value.id,
+    );
 
-      const milestoneRequirements =
-        yield* getMilestoneRequirementsByMilestoneIds(
-          milestones.map((milestone) => {
-            return milestone.id;
-          }),
-        );
+    const milestoneRequirements = yield* getMilestoneRequirementsByMilestoneIds(
+      milestones.map((milestone) => {
+        return milestone.id;
+      }),
+    );
 
-      return yield* createPersistedConfiguration({
-        configuration,
-        configurationDefinition: definition.value,
-        milestoneRequirements,
-        milestones,
-        requirements,
-      }).pipe(E.mapError(mapConfigurationDAOError));
-    });
-  };
+    return yield* createPersistedConfiguration({
+      configuration,
+      configurationDefinition: definition.value,
+      milestoneRequirements,
+      milestones,
+      requirements,
+    }).pipe(E.mapError(mapConfigurationDAOError));
+  });
 
   const getById: ConfigurationDAOShape["getById"] = E.fn(
     "ConfigurationDAO.getById",
@@ -301,125 +296,126 @@ export const makeConfigurationDAO = E.gen(function* () {
     }).pipe(E.mapError(mapConfigurationDAOError));
   };
 
-  const getPersistedConfiguration = (
+  const getPersistedConfiguration: (
     id: ConfigurationId,
-  ): E.Effect<PersistedConfiguration, ConfigurationDAOError> => {
-    return E.gen(function* () {
-      const persisted = yield* getById({ id });
+  ) => E.Effect<PersistedConfiguration, ConfigurationDAOError> = E.fn(
+    "ConfigurationDAO.getPersistedConfiguration",
+  )(function* (id) {
+    const persisted = yield* getById({ id });
 
-      if (Option.isNone(persisted)) {
-        return yield* new ConfigurationDAOError({
-          reason: new ConfigurationNotFoundAfterPersistError({
-            configurationId: id,
-          }),
-        });
-      }
+    if (Option.isNone(persisted)) {
+      return yield* new ConfigurationDAOError({
+        reason: new ConfigurationNotFoundAfterPersistError({
+          configurationId: id,
+        }),
+      });
+    }
 
-      return persisted.value;
-    });
-  };
+    return persisted.value;
+  });
 
-  const persistConfiguration = ({
-    configuration,
-    label,
-    replaceConfigurationId,
-    replaceDungeonAndLevel,
-  }: {
+  const persistConfiguration: (options: {
     readonly configuration: Parameters<
       ConfigurationDAOShape["save"]
     >[0]["configuration"];
     readonly label: Parameters<ConfigurationDAOShape["save"]>[0]["label"];
     readonly replaceConfigurationId?: ConfigurationId;
     readonly replaceDungeonAndLevel: boolean;
-  }): E.Effect<PersistedConfiguration, ConfigurationDAOError> => {
-    return E.gen(function* () {
-      const records = yield* createConfigurationPersistenceRecords({
-        configuration,
-        label,
-      }).pipe(E.mapError(mapConfigurationDAOError));
+  }) => E.Effect<PersistedConfiguration, ConfigurationDAOError> = E.fn(
+    "ConfigurationDAO.persistConfiguration",
+  )(function* ({
+    configuration,
+    label,
+    replaceConfigurationId,
+    replaceDungeonAndLevel,
+  }) {
+    const records = yield* createConfigurationPersistenceRecords({
+      configuration,
+      label,
+    }).pipe(E.mapError(mapConfigurationDAOError));
 
-      const definitionInsert = yield* Schema.encodeEffect(
-        ConfigurationDefinitionModel.insert,
-      )(records.configurationDefinition).pipe(
-        E.mapError(mapConfigurationDAOError),
-      );
+    const definitionInsert = yield* Schema.encodeEffect(
+      ConfigurationDefinitionModel.insert,
+    )(records.configurationDefinition).pipe(
+      E.mapError(mapConfigurationDAOError),
+    );
 
-      const configurationInsert = yield* Schema.encodeEffect(
-        ConfigurationModel.insert,
-      )(records.configuration).pipe(E.mapError(mapConfigurationDAOError));
+    const configurationInsert = yield* Schema.encodeEffect(
+      ConfigurationModel.insert,
+    )(records.configuration).pipe(E.mapError(mapConfigurationDAOError));
 
-      const requirementRecords = yield* E.forEach(
-        records.requirements,
-        (requirement) => {
-          return Schema.encodeEffect(RequirementModel.insert)(requirement).pipe(
-            E.map((insert) => {
-              return {
-                insert,
-                model: requirement,
-              };
-            }),
-          );
-        },
-      ).pipe(E.mapError(mapConfigurationDAOError));
+    const requirementRecords = yield* E.forEach(
+      records.requirements,
+      (requirement) => {
+        return Schema.encodeEffect(RequirementModel.insert)(requirement).pipe(
+          E.map((insert) => {
+            return {
+              insert,
+              model: requirement,
+            };
+          }),
+        );
+      },
+    ).pipe(E.mapError(mapConfigurationDAOError));
 
-      const milestoneRecords = yield* E.forEach(
-        records.milestones,
-        (milestone) => {
-          return Schema.encodeEffect(MilestoneModel.insert)(milestone).pipe(
-            E.map((insert) => {
-              return {
-                insert,
-                model: milestone,
-              };
-            }),
-          );
-        },
-      ).pipe(E.mapError(mapConfigurationDAOError));
+    const milestoneRecords = yield* E.forEach(
+      records.milestones,
+      (milestone) => {
+        return Schema.encodeEffect(MilestoneModel.insert)(milestone).pipe(
+          E.map((insert) => {
+            return {
+              insert,
+              model: milestone,
+            };
+          }),
+        );
+      },
+    ).pipe(E.mapError(mapConfigurationDAOError));
 
-      const milestoneRequirementRecords = yield* E.forEach(
-        records.milestoneRequirements,
-        (milestoneRequirement) => {
-          return Schema.encodeEffect(MilestoneRequirementModel.insert)(
-            milestoneRequirement,
-          ).pipe(
-            E.map((insert) => {
-              return {
-                insert,
-                model: milestoneRequirement,
-              };
-            }),
-          );
-        },
-      ).pipe(E.mapError(mapConfigurationDAOError));
+    const milestoneRequirementRecords = yield* E.forEach(
+      records.milestoneRequirements,
+      (milestoneRequirement) => {
+        return Schema.encodeEffect(MilestoneRequirementModel.insert)(
+          milestoneRequirement,
+        ).pipe(
+          E.map((insert) => {
+            return {
+              insert,
+              model: milestoneRequirement,
+            };
+          }),
+        );
+      },
+    ).pipe(E.mapError(mapConfigurationDAOError));
 
-      const requirementsById = R.fromIterableBy(
-        records.requirements,
-        (requirement) => {
-          return requirement.id;
-        },
-      );
+    const requirementsById = R.fromIterableBy(
+      records.requirements,
+      (requirement) => {
+        return requirement.id;
+      },
+    );
 
-      const milestoneRequirementRecordsByMilestoneId =
-        milestoneRequirementRecords.reduce<
-          Record<string, Array<(typeof milestoneRequirementRecords)[number]>>
-        >((groups, milestoneRequirementRecord) => {
-          const milestoneId = milestoneRequirementRecord.model.milestoneId;
-          const existingRecords = groups[milestoneId];
+    const milestoneRequirementRecordsByMilestoneId =
+      milestoneRequirementRecords.reduce<
+        Record<string, Array<(typeof milestoneRequirementRecords)[number]>>
+      >((groups, milestoneRequirementRecord) => {
+        const milestoneId = milestoneRequirementRecord.model.milestoneId;
+        const existingRecords = groups[milestoneId];
 
-          if (existingRecords === undefined) {
-            groups[milestoneId] = [milestoneRequirementRecord];
-          } else {
-            existingRecords.push(milestoneRequirementRecord);
-          }
+        if (existingRecords === undefined) {
+          groups[milestoneId] = [milestoneRequirementRecord];
+        } else {
+          existingRecords.push(milestoneRequirementRecord);
+        }
 
-          return groups;
-        }, {});
+        return groups;
+      }, {});
 
-      const configurationId = yield* sql
-        .withTransaction(
-          E.gen(function* () {
-            if (replaceConfigurationId !== undefined) {
-              const rows = yield* sql`
+    const configurationId = yield* sql
+      .withTransaction(
+        E.gen(function* () {
+          if (replaceConfigurationId !== undefined) {
+            const rows = yield* sql`
                 SELECT
                   id
                 FROM
@@ -430,16 +426,16 @@ export const makeConfigurationDAO = E.gen(function* () {
                   1
               `;
 
-              if (rows[0] === undefined) {
-                return yield* new ConfigurationDAOError({
-                  reason: new ConfigurationToReplaceNotFoundError({
-                    configurationId: replaceConfigurationId,
-                  }),
-                });
-              }
+            if (rows[0] === undefined) {
+              return yield* new ConfigurationDAOError({
+                reason: new ConfigurationToReplaceNotFoundError({
+                  configurationId: replaceConfigurationId,
+                }),
+              });
             }
+          }
 
-            const definitionRows = yield* sql`
+          const definitionRows = yield* sql`
               SELECT
                 id
               FROM
@@ -450,19 +446,19 @@ export const makeConfigurationDAO = E.gen(function* () {
                 1
             `;
 
-            const existingDefinition = definitionRows[0];
+          const existingDefinition = definitionRows[0];
 
-            const configurationDefinitionId =
-              existingDefinition === undefined
-                ? records.configurationDefinition.id
-                : yield* Schema.decodeUnknownEffect(
-                    ConfigurationDefinitionIdSchema,
-                  )(existingDefinition.id).pipe(
-                    E.mapError(mapConfigurationDAOError),
-                  );
+          const configurationDefinitionId =
+            existingDefinition === undefined
+              ? records.configurationDefinition.id
+              : yield* Schema.decodeUnknownEffect(
+                  ConfigurationDefinitionIdSchema,
+                )(existingDefinition.id).pipe(
+                  E.mapError(mapConfigurationDAOError),
+                );
 
-            if (existingDefinition === undefined) {
-              yield* sql`
+          if (existingDefinition === undefined) {
+            yield* sql`
                 INSERT INTO
                   configuration_definition (
                     id,
@@ -485,10 +481,10 @@ export const makeConfigurationDAO = E.gen(function* () {
                   )
               `;
 
-              yield* E.forEach(
-                requirementRecords,
-                ({ insert: requirementInsert }) => {
-                  return sql`
+            yield* E.forEach(
+              requirementRecords,
+              ({ insert: requirementInsert }) => {
+                return sql`
                     INSERT INTO
                       requirement (
                         id,
@@ -512,14 +508,14 @@ export const makeConfigurationDAO = E.gen(function* () {
                         ${requirementInsert.updatedAt}
                       )
                   `;
-                },
-                {
-                  discard: true,
-                },
-              );
-            }
+              },
+              {
+                discard: true,
+              },
+            );
+          }
 
-            const duplicateRows = yield* sql`
+          const duplicateRows = yield* sql`
               SELECT
                 id
               FROM
@@ -530,23 +526,24 @@ export const makeConfigurationDAO = E.gen(function* () {
                 1
             `;
 
-            const duplicateConfiguration = duplicateRows[0];
+          const duplicateConfiguration = duplicateRows[0];
 
-            if (duplicateConfiguration !== undefined) {
-              const duplicateConfigurationId =
-                yield* Schema.decodeUnknownEffect(ConfigurationIdSchema)(
-                  duplicateConfiguration.id,
-                ).pipe(E.mapError(mapConfigurationDAOError));
+          if (duplicateConfiguration !== undefined) {
+            const duplicateConfigurationId = yield* Schema.decodeUnknownEffect(
+              ConfigurationIdSchema,
+            )(duplicateConfiguration.id).pipe(
+              E.mapError(mapConfigurationDAOError),
+            );
 
-              if (duplicateConfigurationId !== replaceConfigurationId) {
-                return yield* new ConfigurationDAOError({
-                  reason: new ConfigurationDuplicateError({
-                    configurationId: duplicateConfigurationId,
-                  }),
-                });
-              }
+            if (duplicateConfigurationId !== replaceConfigurationId) {
+              return yield* new ConfigurationDAOError({
+                reason: new ConfigurationDuplicateError({
+                  configurationId: duplicateConfigurationId,
+                }),
+              });
+            }
 
-              yield* sql`
+            yield* sql`
                 UPDATE configuration
                 SET
                   label = ${configurationInsert.label},
@@ -555,102 +552,101 @@ export const makeConfigurationDAO = E.gen(function* () {
                   id = ${duplicateConfigurationId}
               `;
 
-              const existingMilestones = yield* getMilestonesByConfigurationId(
-                duplicateConfigurationId,
+            const existingMilestones = yield* getMilestonesByConfigurationId(
+              duplicateConfigurationId,
+            );
+
+            const existingRequirements =
+              yield* getRequirementsByConfigurationDefinitionId(
+                configurationDefinitionId,
               );
 
-              const existingRequirements =
-                yield* getRequirementsByConfigurationDefinitionId(
-                  configurationDefinitionId,
-                );
-
-              const existingMilestoneRequirements =
-                yield* getMilestoneRequirementsByMilestoneIds(
-                  existingMilestones.map((milestone) => {
-                    return milestone.id;
-                  }),
-                );
-
-              const existingRequirementsById = R.fromIterableBy(
-                existingRequirements,
-                (requirement) => {
-                  return requirement.id;
-                },
+            const existingMilestoneRequirements =
+              yield* getMilestoneRequirementsByMilestoneIds(
+                existingMilestones.map((milestone) => {
+                  return milestone.id;
+                }),
               );
 
-              const existingMilestoneRequirementsByMilestoneId =
-                existingMilestoneRequirements.reduce<
-                  Record<
-                    string,
-                    Array<(typeof existingMilestoneRequirements)[number]>
-                  >
-                >((groups, milestoneRequirement) => {
-                  const milestoneId = milestoneRequirement.milestoneId;
-                  const existingRecords = groups[milestoneId];
+            const existingRequirementsById = R.fromIterableBy(
+              existingRequirements,
+              (requirement) => {
+                return requirement.id;
+              },
+            );
 
-                  if (existingRecords === undefined) {
-                    groups[milestoneId] = [milestoneRequirement];
-                  } else {
-                    existingRecords.push(milestoneRequirement);
-                  }
+            const existingMilestoneRequirementsByMilestoneId =
+              existingMilestoneRequirements.reduce<
+                Record<
+                  string,
+                  Array<(typeof existingMilestoneRequirements)[number]>
+                >
+              >((groups, milestoneRequirement) => {
+                const milestoneId = milestoneRequirement.milestoneId;
+                const existingRecords = groups[milestoneId];
 
-                  return groups;
-                }, {});
+                if (existingRecords === undefined) {
+                  groups[milestoneId] = [milestoneRequirement];
+                } else {
+                  existingRecords.push(milestoneRequirement);
+                }
 
-              const existingMilestonesByIdentityKey = R.fromIterableBy(
-                existingMilestones,
-                (milestone) => {
-                  const milestoneRequirements =
-                    existingMilestoneRequirementsByMilestoneId[milestone.id] ??
-                    [];
+                return groups;
+              }, {});
 
-                  const requirements = milestoneRequirements.flatMap(
-                    (milestoneRequirement) => {
+            const existingMilestonesByIdentityKey = R.fromIterableBy(
+              existingMilestones,
+              (milestone) => {
+                const milestoneRequirements =
+                  existingMilestoneRequirementsByMilestoneId[milestone.id] ??
+                  [];
+
+                const requirements = milestoneRequirements.flatMap(
+                  (milestoneRequirement) => {
+                    const requirement =
+                      existingRequirementsById[
+                        milestoneRequirement.requirementId
+                      ];
+
+                    return requirement === undefined ? [] : [requirement];
+                  },
+                );
+
+                return getMilestoneRequirementsIdentityKey(requirements);
+              },
+            );
+
+            yield* E.forEach(
+              milestoneRecords,
+              ({ insert: milestoneInsert, model: milestone }) => {
+                const submittedMilestoneRequirements =
+                  milestoneRequirementRecordsByMilestoneId[milestone.id] ?? [];
+
+                const submittedRequirements =
+                  submittedMilestoneRequirements.flatMap(
+                    ({ model: milestoneRequirement }) => {
                       const requirement =
-                        existingRequirementsById[
-                          milestoneRequirement.requirementId
-                        ];
+                        requirementsById[milestoneRequirement.requirementId];
 
                       return requirement === undefined ? [] : [requirement];
                     },
                   );
 
-                  return getMilestoneRequirementsIdentityKey(requirements);
-                },
-              );
+                const submittedIdentityKey =
+                  getMilestoneRequirementsIdentityKey(submittedRequirements);
 
-              yield* E.forEach(
-                milestoneRecords,
-                ({ insert: milestoneInsert, model: milestone }) => {
-                  const submittedMilestoneRequirements =
-                    milestoneRequirementRecordsByMilestoneId[milestone.id] ??
-                    [];
+                const existingMilestone =
+                  existingMilestonesByIdentityKey[submittedIdentityKey];
 
-                  const submittedRequirements =
-                    submittedMilestoneRequirements.flatMap(
-                      ({ model: milestoneRequirement }) => {
-                        const requirement =
-                          requirementsById[milestoneRequirement.requirementId];
+                if (existingMilestone === undefined) {
+                  return new ConfigurationDAOError({
+                    reason: new ConfigurationPersistedMilestoneNotFoundError({
+                      configurationId: duplicateConfigurationId,
+                    }),
+                  });
+                }
 
-                        return requirement === undefined ? [] : [requirement];
-                      },
-                    );
-
-                  const submittedIdentityKey =
-                    getMilestoneRequirementsIdentityKey(submittedRequirements);
-
-                  const existingMilestone =
-                    existingMilestonesByIdentityKey[submittedIdentityKey];
-
-                  if (existingMilestone === undefined) {
-                    return new ConfigurationDAOError({
-                      reason: new ConfigurationPersistedMilestoneNotFoundError({
-                        configurationId: duplicateConfigurationId,
-                      }),
-                    });
-                  }
-
-                  return sql`
+                return sql`
                     UPDATE milestone
                     SET
                       comparison_time = ${milestoneInsert.comparisonTime},
@@ -659,18 +655,18 @@ export const makeConfigurationDAO = E.gen(function* () {
                     WHERE
                       id = ${existingMilestone.id}
                   `.pipe(E.mapError(mapConfigurationDAOError));
-                },
-                {
-                  discard: true,
-                },
-              );
+              },
+              {
+                discard: true,
+              },
+            );
 
-              return duplicateConfigurationId;
-            }
+            return duplicateConfigurationId;
+          }
 
-            const newConfigurationId = records.configuration.id;
+          const newConfigurationId = records.configuration.id;
 
-            yield* sql`
+          yield* sql`
               INSERT INTO
                 configuration (
                   id,
@@ -693,23 +689,23 @@ export const makeConfigurationDAO = E.gen(function* () {
                 )
             `;
 
-            const persistedRequirements =
-              yield* getRequirementsByConfigurationDefinitionId(
-                configurationDefinitionId,
-              );
-
-            const persistedRequirementsByIdentityKey = R.fromIterableBy(
-              persistedRequirements,
-              (requirement) => {
-                return getMilestoneRequirementsIdentityKey([requirement]);
-              },
+          const persistedRequirements =
+            yield* getRequirementsByConfigurationDefinitionId(
+              configurationDefinitionId,
             );
 
-            yield* E.forEach(
-              milestoneRecords,
-              ({ insert: milestoneInsert, model: milestone }) => {
-                return E.gen(function* () {
-                  yield* sql`
+          const persistedRequirementsByIdentityKey = R.fromIterableBy(
+            persistedRequirements,
+            (requirement) => {
+              return getMilestoneRequirementsIdentityKey([requirement]);
+            },
+          );
+
+          yield* E.forEach(
+            milestoneRecords,
+            ({ insert: milestoneInsert, model: milestone }) => {
+              return E.gen(function* () {
+                yield* sql`
                     INSERT INTO
                       milestone (
                         id,
@@ -730,46 +726,45 @@ export const makeConfigurationDAO = E.gen(function* () {
                       )
                   `;
 
-                  const submittedMilestoneRequirements =
-                    milestoneRequirementRecordsByMilestoneId[milestone.id] ??
-                    [];
+                const submittedMilestoneRequirements =
+                  milestoneRequirementRecordsByMilestoneId[milestone.id] ?? [];
 
-                  yield* E.forEach(
-                    submittedMilestoneRequirements,
-                    ({
-                      insert: milestoneRequirementInsert,
-                      model: milestoneRequirement,
-                    }) => {
-                      const submittedRequirement =
-                        requirementsById[milestoneRequirement.requirementId];
+                yield* E.forEach(
+                  submittedMilestoneRequirements,
+                  ({
+                    insert: milestoneRequirementInsert,
+                    model: milestoneRequirement,
+                  }) => {
+                    const submittedRequirement =
+                      requirementsById[milestoneRequirement.requirementId];
 
-                      if (submittedRequirement === undefined) {
-                        return new ConfigurationDAOError({
-                          reason:
-                            new ConfigurationSubmittedRequirementNotFoundError({
-                              requirementId: milestoneRequirement.requirementId,
-                            }),
-                        });
-                      }
+                    if (submittedRequirement === undefined) {
+                      return new ConfigurationDAOError({
+                        reason:
+                          new ConfigurationSubmittedRequirementNotFoundError({
+                            requirementId: milestoneRequirement.requirementId,
+                          }),
+                      });
+                    }
 
-                      const requirementIdentity =
-                        getMilestoneRequirementsIdentityKey([
-                          submittedRequirement,
-                        ]);
+                    const requirementIdentity =
+                      getMilestoneRequirementsIdentityKey([
+                        submittedRequirement,
+                      ]);
 
-                      const persistedRequirement =
-                        persistedRequirementsByIdentityKey[requirementIdentity];
+                    const persistedRequirement =
+                      persistedRequirementsByIdentityKey[requirementIdentity];
 
-                      if (persistedRequirement === undefined) {
-                        return new ConfigurationDAOError({
-                          reason:
-                            new ConfigurationPersistedRequirementNotFoundError({
-                              milestoneId: milestone.id,
-                            }),
-                        });
-                      }
+                    if (persistedRequirement === undefined) {
+                      return new ConfigurationDAOError({
+                        reason:
+                          new ConfigurationPersistedRequirementNotFoundError({
+                            milestoneId: milestone.id,
+                          }),
+                      });
+                    }
 
-                      return sql`
+                    return sql`
                         INSERT INTO
                           milestone_requirement (milestone_id, requirement_id, created_at)
                         VALUES
@@ -779,31 +774,31 @@ export const makeConfigurationDAO = E.gen(function* () {
                             ${milestoneRequirementInsert.createdAt}
                           )
                       `.pipe(E.mapError(mapConfigurationDAOError));
-                    },
-                    {
-                      discard: true,
-                    },
-                  );
-                });
-              },
-              {
-                discard: true,
-              },
-            );
+                  },
+                  {
+                    discard: true,
+                  },
+                );
+              });
+            },
+            {
+              discard: true,
+            },
+          );
 
-            if (
-              replaceConfigurationId !== undefined &&
-              replaceConfigurationId !== newConfigurationId
-            ) {
-              yield* sql`
+          if (
+            replaceConfigurationId !== undefined &&
+            replaceConfigurationId !== newConfigurationId
+          ) {
+            yield* sql`
                 DELETE FROM configuration
                 WHERE
                   id = ${replaceConfigurationId}
               `;
-            }
+          }
 
-            if (replaceDungeonAndLevel) {
-              yield* sql`
+          if (replaceDungeonAndLevel) {
+            yield* sql`
                 DELETE FROM configuration
                 WHERE
                   id IN (
@@ -818,16 +813,15 @@ export const makeConfigurationDAO = E.gen(function* () {
                       AND configuration.id <> ${newConfigurationId}
                   )
               `;
-            }
+          }
 
-            return newConfigurationId;
-          }),
-        )
-        .pipe(E.mapError(mapConfigurationDAOError));
+          return newConfigurationId;
+        }),
+      )
+      .pipe(E.mapError(mapConfigurationDAOError));
 
-      return yield* getPersistedConfiguration(configurationId);
-    });
-  };
+    return yield* getPersistedConfiguration(configurationId);
+  });
 
   const save: ConfigurationDAOShape["save"] = ({ configuration, label }) => {
     return persistConfiguration({

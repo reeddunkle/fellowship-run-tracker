@@ -104,19 +104,21 @@ const makeLiveSplitGateway = E.gen(function* () {
     name: "LiveSplit",
   });
 
-  const withClient = <A, Error>(
+  const withClient: <A, Error>(
     use: (client: LiveSplitGatewayClient) => E.Effect<A, Error>,
-  ): E.Effect<A, Error | LiveSplitGatewayNotConnectedError> => {
-    return E.gen(function* () {
-      const client = yield* connectionManager.connection;
+  ) => E.Effect<A, Error | LiveSplitGatewayNotConnectedError> = E.fn(
+    "LiveSplitGateway.withClient",
+  )(function* <A, Error>(
+    use: (client: LiveSplitGatewayClient) => E.Effect<A, Error>,
+  ) {
+    const client = yield* connectionManager.connection;
 
-      if (Option.isNone(client)) {
-        return yield* new LiveSplitGatewayNotConnectedError();
-      }
+    if (Option.isNone(client)) {
+      return yield* new LiveSplitGatewayNotConnectedError();
+    }
 
-      return yield* use(client.value);
-    });
-  };
+    return yield* use(client.value);
+  });
 
   return {
     connect: connectionManager.connect,

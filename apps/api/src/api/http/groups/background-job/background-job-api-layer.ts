@@ -11,15 +11,15 @@ import { BackgroundJob } from "@frt/api/services/background-job/background-job-s
 import { BackgroundJobApiNotFoundError } from "@frt/api-contract/errors/background-job-api-error.ts";
 import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
 
-function logInternalServerError(
+const logInternalServerError: (
   error: BackgroundJobQueueError,
-): E.Effect<never, HttpApiError.InternalServerError> {
-  return E.gen(function* () {
-    yield* E.logError("Background job API operation failed.", { error });
+) => E.Effect<never, HttpApiError.InternalServerError> = E.fn(
+  "logInternalServerError",
+)(function* (error) {
+  yield* E.logError("Background job API operation failed.", { error });
 
-    return yield* new HttpApiError.InternalServerError();
-  });
-}
+  return yield* new HttpApiError.InternalServerError();
+});
 
 function mapBackgroundJobCommandError(
   error: BackgroundJobQueueError | BackgroundJobQueueNotFoundError,

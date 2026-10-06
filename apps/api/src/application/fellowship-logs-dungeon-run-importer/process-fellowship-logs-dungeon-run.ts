@@ -64,108 +64,108 @@ type ProcessFellowshipLogsDungeonRunError<StreamError> =
   | FellowshipLogsDungeonRunImportRunNotFinishedError
   | FellowshipLogsDungeonRunImportRunNotFoundError;
 
-export function processFellowshipLogsDungeonRun<StreamError>({
+export const processFellowshipLogsDungeonRun: <StreamError>(
+  options: ProcessFellowshipLogsDungeonRunOptions<StreamError>,
+) => E.Effect<
+  ProcessedFellowshipLogsDungeonRun,
+  ProcessFellowshipLogsDungeonRunError<StreamError>
+> = E.fn("processFellowshipLogsDungeonRun")(function* <StreamError>({
   events,
   fightId,
   reportCode,
-}: ProcessFellowshipLogsDungeonRunOptions<StreamError>): E.Effect<
-  ProcessedFellowshipLogsDungeonRun,
-  ProcessFellowshipLogsDungeonRunError<StreamError>
-> {
-  return E.gen(function* () {
-    const { completedRun, runTracker } = yield* events.pipe(
-      Stream.runFold(
-        (): ProcessingAccumulator => ({
-          completedRun: undefined,
-          observations: [],
-          runTracker: initialDungeonRunTrackerState,
-        }),
-        (accumulator, event): ProcessingAccumulator => {
-          const trackerResult = trackDungeonRunEvent({
-            event,
-            state: accumulator.runTracker,
-          });
+}: ProcessFellowshipLogsDungeonRunOptions<StreamError>) {
+  const { completedRun, runTracker } = yield* events.pipe(
+    Stream.runFold(
+      (): ProcessingAccumulator => ({
+        completedRun: undefined,
+        observations: [],
+        runTracker: initialDungeonRunTrackerState,
+      }),
+      (accumulator, event): ProcessingAccumulator => {
+        const trackerResult = trackDungeonRunEvent({
+          event,
+          state: accumulator.runTracker,
+        });
 
-          const observations =
-            trackerResult.startedRun !== undefined
-              ? []
-              : accumulator.observations;
+        const observations =
+          trackerResult.startedRun !== undefined
+            ? []
+            : accumulator.observations;
 
-          const observation = createDungeonRunObservation(event);
+        const observation = createDungeonRunObservation(event);
 
-          const isRunActive =
-            accumulator.runTracker.currentStart !== undefined ||
-            trackerResult.startedRun !== undefined;
+        const isRunActive =
+          accumulator.runTracker.currentStart !== undefined ||
+          trackerResult.startedRun !== undefined;
 
-          const nextObservations =
-            observation !== undefined && isRunActive
-              ? A.append(observations, observation)
-              : observations;
+        const nextObservations =
+          observation !== undefined && isRunActive
+            ? A.append(observations, observation)
+            : observations;
 
-          const endedAt = getEventTimestamp(event);
+        const endedAt = getEventTimestamp(event);
 
-          const nextCompletedRun =
-            trackerResult.completedRun !== undefined
+        const nextCompletedRun =
+          trackerResult.completedRun !== undefined
+            ? {
+                endedAt,
+                observations: nextObservations,
+                start: trackerResult.completedRun.start,
+                status: "COMPLETED" as const,
+              }
+            : trackerResult.exitedRunStart !== undefined
               ? {
                   endedAt,
                   observations: nextObservations,
-                  start: trackerResult.completedRun.start,
-                  status: "COMPLETED" as const,
+                  start: trackerResult.exitedRunStart,
+                  status: "EXITED" as const,
                 }
-              : trackerResult.exitedRunStart !== undefined
-                ? {
-                    endedAt,
-                    observations: nextObservations,
-                    start: trackerResult.exitedRunStart,
-                    status: "EXITED" as const,
-                  }
-                : accumulator.completedRun;
+              : accumulator.completedRun;
 
-          return {
-            completedRun: nextCompletedRun,
-            observations:
-              trackerResult.completedRun !== undefined ||
-              trackerResult.exitedRunStart !== undefined
-                ? []
-                : nextObservations,
-            runTracker: trackerResult.state,
-          };
+        return {
+          completedRun: nextCompletedRun,
+          observations:
+            trackerResult.completedRun !== undefined ||
+            trackerResult.exitedRunStart !== undefined
+              ? []
+              : nextObservations,
+          runTracker: trackerResult.state,
+        };
+      },
+    ),
+  );
+
+  if (completedRun !== undefined) {
+    const dungeonLevel = completedRun.start.dungeonLevel;
+
+    if (dungeonLevel === undefined) {
+      return yield* new FellowshipLogsDungeonRunImportDungeonLevelNotFoundError(
+        {
+          fightId,
+          reportCode,
         },
-      ),
-    );
-
-    if (completedRun !== undefined) {
-      const dungeonLevel = completedRun.start.dungeonLevel;
-
-      if (dungeonLevel === undefined) {
-        return yield* new FellowshipLogsDungeonRunImportDungeonLevelNotFoundError(
-          {
-            fightId,
-            reportCode,
-          },
-        );
-      }
-
-      return {
-        dungeonId: completedRun.start.dungeonId,
-        dungeonLevel,
-        endedAt: completedRun.endedAt,
-        observations: completedRun.observations,
-        startedAt: completedRun.start.startedAt,
-        status: completedRun.status,
-      } satisfies ProcessedFellowshipLogsDungeonRun;
+      );
     }
 
-    if (runTracker.currentStart !== undefined) {
-      return yield* new FellowshipLogsDungeonRunImportRunNotFinishedError({
-        fightId,
-        reportCode,
-      });
-    }
+    return {
+      dungeonId: completedRun.start.dungeonId,
+      dungeonLevel,
+      endedAt: completedRun.endedAt,
+      observations: completedRun.observations,
+      startedAt: completedRun.start.startedAt,
+      status: completedRun.status,
+    } satisfies ProcessedFellowshipLogsDungeonRun;
+  }
 
-    return yield* new FellowshipLogsDungeonRunImportRunNotFoundError({
+  if (runTracker.currentStart !== undefined) {
+    return yield* new FellowshipLogsDungeonRunImportRunNotFinishedError({
       fightId,
       reportCode,
     });
+  }
+
+  return yield* new FellowshipLogsDungeonRunImportRunNotFoundError({
+    fightId,
+    reportCode,
   });
-}
+});

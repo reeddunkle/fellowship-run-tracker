@@ -124,71 +124,67 @@ const makeFileMonitor = E.gen(function* () {
       .join("");
   };
 
-  const readAppendedLines = ({
-    file,
-    state,
-  }: ReadAppendedLinesOptions): E.Effect<
-    ReadAppendedLinesResult,
-    PlatformError.PlatformError
-  > => {
-    return E.gen(function* () {
-      if (!isSameFile(file, state.file)) {
-        return yield* readAppendedLines({
-          file,
-          state: createFileReadStateFromBeginning(file),
-        });
-      }
-
-      if (file.size < state.byteOffset) {
-        return yield* readAppendedLines({
-          file,
-          state: createFileReadStateFromBeginning(file),
-        });
-      }
-
-      const bytesToRead = ByteSize.bytes(file.size - state.byteOffset);
-
-      if (bytesToRead === ByteSize.bytes(0)) {
-        return {
-          lines: [],
-          state: {
-            ...state,
-            file,
-          },
-        };
-      }
-
-      const chunks = yield* readFileRange({
-        bytesToRead,
-        filePath: file.filePath,
-        offset: state.byteOffset,
+  const readAppendedLines: (
+    options: ReadAppendedLinesOptions,
+  ) => E.Effect<ReadAppendedLinesResult, PlatformError.PlatformError> = E.fn(
+    "FileMonitor.readAppendedLines",
+  )(function* ({ file, state }) {
+    if (!isSameFile(file, state.file)) {
+      return yield* readAppendedLines({
+        file,
+        state: createFileReadStateFromBeginning(file),
       });
+    }
 
-      const bytesRead = chunks.reduce((total, chunk) => {
-        return total + BigInt(chunk.byteLength);
-      }, BigInt(0));
-
-      const appendedText = decodeChunks({
-        chunks,
-        decoder: state.decoder,
+    if (file.size < state.byteOffset) {
+      return yield* readAppendedLines({
+        file,
+        state: createFileReadStateFromBeginning(file),
       });
+    }
 
-      const splitResult = splitCompleteLines({
-        incompleteLine: state.incompleteLine,
-        text: appendedText,
-      });
+    const bytesToRead = ByteSize.bytes(file.size - state.byteOffset);
 
+    if (bytesToRead === ByteSize.bytes(0)) {
       return {
-        lines: splitResult.lines,
+        lines: [],
         state: {
-          byteOffset: ByteSize.bytes(state.byteOffset + bytesRead),
-          decoder: state.decoder,
+          ...state,
           file,
-          incompleteLine: splitResult.incompleteLine,
         },
       };
+    }
+
+    const chunks = yield* readFileRange({
+      bytesToRead,
+      filePath: file.filePath,
+      offset: state.byteOffset,
     });
-  };
+
+    const bytesRead = chunks.reduce((total, chunk) => {
+      return total + BigInt(chunk.byteLength);
+    }, BigInt(0));
+
+    const appendedText = decodeChunks({
+      chunks,
+      decoder: state.decoder,
+    });
+
+    const splitResult = splitCompleteLines({
+      incompleteLine: state.incompleteLine,
+      text: appendedText,
+    });
+
+    return {
+      lines: splitResult.lines,
+      state: {
+        byteOffset: ByteSize.bytes(state.byteOffset + bytesRead),
+        decoder: state.decoder,
+        file,
+        incompleteLine: splitResult.incompleteLine,
+      },
+    };
+  });
 
   const streamLines = ({
     filePath,

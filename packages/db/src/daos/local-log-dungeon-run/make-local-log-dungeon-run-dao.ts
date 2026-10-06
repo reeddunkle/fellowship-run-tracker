@@ -122,21 +122,19 @@ export const makeLocalLogDungeonRunDAO = E.gen(function* () {
     return persistedLocalLogDungeonRun;
   }, E.mapError(mapLocalLogDungeonRunDAOError));
 
-  const finishRun = ({
-    dungeonRunId,
-    status,
-  }: {
+  const finishRun: (options: {
     readonly dungeonRunId: DungeonRunId;
     readonly status: Exclude<DungeonRunStatus, "ACTIVE">;
-  }): E.Effect<void, LocalLogDungeonRunDAOError> => {
-    return E.gen(function* () {
-      const updatedAt = yield* DateTime.now;
+  }) => E.Effect<void, LocalLogDungeonRunDAOError> = E.fn(
+    "LocalLogDungeonRunDAO.finishRun",
+  )(function* ({ dungeonRunId, status }) {
+    const updatedAt = yield* DateTime.now;
 
-      const encodedUpdatedAt = yield* Schema.encodeEffect(
-        Schema.DateTimeUtcFromMillis,
-      )(updatedAt).pipe(E.mapError(mapLocalLogDungeonRunDAOError));
+    const encodedUpdatedAt = yield* Schema.encodeEffect(
+      Schema.DateTimeUtcFromMillis,
+    )(updatedAt).pipe(E.mapError(mapLocalLogDungeonRunDAOError));
 
-      const rows = yield* sql`
+    const rows = yield* sql`
         UPDATE local_log_dungeon_run
         SET
           status = ${status},
@@ -148,11 +146,10 @@ export const makeLocalLogDungeonRunDAO = E.gen(function* () {
           dungeon_run_id
       `;
 
-      if (rows[0] === undefined) {
-        return yield* makeRunNotFoundOrInactiveError(dungeonRunId);
-      }
-    }).pipe(E.mapError(mapLocalLogDungeonRunDAOError));
-  };
+    if (rows[0] === undefined) {
+      return yield* makeRunNotFoundOrInactiveError(dungeonRunId);
+    }
+  }, E.mapError(mapLocalLogDungeonRunDAOError));
 
   const complete: LocalLogDungeonRunDAOShape["complete"] = ({
     dungeonRunId,

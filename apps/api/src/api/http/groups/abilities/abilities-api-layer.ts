@@ -8,17 +8,17 @@ import { AbilityCatalog } from "@frt/api/services/ability-catalog/ability-catalo
 import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
 import { type AbilityDAOError } from "@frt/db/daos/ability/ability-dao.ts";
 
-function mapAbilityApiError(
+const mapAbilityApiError: (
   error: AbilityDAOError,
-): E.Effect<never, HttpApiError.InternalServerError> {
-  return E.gen(function* () {
-    yield* E.logError("Ability API operation failed.", {
-      error,
-    });
-
-    return yield* new HttpApiError.InternalServerError();
+) => E.Effect<never, HttpApiError.InternalServerError> = E.fn(
+  "mapAbilityApiError",
+)(function* (error) {
+  yield* E.logError("Ability API operation failed.", {
+    error,
   });
-}
+
+  return yield* new HttpApiError.InternalServerError();
+});
 
 const AbilitiesApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,

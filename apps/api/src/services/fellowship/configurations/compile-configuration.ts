@@ -105,38 +105,38 @@ type MilestoneIdentityOccurrence = {
   readonly milestone: CompiledMilestoneDefinition;
 };
 
-function validateUniqueMilestones(
+const validateUniqueMilestones: (
   milestones: ReadonlyArray<CompiledMilestoneDefinition>,
-): E.Effect<void, DuplicateMilestoneRequirementsError> {
-  return E.gen(function* () {
-    const milestonesById = new Map<string, MilestoneIdentityOccurrence>();
+) => E.Effect<void, DuplicateMilestoneRequirementsError> = E.fn(
+  "validateUniqueMilestones",
+)(function* (milestones) {
+  const milestonesById = new Map<string, MilestoneIdentityOccurrence>();
 
-    for (const [index, milestone] of milestones.entries()) {
-      const existing = milestonesById.get(milestone.milestoneId);
+  for (const [index, milestone] of milestones.entries()) {
+    const existing = milestonesById.get(milestone.milestoneId);
 
-      if (existing !== undefined) {
-        return yield* new DuplicateMilestoneRequirementsError({
-          duplicate: {
-            index,
-            label: milestone.label,
-            requirements: milestone.requirements,
-          },
-          milestoneId: milestone.milestoneId,
-          original: {
-            index: existing.index,
-            label: existing.milestone.label,
-            requirements: existing.milestone.requirements,
-          },
-        });
-      }
-
-      milestonesById.set(milestone.milestoneId, {
-        index,
-        milestone,
+    if (existing !== undefined) {
+      return yield* new DuplicateMilestoneRequirementsError({
+        duplicate: {
+          index,
+          label: milestone.label,
+          requirements: milestone.requirements,
+        },
+        milestoneId: milestone.milestoneId,
+        original: {
+          index: existing.index,
+          label: existing.milestone.label,
+          requirements: existing.milestone.requirements,
+        },
       });
     }
-  });
-}
+
+    milestonesById.set(milestone.milestoneId, {
+      index,
+      milestone,
+    });
+  }
+});
 
 function addRequirementReference({
   definition,
@@ -211,10 +211,10 @@ function createIndexes(
   );
 }
 
-export function compileConfiguration(
+export const compileConfiguration: (
   configuration: FellowshipMilestoneConfiguration,
-): E.Effect<CompiledConfiguration, DuplicateMilestoneRequirementsError> {
-  return E.gen(function* () {
+) => E.Effect<CompiledConfiguration, DuplicateMilestoneRequirementsError> =
+  E.fn("compileConfiguration")(function* (configuration) {
     const milestones = compileMilestones(configuration);
 
     yield* validateUniqueMilestones(milestones);
@@ -229,4 +229,3 @@ export function compileConfiguration(
       requirementsByEvent,
     };
   });
-}

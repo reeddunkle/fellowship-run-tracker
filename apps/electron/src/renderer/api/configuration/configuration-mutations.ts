@@ -74,32 +74,32 @@ function setConfiguration(
   );
 }
 
-function snapshotConfigurations(
+const snapshotConfigurations: (
   queryClient: QueryClient,
-): E.Effect<ConfigurationsMutationContext, unknown> {
-  return E.gen(function* () {
-    yield* E.tryPromise({
-      catch: (cause) => {
-        return new QueryClientOperationError({
-          cause,
-          operation: "CancelQueries",
-        });
-      },
-      try: () => {
-        return queryClient.cancelQueries({
-          queryKey: getConfigurationsQueryKey(),
-        });
-      },
-    });
-
-    return {
-      previousConfigurations:
-        queryClient.getQueryData<ConfigurationApiConfigurationList>(
-          getConfigurationsQueryKey(),
-        ),
-    };
+) => E.Effect<ConfigurationsMutationContext, unknown> = E.fn(
+  "snapshotConfigurations",
+)(function* (queryClient) {
+  yield* E.tryPromise({
+    catch: (cause) => {
+      return new QueryClientOperationError({
+        cause,
+        operation: "CancelQueries",
+      });
+    },
+    try: () => {
+      return queryClient.cancelQueries({
+        queryKey: getConfigurationsQueryKey(),
+      });
+    },
   });
-}
+
+  return {
+    previousConfigurations:
+      queryClient.getQueryData<ConfigurationApiConfigurationList>(
+        getConfigurationsQueryKey(),
+      ),
+  };
+});
 
 function rollbackConfigurations(
   queryClient: QueryClient,

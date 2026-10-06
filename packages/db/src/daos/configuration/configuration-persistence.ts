@@ -203,217 +203,208 @@ function createRequirement(
   );
 }
 
-export function createConfigurationPersistenceRecords({
-  configuration,
-  label,
-}: CreateConfigurationPersistenceRecordsOptions): E.Effect<
-  ConfigurationPersistenceRecords,
-  ConfigurationDAOError
-> {
-  return E.gen(function* () {
-    const definitionFingerprintResult =
-      yield* createConfigurationDefinitionFingerprint(configuration).pipe(
-        E.mapError(mapConfigurationDAOError),
-      );
-
-    const configurationFingerprintResult =
-      yield* createConfigurationFingerprint(configuration).pipe(
-        E.mapError(mapConfigurationDAOError),
-      );
-
-    const configurationDefinition = yield* ConfigurationDefinitionModel.insert
-      .makeEffect({
-        canonicalJson: definitionFingerprintResult.canonicalJson,
-        dungeonId: configuration.dungeonId,
-        dungeonLevel: configuration.dungeonLevel,
-        fingerprint: definitionFingerprintResult.fingerprint,
-      })
-      .pipe(E.mapError(mapConfigurationDAOError));
-
-    const configurationRecord = yield* ConfigurationModel.insert
-      .makeEffect({
-        canonicalJson: configurationFingerprintResult.canonicalJson,
-        configurationDefinitionId: configurationDefinition.id,
-        fingerprint: configurationFingerprintResult.fingerprint,
-        label,
-      })
-      .pipe(E.mapError(mapConfigurationDAOError));
-
-    const allRequirements = A.flatMap(configuration.milestones, (milestone) => {
-      return milestone.requirements;
-    });
-
-    const uniqueRequirementsByIdentity = A.reduce(
-      allRequirements,
-      new Map<string, FellowshipRequirement>(),
-      (accumulator, requirement) => {
-        const identity = createRequirementIdentity({
-          configuration,
-          requirement,
-        });
-
-        const identityKey = getRequirementIdentityMapKey(identity);
-
-        if (!accumulator.has(identityKey)) {
-          accumulator.set(identityKey, requirement);
-        }
-
-        return accumulator;
-      },
+export const createConfigurationPersistenceRecords: (
+  options: CreateConfigurationPersistenceRecordsOptions,
+) => E.Effect<ConfigurationPersistenceRecords, ConfigurationDAOError> = E.fn(
+  "createConfigurationPersistenceRecords",
+)(function* ({ configuration, label }) {
+  const definitionFingerprintResult =
+    yield* createConfigurationDefinitionFingerprint(configuration).pipe(
+      E.mapError(mapConfigurationDAOError),
     );
 
-    const requirementEntries = yield* E.forEach(
-      uniqueRequirementsByIdentity,
-      ([identityKey, requirement]) => {
-        return createRequirementInsert({
-          configuration,
-          configurationDefinitionId: configurationDefinition.id,
-          requirement,
-        }).pipe(
-          E.map((requirementInsert) => {
-            return [identityKey, requirementInsert] as const;
-          }),
-        );
-      },
-    );
+  const configurationFingerprintResult = yield* createConfigurationFingerprint(
+    configuration,
+  ).pipe(E.mapError(mapConfigurationDAOError));
 
-    const requirementsByIdentity = new Map(requirementEntries);
+  const configurationDefinition = yield* ConfigurationDefinitionModel.insert
+    .makeEffect({
+      canonicalJson: definitionFingerprintResult.canonicalJson,
+      dungeonId: configuration.dungeonId,
+      dungeonLevel: configuration.dungeonLevel,
+      fingerprint: definitionFingerprintResult.fingerprint,
+    })
+    .pipe(E.mapError(mapConfigurationDAOError));
 
-    const requirements = A.fromIterable(requirementsByIdentity.values());
+  const configurationRecord = yield* ConfigurationModel.insert
+    .makeEffect({
+      canonicalJson: configurationFingerprintResult.canonicalJson,
+      configurationDefinitionId: configurationDefinition.id,
+      fingerprint: configurationFingerprintResult.fingerprint,
+      label,
+    })
+    .pipe(E.mapError(mapConfigurationDAOError));
 
-    const milestonePersistenceRecords = yield* E.forEach(
-      configuration.milestones,
-      (milestone) => {
-        return E.gen(function* () {
-          const milestoneRecord = yield* MilestoneModel.insert
-            .makeEffect({
-              comparisonTime: milestone.comparisonTime,
-              configurationId: configurationRecord.id,
-              label: milestone.label,
-            })
-            .pipe(E.mapError(mapConfigurationDAOError));
-
-          const milestoneRequirementRecords = yield* E.forEach(
-            milestone.requirements,
-            (requirement) => {
-              const identity = createRequirementIdentity({
-                configuration,
-                requirement,
-              });
-
-              const identityKey = getRequirementIdentityMapKey(identity);
-
-              const requirementRecord = requirementsByIdentity.get(identityKey);
-
-              if (requirementRecord === undefined) {
-                return E.fail(
-                  new ConfigurationDAOError({
-                    reason: new ConfigurationRequirementNotResolvedError({
-                      milestoneLabel: milestone.label,
-                      requirementIdentityKey: identityKey,
-                    }),
-                  }),
-                );
-              }
-
-              return MilestoneRequirementModel.insert
-                .makeEffect({
-                  milestoneId: milestoneRecord.id,
-                  requirementId: requirementRecord.id,
-                })
-                .pipe(E.mapError(mapConfigurationDAOError));
-            },
-          );
-
-          return {
-            milestoneRecord,
-            milestoneRequirementRecords,
-          };
-        });
-      },
-    );
-
-    const milestones = A.map(
-      milestonePersistenceRecords,
-      ({ milestoneRecord }) => {
-        return milestoneRecord;
-      },
-    );
-
-    const milestoneRequirements = A.flatMap(
-      milestonePersistenceRecords,
-      ({ milestoneRequirementRecords }) => {
-        return milestoneRequirementRecords;
-      },
-    );
-
-    return {
-      configuration: configurationRecord,
-      configurationDefinition,
-      milestoneRequirements,
-      milestones,
-      requirements,
-    };
+  const allRequirements = A.flatMap(configuration.milestones, (milestone) => {
+    return milestone.requirements;
   });
-}
 
-export function createPersistedConfiguration({
+  const uniqueRequirementsByIdentity = A.reduce(
+    allRequirements,
+    new Map<string, FellowshipRequirement>(),
+    (accumulator, requirement) => {
+      const identity = createRequirementIdentity({
+        configuration,
+        requirement,
+      });
+
+      const identityKey = getRequirementIdentityMapKey(identity);
+
+      if (!accumulator.has(identityKey)) {
+        accumulator.set(identityKey, requirement);
+      }
+
+      return accumulator;
+    },
+  );
+
+  const requirementEntries = yield* E.forEach(
+    uniqueRequirementsByIdentity,
+    ([identityKey, requirement]) => {
+      return createRequirementInsert({
+        configuration,
+        configurationDefinitionId: configurationDefinition.id,
+        requirement,
+      }).pipe(
+        E.map((requirementInsert) => {
+          return [identityKey, requirementInsert] as const;
+        }),
+      );
+    },
+  );
+
+  const requirementsByIdentity = new Map(requirementEntries);
+
+  const requirements = A.fromIterable(requirementsByIdentity.values());
+
+  const milestonePersistenceRecords = yield* E.forEach(
+    configuration.milestones,
+    (milestone) => {
+      return E.gen(function* () {
+        const milestoneRecord = yield* MilestoneModel.insert
+          .makeEffect({
+            comparisonTime: milestone.comparisonTime,
+            configurationId: configurationRecord.id,
+            label: milestone.label,
+          })
+          .pipe(E.mapError(mapConfigurationDAOError));
+
+        const milestoneRequirementRecords = yield* E.forEach(
+          milestone.requirements,
+          (requirement) => {
+            const identity = createRequirementIdentity({
+              configuration,
+              requirement,
+            });
+
+            const identityKey = getRequirementIdentityMapKey(identity);
+
+            const requirementRecord = requirementsByIdentity.get(identityKey);
+
+            if (requirementRecord === undefined) {
+              return E.fail(
+                new ConfigurationDAOError({
+                  reason: new ConfigurationRequirementNotResolvedError({
+                    milestoneLabel: milestone.label,
+                    requirementIdentityKey: identityKey,
+                  }),
+                }),
+              );
+            }
+
+            return MilestoneRequirementModel.insert
+              .makeEffect({
+                milestoneId: milestoneRecord.id,
+                requirementId: requirementRecord.id,
+              })
+              .pipe(E.mapError(mapConfigurationDAOError));
+          },
+        );
+
+        return {
+          milestoneRecord,
+          milestoneRequirementRecords,
+        };
+      });
+    },
+  );
+
+  const milestones = A.map(
+    milestonePersistenceRecords,
+    ({ milestoneRecord }) => {
+      return milestoneRecord;
+    },
+  );
+
+  const milestoneRequirements = A.flatMap(
+    milestonePersistenceRecords,
+    ({ milestoneRequirementRecords }) => {
+      return milestoneRequirementRecords;
+    },
+  );
+
+  return {
+    configuration: configurationRecord,
+    configurationDefinition,
+    milestoneRequirements,
+    milestones,
+    requirements,
+  };
+});
+
+export const createPersistedConfiguration: (
+  options: CreatePersistedConfigurationOptions,
+) => E.Effect<PersistedConfiguration, ConfigurationDAOError> = E.fn(
+  "createPersistedConfiguration",
+)(function* ({
   configuration,
   configurationDefinition,
   milestoneRequirements,
   milestones,
   requirements,
-}: CreatePersistedConfigurationOptions): E.Effect<
-  PersistedConfiguration,
-  ConfigurationDAOError
-> {
-  return E.gen(function* () {
-    const configurationMilestones = yield* E.forEach(
-      milestones,
-      (milestone) => {
-        const requirementIds = A.map(
-          A.filter(milestoneRequirements, (milestoneRequirement) => {
-            return milestoneRequirement.milestoneId === milestone.id;
-          }),
-          (milestoneRequirement) => {
-            return milestoneRequirement.requirementId;
-          },
-        );
-
-        const requirementModels = A.filter(requirements, (requirement) => {
-          return requirementIds.includes(requirement.id);
-        });
-
-        if (!isNonEmptyArray(requirementModels)) {
-          return E.fail(
-            new ConfigurationDAOError({
-              reason: new ConfigurationPersistedMilestoneHasNoRequirementsError(
-                { milestoneId: milestone.id },
-              ),
-            }),
-          );
-        }
-
-        return E.succeed({
-          comparisonTime: milestone.comparisonTime,
-          label: milestone.label,
-          requirements: A.map(requirementModels, createRequirement),
-        });
+}) {
+  const configurationMilestones = yield* E.forEach(milestones, (milestone) => {
+    const requirementIds = A.map(
+      A.filter(milestoneRequirements, (milestoneRequirement) => {
+        return milestoneRequirement.milestoneId === milestone.id;
+      }),
+      (milestoneRequirement) => {
+        return milestoneRequirement.requirementId;
       },
     );
 
-    return {
-      configuration: {
-        dungeonId: configurationDefinition.dungeonId,
-        dungeonLevel: configurationDefinition.dungeonLevel,
-        milestones: configurationMilestones,
-      },
-      configurationDefinitionId: configurationDefinition.id,
-      createdAt: configuration.createdAt,
-      fingerprint: configuration.fingerprint,
-      id: configuration.id,
-      label: configuration.label,
-      updatedAt: configuration.updatedAt,
-    };
+    const requirementModels = A.filter(requirements, (requirement) => {
+      return requirementIds.includes(requirement.id);
+    });
+
+    if (!isNonEmptyArray(requirementModels)) {
+      return E.fail(
+        new ConfigurationDAOError({
+          reason: new ConfigurationPersistedMilestoneHasNoRequirementsError({
+            milestoneId: milestone.id,
+          }),
+        }),
+      );
+    }
+
+    return E.succeed({
+      comparisonTime: milestone.comparisonTime,
+      label: milestone.label,
+      requirements: A.map(requirementModels, createRequirement),
+    });
   });
-}
+
+  return {
+    configuration: {
+      dungeonId: configurationDefinition.dungeonId,
+      dungeonLevel: configurationDefinition.dungeonLevel,
+      milestones: configurationMilestones,
+    },
+    configurationDefinitionId: configurationDefinition.id,
+    createdAt: configuration.createdAt,
+    fingerprint: configuration.fingerprint,
+    id: configuration.id,
+    label: configuration.label,
+    updatedAt: configuration.updatedAt,
+  };
+});

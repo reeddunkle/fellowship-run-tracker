@@ -78,62 +78,60 @@ const INVALID_REQUEST_BODY = {
   invalid: true,
 };
 
-function parseResponseJson(
+const parseResponseJson: (
   response: HttpClientResponse.HttpClientResponse,
-): E.Effect<unknown, HttpResponseReadError | HttpResponseParseError> {
-  return E.gen(function* () {
-    const contents = yield* response.text.pipe(
-      E.mapError((cause) => {
-        return new HttpResponseReadError({
-          cause,
-        });
-      }),
-    );
+) => E.Effect<unknown, HttpResponseReadError | HttpResponseParseError> = E.fn(
+  "test.parseResponseJson",
+)(function* (response) {
+  const contents = yield* response.text.pipe(
+    E.mapError((cause) => {
+      return new HttpResponseReadError({
+        cause,
+      });
+    }),
+  );
 
-    return yield* parseJson({
-      contents,
-      onError: (cause) => {
-        return new HttpResponseParseError({
-          cause,
-        });
-      },
-    });
+  return yield* parseJson({
+    contents,
+    onError: (cause) => {
+      return new HttpResponseParseError({
+        cause,
+      });
+    },
   });
-}
+});
 
-function request(
+const request: (
   url: string,
-  options: RequestOptions = {},
-): E.Effect<
+  options?: RequestOptions,
+) => E.Effect<
   HttpClientResponse.HttpClientResponse,
   HttpRequestError | Schema.SchemaError,
   HttpClient.HttpClient
-> {
-  return E.gen(function* () {
-    const httpClient = yield* HttpClient.HttpClient;
-    const method = options.method ?? "GET";
+> = E.fn("test.request")(function* (url, options = {}) {
+  const httpClient = yield* HttpClient.HttpClient;
+  const method = options.method ?? "GET";
 
-    const httpRequest =
-      options.body === undefined
-        ? HttpClientRequest.make(method)(url)
-        : HttpClientRequest.make(method)(url).pipe(
-            HttpClientRequest.bodyText(
-              yield* Schema.encodeEffect(UnknownFromJsonStringSchema)(
-                options.body,
-              ),
-              "application/json",
+  const httpRequest =
+    options.body === undefined
+      ? HttpClientRequest.make(method)(url)
+      : HttpClientRequest.make(method)(url).pipe(
+          HttpClientRequest.bodyText(
+            yield* Schema.encodeEffect(UnknownFromJsonStringSchema)(
+              options.body,
             ),
-          );
+            "application/json",
+          ),
+        );
 
-    return yield* httpClient.execute(httpRequest).pipe(
-      E.mapError((cause) => {
-        return new HttpRequestError({
-          cause,
-        });
-      }),
-    );
-  });
-}
+  return yield* httpClient.execute(httpRequest).pipe(
+    E.mapError((cause) => {
+      return new HttpRequestError({
+        cause,
+      });
+    }),
+  );
+});
 
 const requestWithDecodedBody = E.fn("test.requestWithDecodedBody")(function* <
   A,

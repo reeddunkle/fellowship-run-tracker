@@ -111,153 +111,149 @@ function selectLayerGraphCandidate({
   return candidate;
 }
 
-export function getLayerLspGraph({
-  sourceFile,
-}: {
+export const getLayerLspGraph: (options: {
   readonly sourceFile: string;
-}): E.Effect<
+}) => E.Effect<
   GeneratedLayerGraph,
   EffectTsGoLspError | GetLayerLspGraphError,
   EffectTsGoLsp | FileSystem.FileSystem
-> {
-  return E.gen(function* () {
-    const fileSystem = yield* FileSystem.FileSystem;
-    const lsp = yield* EffectTsGoLsp;
+> = E.fn("getLayerLspGraph")(function* ({ sourceFile }) {
+  const fileSystem = yield* FileSystem.FileSystem;
+  const lsp = yield* EffectTsGoLsp;
 
-    const source = yield* fileSystem.readFileString(sourceFile).pipe(
-      E.mapError((cause) => {
-        return new LayerGraphSourceFileError({
-          cause,
-          sourceFile,
-        });
-      }),
-    );
+  const source = yield* fileSystem.readFileString(sourceFile).pipe(
+    E.mapError((cause) => {
+      return new LayerGraphSourceFileError({
+        cause,
+        sourceFile,
+      });
+    }),
+  );
 
-    const sourceUri = yield* lsp.getDocumentUri(sourceFile);
+  const sourceUri = yield* lsp.getDocumentUri(sourceFile);
 
-    yield* lsp.notify({
-      method: "textDocument/didOpen",
-      params: {
-        textDocument: {
-          languageId: "typescript",
-          text: source,
-          uri: sourceUri,
-          version: 1,
-        },
+  yield* lsp.notify({
+    method: "textDocument/didOpen",
+    params: {
+      textDocument: {
+        languageId: "typescript",
+        text: source,
+        uri: sourceUri,
+        version: 1,
       },
-    });
-
-    const documentSymbolResponse = yield* lsp.request({
-      method: "textDocument/documentSymbol",
-      params: {
-        textDocument: {
-          uri: sourceUri,
-        },
-      },
-    });
-
-    const documentSymbols = yield* E.try({
-      catch: (cause) => {
-        if (cause instanceof LayerGraphDocumentSymbolsError) {
-          return cause;
-        }
-
-        return new LayerGraphDocumentSymbolsError({
-          cause,
-          reason: "RequestFailed",
-        });
-      },
-      try: () => {
-        return pipe(
-          documentSymbolResponse,
-          getDocumentSymbols,
-          flattenDocumentSymbols,
-        );
-      },
-    });
-
-    yield* E.logInfo("Found document symbols.", {
-      count: documentSymbols.length,
-      file: sourceFile,
-    });
-
-    const hoverResponses = yield* E.forEach(
-      documentSymbols,
-      (symbol) => {
-        return E.gen(function* () {
-          const hoverResponse = yield* lsp.request({
-            method: "textDocument/hover",
-            params: {
-              position: symbol.selectionRange.start,
-              textDocument: {
-                uri: sourceUri,
-              },
-            },
-          });
-
-          return {
-            hoverResponse,
-            symbol,
-          };
-        });
-      },
-      {
-        concurrency: 1,
-        discard: false,
-      },
-    );
-
-    const layerGraphCandidates = pipe(
-      hoverResponses,
-      A.flatMap((hoverResult) => {
-        const mermaid = tryExtractMermaidLayerGraph(hoverResult.hoverResponse);
-
-        if (mermaid === undefined) {
-          return [];
-        }
-
-        return [
-          {
-            mermaid,
-            symbol: hoverResult.symbol,
-          },
-        ];
-      }),
-    );
-
-    yield* E.logInfo("Found Effect Layer graph candidates.", {
-      count: layerGraphCandidates.length,
-      symbols: pipe(
-        layerGraphCandidates,
-        A.map((candidate) => {
-          return candidate.symbol.name;
-        }),
-      ),
-    });
-
-    const selectedCandidate = yield* E.try({
-      catch: (cause) => {
-        if (cause instanceof LayerGraphSelectionError) {
-          return cause;
-        }
-
-        return new LayerGraphSelectionError({
-          cause,
-          reason: "SelectionFailed",
-          sourceFile,
-        });
-      },
-      try: () => {
-        return selectLayerGraphCandidate({
-          candidates: layerGraphCandidates,
-          sourceFile,
-        });
-      },
-    });
-
-    return {
-      mermaid: `${selectedCandidate.mermaid.trimEnd()}\n`,
-      symbolName: selectedCandidate.symbol.name,
-    };
+    },
   });
-}
+
+  const documentSymbolResponse = yield* lsp.request({
+    method: "textDocument/documentSymbol",
+    params: {
+      textDocument: {
+        uri: sourceUri,
+      },
+    },
+  });
+
+  const documentSymbols = yield* E.try({
+    catch: (cause) => {
+      if (cause instanceof LayerGraphDocumentSymbolsError) {
+        return cause;
+      }
+
+      return new LayerGraphDocumentSymbolsError({
+        cause,
+        reason: "RequestFailed",
+      });
+    },
+    try: () => {
+      return pipe(
+        documentSymbolResponse,
+        getDocumentSymbols,
+        flattenDocumentSymbols,
+      );
+    },
+  });
+
+  yield* E.logInfo("Found document symbols.", {
+    count: documentSymbols.length,
+    file: sourceFile,
+  });
+
+  const hoverResponses = yield* E.forEach(
+    documentSymbols,
+    (symbol) => {
+      return E.gen(function* () {
+        const hoverResponse = yield* lsp.request({
+          method: "textDocument/hover",
+          params: {
+            position: symbol.selectionRange.start,
+            textDocument: {
+              uri: sourceUri,
+            },
+          },
+        });
+
+        return {
+          hoverResponse,
+          symbol,
+        };
+      });
+    },
+    {
+      concurrency: 1,
+      discard: false,
+    },
+  );
+
+  const layerGraphCandidates = pipe(
+    hoverResponses,
+    A.flatMap((hoverResult) => {
+      const mermaid = tryExtractMermaidLayerGraph(hoverResult.hoverResponse);
+
+      if (mermaid === undefined) {
+        return [];
+      }
+
+      return [
+        {
+          mermaid,
+          symbol: hoverResult.symbol,
+        },
+      ];
+    }),
+  );
+
+  yield* E.logInfo("Found Effect Layer graph candidates.", {
+    count: layerGraphCandidates.length,
+    symbols: pipe(
+      layerGraphCandidates,
+      A.map((candidate) => {
+        return candidate.symbol.name;
+      }),
+    ),
+  });
+
+  const selectedCandidate = yield* E.try({
+    catch: (cause) => {
+      if (cause instanceof LayerGraphSelectionError) {
+        return cause;
+      }
+
+      return new LayerGraphSelectionError({
+        cause,
+        reason: "SelectionFailed",
+        sourceFile,
+      });
+    },
+    try: () => {
+      return selectLayerGraphCandidate({
+        candidates: layerGraphCandidates,
+        sourceFile,
+      });
+    },
+  });
+
+  return {
+    mermaid: `${selectedCandidate.mermaid.trimEnd()}\n`,
+    symbolName: selectedCandidate.symbol.name,
+  };
+});

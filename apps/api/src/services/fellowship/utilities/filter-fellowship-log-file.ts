@@ -34,42 +34,42 @@ function inspectLogLine(line: string): E.Effect<FilterLineResult> {
   );
 }
 
-export function filterFellowshipLogFile({
-  inputFilePath,
-  outputFilePath,
-}: FilterFellowshipLogFileOptions): E.Effect<
+export const filterFellowshipLogFile: (
+  options: FilterFellowshipLogFileOptions,
+) => E.Effect<
   FilterFellowshipLogFileResult,
   FilterFellowshipLogFileError,
   FileSystem.FileSystem
-> {
-  return E.gen(function* () {
-    const fileSystem = yield* FileSystem.FileSystem;
+> = E.fn("filterFellowshipLogFile")(function* ({
+  inputFilePath,
+  outputFilePath,
+}) {
+  const fileSystem = yield* FileSystem.FileSystem;
 
-    const results = yield* fileSystem
-      .stream(inputFilePath)
-      .pipe(
-        Stream.decodeText,
-        Stream.splitLines,
-        Stream.mapEffect(inspectLogLine),
-        Stream.runCollect,
-      );
+  const results = yield* fileSystem
+    .stream(inputFilePath)
+    .pipe(
+      Stream.decodeText,
+      Stream.splitLines,
+      Stream.mapEffect(inspectLogLine),
+      Stream.runCollect,
+    );
 
-    const relevantLines = results
-      .filter((result) => {
-        return result.isRelevant;
-      })
-      .map((result) => {
-        return result.line;
-      });
+  const relevantLines = results
+    .filter((result) => {
+      return result.isRelevant;
+    })
+    .map((result) => {
+      return result.line;
+    });
 
-    const contents =
-      relevantLines.length === 0 ? "" : `${relevantLines.join("\n")}\n`;
+  const contents =
+    relevantLines.length === 0 ? "" : `${relevantLines.join("\n")}\n`;
 
-    yield* fileSystem.writeFileString(outputFilePath, contents);
+  yield* fileSystem.writeFileString(outputFilePath, contents);
 
-    return {
-      retainedLineCount: relevantLines.length,
-      totalLineCount: results.length,
-    };
-  });
-}
+  return {
+    retainedLineCount: relevantLines.length,
+    totalLineCount: results.length,
+  };
+});

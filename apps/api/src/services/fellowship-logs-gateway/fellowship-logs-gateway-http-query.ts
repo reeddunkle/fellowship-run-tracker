@@ -37,140 +37,140 @@ export const REQUEST_TIMEOUT = "30 seconds";
 
 const TOO_MANY_REQUESTS_STATUS = 429;
 
-export function makeFellowshipLogsGatewayHttpQuery(
+export const makeFellowshipLogsGatewayHttpQuery: (
   getCredentials: GetCredentials,
-): E.Effect<Query, never, HttpClient.HttpClient> {
-  return E.gen(function* () {
-    const baseHttpClient = yield* HttpClient.HttpClient;
-    const httpClient = baseHttpClient.pipe(HttpClient.filterStatusOk);
-    const pace = yield* makeRequestPacer(MIN_QUERY_INTERVAL);
+) => E.Effect<Query, never, HttpClient.HttpClient> = E.fn(
+  "makeFellowshipLogsGatewayHttpQuery",
+)(function* (getCredentials) {
+  const baseHttpClient = yield* HttpClient.HttpClient;
+  const httpClient = baseHttpClient.pipe(HttpClient.filterStatusOk);
+  const pace = yield* makeRequestPacer(MIN_QUERY_INTERVAL);
 
-    const accessTokenRef = yield* SynchronizedRef.make<
-      Option.Option<CachedAccessToken>
-    >(Option.none());
+  const accessTokenRef = yield* SynchronizedRef.make<
+    Option.Option<CachedAccessToken>
+  >(Option.none());
 
-    const requestAccessToken = E.fn("FellowshipLogsGateway.requestAccessToken")(
-      function* (credentials: FellowshipLogsGatewayCredentials) {
-        const request = HttpClientRequest.post(FELLOWSHIP_LOGS_TOKEN_URL).pipe(
-          HttpClientRequest.basicAuth(
-            credentials.clientId,
-            credentials.clientSecret,
-          ),
-          HttpClientRequest.bodyUrlParams({
-            grant_type: "client_credentials",
-          }),
-        );
+  const requestAccessToken = E.fn("FellowshipLogsGateway.requestAccessToken")(
+    function* (credentials: FellowshipLogsGatewayCredentials) {
+      const request = HttpClientRequest.post(FELLOWSHIP_LOGS_TOKEN_URL).pipe(
+        HttpClientRequest.basicAuth(
+          credentials.clientId,
+          credentials.clientSecret,
+        ),
+        HttpClientRequest.bodyUrlParams({
+          grant_type: "client_credentials",
+        }),
+      );
 
-        const tokenResponse = yield* httpClient
-          .execute(request)
-          .pipe(
-            E.flatMap(
-              HttpClientResponse.schemaBodyJson(
-                FellowshipLogsGatewayOAuthTokenResponseSchema,
-              ),
+      const tokenResponse = yield* httpClient
+        .execute(request)
+        .pipe(
+          E.flatMap(
+            HttpClientResponse.schemaBodyJson(
+              FellowshipLogsGatewayOAuthTokenResponseSchema,
             ),
-            E.timeout(REQUEST_TIMEOUT),
-          );
+          ),
+          E.timeout(REQUEST_TIMEOUT),
+        );
 
-        const nowMilliseconds = yield* Clock.currentTimeMillis;
+      const nowMilliseconds = yield* Clock.currentTimeMillis;
 
-        return {
-          accessToken: tokenResponse.access_token,
-          clientId: credentials.clientId,
-          clientSecret: credentials.clientSecret,
-          expiresAtMilliseconds:
-            nowMilliseconds + tokenResponse.expires_in * 1_000,
-        } satisfies CachedAccessToken;
-      },
-    );
+      return {
+        accessToken: tokenResponse.access_token,
+        clientId: credentials.clientId,
+        clientSecret: credentials.clientSecret,
+        expiresAtMilliseconds:
+          nowMilliseconds + tokenResponse.expires_in * 1_000,
+      } satisfies CachedAccessToken;
+    },
+  );
 
-    const getAccessToken = E.fn("FellowshipLogsGateway.getAccessToken")(
-      function* () {
-        const credentials = yield* getCredentials();
-        const nowMilliseconds = yield* Clock.currentTimeMillis;
+  const getAccessToken = E.fn("FellowshipLogsGateway.getAccessToken")(
+    function* () {
+      const credentials = yield* getCredentials();
+      const nowMilliseconds = yield* Clock.currentTimeMillis;
 
-        const accessToken: FellowshipLogsGatewayAccessToken =
-          yield* SynchronizedRef.modifyEffect(
-            accessTokenRef,
-            (cachedAccessTokenOption) => {
-              if (Option.isSome(cachedAccessTokenOption)) {
-                const cachedAccessToken = cachedAccessTokenOption.value;
+      const accessToken: FellowshipLogsGatewayAccessToken =
+        yield* SynchronizedRef.modifyEffect(
+          accessTokenRef,
+          (cachedAccessTokenOption) => {
+            if (Option.isSome(cachedAccessTokenOption)) {
+              const cachedAccessToken = cachedAccessTokenOption.value;
 
-                const credentialsMatch =
-                  cachedAccessToken.clientId === credentials.clientId &&
-                  cachedAccessToken.clientSecret === credentials.clientSecret;
+              const credentialsMatch =
+                cachedAccessToken.clientId === credentials.clientId &&
+                cachedAccessToken.clientSecret === credentials.clientSecret;
 
-                const isValid =
-                  cachedAccessToken.expiresAtMilliseconds -
-                    ACCESS_TOKEN_EXPIRATION_BUFFER_MILLISECONDS >
-                  nowMilliseconds;
+              const isValid =
+                cachedAccessToken.expiresAtMilliseconds -
+                  ACCESS_TOKEN_EXPIRATION_BUFFER_MILLISECONDS >
+                nowMilliseconds;
 
-                if (credentialsMatch && isValid) {
-                  return E.succeed([
-                    cachedAccessToken.accessToken,
-                    cachedAccessTokenOption,
-                  ] as const);
-                }
+              if (credentialsMatch && isValid) {
+                return E.succeed([
+                  cachedAccessToken.accessToken,
+                  cachedAccessTokenOption,
+                ] as const);
               }
+            }
 
-              return requestAccessToken(credentials).pipe(
-                E.map((cachedAccessToken) => {
-                  return [
-                    cachedAccessToken.accessToken,
-                    Option.some(cachedAccessToken),
-                  ] as const;
-                }),
-              );
-            },
-          );
-
-        return accessToken;
-      },
-    );
-
-    const query: Query = E.fn("FellowshipLogsGatewayHttpQuery.query")(
-      function* (request, responseSchema) {
-        const accessToken = yield* getAccessToken();
-
-        const httpRequest = yield* HttpClientRequest.post(
-          FELLOWSHIP_LOGS_CLIENT_API_URL,
-        ).pipe(
-          HttpClientRequest.acceptJson,
-          HttpClientRequest.bearerToken(accessToken),
-          HttpClientRequest.schemaBodyJson(
-            FellowshipLogsGatewayGraphQLRequestSchema,
-          )(request),
+            return requestAccessToken(credentials).pipe(
+              E.map((cachedAccessToken) => {
+                return [
+                  cachedAccessToken.accessToken,
+                  Option.some(cachedAccessToken),
+                ] as const;
+              }),
+            );
+          },
         );
 
-        const response = yield* pace(
-          baseHttpClient.execute(httpRequest).pipe(E.timeout(REQUEST_TIMEOUT)),
-        );
+      return accessToken;
+    },
+  );
 
-        if (response.status === TOO_MANY_REQUESTS_STATUS) {
-          return yield* new FellowshipLogsGatewayRateLimitRejectedError();
-        }
+  const query: Query = E.fn("FellowshipLogsGatewayHttpQuery.query")(
+    function* (request, responseSchema) {
+      const accessToken = yield* getAccessToken();
 
-        const okResponse = yield* HttpClientResponse.filterStatusOk(response);
+      const httpRequest = yield* HttpClientRequest.post(
+        FELLOWSHIP_LOGS_CLIENT_API_URL,
+      ).pipe(
+        HttpClientRequest.acceptJson,
+        HttpClientRequest.bearerToken(accessToken),
+        HttpClientRequest.schemaBodyJson(
+          FellowshipLogsGatewayGraphQLRequestSchema,
+        )(request),
+      );
 
-        return yield* HttpClientResponse.schemaBodyJson(
-          makeFellowshipLogsGatewayGraphQLResponseSchema(responseSchema),
-        )(okResponse).pipe(E.timeout(REQUEST_TIMEOUT));
-      },
-      E.mapError((error) => {
-        if (
-          error instanceof FellowshipLogsGatewayRequestError ||
-          error instanceof FellowshipLogsGatewayRateLimitRejectedError
-        ) {
-          return error;
-        }
+      const response = yield* pace(
+        baseHttpClient.execute(httpRequest).pipe(E.timeout(REQUEST_TIMEOUT)),
+      );
 
-        return new FellowshipLogsGatewayRequestError({
-          cause: error,
-          operation: "Query",
-        });
-      }),
-    );
+      if (response.status === TOO_MANY_REQUESTS_STATUS) {
+        return yield* new FellowshipLogsGatewayRateLimitRejectedError();
+      }
 
-    return query;
-  });
-}
+      const okResponse = yield* HttpClientResponse.filterStatusOk(response);
+
+      return yield* HttpClientResponse.schemaBodyJson(
+        makeFellowshipLogsGatewayGraphQLResponseSchema(responseSchema),
+      )(okResponse).pipe(E.timeout(REQUEST_TIMEOUT));
+    },
+    E.mapError((error) => {
+      if (
+        error instanceof FellowshipLogsGatewayRequestError ||
+        error instanceof FellowshipLogsGatewayRateLimitRejectedError
+      ) {
+        return error;
+      }
+
+      return new FellowshipLogsGatewayRequestError({
+        cause: error,
+        operation: "Query",
+      });
+    }),
+  );
+
+  return query;
+});

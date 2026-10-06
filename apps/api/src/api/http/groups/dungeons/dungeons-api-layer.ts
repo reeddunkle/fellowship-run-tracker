@@ -8,17 +8,17 @@ import { DungeonCatalog } from "@frt/api/services/dungeon-catalog/dungeon-catalo
 import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
 import { type DungeonDAOError } from "@frt/db/daos/dungeon/dungeon-dao.ts";
 
-function mapDungeonApiError(
+const mapDungeonApiError: (
   error: DungeonDAOError,
-): E.Effect<never, HttpApiError.InternalServerError> {
-  return E.gen(function* () {
-    yield* E.logError("Dungeon API operation failed.", {
-      error,
-    });
-
-    return yield* new HttpApiError.InternalServerError();
+) => E.Effect<never, HttpApiError.InternalServerError> = E.fn(
+  "mapDungeonApiError",
+)(function* (error) {
+  yield* E.logError("Dungeon API operation failed.", {
+    error,
   });
-}
+
+  return yield* new HttpApiError.InternalServerError();
+});
 
 const DungeonsApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,

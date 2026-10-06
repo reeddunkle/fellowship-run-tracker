@@ -9,17 +9,17 @@ import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
 import { type ConfigurationDAOError } from "@frt/db/errors/configuration-dao-error.ts";
 import { type FellowshipMilestoneConfiguration } from "@frt/shared/fellowship/configurations/configuration-types.ts";
 
-function mapConfigurationError(
+const mapConfigurationError: (
   error: ConfigurationDAOError,
-): E.Effect<never, HttpApiError.InternalServerError> {
-  return E.gen(function* () {
-    yield* E.logError("Configuration persistence operation failed.", {
-      error,
-    });
-
-    return yield* new HttpApiError.InternalServerError();
+) => E.Effect<never, HttpApiError.InternalServerError> = E.fn(
+  "mapConfigurationError",
+)(function* (error) {
+  yield* E.logError("Configuration persistence operation failed.", {
+    error,
   });
-}
+
+  return yield* new HttpApiError.InternalServerError();
+});
 
 const ConfigurationsApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,

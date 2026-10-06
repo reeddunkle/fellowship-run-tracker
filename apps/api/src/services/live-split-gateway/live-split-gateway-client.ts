@@ -101,10 +101,10 @@ export const makeLiveSplitGatewayClient = E.fn("makeLiveSplitGatewayClient")(
     const unavailability: LiveSplitGatewayClient["unavailability"] =
       unavailabilityDeferred.pipe(Deferred.await, Stream.fromEffect);
 
-    const markUnavailable = (
+    const markUnavailable: (
       cause: LiveSplitGatewayClientUnavailabilityCause,
-    ): E.Effect<void> => {
-      return E.gen(function* () {
+    ) => E.Effect<void> = E.fn("LiveSplitGatewayClient.markUnavailable")(
+      function* (cause) {
         const existingFailure = yield* Ref.get(responseChannelFailure);
 
         if (existingFailure !== undefined) {
@@ -113,8 +113,8 @@ export const makeLiveSplitGatewayClient = E.fn("makeLiveSplitGatewayClient")(
 
         yield* Ref.set(responseChannelFailure, cause);
         yield* Deferred.succeed(unavailabilityDeferred, cause);
-      });
-    };
+      },
+    );
 
     const responseStream = transport.chunks.pipe(
       Stream.mapAccumEffect(

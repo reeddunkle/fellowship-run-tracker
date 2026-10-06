@@ -45,16 +45,14 @@ const CONNECTED_STATUS = {
   _tag: "Connected",
 } satisfies ConnectionStatus;
 
-export function makeConnectionManager<Connection, AcquireError>({
-  acquire,
-  getUnavailability,
-  name,
-}: MakeConnectionManagerOptions<Connection, AcquireError>): E.Effect<
-  ConnectionManager<Connection, AcquireError>,
-  never,
-  Scope.Scope
-> {
-  return E.gen(function* () {
+export const makeConnectionManager: <Connection, AcquireError>(
+  options: MakeConnectionManagerOptions<Connection, AcquireError>,
+) => E.Effect<ConnectionManager<Connection, AcquireError>, never, Scope.Scope> =
+  E.fn("makeConnectionManager")(function* <Connection, AcquireError>({
+    acquire,
+    getUnavailability,
+    name,
+  }: MakeConnectionManagerOptions<Connection, AcquireError>) {
     const managerScope = yield* E.scope;
 
     const connectionLock = yield* Semaphore.make(1);
@@ -154,4 +152,3 @@ export function makeConnectionManager<Connection, AcquireError>({
       statusChanges: SubscriptionRef.changes(statusRef),
     } satisfies ConnectionManager<Connection, AcquireError>;
   });
-}

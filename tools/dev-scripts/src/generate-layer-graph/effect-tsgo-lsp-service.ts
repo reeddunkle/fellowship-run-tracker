@@ -176,12 +176,10 @@ function getTsGoPlatformDependency(): string | undefined {
   return platformDependencies[`${process.platform}:${process.arch}`];
 }
 
-function getTsGoExecutableCommand({
-  projectRoot,
-}: {
+const getTsGoExecutableCommand: (options: {
   readonly projectRoot: string;
-}): E.Effect<TsGoExecutableCommand> {
-  return E.gen(function* () {
+}) => E.Effect<TsGoExecutableCommand> = E.fn("getTsGoExecutableCommand")(
+  function* ({ projectRoot }) {
     const platform = `${process.platform}/${process.arch}`;
     const platformDependency = getTsGoPlatformDependency();
 
@@ -197,8 +195,8 @@ function getTsGoExecutableCommand({
       platform,
       platformDependency,
     };
-  });
-}
+  },
+);
 
 function getTsGoDependencyMessage({
   platform,
@@ -407,46 +405,46 @@ const make = E.gen(function* () {
         return E.void;
       };
 
-      const handleData = (
+      const handleData: (
         chunk: Uint8Array,
-      ): E.Effect<void, EffectTsGoLspProtocolError> => {
-        return E.gen(function* () {
-          responseBuffer = Buffer.concat([responseBuffer, Buffer.from(chunk)]);
+      ) => E.Effect<void, EffectTsGoLspProtocolError> = E.fn(
+        "EffectTsGoLsp.handleData",
+      )(function* (chunk) {
+        responseBuffer = Buffer.concat([responseBuffer, Buffer.from(chunk)]);
 
-          const messages: Array<JsonRpcMessage> = [];
+        const messages: Array<JsonRpcMessage> = [];
 
-          yield* E.try({
-            catch: (cause) => {
-              return new EffectTsGoLspProtocolError({
-                cause,
-                operation: "ParseMessage",
-              });
-            },
-            try: () => {
-              while (true) {
-                const parsedMessage = parseNextMessage(responseBuffer);
+        yield* E.try({
+          catch: (cause) => {
+            return new EffectTsGoLspProtocolError({
+              cause,
+              operation: "ParseMessage",
+            });
+          },
+          try: () => {
+            while (true) {
+              const parsedMessage = parseNextMessage(responseBuffer);
 
-                if (parsedMessage === undefined) {
-                  return;
-                }
-
-                responseBuffer = parsedMessage.remaining;
-                messages.push(parsedMessage.message);
+              if (parsedMessage === undefined) {
+                return;
               }
-            },
-          });
 
-          yield* E.forEach(
-            messages,
-            (parsedMessage) => {
-              return handleMessage(parsedMessage);
-            },
-            {
-              discard: true,
-            },
-          );
+              responseBuffer = parsedMessage.remaining;
+              messages.push(parsedMessage.message);
+            }
+          },
         });
-      };
+
+        yield* E.forEach(
+          messages,
+          (parsedMessage) => {
+            return handleMessage(parsedMessage);
+          },
+          {
+            discard: true,
+          },
+        );
+      });
 
       yield* child.stdout.pipe(
         Stream.runForEach((chunk) => {

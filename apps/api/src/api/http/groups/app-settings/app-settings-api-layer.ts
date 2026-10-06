@@ -7,17 +7,17 @@ import { AppSettings } from "@frt/api/services/app-settings/app-settings-service
 import { type AppSettingsStoreSetError } from "@frt/api/services/app-settings-store/app-settings-store-service.ts";
 import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
 
-function mapAppSettingsApiError(
+const mapAppSettingsApiError: (
   error: AppSettingsStoreSetError,
-): E.Effect<never, HttpApiError.InternalServerError> {
-  return E.gen(function* () {
-    yield* E.logError("App settings API operation failed.", {
-      error,
-    });
-
-    return yield* new HttpApiError.InternalServerError();
+) => E.Effect<never, HttpApiError.InternalServerError> = E.fn(
+  "mapAppSettingsApiError",
+)(function* (error) {
+  yield* E.logError("App settings API operation failed.", {
+    error,
   });
-}
+
+  return yield* new HttpApiError.InternalServerError();
+});
 
 const AppSettingsApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,

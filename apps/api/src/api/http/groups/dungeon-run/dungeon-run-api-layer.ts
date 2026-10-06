@@ -9,17 +9,17 @@ import {
 } from "@frt/api/services/dungeon-run-history/dungeon-run-history-service.ts";
 import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
 
-function mapDungeonRunApiError(
+const mapDungeonRunApiError: (
   error: DungeonRunHistoryError,
-): E.Effect<never, HttpApiError.InternalServerError> {
-  return E.gen(function* () {
-    yield* E.logError("Dungeon run API operation failed.", {
-      error,
-    });
-
-    return yield* new HttpApiError.InternalServerError();
+) => E.Effect<never, HttpApiError.InternalServerError> = E.fn(
+  "mapDungeonRunApiError",
+)(function* (error) {
+  yield* E.logError("Dungeon run API operation failed.", {
+    error,
   });
-}
+
+  return yield* new HttpApiError.InternalServerError();
+});
 
 const DungeonRunApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
