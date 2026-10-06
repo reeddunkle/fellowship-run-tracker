@@ -1,4 +1,5 @@
 import * as Schema from "effect/Schema";
+import * as SchemaTransformation from "effect/SchemaTransformation";
 
 export const BooleanFlagSchema = Schema.Union([
   Schema.Literal("0").transform(false),
@@ -28,15 +29,29 @@ export const NonNegativeIntegerSchema = Schema.Int.check(
   Schema.isGreaterThanOrEqualTo(0),
 );
 
-export const IntegerFromStringSchema = Schema.FiniteFromString.pipe(
-  Schema.decodeTo(Schema.Int),
+export const IntegerFromStringSchema = Schema.FiniteFromString.check(
+  Schema.isInt(),
 );
 
 export const PositiveIntegerFromStringSchema = Schema.FiniteFromString.pipe(
   Schema.decodeTo(PositiveIntegerSchema),
 );
 
-export const JsonStringSchema = Schema.fromJsonString(Schema.String);
+const JSON_STRING_LITERAL_PATTERN =
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: JSON string literals can't contain raw control characters.
+  /^"(?:[^"\\\u0000-\u001f]|\\(?:["\\/bfnrt]|u[0-9a-fA-F]{4}))*"$/;
+
+export const JsonStringSchema = Schema.String.check(
+  Schema.isPattern(JSON_STRING_LITERAL_PATTERN),
+).pipe(
+  Schema.decodeTo(
+    Schema.String,
+    SchemaTransformation.transform({
+      decode: (json): string => JSON.parse(json),
+      encode: (value) => JSON.stringify(value),
+    }),
+  ),
+);
 
 export const UnknownFromJsonStringSchema = Schema.fromJsonString(
   Schema.Unknown,

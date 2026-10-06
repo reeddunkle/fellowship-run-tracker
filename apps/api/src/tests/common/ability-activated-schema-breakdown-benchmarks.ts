@@ -1,5 +1,4 @@
 import * as Schema from "effect/Schema";
-import * as SchemaGetter from "effect/SchemaGetter";
 import { describe, test } from "vitest";
 
 import {
@@ -33,21 +32,11 @@ const AbilityActivatedLogLineSchema = Schema.Tuple([
   Schema.String,
 ]);
 
-const FlatIntegerFromStringSchema = Schema.FiniteFromString.check(
-  Schema.isInt(),
+const NestedIntegerFromStringSchema = Schema.FiniteFromString.pipe(
+  Schema.decodeTo(Schema.Int),
 );
 
-const JSON_STRING_PATTERN =
-  /^"(?:[^"\\\u0000-\u001f]|\\(?:["\\/bfnrt]|u[0-9a-fA-F]{4}))*"$/;
-
-const SyncJsonStringSchema = Schema.String.check(
-  Schema.isPattern(JSON_STRING_PATTERN),
-).pipe(
-  Schema.decodeTo(Schema.String, {
-    decode: SchemaGetter.transform((json): string => JSON.parse(json)),
-    encode: SchemaGetter.transform((value) => JSON.stringify(value)),
-  }),
-);
+const EffectfulJsonStringSchema = Schema.fromJsonString(Schema.String);
 
 const fieldIndexes = {
   finite: [12, 13, 14],
@@ -116,7 +105,10 @@ export function describeAbilityActivatedSchemaBreakdownBenchmarks(
         ),
         bench(
           "event struct validation only",
-          makeDecodeAll(Schema.toType(AbilityActivatedEventFromLogSchema), events),
+          makeDecodeAll(
+            Schema.toType(AbilityActivatedEventFromLogSchema),
+            events,
+          ),
         ),
         bench(
           "timestamp x1",
@@ -126,30 +118,30 @@ export function describeAbilityActivatedSchemaBreakdownBenchmarks(
           ),
         ),
         bench(
-          "JSON string x3",
+          "JsonStringSchema x3",
           makeDecodeAll(
             repeatTuple(JsonStringSchema, 3),
             pickFields(fieldsByLine, fieldIndexes.jsonString),
           ),
         ),
         bench(
-          "JSON string via pattern check x3",
+          "fromJsonString x3",
           makeDecodeAll(
-            repeatTuple(SyncJsonStringSchema, 3),
+            repeatTuple(EffectfulJsonStringSchema, 3),
             pickFields(fieldsByLine, fieldIndexes.jsonString),
           ),
         ),
         bench(
-          "IntegerFromString x4",
+          "IntegerFromStringSchema x4",
           makeDecodeAll(
             repeatTuple(IntegerFromStringSchema, 4),
             pickFields(fieldsByLine, fieldIndexes.integer),
           ),
         ),
         bench(
-          "FiniteFromString with isInt x4",
+          "FiniteFromString decodeTo Int x4",
           makeDecodeAll(
-            repeatTuple(FlatIntegerFromStringSchema, 4),
+            repeatTuple(NestedIntegerFromStringSchema, 4),
             pickFields(fieldsByLine, fieldIndexes.integer),
           ),
         ),
