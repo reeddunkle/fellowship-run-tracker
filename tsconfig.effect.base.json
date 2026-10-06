@@ -9,6 +9,19 @@
         "completions": true,
         "namespaceImportPackages": ["effect"],
         "topLevelNamedReexports": "follow",
+        "allowedUnstableApis": [
+          "effect/cli",
+          "effect/http",
+          "effect/http-api",
+          "effect/net",
+          "effect/observability",
+          "effect/persistence",
+          "effect/process",
+          "effect/reactivity",
+          "effect/schema/Model",
+          "effect/socket",
+          "effect/sql"
+        ],
         "diagnosticSeverity": {},
         "overrides": [
           {

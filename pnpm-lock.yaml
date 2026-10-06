@@ -169,20 +169,20 @@ catalogs:
       version: 2.3.4
   effect:
     '@effect/platform-node':
-      specifier: 4.0.0-rc.118
-      version: 4.0.0-rc.118
+      specifier: 4.0.1
+      version: 4.0.1
     '@effect/sql-sqlite-node':
-      specifier: 4.0.0-rc.118
-      version: 4.0.0-rc.118
+      specifier: 4.0.1
+      version: 4.0.1
     '@effect/tsgo':
-      specifier: 0.45.0
-      version: 0.45.0
+      specifier: 0.49.0
+      version: 0.49.0
     '@effect/tsgo-win32-x64':
-      specifier: 0.45.0
-      version: 0.45.0
+      specifier: 0.49.0
+      version: 0.49.0
     effect:
-      specifier: 4.0.0-rc.118
-      version: 4.0.0-rc.118
+      specifier: 4.0.1
+      version: 4.0.1
   electron:
     '@electron-forge/cli':
       specifier: ^7.10.2
@@ -358,7 +358,7 @@ catalogs:
 
 overrides:
   '@electron/rebuild': ^4.2.0
-  '@effect/platform-node-shared': 4.0.0-rc.118
+  '@effect/platform-node-shared': 4.0.1
 
 importers:
 
@@ -372,10 +372,10 @@ importers:
         version: 3.0.3
       '@effect/tsgo':
         specifier: catalog:effect
-        version: 0.45.0
+        version: 0.49.0
       '@effect/tsgo-win32-x64':
         specifier: catalog:effect
-        version: 0.45.0
+        version: 0.49.0
       '@mermaid-js/mermaid-cli':
         specifier: catalog:mermaid
         version: 11.17.0(@babel/core@7.29.7(supports-color@8.1.1))(@babel/template@7.29.7)(@types/react@19.3.0)(puppeteer@25.11.0(yauzl@2.10.0))(tailwindcss@4.3.3)
@@ -426,7 +426,7 @@ importers:
     dependencies:
       '@effect/platform-node':
         specifier: catalog:effect
-        version: 4.0.0-rc.118(effect@4.0.0-rc.118)(redis@6.2.1)
+        version: 4.0.1(effect@4.0.1)(redis@6.2.1)
       '@frt/api-contract':
         specifier: workspace:*
         version: link:../../packages/api-contract
@@ -438,17 +438,17 @@ importers:
         version: link:../../packages/shared
       effect:
         specifier: catalog:effect
-        version: 4.0.0-rc.118
+        version: 4.0.1
       env-paths:
         specifier: catalog:runtime
         version: 4.0.0
     devDependencies:
       '@effect/tsgo':
         specifier: catalog:effect
-        version: 0.45.0
+        version: 0.49.0
       '@effect/tsgo-win32-x64':
         specifier: catalog:effect
-        version: 0.45.0
+        version: 0.49.0
       '@types/node':
         specifier: catalog:node
         version: 24.13.6
@@ -466,7 +466,7 @@ importers:
     dependencies:
       '@effect/platform-node':
         specifier: catalog:effect
-        version: 4.0.0-rc.118(effect@4.0.0-rc.118)(redis@6.2.1)
+        version: 4.0.1(effect@4.0.1)(redis@6.2.1)
       '@frt/api':
         specifier: workspace:*
         version: link:../api
@@ -478,14 +478,14 @@ importers:
         version: link:../../packages/shared
       effect:
         specifier: catalog:effect
-        version: 4.0.0-rc.118
+        version: 4.0.1
     devDependencies:
       '@effect/tsgo':
         specifier: catalog:effect
-        version: 0.45.0
+        version: 0.49.0
       '@effect/tsgo-win32-x64':
         specifier: catalog:effect
-        version: 0.45.0
+        version: 0.49.0
       '@types/node':
         specifier: catalog:node
         version: 24.13.6
@@ -530,7 +530,7 @@ importers:
         version: 4.4.0
       effect:
         specifier: catalog:effect
-        version: 4.0.0-rc.118
+        version: 4.0.1
       lucide-react:
         specifier: catalog:ui
         version: 1.46.0(react@19.3.0)
@@ -546,13 +546,13 @@ importers:
     devDependencies:
       '@effect/platform-node':
         specifier: catalog:effect
-        version: 4.0.0-rc.118(effect@4.0.0-rc.118)(redis@6.2.1)
+        version: 4.0.1(effect@4.0.1)(redis@6.2.1)
       '@effect/tsgo':
         specifier: catalog:effect
-        version: 0.45.0
+        version: 0.49.0
       '@effect/tsgo-win32-x64':
         specifier: catalog:effect
-        version: 0.45.0
+        version: 0.49.0
       '@electron-forge/cli':
         specifier: catalog:electron
         version: 7.11.2(encoding@0.1.13)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28)(supports-color@8.1.1)
@@ -627,14 +627,14 @@ importers:
         version: link:../shared
       effect:
         specifier: catalog:effect
-        version: 4.0.0-rc.118
+        version: 4.0.1
     devDependencies:
       '@effect/tsgo':
         specifier: catalog:effect
-        version: 0.45.0
+        version: 0.49.0
       '@effect/tsgo-win32-x64':
         specifier: catalog:effect
-        version: 0.45.0
+        version: 0.49.0
       '@types/node':
         specifier: catalog:node
         version: 24.13.6
@@ -646,10 +646,10 @@ importers:
     dependencies:
       '@effect/platform-node':
         specifier: catalog:effect
-        version: 4.0.0-rc.118(effect@4.0.0-rc.118)(redis@6.2.1)
+        version: 4.0.1(effect@4.0.1)(redis@6.2.1)
       '@effect/sql-sqlite-node':
         specifier: catalog:effect
-        version: 4.0.0-rc.118(effect@4.0.0-rc.118)
+        version: 4.0.1(effect@4.0.1)
       '@frt/api-contract':
         specifier: workspace:*
         version: link:../api-contract
@@ -658,17 +658,17 @@ importers:
         version: link:../shared
       effect:
         specifier: catalog:effect
-        version: 4.0.0-rc.118
+        version: 4.0.1
     devDependencies:
       '@biomejs/biome':
         specifier: catalog:biome
         version: 2.3.4
       '@effect/tsgo':
         specifier: catalog:effect
-        version: 0.45.0
+        version: 0.49.0
       '@effect/tsgo-win32-x64':
         specifier: catalog:effect
-        version: 0.45.0
+        version: 0.49.0
       '@types/node':
         specifier: catalog:node
         version: 24.13.6
@@ -689,13 +689,13 @@ importers:
     devDependencies:
       '@effect/platform-node':
         specifier: catalog:effect
-        version: 4.0.0-rc.118(effect@4.0.0-rc.118)(redis@6.2.1)
+        version: 4.0.1(effect@4.0.1)(redis@6.2.1)
       '@effect/tsgo':
         specifier: catalog:effect
-        version: 0.45.0
+        version: 0.49.0
       '@effect/tsgo-win32-x64':
         specifier: catalog:effect
-        version: 0.45.0
+        version: 0.49.0
       '@frt/shared':
         specifier: workspace:*
         version: link:../shared
@@ -704,7 +704,7 @@ importers:
         version: 24.13.6
       effect:
         specifier: catalog:effect
-        version: 4.0.0-rc.118
+        version: 4.0.1
       tsx:
         specifier: catalog:typescript
         version: 4.23.15
@@ -716,14 +716,14 @@ importers:
     dependencies:
       effect:
         specifier: catalog:effect
-        version: 4.0.0-rc.118
+        version: 4.0.1
     devDependencies:
       '@effect/tsgo':
         specifier: catalog:effect
-        version: 0.45.0
+        version: 0.49.0
       '@effect/tsgo-win32-x64':
         specifier: catalog:effect
-        version: 0.45.0
+        version: 0.49.0
       '@types/node':
         specifier: catalog:node
         version: 24.13.6
@@ -744,7 +744,7 @@ importers:
         version: 2.1.1
       effect:
         specifier: catalog:effect
-        version: 4.0.0-rc.118
+        version: 4.0.1
       lucide-react:
         specifier: catalog:ui
         version: 1.46.0(react@19.3.0)
@@ -766,10 +766,10 @@ importers:
     devDependencies:
       '@effect/tsgo':
         specifier: catalog:effect
-        version: 0.45.0
+        version: 0.49.0
       '@effect/tsgo-win32-x64':
         specifier: catalog:effect
-        version: 0.45.0
+        version: 0.49.0
       '@types/node':
         specifier: catalog:node
         version: 24.13.6
@@ -784,7 +784,7 @@ importers:
     dependencies:
       '@effect/platform-node':
         specifier: catalog:effect
-        version: 4.0.0-rc.118(effect@4.0.0-rc.118)(redis@6.2.1)
+        version: 4.0.1(effect@4.0.1)(redis@6.2.1)
       '@frt/api':
         specifier: workspace:*
         version: link:../../apps/api
@@ -796,14 +796,14 @@ importers:
         version: link:../../packages/shared
       effect:
         specifier: catalog:effect
-        version: 4.0.0-rc.118
+        version: 4.0.1
     devDependencies:
       '@effect/tsgo':
         specifier: catalog:effect
-        version: 0.45.0
+        version: 0.49.0
       '@effect/tsgo-win32-x64':
         specifier: catalog:effect
-        version: 0.45.0
+        version: 0.49.0
       '@oxlint/plugins':
         specifier: catalog:tooling
         version: 1.83.0
@@ -1124,61 +1124,61 @@ packages:
   '@dotenvx/primitives@0.8.0':
     resolution: {integrity: sha512-VYJy0uhFm9zTJ1TxBaW/pA8bjbOM/OttaNMwZ1RHG4JKyRG7DhSdiqD1ipQoAyoD22olUtxbP78W9xY3Wd11bg==}
 
-  '@effect/platform-node-shared@4.0.0-rc.118':
-    resolution: {integrity: sha512-pNbmIlxbAUxAthUNsp2xm1NLG9kxoYecsPkoYl9mNF2oxPcKDxAvkOar7tYnLSUpXJeATm4pxYVipdZjQfqO4Q==}
+  '@effect/platform-node-shared@4.0.1':
+    resolution: {integrity: sha512-VanaejudEhKJ4mpmqnEzdncVUhN6sGSO9ZDND54mRxAlZxj+4dYAWjDTYAy9o4tJo9aALeP2U8cVcOFzEdSeLg==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
-      effect: ^4.0.0-rc.118
+      effect: ^4.0.1
 
-  '@effect/platform-node@4.0.0-rc.118':
-    resolution: {integrity: sha512-qdAxPZ+5bKxVnzkwziqcHZTHRHz2hyfFX6NhwEmm75CBpmaIzXIZR2LRqGd1/8eI3J3cOrXcAYzByhln7T1/EA==}
+  '@effect/platform-node@4.0.1':
+    resolution: {integrity: sha512-FT0Fu5LO0/XP9zBpj0HqrtJNLluK4StNKqf6TSulUsjp8FPBsDVXGJiDuyoN5J2yVMT7tgvhxSwaDcObWVRIaQ==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
-      effect: ^4.0.0-rc.118
+      effect: ^4.0.1
       redis: '>=5.0.0 <7.0.0'
 
-  '@effect/sql-sqlite-node@4.0.0-rc.118':
-    resolution: {integrity: sha512-O+TswiXTeP1/9I7GaCalMWWGXrbalzZkFdkXoO/x/3uDdfnYSi3/lkcOvmfFJnmaQPvOR4wG2CkZSdf9n88A4w==}
+  '@effect/sql-sqlite-node@4.0.1':
+    resolution: {integrity: sha512-VBlNvfFRxyyiu1viNygxA0ZVGZcpxBHA3+QLobaLQSXgAP0submgo98IzioWTHzdZUc9Xodi7ICci5ehhbD2fQ==}
     peerDependencies:
-      effect: ^4.0.0-rc.118
+      effect: ^4.0.1
 
-  '@effect/tsgo-darwin-arm64@0.45.0':
-    resolution: {integrity: sha512-WUoiEVcm8E19QK6fl63lsssM4dkT9IFnULbmqQ6LBfv7H9uRkpE9S3thj8ZtZ+vl/QY8atwfuaTf+3A1m/kGtQ==}
+  '@effect/tsgo-darwin-arm64@0.49.0':
+    resolution: {integrity: sha512-UZeNVyLWGdC1XCPJg5y2De+ONZnrtLgcz0nPLvVbVEWBqT437I7XwENvLIhbTU3ncpioQ8QLKn/2yyou6PBnMg==}
     cpu: [arm64]
     os: [darwin]
 
-  '@effect/tsgo-darwin-x64@0.45.0':
-    resolution: {integrity: sha512-s3yz7ZfIzvObXJ/r5xd9sEPxHKC3L+D+yedS1BV2Kpn47Je2svYCNYKxzXIpqFLkNjK+RcOQrcfYbYEpKZZa6g==}
+  '@effect/tsgo-darwin-x64@0.49.0':
+    resolution: {integrity: sha512-zbdskzTYk5kg7MlYJxRb2Z5YViHebf6ntAZlr7noGk8zf+W3m9O8y8L9JocYd2YYiEKjzRvkUOL0zO7bVc516g==}
     cpu: [x64]
     os: [darwin]
 
-  '@effect/tsgo-linux-arm64@0.45.0':
-    resolution: {integrity: sha512-N+lyzixtylOOn49demDaqg0kb/U8ISxM10Gphs1pIMSGlqlfqC4inYEoFpYej+f4T/cRlkA11Ue7wJzNz83ePA==}
+  '@effect/tsgo-linux-arm64@0.49.0':
+    resolution: {integrity: sha512-IG9+vo8UDrUDH3UE86eYGnsMJx1C7VrOwF3xDJK15kuJ4wOMOM4fUX6Si45UxH3XF4n9YlEXbFXo1OOyjUmZqw==}
     cpu: [arm64]
     os: [linux]
 
-  '@effect/tsgo-linux-arm@0.45.0':
-    resolution: {integrity: sha512-f6zL6YbWA9lXdfJ//KOjUz/U3CdGtajKi5NsR/lcQaKfZiJwHfeeLBB3yetF3qbPGSA149/kuMoDMWL13RUH3A==}
+  '@effect/tsgo-linux-arm@0.49.0':
+    resolution: {integrity: sha512-b4DMRv5RmHMi/5KSDHA8LDgydqdLfY7AqWghc5iBRUF1QK9YQHH/9nBNbYdFNuUK9MuiD0qi/ND+LK83393TnA==}
     cpu: [arm]
     os: [linux]
 
-  '@effect/tsgo-linux-x64@0.45.0':
-    resolution: {integrity: sha512-aWt0G8celAxJOis4+xiILkyMP/3J+vukimUhSoCmUAPt8zoT9qhZcN64XYZE7jfqp88ByRdgN9GK1/C7YfPtcQ==}
+  '@effect/tsgo-linux-x64@0.49.0':
+    resolution: {integrity: sha512-jYedIzaBrWOalT7jDWwss5/H0j0nHTr+oUbnWf5j/kneN1QiXYNsAt9DgnuOMqn8yVFmIGN0ABGdgDSzGV4Keg==}
     cpu: [x64]
     os: [linux]
 
-  '@effect/tsgo-win32-arm64@0.45.0':
-    resolution: {integrity: sha512-EAdeV366ja+M4XCx6xjXMv4Xkc0Fgzy4bapa0saDWcGhllNLqJDfOk4lk0BgAEjBUI8+0xC+PXKVB5SMz4EpVA==}
+  '@effect/tsgo-win32-arm64@0.49.0':
+    resolution: {integrity: sha512-k9ie5Nnkcjte7LY9v0TMn0K8IQzxaNNAzRIYe8q+m1/DwFtG17tZb1Br9TYRg1bc42Gk27FBpiNar4/+eA1nqQ==}
     cpu: [arm64]
     os: [win32]
 
-  '@effect/tsgo-win32-x64@0.45.0':
-    resolution: {integrity: sha512-1Hsr/sT5dmIafoY9L0ASJo4VqGyPNzM1nwTb4Wj1Lmjq6kGuwO/PVozFg3WZZ0piChFmgiU3nx1AKZfyqgjGUw==}
+  '@effect/tsgo-win32-x64@0.49.0':
+    resolution: {integrity: sha512-oB9j8Z0aCE26EidQ8XrLrFO9XaO3cQTkULhK//5y8MDFReV2ICtcpRMndPjgJVIxeeZJECerZ8XrmT860FdYwg==}
     cpu: [x64]
     os: [win32]
 
-  '@effect/tsgo@0.45.0':
-    resolution: {integrity: sha512-gPG0ixVHgtYBUe5DbKX9vzHlhqd9+ZEfs4m/XWy0808av0A2XqMzaG3F5rnPBN7EUJRPlo9TluIi8WHx/pBV+A==}
+  '@effect/tsgo@0.49.0':
+    resolution: {integrity: sha512-K5FpaJ9KZiy6IwV7dYBvEaOIvo6mX2DHfqaTZTGxr60E6lwIoER9gKnQe1FMstlQYxwUhIiITPd8Y1yvxN1G0Q==}
     hasBin: true
 
   '@electron-forge/cli@7.11.2':
@@ -3704,8 +3704,8 @@ packages:
   ee-first@1.1.1:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
 
-  effect@4.0.0-rc.118:
-    resolution: {integrity: sha512-hxhpCd+swzrtu9lnyPpEFre2ODQzJ9qxgyL1oHIEY8NKnW4PxTbM1XzplMZXiAsLD62HO+KJc41Nqxr9T791ZQ==}
+  effect@4.0.1:
+    resolution: {integrity: sha512-b1VlQG9g8fwxE5QnIZuPoOP/0MsqHJSRKxUijjoM80E5q95FXrX5yWtY5XI8G+GJsBQAVSDbLS458z9a++uVvw==}
 
   electron-to-chromium@1.5.428:
     resolution: {integrity: sha512-1JxbaFJj1bRKurj1uY3l4xxpU9kOUAUjcIgApj0qu1Pao5GhoIWI8iL0BeMYJ2njig1hBx0A7eKD9VGjH9wlHw==}
@@ -6661,58 +6661,58 @@ snapshots:
 
   '@dotenvx/primitives@0.8.0': {}
 
-  '@effect/platform-node-shared@4.0.0-rc.118(effect@4.0.0-rc.118)':
+  '@effect/platform-node-shared@4.0.1(effect@4.0.1)':
     dependencies:
       '@types/ws': 8.18.1
-      effect: 4.0.0-rc.118
+      effect: 4.0.1
       ws: 8.22.0
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
 
-  '@effect/platform-node@4.0.0-rc.118(effect@4.0.0-rc.118)(redis@6.2.1)':
+  '@effect/platform-node@4.0.1(effect@4.0.1)(redis@6.2.1)':
     dependencies:
-      '@effect/platform-node-shared': 4.0.0-rc.118(effect@4.0.0-rc.118)
-      effect: 4.0.0-rc.118
+      '@effect/platform-node-shared': 4.0.1(effect@4.0.1)
+      effect: 4.0.1
       redis: 6.2.1
       undici: 8.11.2
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
 
-  '@effect/sql-sqlite-node@4.0.0-rc.118(effect@4.0.0-rc.118)':
+  '@effect/sql-sqlite-node@4.0.1(effect@4.0.1)':
     dependencies:
-      effect: 4.0.0-rc.118
+      effect: 4.0.1
 
-  '@effect/tsgo-darwin-arm64@0.45.0':
+  '@effect/tsgo-darwin-arm64@0.49.0':
     optional: true
 
-  '@effect/tsgo-darwin-x64@0.45.0':
+  '@effect/tsgo-darwin-x64@0.49.0':
     optional: true
 
-  '@effect/tsgo-linux-arm64@0.45.0':
+  '@effect/tsgo-linux-arm64@0.49.0':
     optional: true
 
-  '@effect/tsgo-linux-arm@0.45.0':
+  '@effect/tsgo-linux-arm@0.49.0':
     optional: true
 
-  '@effect/tsgo-linux-x64@0.45.0':
+  '@effect/tsgo-linux-x64@0.49.0':
     optional: true
 
-  '@effect/tsgo-win32-arm64@0.45.0':
+  '@effect/tsgo-win32-arm64@0.49.0':
     optional: true
 
-  '@effect/tsgo-win32-x64@0.45.0': {}
+  '@effect/tsgo-win32-x64@0.49.0': {}
 
-  '@effect/tsgo@0.45.0':
+  '@effect/tsgo@0.49.0':
     optionalDependencies:
-      '@effect/tsgo-darwin-arm64': 0.45.0
-      '@effect/tsgo-darwin-x64': 0.45.0
-      '@effect/tsgo-linux-arm': 0.45.0
-      '@effect/tsgo-linux-arm64': 0.45.0
-      '@effect/tsgo-linux-x64': 0.45.0
-      '@effect/tsgo-win32-arm64': 0.45.0
-      '@effect/tsgo-win32-x64': 0.45.0
+      '@effect/tsgo-darwin-arm64': 0.49.0
+      '@effect/tsgo-darwin-x64': 0.49.0
+      '@effect/tsgo-linux-arm': 0.49.0
+      '@effect/tsgo-linux-arm64': 0.49.0
+      '@effect/tsgo-linux-x64': 0.49.0
+      '@effect/tsgo-win32-arm64': 0.49.0
+      '@effect/tsgo-win32-x64': 0.49.0
 
   '@electron-forge/cli@7.11.2(encoding@0.1.13)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28)(supports-color@8.1.1)':
     dependencies:
@@ -9183,7 +9183,7 @@ snapshots:
 
   ee-first@1.1.1: {}
 
-  effect@4.0.0-rc.118: {}
+  effect@4.0.1: {}
 
   electron-to-chromium@1.5.428: {}
 

@@ -23,13 +23,16 @@ const program = E.gen(function* () {
     process.argv[2] ?? defaultOutputFilePath,
   );
 
-  const standardSchema = Schema.toStandardJSONSchemaV1(
+  const jsonSchemaDocument = Schema.toJsonSchemaDocument(
     FellowshipConfigurationFileSchema,
+    { onExcessProperty: "error" },
   );
 
-  const jsonSchema = standardSchema["~standard"].jsonSchema.input({
-    target: "draft-2020-12",
-  });
+  const hasDefinitions = Object.keys(jsonSchemaDocument.definitions).length > 0;
+
+  const jsonSchema = hasDefinitions
+    ? { ...jsonSchemaDocument.schema, $defs: jsonSchemaDocument.definitions }
+    : jsonSchemaDocument.schema;
 
   yield* fileSystem.makeDirectory(path.dirname(resolvedOutputPath), {
     recursive: true,
