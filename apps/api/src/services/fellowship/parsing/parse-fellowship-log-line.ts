@@ -11,7 +11,7 @@ import {
   isParsedFellowshipEventType,
 } from "@frt/shared/fellowship/validation/fellowship-event-schema.ts";
 
-export const parseFellowshipLogLine = E.fn(function* (line: string) {
+export const parseFellowshipLogLine = E.fnUntraced(function* (line: string) {
   const eventType = getEventType(line);
 
   if (!isParsedFellowshipEventType(eventType)) {

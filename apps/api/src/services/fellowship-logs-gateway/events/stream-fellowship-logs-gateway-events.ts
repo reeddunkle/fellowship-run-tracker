@@ -42,7 +42,7 @@ function isConvertibleEvent(event: unknown): boolean {
   );
 }
 
-function decodeEvent({
+const decodeEvent = E.fnUntraced(function* ({
   actors,
   event,
   reportStartTime,
@@ -51,37 +51,35 @@ function decodeEvent({
   readonly event: unknown;
   readonly reportStartTime: number;
 }) {
-  return E.gen(function* () {
-    const convertibleEvent = yield* Schema.decodeUnknownEffect(
-      FellowshipLogsGatewayConvertibleEventSchema,
-    )(event).pipe(
-      E.mapError((cause) => {
-        return new FellowshipLogsGatewayEventDecodeError({
-          cause,
-        });
-      }),
+  const convertibleEvent = yield* Schema.decodeUnknownEffect(
+    FellowshipLogsGatewayConvertibleEventSchema,
+  )(event).pipe(
+    E.mapError((cause) => {
+      return new FellowshipLogsGatewayEventDecodeError({
+        cause,
+      });
+    }),
+  );
+
+  if (
+    convertibleEvent.type === "death" &&
+    convertibleEvent.targetInstance === undefined
+  ) {
+    yield* E.logDebug(
+      "Fellowship Logs death event is missing targetInstance.",
+      {
+        targetId: convertibleEvent.targetID,
+        timestamp: convertibleEvent.timestamp,
+      },
     );
+  }
 
-    if (
-      convertibleEvent.type === "death" &&
-      convertibleEvent.targetInstance === undefined
-    ) {
-      yield* E.logDebug(
-        "Fellowship Logs death event is missing targetInstance.",
-        {
-          targetId: convertibleEvent.targetID,
-          timestamp: convertibleEvent.timestamp,
-        },
-      );
-    }
-
-    return {
-      actors,
-      event: convertibleEvent,
-      reportStartTime,
-    } satisfies FellowshipLogsGatewayEventContext;
-  });
-}
+  return {
+    actors,
+    event: convertibleEvent,
+    reportStartTime,
+  } satisfies FellowshipLogsGatewayEventContext;
+});
 
 export function streamFellowshipLogsGatewayEvents<StreamError>(
   reportPages: Stream.Stream<FellowshipLogsGatewayReport, StreamError>,
