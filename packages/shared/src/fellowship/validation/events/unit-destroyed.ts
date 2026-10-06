@@ -1,5 +1,5 @@
-import { SchemaGetter } from "effect";
 import * as Schema from "effect/Schema";
+import * as SchemaGetter from "effect/SchemaGetter";
 
 import { FELLOWSHIP_EVENT } from "@frt/shared/fellowship/constants/fellowship-event.ts";
 import { parseUnitId } from "@frt/shared/fellowship/validation/events/parse-unit-id.ts";
