@@ -16,8 +16,8 @@ function decodeEncounterRows(
 export const makeEncounterDAO = E.gen(function* () {
   const sql = yield* MainDatabase;
 
-  const getAll: EncounterDAOShape["getAll"] = () => {
-    return E.gen(function* () {
+  const getAll: EncounterDAOShape["getAll"] = E.fn("EncounterDAO.getAll")(
+    function* () {
       const rows = yield* sql`
         SELECT
           created_at AS createdAt,
@@ -32,8 +32,8 @@ export const makeEncounterDAO = E.gen(function* () {
       `;
 
       return yield* decodeEncounterRows(rows);
-    });
-  };
+    },
+  );
 
   const getById: EncounterDAOShape["getById"] = E.fn("EncounterDAO.getById")(
     function* ({ dungeonId, id }) {

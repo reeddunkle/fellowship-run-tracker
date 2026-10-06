@@ -2,18 +2,14 @@ import * as E from "effect/Effect";
 
 import { AppApiClient } from "@/renderer/services/app-api-client/app-api-client";
 
-export function connectLiveSplit() {
-  return E.gen(function* () {
-    const client = yield* AppApiClient;
+export const connectLiveSplit = E.fn("connectLiveSplit")(function* () {
+  const client = yield* AppApiClient;
 
-    return yield* client.liveSplit.connectLiveSplit();
-  });
-}
+  return yield* client.liveSplit.connectLiveSplit();
+});
 
-export function disconnectLiveSplit() {
-  return E.gen(function* () {
-    const client = yield* AppApiClient;
+export const disconnectLiveSplit = E.fn("disconnectLiveSplit")(function* () {
+  const client = yield* AppApiClient;
 
-    return yield* client.liveSplit.disconnectLiveSplit();
-  });
-}
+  return yield* client.liveSplit.disconnectLiveSplit();
+});

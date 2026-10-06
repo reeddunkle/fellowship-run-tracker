@@ -25,12 +25,12 @@ export const makeFellowshipTrackerIntegrationTestHarness = E.fn(
 )(function* ({
   databaseFilename = ":memory:",
 }: MakeFellowshipTrackerIntegrationTestHarnessOptions = {}) {
-  const encryptionHarness = yield* makeEncryptionHarness();
+  const encryptionHarness = yield* makeEncryptionHarness;
 
-  const liveSplitHarness = yield* makeLiveSplitGatewayTransportTestHarness();
+  const liveSplitHarness = yield* makeLiveSplitGatewayTransportTestHarness;
 
   const dungeonRunWebSocketBroadcasterHarness =
-    yield* makeWebSocketBroadcasterTestHarness();
+    yield* makeWebSocketBroadcasterTestHarness;
 
   const PersistenceTestLive = makePersistenceTestLayer(databaseFilename);
 

@@ -53,7 +53,7 @@ function withAppSettingsStore<A, Error>(
 ) {
   return E.scoped(
     E.gen(function* () {
-      const { encryption } = yield* makeEncryptionHarness();
+      const { encryption } = yield* makeEncryptionHarness;
 
       const PersistenceTestLive = makePersistenceTestLayer();
 

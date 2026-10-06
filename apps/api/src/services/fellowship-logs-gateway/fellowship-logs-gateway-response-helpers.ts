@@ -120,8 +120,8 @@ function getRequestCost({
   return rateLimitData.pointsSpentThisHour - previous.pointsSpentThisHour;
 }
 
-export function makeFellowshipLogsGatewayRateLimitDataTracker() {
-  return E.gen(function* () {
+export const makeFellowshipLogsGatewayRateLimitDataTracker = E.gen(
+  function* () {
     const analytics = yield* FellowshipLogsAnalytics;
     const stateRef = yield* Ref.make<RateLimitTrackerState>({
       costByKey: {},
@@ -239,8 +239,8 @@ export function makeFellowshipLogsGatewayRateLimitDataTracker() {
       getRejectedResetsAt,
       track,
     } satisfies FellowshipLogsGatewayRateLimitDataTracker;
-  });
-}
+  },
+);
 
 export function readAndTrackGraphQLResponse(
   tracker: FellowshipLogsGatewayRateLimitDataTracker,

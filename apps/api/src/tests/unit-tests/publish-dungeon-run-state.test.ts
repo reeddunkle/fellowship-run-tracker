@@ -52,7 +52,7 @@ function createDungeonRunProcessingState({
 function publishAndGetMessages(state: DungeonRunProcessingState) {
   return E.gen(function* () {
     const webSocketBroadcasterHarness =
-      yield* makeWebSocketBroadcasterTestHarness();
+      yield* makeWebSocketBroadcasterTestHarness;
 
     yield* publishDungeonRunState({
       state,

@@ -18,13 +18,11 @@ export type UpdateConfigurationArgs = {
   readonly request: SaveConfigurationApiRequest;
 };
 
-export function getConfigurations() {
-  return E.gen(function* () {
-    const client = yield* AppApiClient;
+export const getConfigurations = E.fn("getConfigurations")(function* () {
+  const client = yield* AppApiClient;
 
-    return yield* client.configurations.getConfigurations();
-  });
-}
+  return yield* client.configurations.getConfigurations();
+});
 
 export const getConfiguration = E.fn("getConfiguration")(function* ({
   id,

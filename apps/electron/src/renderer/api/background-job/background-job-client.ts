@@ -8,13 +8,11 @@ export type BackgroundJobCommandArgs = {
   readonly id: BackgroundJobId;
 };
 
-export function getBackgroundJobs() {
-  return E.gen(function* () {
-    const client = yield* AppApiClient;
+export const getBackgroundJobs = E.fn("getBackgroundJobs")(function* () {
+  const client = yield* AppApiClient;
 
-    return yield* client.backgroundJob.getBackgroundJobs();
-  });
-}
+  return yield* client.backgroundJob.getBackgroundJobs();
+});
 
 export const cancelBackgroundJob = E.fn("cancelBackgroundJob")(function* ({
   id,

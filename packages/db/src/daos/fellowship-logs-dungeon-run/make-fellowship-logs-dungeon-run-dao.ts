@@ -142,9 +142,10 @@ export const makeFellowshipLogsDungeonRunDAO = E.gen(function* () {
     return persistedFellowshipLogsDungeonRun;
   }, E.mapError(mapFellowshipLogsDungeonRunDAOError));
 
-  const listImported: FellowshipLogsDungeonRunDAOShape["listImported"] = () => {
-    return E.gen(function* () {
-      const rows = yield* sql`
+  const listImported: FellowshipLogsDungeonRunDAOShape["listImported"] = E.fn(
+    "FellowshipLogsDungeonRunDAO.listImported",
+  )(function* () {
+    const rows = yield* sql`
         SELECT
           flr.dungeon_run_id,
           dr.dungeon_id,
@@ -163,11 +164,10 @@ export const makeFellowshipLogsDungeonRunDAO = E.gen(function* () {
           flr.created_at DESC
       `;
 
-      return yield* Schema.decodeUnknownEffect(
-        Schema.Array(FellowshipLogsImportedDungeonRunRowSchema),
-      )(rows);
-    }).pipe(E.mapError(mapFellowshipLogsDungeonRunDAOError));
-  };
+    return yield* Schema.decodeUnknownEffect(
+      Schema.Array(FellowshipLogsImportedDungeonRunRowSchema),
+    )(rows);
+  }, E.mapError(mapFellowshipLogsDungeonRunDAOError));
 
   return {
     create,

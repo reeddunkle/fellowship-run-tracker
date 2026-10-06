@@ -35,7 +35,7 @@ describe("FileMonitorSource", () => {
     test("finds a matching file", async () => {
       const program = E.scoped(
         E.gen(function* () {
-          const harness = yield* makeFileMonitorSourceTestHarness();
+          const harness = yield* makeFileMonitorSourceTestHarness;
 
           const filePath = harness.getFilePath("fellowship.txt");
 
@@ -57,7 +57,7 @@ describe("FileMonitorSource", () => {
     test("ignores files that do not match", async () => {
       const program = E.scoped(
         E.gen(function* () {
-          const harness = yield* makeFileMonitorSourceTestHarness();
+          const harness = yield* makeFileMonitorSourceTestHarness;
 
           yield* harness.writeFile("fellowship.log", "log contents\n");
 
@@ -82,7 +82,7 @@ describe("FileMonitorSource", () => {
     test("ignores matching directories", async () => {
       const program = E.scoped(
         E.gen(function* () {
-          const harness = yield* makeFileMonitorSourceTestHarness();
+          const harness = yield* makeFileMonitorSourceTestHarness;
 
           yield* harness.makeDirectory("not-a-file.txt");
 
@@ -109,7 +109,7 @@ describe("FileMonitorSource", () => {
     test("emits None initially and Some when a matching file appears", async () => {
       const program = E.scoped(
         E.gen(function* () {
-          const harness = yield* makeFileMonitorSourceTestHarness();
+          const harness = yield* makeFileMonitorSourceTestHarness;
 
           const filePath = harness.getFilePath("fellowship.txt");
 
@@ -142,7 +142,7 @@ describe("FileMonitorSource", () => {
     test("emits the current matching file initially", async () => {
       const program = E.scoped(
         E.gen(function* () {
-          const harness = yield* makeFileMonitorSourceTestHarness();
+          const harness = yield* makeFileMonitorSourceTestHarness;
 
           const filePath = harness.getFilePath("fellowship.txt");
 
@@ -171,7 +171,7 @@ describe("FileMonitorSource", () => {
     test("emits another value when the current file is updated", async () => {
       const program = E.scoped(
         E.gen(function* () {
-          const harness = yield* makeFileMonitorSourceTestHarness();
+          const harness = yield* makeFileMonitorSourceTestHarness;
 
           yield* harness.writeFile("fellowship.txt", "first line\n");
 
@@ -212,7 +212,7 @@ describe("FileMonitorSource", () => {
     test("emits None when the current matching file is removed", async () => {
       const program = E.scoped(
         E.gen(function* () {
-          const harness = yield* makeFileMonitorSourceTestHarness();
+          const harness = yield* makeFileMonitorSourceTestHarness;
 
           yield* harness.writeFile("fellowship.txt", "first line\n");
 
@@ -282,7 +282,7 @@ describe("FileMonitorSource", () => {
 
         yield* E.scoped(
           E.gen(function* () {
-            const harness = yield* makeFileMonitorSourceTestHarness();
+            const harness = yield* makeFileMonitorSourceTestHarness;
 
             const options = {
               directoryPath: harness.directoryPath,
@@ -322,7 +322,7 @@ describe("FileMonitorSource", () => {
 
         yield* E.scoped(
           E.gen(function* () {
-            const harness = yield* makeFileMonitorSourceTestHarness();
+            const harness = yield* makeFileMonitorSourceTestHarness;
 
             const options = {
               directoryPath: harness.directoryPath,
@@ -370,7 +370,7 @@ describe("FileMonitorSource", () => {
 
           return yield* E.scoped(
             E.gen(function* () {
-              const harness = yield* makeFileMonitorSourceTestHarness();
+              const harness = yield* makeFileMonitorSourceTestHarness;
 
               const options = {
                 directoryPath: harness.directoryPath,
@@ -488,7 +488,7 @@ describe("FileMonitorSource", () => {
 
         yield* E.scoped(
           E.gen(function* () {
-            const harness = yield* makeFileMonitorSourceTestHarness();
+            const harness = yield* makeFileMonitorSourceTestHarness;
 
             const latestFiles = yield* makeStreamTestHarness(
               harness.fileMonitorSource.streamLatestFile({
@@ -528,7 +528,7 @@ describe("FileMonitorSource", () => {
     test("transitions from waiting for a file to monitoring", async () => {
       const program = E.scoped(
         E.gen(function* () {
-          const harness = yield* makeFileMonitorSourceTestHarness();
+          const harness = yield* makeFileMonitorSourceTestHarness;
 
           const filePath = harness.getFilePath("fellowship.txt");
 
@@ -564,7 +564,7 @@ describe("FileMonitorSource", () => {
     test("does not emit another status when the monitored file is only updated", async () => {
       const program = E.scoped(
         E.gen(function* () {
-          const harness = yield* makeFileMonitorSourceTestHarness();
+          const harness = yield* makeFileMonitorSourceTestHarness;
 
           const filePath = harness.getFilePath("fellowship.txt");
 

@@ -12,7 +12,7 @@ describe("LiveSplitGatewayClient", () => {
   test("gets the current time", async () => {
     const program = E.scoped(
       E.gen(function* () {
-        const harness = yield* makeLiveSplitGatewayClientTestHarness();
+        const harness = yield* makeLiveSplitGatewayClientTestHarness;
 
         const request = yield* harness.start(harness.client.getCurrentTime());
 
@@ -34,7 +34,7 @@ describe("LiveSplitGatewayClient", () => {
   test("assembles a response split across multiple chunks", async () => {
     const program = E.scoped(
       E.gen(function* () {
-        const harness = yield* makeLiveSplitGatewayClientTestHarness();
+        const harness = yield* makeLiveSplitGatewayClientTestHarness;
 
         const request = yield* harness.start(harness.client.getCurrentTime());
 
@@ -54,7 +54,7 @@ describe("LiveSplitGatewayClient", () => {
   test("handles multiple responses in one chunk", async () => {
     const program = E.scoped(
       E.gen(function* () {
-        const harness = yield* makeLiveSplitGatewayClientTestHarness();
+        const harness = yield* makeLiveSplitGatewayClientTestHarness;
 
         const currentTimeRequest = yield* harness.start(
           harness.client.getCurrentTime(),
@@ -84,7 +84,7 @@ describe("LiveSplitGatewayClient", () => {
   test("serializes concurrent response-producing requests", async () => {
     const program = E.scoped(
       E.gen(function* () {
-        const harness = yield* makeLiveSplitGatewayClientTestHarness();
+        const harness = yield* makeLiveSplitGatewayClientTestHarness;
 
         const currentTimeRequest = yield* harness.start(
           harness.client.getCurrentTime(),

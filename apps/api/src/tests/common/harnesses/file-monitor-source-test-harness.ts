@@ -132,46 +132,44 @@ export const makeWatchCountingFileMonitorSourceTestLive = E.fn(
   };
 });
 
-export function makeFileMonitorSourceTestHarness() {
-  return E.gen(function* () {
-    const fileMonitorSource = yield* FileMonitorSource;
-    const fileSystem = yield* FileSystem.FileSystem;
-    const path = yield* Path.Path;
+export const makeFileMonitorSourceTestHarness = E.gen(function* () {
+  const fileMonitorSource = yield* FileMonitorSource;
+  const fileSystem = yield* FileSystem.FileSystem;
+  const path = yield* Path.Path;
 
-    const directoryPath = yield* fileSystem.makeTempDirectoryScoped({
-      prefix: "file-monitor-source-",
-    });
-
-    const getFilePath = (fileName: string): string => {
-      return path.join(directoryPath, fileName);
-    };
-
-    const writeFile = (fileName: string, contents: string) => {
-      return fileSystem.writeFileString(getFilePath(fileName), contents);
-    };
-
-    const appendFile = (fileName: string, contents: string) => {
-      return fileSystem.writeFileString(getFilePath(fileName), contents, {
-        flag: "a",
-      });
-    };
-
-    const removeFile = (fileName: string) => {
-      return fileSystem.remove(getFilePath(fileName));
-    };
-
-    const makeDirectory = (directoryName: string) => {
-      return fileSystem.makeDirectory(getFilePath(directoryName));
-    };
-
-    return {
-      appendFile,
-      directoryPath,
-      fileMonitorSource,
-      getFilePath,
-      makeDirectory,
-      removeFile,
-      writeFile,
-    };
+  const directoryPath = yield* fileSystem.makeTempDirectoryScoped({
+    prefix: "file-monitor-source-",
   });
-}
+
+  const getFilePath = (fileName: string): string => {
+    return path.join(directoryPath, fileName);
+  };
+
+  const writeFile = (fileName: string, contents: string) => {
+    return fileSystem.writeFileString(getFilePath(fileName), contents);
+  };
+
+  const appendFile = (fileName: string, contents: string) => {
+    return fileSystem.writeFileString(getFilePath(fileName), contents, {
+      flag: "a",
+    });
+  };
+
+  const removeFile = (fileName: string) => {
+    return fileSystem.remove(getFilePath(fileName));
+  };
+
+  const makeDirectory = (directoryName: string) => {
+    return fileSystem.makeDirectory(getFilePath(directoryName));
+  };
+
+  return {
+    appendFile,
+    directoryPath,
+    fileMonitorSource,
+    getFilePath,
+    makeDirectory,
+    removeFile,
+    writeFile,
+  };
+});

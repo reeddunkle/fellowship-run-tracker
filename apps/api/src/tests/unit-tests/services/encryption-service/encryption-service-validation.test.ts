@@ -23,7 +23,7 @@ async function decryptExpectingFailure<Error>(
   ) => E.Effect<EncryptedValue, Error>,
 ) {
   const error = await E.gen(function* () {
-    const { encryption } = yield* makeEncryptionHarness();
+    const { encryption } = yield* makeEncryptionHarness;
 
     const encryptedValue = yield* makeEncryptedValue(encryption);
 

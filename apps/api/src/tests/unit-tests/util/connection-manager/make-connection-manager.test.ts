@@ -18,40 +18,38 @@ type TestConnection = {
   readonly unavailable: Deferred.Deferred<void>;
 };
 
-function makeTestConnectionManager() {
-  return E.gen(function* () {
-    const acquiredCount = yield* Ref.make(0);
-    const releasedCount = yield* Ref.make(0);
+const makeTestConnectionManager = E.gen(function* () {
+  const acquiredCount = yield* Ref.make(0);
+  const releasedCount = yield* Ref.make(0);
 
-    const connectionManager = yield* makeConnectionManager({
-      acquire: E.gen(function* () {
-        const id = yield* Ref.updateAndGet(acquiredCount, (count) => {
+  const connectionManager = yield* makeConnectionManager({
+    acquire: E.gen(function* () {
+      const id = yield* Ref.updateAndGet(acquiredCount, (count) => {
+        return count + 1;
+      });
+
+      yield* E.addFinalizer(() => {
+        return Ref.update(releasedCount, (count) => {
           return count + 1;
         });
+      });
 
-        yield* E.addFinalizer(() => {
-          return Ref.update(releasedCount, (count) => {
-            return count + 1;
-          });
-        });
-
-        return {
-          id,
-          unavailable: yield* Deferred.make<void>(),
-        } satisfies TestConnection;
-      }),
-      getUnavailability: (connection) => {
-        return connection.unavailable.pipe(Deferred.await, Stream.fromEffect);
-      },
-      name: "Test",
-    });
-
-    return {
-      connectionManager,
-      releasedCount,
-    };
+      return {
+        id,
+        unavailable: yield* Deferred.make<void>(),
+      } satisfies TestConnection;
+    }),
+    getUnavailability: (connection) => {
+      return connection.unavailable.pipe(Deferred.await, Stream.fromEffect);
+    },
+    name: "Test",
   });
-}
+
+  return {
+    connectionManager,
+    releasedCount,
+  };
+});
 
 function waitForDisconnected(
   connectionManager: ConnectionManager<TestConnection, never>,
@@ -70,7 +68,7 @@ describe("makeConnectionManager", () => {
   test("starts disconnected with no connection", async () => {
     const program = E.scoped(
       E.gen(function* () {
-        const { connectionManager } = yield* makeTestConnectionManager();
+        const { connectionManager } = yield* makeTestConnectionManager;
 
         expect(yield* connectionManager.status).toEqual({
           _tag: "Disconnected",
@@ -85,7 +83,7 @@ describe("makeConnectionManager", () => {
   test("connect acquires a connection and reports Connected", async () => {
     const program = E.scoped(
       E.gen(function* () {
-        const { connectionManager } = yield* makeTestConnectionManager();
+        const { connectionManager } = yield* makeTestConnectionManager;
 
         yield* connectionManager.connect();
 
@@ -103,7 +101,7 @@ describe("makeConnectionManager", () => {
     const program = E.scoped(
       E.gen(function* () {
         const { connectionManager, releasedCount } =
-          yield* makeTestConnectionManager();
+          yield* makeTestConnectionManager;
 
         yield* connectionManager.connect();
 
@@ -127,7 +125,7 @@ describe("makeConnectionManager", () => {
   test("connects again after the connection became unavailable", async () => {
     const program = E.scoped(
       E.gen(function* () {
-        const { connectionManager } = yield* makeTestConnectionManager();
+        const { connectionManager } = yield* makeTestConnectionManager;
 
         yield* connectionManager.connect();
 
@@ -157,7 +155,7 @@ describe("makeConnectionManager", () => {
     const program = E.scoped(
       E.gen(function* () {
         const { connectionManager, releasedCount } =
-          yield* makeTestConnectionManager();
+          yield* makeTestConnectionManager;
 
         yield* connectionManager.connect();
         yield* connectionManager.disconnect();
@@ -177,7 +175,7 @@ describe("makeConnectionManager", () => {
     const program = E.scoped(
       E.gen(function* () {
         const { connectionManager, releasedCount } =
-          yield* makeTestConnectionManager();
+          yield* makeTestConnectionManager;
 
         yield* connectionManager.connect();
         yield* connectionManager.connect();

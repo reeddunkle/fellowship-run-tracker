@@ -42,7 +42,7 @@ export const makeFellowshipTracker = E.gen(function* () {
   const scope = yield* E.scope;
 
   const eventProcessor = yield* makeFellowshipTrackerEventProcessor;
-  const trackerState = yield* makeFellowshipTrackerState();
+  const trackerState = yield* makeFellowshipTrackerState;
   const semaphore = yield* Semaphore.make(1);
 
   const startTracking = E.fn("FellowshipTracker.startTracking")(function* ({

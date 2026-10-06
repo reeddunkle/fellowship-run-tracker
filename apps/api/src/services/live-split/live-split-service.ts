@@ -38,21 +38,21 @@ const makeLiveSplit = E.gen(function* () {
   const statusChanges: LiveSplitShape["statusChanges"] =
     liveSplitGateway.statusChanges.pipe(Stream.map(createLiveSplitApiResponse));
 
-  const connect: LiveSplitShape["connect"] = () => {
-    return E.gen(function* () {
+  const connect: LiveSplitShape["connect"] = E.fn("LiveSplit.connect")(
+    function* () {
       yield* liveSplitGateway.connect();
 
       return yield* getStatus();
-    });
-  };
+    },
+  );
 
-  const disconnect: LiveSplitShape["disconnect"] = () => {
-    return E.gen(function* () {
+  const disconnect: LiveSplitShape["disconnect"] = E.fn("LiveSplit.disconnect")(
+    function* () {
       yield* liveSplitGateway.disconnect();
 
       return yield* getStatus();
-    });
-  };
+    },
+  );
 
   const handleRunEvent: LiveSplitShape["handleRunEvent"] = (
     processingEvent,

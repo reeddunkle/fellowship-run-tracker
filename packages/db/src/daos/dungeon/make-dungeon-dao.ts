@@ -16,8 +16,8 @@ function decodeDungeonRows(
 export const makeDungeonDAO = E.gen(function* () {
   const sql = yield* MainDatabase;
 
-  const getAll: DungeonDAOShape["getAll"] = () => {
-    return E.gen(function* () {
+  const getAll: DungeonDAOShape["getAll"] = E.fn("DungeonDAO.getAll")(
+    function* () {
       const rows = yield* sql`
         SELECT
           created_at AS createdAt,
@@ -32,8 +32,8 @@ export const makeDungeonDAO = E.gen(function* () {
       `;
 
       return yield* decodeDungeonRows(rows);
-    });
-  };
+    },
+  );
 
   const getById: DungeonDAOShape["getById"] = E.fn("DungeonDAO.getById")(
     function* ({ id }) {

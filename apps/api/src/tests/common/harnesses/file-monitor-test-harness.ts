@@ -33,183 +33,177 @@ type FileMonitorSourceSignal =
       readonly error: PlatformError.PlatformError;
     };
 
-export function makeFileMonitorTestHarness() {
-  return E.gen(function* () {
-    const fileSystem = yield* FileSystem.FileSystem;
-    const path = yield* Path.Path;
+export const makeFileMonitorTestHarness = E.gen(function* () {
+  const fileSystem = yield* FileSystem.FileSystem;
+  const path = yield* Path.Path;
 
-    const directoryPath = yield* fileSystem.makeTempDirectoryScoped({
-      prefix: "file-monitor-",
+  const directoryPath = yield* fileSystem.makeTempDirectoryScoped({
+    prefix: "file-monitor-",
+  });
+
+  const sourceSignals = yield* Queue.make<FileMonitorSourceSignal>();
+  const sourceRequests = yield* Queue.make<void>();
+
+  const latestSourceValueRef = yield* Ref.make<FileMonitorSourceValue>(
+    Option.none(),
+  );
+
+  const getFilePath = (fileName: string): string => {
+    return path.join(directoryPath, fileName);
+  };
+
+  const writeFile = (fileName: string, contents: string) => {
+    return fileSystem.writeFileString(getFilePath(fileName), contents);
+  };
+
+  const appendFile = (fileName: string, contents: string) => {
+    return fileSystem.writeFileString(getFilePath(fileName), contents, {
+      flag: "a",
     });
+  };
 
-    const sourceSignals = yield* Queue.make<FileMonitorSourceSignal>();
-    const sourceRequests = yield* Queue.make<void>();
+  const writeFileBytes = (fileName: string, bytes: Uint8Array) => {
+    return fileSystem.writeFile(getFilePath(fileName), bytes);
+  };
 
-    const latestSourceValueRef = yield* Ref.make<FileMonitorSourceValue>(
-      Option.none(),
-    );
+  const appendFileBytes = (fileName: string, bytes: Uint8Array) => {
+    return fileSystem.writeFile(getFilePath(fileName), bytes, {
+      flag: "a",
+    });
+  };
 
-    const getFilePath = (fileName: string): string => {
-      return path.join(directoryPath, fileName);
-    };
+  const truncateFile = (fileName: string) => {
+    return fileSystem.truncate(getFilePath(fileName));
+  };
 
-    const writeFile = (fileName: string, contents: string) => {
-      return fileSystem.writeFileString(getFilePath(fileName), contents);
-    };
+  const setModifiedTime = (fileName: string, modifiedTime: Date) => {
+    return fileSystem.utimes(getFilePath(fileName), modifiedTime, modifiedTime);
+  };
 
-    const appendFile = (fileName: string, contents: string) => {
-      return fileSystem.writeFileString(getFilePath(fileName), contents, {
-        flag: "a",
-      });
-    };
+  const removeFile = (fileName: string) => {
+    return fileSystem.remove(getFilePath(fileName));
+  };
 
-    const writeFileBytes = (fileName: string, bytes: Uint8Array) => {
-      return fileSystem.writeFile(getFilePath(fileName), bytes);
-    };
+  const getFileData = (fileName: string) => {
+    const filePath = getFilePath(fileName);
 
-    const appendFileBytes = (fileName: string, bytes: Uint8Array) => {
-      return fileSystem.writeFile(getFilePath(fileName), bytes, {
-        flag: "a",
-      });
-    };
+    return E.gen(function* () {
+      const info = yield* fileSystem.stat(filePath);
 
-    const truncateFile = (fileName: string) => {
-      return fileSystem.truncate(getFilePath(fileName));
-    };
-
-    const setModifiedTime = (fileName: string, modifiedTime: Date) => {
-      return fileSystem.utimes(
-        getFilePath(fileName),
-        modifiedTime,
-        modifiedTime,
-      );
-    };
-
-    const removeFile = (fileName: string) => {
-      return fileSystem.remove(getFilePath(fileName));
-    };
-
-    const getFileData = (fileName: string) => {
-      const filePath = getFilePath(fileName);
-
-      return E.gen(function* () {
-        const info = yield* fileSystem.stat(filePath);
-
-        return {
-          createdAtEpochMilliseconds: getDateEpochMilliseconds(info.birthtime),
-          fileId: getFileId({
-            filePath,
-            info,
-          }),
+      return {
+        createdAtEpochMilliseconds: getDateEpochMilliseconds(info.birthtime),
+        fileId: getFileId({
           filePath,
-          modifiedAtEpochMilliseconds: getDateEpochMilliseconds(info.mtime),
-          size: info.size,
-        } satisfies FileData;
-      });
-    };
-
-    const emitSourceValue = E.fn("test.emitSourceValue")(function* (
-      value: FileMonitorSourceValue,
-    ) {
-      yield* Ref.set(latestSourceValueRef, value);
-
-      yield* Queue.offer(sourceSignals, {
-        _tag: "VALUE",
-        value,
-      });
+          info,
+        }),
+        filePath,
+        modifiedAtEpochMilliseconds: getDateEpochMilliseconds(info.mtime),
+        size: info.size,
+      } satisfies FileData;
     });
+  };
 
-    const emitFile = E.fn("test.emitFile")(function* (fileName: string) {
-      const file = yield* getFileData(fileName);
+  const emitSourceValue = E.fn("test.emitSourceValue")(function* (
+    value: FileMonitorSourceValue,
+  ) {
+    yield* Ref.set(latestSourceValueRef, value);
 
-      yield* emitSourceValue(Option.some(file));
-
-      return file;
+    yield* Queue.offer(sourceSignals, {
+      _tag: "VALUE",
+      value,
     });
+  });
 
-    const emitNoFile = emitSourceValue(Option.none());
+  const emitFile = E.fn("test.emitFile")(function* (fileName: string) {
+    const file = yield* getFileData(fileName);
 
-    const emitSourceFailure = (error: PlatformError.PlatformError) => {
-      return Queue.offer(sourceSignals, {
-        _tag: "FAILURE",
-        error,
+    yield* emitSourceValue(Option.some(file));
+
+    return file;
+  });
+
+  const emitNoFile = emitSourceValue(Option.none());
+
+  const emitSourceFailure = (error: PlatformError.PlatformError) => {
+    return Queue.offer(sourceSignals, {
+      _tag: "FAILURE",
+      error,
+    });
+  };
+
+  const awaitSourceRequest = Queue.take(sourceRequests);
+
+  const fileMonitorSource = {
+    findLatestFile: ({ directoryPath: directoryPathValue }) => {
+      return E.gen(function* () {
+        const latestSourceValue = yield* Ref.get(latestSourceValueRef);
+
+        if (Option.isNone(latestSourceValue)) {
+          return yield* new FileNotFoundError({
+            directoryPath: directoryPathValue,
+          });
+        }
+
+        return latestSourceValue.value;
       });
-    };
+    },
+    streamLatestFile: () => {
+      return Stream.fromEffectRepeat(
+        E.gen(function* () {
+          /*
+           * This signal occurs only when FileMonitor asks for another
+           * source snapshot. If a previous value was emitted, that means
+           * FileMonitor has already finished processing that value.
+           */
+          yield* Queue.offer(sourceRequests, undefined);
 
-    const awaitSourceRequest = Queue.take(sourceRequests);
+          const signal = yield* Queue.take(sourceSignals);
 
-    const fileMonitorSource = {
-      findLatestFile: ({ directoryPath: directoryPathValue }) => {
-        return E.gen(function* () {
-          const latestSourceValue = yield* Ref.get(latestSourceValueRef);
-
-          if (Option.isNone(latestSourceValue)) {
-            return yield* new FileNotFoundError({
-              directoryPath: directoryPathValue,
-            });
+          if (signal._tag === "FAILURE") {
+            return yield* signal.error;
           }
 
-          return latestSourceValue.value;
-        });
-      },
-      streamLatestFile: () => {
-        return Stream.fromEffectRepeat(
-          E.gen(function* () {
-            /*
-             * This signal occurs only when FileMonitor asks for another
-             * source snapshot. If a previous value was emitted, that means
-             * FileMonitor has already finished processing that value.
-             */
-            yield* Queue.offer(sourceRequests, undefined);
+          return signal.value;
+        }),
+      );
+    },
+    streamStatus: () => {
+      return Stream.empty;
+    },
+  } satisfies FileMonitorSourceShape;
 
-            const signal = yield* Queue.take(sourceSignals);
+  const FileMonitorSourceMock = Layer.succeed(
+    FileMonitorSource,
+    fileMonitorSource,
+  );
 
-            if (signal._tag === "FAILURE") {
-              return yield* signal.error;
-            }
+  const FileMonitorTestDependenciesLive = FileMonitor.layerNoDeps.pipe(
+    Layer.provide(Layer.mergeAll(FileMonitorSourceMock, NodePlatformLayer)),
+  );
 
-            return signal.value;
-          }),
-        );
-      },
-      streamStatus: () => {
-        return Stream.empty;
-      },
-    } satisfies FileMonitorSourceShape;
+  const fileMonitor = yield* FileMonitor.pipe(
+    E.provide(FileMonitorTestDependenciesLive),
+  );
 
-    const FileMonitorSourceMock = Layer.succeed(
-      FileMonitorSource,
-      fileMonitorSource,
-    );
-
-    const FileMonitorTestDependenciesLive = FileMonitor.layerNoDeps.pipe(
-      Layer.provide(Layer.mergeAll(FileMonitorSourceMock, NodePlatformLayer)),
-    );
-
-    const fileMonitor = yield* FileMonitor.pipe(
-      E.provide(FileMonitorTestDependenciesLive),
-    );
-
-    return {
-      appendFile,
-      appendFileBytes,
-      awaitSourceRequest,
-      directoryPath,
-      emitFile,
-      emitNoFile,
-      emitSourceFailure,
-      emitSourceValue,
-      fileMonitor,
-      fileSystem,
-      getFileData,
-      getFilePath,
-      removeFile,
-      setModifiedTime,
-      truncateFile,
-      writeFile,
-      writeFileBytes,
-    };
-  });
-}
+  return {
+    appendFile,
+    appendFileBytes,
+    awaitSourceRequest,
+    directoryPath,
+    emitFile,
+    emitNoFile,
+    emitSourceFailure,
+    emitSourceValue,
+    fileMonitor,
+    fileSystem,
+    getFileData,
+    getFilePath,
+    removeFile,
+    setModifiedTime,
+    truncateFile,
+    writeFile,
+    writeFileBytes,
+  };
+});
 
 export const FileMonitorTestDependenciesLive = NodePlatformLayer;

@@ -69,9 +69,10 @@ export const makeFellowshipLogsRequestDAO = E.gen(function* () {
       .pipe(E.mapError(mapFellowshipLogsRequestDAOError));
   };
 
-  const getSummary: FellowshipLogsRequestDAOShape["getSummary"] = () => {
-    return E.gen(function* () {
-      const [row] = yield* sql`
+  const getSummary: FellowshipLogsRequestDAOShape["getSummary"] = E.fn(
+    "FellowshipLogsRequestDAO.getSummary",
+  )(function* () {
+    const [row] = yield* sql`
         WITH
           operation_cost AS (
             SELECT
@@ -110,11 +111,10 @@ export const makeFellowshipLogsRequestDAO = E.gen(function* () {
           LEFT JOIN operation_cost USING (operation)
       `;
 
-      return yield* Schema.decodeUnknownEffect(
-        FellowshipLogsRequestSummaryRowSchema,
-      )(row);
-    }).pipe(E.mapError(mapFellowshipLogsRequestDAOError));
-  };
+    return yield* Schema.decodeUnknownEffect(
+      FellowshipLogsRequestSummaryRowSchema,
+    )(row);
+  }, E.mapError(mapFellowshipLogsRequestDAOError));
 
   return {
     getSummary,

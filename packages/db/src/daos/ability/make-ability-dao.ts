@@ -16,8 +16,8 @@ function decodeAbilityRows(
 export const makeAbilityDAO = E.gen(function* () {
   const sql = yield* MainDatabase;
 
-  const getAll: AbilityDAOShape["getAll"] = () => {
-    return E.gen(function* () {
+  const getAll: AbilityDAOShape["getAll"] = E.fn("AbilityDAO.getAll")(
+    function* () {
       const rows = yield* sql`
         SELECT
           ability.created_at AS createdAt,
@@ -33,8 +33,8 @@ export const makeAbilityDAO = E.gen(function* () {
       `;
 
       return yield* decodeAbilityRows(rows);
-    });
-  };
+    },
+  );
 
   const getById: AbilityDAOShape["getById"] = E.fn("AbilityDAO.getById")(
     function* ({ id }) {

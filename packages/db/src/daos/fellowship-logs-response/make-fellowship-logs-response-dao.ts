@@ -156,11 +156,12 @@ export const makeFellowshipLogsResponseDAO = E.gen(function* () {
     );
   };
 
-  const deleteExpired: FellowshipLogsResponseDAOShape["deleteExpired"] = () => {
-    return E.gen(function* () {
-      const now = yield* nowMillis;
+  const deleteExpired: FellowshipLogsResponseDAOShape["deleteExpired"] = E.fn(
+    "FellowshipLogsResponseDAO.deleteExpired",
+  )(function* () {
+    const now = yield* nowMillis;
 
-      const rows = yield* sql`
+    const rows = yield* sql`
         DELETE FROM fellowship_logs_response
         WHERE
           expires_at IS NOT NULL
@@ -169,9 +170,8 @@ export const makeFellowshipLogsResponseDAO = E.gen(function* () {
           request_key
       `;
 
-      return rows.length;
-    }).pipe(E.mapError(mapFellowshipLogsResponseDAOError));
-  };
+    return rows.length;
+  }, E.mapError(mapFellowshipLogsResponseDAOError));
 
   const evictToSize: FellowshipLogsResponseDAOShape["evictToSize"] = ({
     maxBytes,

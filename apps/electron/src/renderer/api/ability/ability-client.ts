@@ -6,13 +6,11 @@ type AbilityIdArgs = {
   readonly id: string;
 };
 
-export function getAbilities() {
-  return E.gen(function* () {
-    const client = yield* AppApiClient;
+export const getAbilities = E.fn("getAbilities")(function* () {
+  const client = yield* AppApiClient;
 
-    return yield* client.abilities.getAbilities();
-  });
-}
+  return yield* client.abilities.getAbilities();
+});
 
 export const getAbility = E.fn("getAbility")(function* ({ id }: AbilityIdArgs) {
   const client = yield* AppApiClient;

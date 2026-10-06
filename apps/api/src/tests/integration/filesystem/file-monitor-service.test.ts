@@ -31,7 +31,7 @@ describe("FileMonitor", () => {
     test("delegates latest file discovery to FileMonitorSource", async () => {
       const program = E.scoped(
         E.gen(function* () {
-          const harness = yield* makeFileMonitorTestHarness();
+          const harness = yield* makeFileMonitorTestHarness;
 
           const filePath = harness.getFilePath("fellowship.txt");
 
@@ -55,7 +55,7 @@ describe("FileMonitor", () => {
     test("reads all non-empty lines from a file", async () => {
       const program = E.scoped(
         E.gen(function* () {
-          const harness = yield* makeFileMonitorTestHarness();
+          const harness = yield* makeFileMonitorTestHarness;
 
           yield* harness.writeFile(
             "fellowship.txt",
@@ -78,7 +78,7 @@ describe("FileMonitor", () => {
     test("streams all non-empty lines from a file", async () => {
       const program = E.scoped(
         E.gen(function* () {
-          const harness = yield* makeFileMonitorTestHarness();
+          const harness = yield* makeFileMonitorTestHarness;
 
           yield* harness.writeFile(
             "fellowship.txt",
@@ -103,7 +103,7 @@ describe("FileMonitor", () => {
     test('with startFrom "end" emits only lines appended after monitoring starts', async () => {
       const program = E.scoped(
         E.gen(function* () {
-          const harness = yield* makeFileMonitorTestHarness();
+          const harness = yield* makeFileMonitorTestHarness;
 
           yield* harness.writeFile(
             "fellowship.txt",
@@ -150,7 +150,7 @@ describe("FileMonitor", () => {
     test('with startFrom "start" reads the initial file immediately from the beginning', async () => {
       const program = E.scoped(
         E.gen(function* () {
-          const harness = yield* makeFileMonitorTestHarness();
+          const harness = yield* makeFileMonitorTestHarness;
 
           yield* harness.writeFile(
             "fellowship.txt",
@@ -197,7 +197,7 @@ describe("FileMonitor", () => {
     test("reads every line across multiple batches of appended lines", async () => {
       const program = E.scoped(
         E.gen(function* () {
-          const harness = yield* makeFileMonitorTestHarness();
+          const harness = yield* makeFileMonitorTestHarness;
 
           yield* harness.writeFile("fellowship.txt", "");
 
@@ -256,7 +256,7 @@ describe("FileMonitor", () => {
     test("reads all appended lines when multiple source snapshots are queued", async () => {
       const program = E.scoped(
         E.gen(function* () {
-          const harness = yield* makeFileMonitorTestHarness();
+          const harness = yield* makeFileMonitorTestHarness;
 
           yield* harness.writeFile("fellowship.txt", "");
 
@@ -314,7 +314,7 @@ describe("FileMonitor", () => {
     test("waits when no matching file exists and reads a file that appears later from its beginning", async () => {
       const program = E.scoped(
         E.gen(function* () {
-          const harness = yield* makeFileMonitorTestHarness();
+          const harness = yield* makeFileMonitorTestHarness;
 
           const lines = yield* makeStreamTestHarness(
             harness.fileMonitor.streamLatestFileLines({
@@ -359,7 +359,7 @@ describe("FileMonitor", () => {
     test("switches to a copied older file from its end instead of replaying it", async () => {
       const program = E.scoped(
         E.gen(function* () {
-          const harness = yield* makeFileMonitorTestHarness();
+          const harness = yield* makeFileMonitorTestHarness;
 
           yield* harness.writeFile("current.txt", "");
 
@@ -399,7 +399,7 @@ describe("FileMonitor", () => {
     test("reads a file from its beginning when its content started after monitoring, whatever its file times say", async () => {
       const program = E.scoped(
         E.gen(function* () {
-          const harness = yield* makeFileMonitorTestHarness();
+          const harness = yield* makeFileMonitorTestHarness;
 
           yield* harness.writeFile("current.txt", "");
 
@@ -441,7 +441,7 @@ describe("FileMonitor", () => {
     test("starts a file from its end when its content started before monitoring, whatever its file times say", async () => {
       const program = E.scoped(
         E.gen(function* () {
-          const harness = yield* makeFileMonitorTestHarness();
+          const harness = yield* makeFileMonitorTestHarness;
 
           yield* harness.writeFile("current.txt", "");
 
@@ -484,7 +484,7 @@ describe("FileMonitor", () => {
     test("does not emit lines when a source snapshot contains no new bytes", async () => {
       const program = E.scoped(
         E.gen(function* () {
-          const harness = yield* makeFileMonitorTestHarness();
+          const harness = yield* makeFileMonitorTestHarness;
 
           yield* harness.writeFile("fellowship.txt", "existing line\n");
 
@@ -529,7 +529,7 @@ describe("FileMonitor", () => {
     test("handles repeated identical snapshots after multiple writes", async () => {
       const program = E.scoped(
         E.gen(function* () {
-          const harness = yield* makeFileMonitorTestHarness();
+          const harness = yield* makeFileMonitorTestHarness;
 
           yield* harness.writeFile("fellowship.txt", "");
 
@@ -589,7 +589,7 @@ describe("FileMonitor", () => {
     test("emits only newly appended complete lines", async () => {
       const program = E.scoped(
         E.gen(function* () {
-          const harness = yield* makeFileMonitorTestHarness();
+          const harness = yield* makeFileMonitorTestHarness;
 
           yield* harness.writeFile("fellowship.txt", "");
 
@@ -641,7 +641,7 @@ describe("FileMonitor", () => {
     test("switches to a newer matching file", async () => {
       const program = E.scoped(
         E.gen(function* () {
-          const harness = yield* makeFileMonitorTestHarness();
+          const harness = yield* makeFileMonitorTestHarness;
 
           yield* harness.writeFile("first.txt", "");
 
@@ -712,7 +712,7 @@ describe("FileMonitor", () => {
     test("restarts from the beginning when the monitored file is truncated", async () => {
       const program = E.scoped(
         E.gen(function* () {
-          const harness = yield* makeFileMonitorTestHarness();
+          const harness = yield* makeFileMonitorTestHarness;
 
           yield* harness.writeFile(
             "fellowship.txt",
@@ -773,7 +773,7 @@ describe("FileMonitor", () => {
 
       const program = E.scoped(
         E.gen(function* () {
-          const harness = yield* makeFileMonitorTestHarness();
+          const harness = yield* makeFileMonitorTestHarness;
 
           const lines = harness.fileMonitor.streamLatestFileLines({
             directoryPath: harness.directoryPath,
@@ -809,7 +809,7 @@ describe("FileMonitor", () => {
     test("decodes a UTF-8 character split across appended reads", async () => {
       const program = E.scoped(
         E.gen(function* () {
-          const harness = yield* makeFileMonitorTestHarness();
+          const harness = yield* makeFileMonitorTestHarness;
 
           yield* harness.writeFile("fellowship.txt", "");
 
@@ -860,7 +860,7 @@ describe("FileMonitor", () => {
     test("resumes with a new matching file after the monitored file disappears", async () => {
       const program = E.scoped(
         E.gen(function* () {
-          const harness = yield* makeFileMonitorTestHarness();
+          const harness = yield* makeFileMonitorTestHarness;
 
           yield* harness.writeFile("first.txt", "");
 
@@ -912,7 +912,7 @@ describe("FileMonitor", () => {
     test("fails when the monitored file disappears before appended bytes can be read", async () => {
       const program = E.scoped(
         E.gen(function* () {
-          const harness = yield* makeFileMonitorTestHarness();
+          const harness = yield* makeFileMonitorTestHarness;
 
           yield* harness.writeFile("fellowship.txt", "");
 

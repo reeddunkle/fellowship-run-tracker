@@ -10,8 +10,8 @@ import { AppSettingModel } from "@frt/db/models/app-setting-model.ts";
 export const makeAppSettingDAO = E.gen(function* () {
   const sql = yield* MainDatabase;
 
-  const get: AppSettingDAOShape["get"] = () => {
-    return E.gen(function* () {
+  const get: AppSettingDAOShape["get"] = E.fn("AppSettingDAO.get")(
+    function* () {
       const rows = yield* sql`
         SELECT
           id,
@@ -29,8 +29,8 @@ export const makeAppSettingDAO = E.gen(function* () {
       )(rows);
 
       return Option.fromUndefinedOr(appSetting);
-    });
-  };
+    },
+  );
 
   const insert: AppSettingDAOShape["insert"] = E.fn("AppSettingDAO.insert")(
     function* ({ fellowshipLogDirectory }) {

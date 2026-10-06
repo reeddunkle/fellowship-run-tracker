@@ -87,8 +87,7 @@ export const makeFellowshipLogsGatewayFixture = E.fn(
 )(function* ({ fixtureDirectory }: MakeFellowshipLogsFixtureLiveOptions) {
   const fileSystem = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
-  const rateLimitTracker =
-    yield* makeFellowshipLogsGatewayRateLimitDataTracker();
+  const rateLimitTracker = yield* makeFellowshipLogsGatewayRateLimitDataTracker;
 
   function getReportFixtureDirectory(
     options: GetFellowshipLogsGatewayReportOptions,

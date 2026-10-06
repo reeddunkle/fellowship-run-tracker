@@ -10,8 +10,8 @@ import { LiveSplitSettingModel } from "@frt/db/models/live-split-setting-model.t
 export const makeLiveSplitSettingDAO = E.gen(function* () {
   const sql = yield* MainDatabase;
 
-  const get: LiveSplitSettingDAOShape["get"] = () => {
-    return E.gen(function* () {
+  const get: LiveSplitSettingDAOShape["get"] = E.fn("LiveSplitSettingDAO.get")(
+    function* () {
       const rows = yield* sql`
         SELECT
           id,
@@ -31,8 +31,8 @@ export const makeLiveSplitSettingDAO = E.gen(function* () {
       )(rows);
 
       return Option.fromUndefinedOr(liveSplitSetting);
-    });
-  };
+    },
+  );
 
   const insert: LiveSplitSettingDAOShape["insert"] = E.fn(
     "LiveSplitSettingDAO.insert",

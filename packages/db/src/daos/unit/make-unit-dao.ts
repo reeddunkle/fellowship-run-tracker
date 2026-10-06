@@ -79,9 +79,8 @@ function createUnitModels(
 export const makeUnitDAO = E.gen(function* () {
   const sql = yield* MainDatabase;
 
-  const getAll: UnitDAOShape["getAll"] = () => {
-    return E.gen(function* () {
-      const rows = yield* sql`
+  const getAll: UnitDAOShape["getAll"] = E.fn("UnitDAO.getAll")(function* () {
+    const rows = yield* sql`
         SELECT
           unit.created_at AS createdAt,
           unit.id,
@@ -100,11 +99,10 @@ export const makeUnitDAO = E.gen(function* () {
           unit.name
       `;
 
-      const unitRows = yield* decodeUnitRows(rows);
+    const unitRows = yield* decodeUnitRows(rows);
 
-      return createUnitModels(unitRows);
-    });
-  };
+    return createUnitModels(unitRows);
+  });
 
   const getById: UnitDAOShape["getById"] = E.fn("UnitDAO.getById")(function* ({
     id,

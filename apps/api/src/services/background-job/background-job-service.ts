@@ -45,18 +45,18 @@ export type BackgroundJobShape = {
 const makeBackgroundJob = E.gen(function* () {
   const backgroundJobQueue = yield* BackgroundJobQueue;
 
-  const getSnapshot: BackgroundJobShape["getSnapshot"] = () => {
-    return E.gen(function* () {
-      const revision = yield* backgroundJobQueue.revision;
-      const jobs = yield* backgroundJobQueue.listVisible();
+  const getSnapshot: BackgroundJobShape["getSnapshot"] = E.fn(
+    "BackgroundJob.getSnapshot",
+  )(function* () {
+    const revision = yield* backgroundJobQueue.revision;
+    const jobs = yield* backgroundJobQueue.listVisible();
 
-      return {
-        jobs: A.getSomes(jobs.map(createBackgroundJobApiItem)),
-        revision,
-        sessionId: backgroundJobQueue.sessionId,
-      };
-    });
-  };
+    return {
+      jobs: A.getSomes(jobs.map(createBackgroundJobApiItem)),
+      revision,
+      sessionId: backgroundJobQueue.sessionId,
+    };
+  });
 
   const retry: BackgroundJobShape["retry"] = (options) => {
     return backgroundJobQueue.retry(options).pipe(E.asVoid);

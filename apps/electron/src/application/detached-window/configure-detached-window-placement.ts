@@ -78,46 +78,46 @@ function placeDetachedWindow({
   });
 }
 
-export function configureDetachedWindowPlacement() {
-  return E.gen(function* () {
-    const windowState = yield* WindowState;
-    const runPromise = E.runPromiseWith(yield* E.context<WindowState>());
+export const configureDetachedWindowPlacement = E.fn(
+  "configureDetachedWindowPlacement",
+)(function* () {
+  const windowState = yield* WindowState;
+  const runPromise = E.runPromiseWith(yield* E.context<WindowState>());
 
-    let savedState = yield* windowState.getDetachedWindowState;
+  let savedState = yield* windowState.getDetachedWindowState;
 
-    const saveDetachedWindowState = (state: DetachedWindowStateValue) => {
-      savedState = Option.some(state);
+  const saveDetachedWindowState = (state: DetachedWindowStateValue) => {
+    savedState = Option.some(state);
 
-      return runPromise(windowState.setDetachedWindowState(state));
-    };
+    return runPromise(windowState.setDetachedWindowState(state));
+  };
 
-    yield* E.sync(() => {
-      app.on("web-contents-created", (_event, opener) => {
-        opener.on("did-create-window", (detachedWindow) => {
-          placeDetachedWindow({ detachedWindow, opener, savedState });
+  yield* E.sync(() => {
+    app.on("web-contents-created", (_event, opener) => {
+      opener.on("did-create-window", (detachedWindow) => {
+        placeDetachedWindow({ detachedWindow, opener, savedState });
 
-          let lastUserBounds: WindowBounds | undefined;
+        let lastUserBounds: WindowBounds | undefined;
 
-          trackWindowStateSaves({
-            getSnapshot: () => {
-              return lastUserBounds === undefined
-                ? undefined
-                : { bounds: lastUserBounds };
-            },
-            save: saveDetachedWindowState,
-            subscribe: (scheduleSave) => {
-              const recordUserPlacement = () => {
-                lastUserBounds = anchorToCurrentBounds(detachedWindow);
-                scheduleSave();
-              };
+        trackWindowStateSaves({
+          getSnapshot: () => {
+            return lastUserBounds === undefined
+              ? undefined
+              : { bounds: lastUserBounds };
+          },
+          save: saveDetachedWindowState,
+          subscribe: (scheduleSave) => {
+            const recordUserPlacement = () => {
+              lastUserBounds = anchorToCurrentBounds(detachedWindow);
+              scheduleSave();
+            };
 
-              detachedWindow.on("moved", recordUserPlacement);
-              detachedWindow.on("resized", recordUserPlacement);
-            },
-            window: detachedWindow,
-          });
+            detachedWindow.on("moved", recordUserPlacement);
+            detachedWindow.on("resized", recordUserPlacement);
+          },
+          window: detachedWindow,
         });
       });
     });
   });
-}
+});

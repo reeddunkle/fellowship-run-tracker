@@ -15,37 +15,35 @@ const FLUSH_INTERVAL = "2 seconds";
 
 const SAVE_TIMEOUT = "1 second";
 
-function makeRecordingRequestDAO() {
-  return E.gen(function* () {
-    const savedBatchSizes = yield* Ref.make<ReadonlyArray<number>>([]);
-    const savedBatches = yield* Queue.unbounded<number>();
+const makeRecordingRequestDAO = E.gen(function* () {
+  const savedBatchSizes = yield* Ref.make<ReadonlyArray<number>>([]);
+  const savedBatches = yield* Queue.unbounded<number>();
 
-    const requestDAO = {
-      getSummary: () => {
-        return E.die("unexpected call: getSummary");
-      },
-      insertMany: (events) => {
-        return Ref.update(savedBatchSizes, (batchSizes) => {
-          return [...batchSizes, events.length];
-        }).pipe(E.andThen(Queue.offer(savedBatches, events.length)));
-      },
-    } satisfies FellowshipLogsRequestDAOShape;
+  const requestDAO = {
+    getSummary: () => {
+      return E.die("unexpected call: getSummary");
+    },
+    insertMany: (events) => {
+      return Ref.update(savedBatchSizes, (batchSizes) => {
+        return [...batchSizes, events.length];
+      }).pipe(E.andThen(Queue.offer(savedBatches, events.length)));
+    },
+  } satisfies FellowshipLogsRequestDAOShape;
 
-    const awaitSavedBatches = (batchCount: number) => {
-      return TestClock.withLive(
-        E.forEach(Array.from({ length: batchCount }), () => {
-          return Queue.take(savedBatches);
-        }).pipe(E.timeout(SAVE_TIMEOUT)),
-      );
-    };
+  const awaitSavedBatches = (batchCount: number) => {
+    return TestClock.withLive(
+      E.forEach(Array.from({ length: batchCount }), () => {
+        return Queue.take(savedBatches);
+      }).pipe(E.timeout(SAVE_TIMEOUT)),
+    );
+  };
 
-    return {
-      awaitSavedBatches,
-      getSavedBatchSizes: Ref.get(savedBatchSizes),
-      requestDAO,
-    };
-  });
-}
+  return {
+    awaitSavedBatches,
+    getSavedBatchSizes: Ref.get(savedBatchSizes),
+    requestDAO,
+  };
+});
 
 function recordEvents(
   analytics: E.Success<typeof makeFellowshipLogsAnalytics>,
@@ -68,7 +66,7 @@ describe("FellowshipLogsAnalytics batching", () => {
   test("saves a backlog of events without waiting between full batches", async () => {
     const savedBatchSizes = await E.gen(function* () {
       const { awaitSavedBatches, getSavedBatchSizes, requestDAO } =
-        yield* makeRecordingRequestDAO();
+        yield* makeRecordingRequestDAO;
 
       const analytics = yield* makeFellowshipLogsAnalytics.pipe(
         E.provideService(FellowshipLogsRequestDAO, requestDAO),

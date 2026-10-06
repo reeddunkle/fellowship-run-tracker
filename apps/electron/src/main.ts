@@ -53,71 +53,69 @@ function runProgram<A, ProgramError>(
   return electronRuntime.runPromiseExit(effect.pipe(E.tapCause(logCause)));
 }
 
-function runElectronMain() {
-  return E.gen(function* () {
-    const electronRendererHost = yield* appConfig.electronRendererHost;
-    const electronRendererPort = yield* appConfig.electronRendererPort;
+const runElectronMain = E.fn("runElectronMain")(function* () {
+  const electronRendererHost = yield* appConfig.electronRendererHost;
+  const electronRendererPort = yield* appConfig.electronRendererPort;
 
-    const useRendererDevServer =
-      !app.isPackaged && process.argv.includes("--renderer-dev-server");
+  const useRendererDevServer =
+    !app.isPackaged && process.argv.includes("--renderer-dev-server");
 
-    const rendererDevServerUrl = useRendererDevServer
-      ? `http://${electronRendererHost}:${electronRendererPort}`
-      : undefined;
+  const rendererDevServerUrl = useRendererDevServer
+    ? `http://${electronRendererHost}:${electronRendererPort}`
+    : undefined;
 
-    const windowOptions = {
-      currentDirectoryPath,
-      rendererDevServerUrl,
-    };
+  const windowOptions = {
+    currentDirectoryPath,
+    rendererDevServerUrl,
+  };
 
-    const appBaseUrl =
-      rendererDevServerUrl ??
-      `${pathToFileURL(path.join(currentDirectoryPath, "renderer")).href}/`;
+  const appBaseUrl =
+    rendererDevServerUrl ??
+    `${pathToFileURL(path.join(currentDirectoryPath, "renderer")).href}/`;
 
-    configureErrorLogging(electronRuntime);
-    configureWebContentsSecurity({
-      appBaseUrl,
-      preloadPath: path.join(currentDirectoryPath, "preload.cjs"),
-    });
-    configureWindowIpc(electronRuntime);
-    yield* configureDetachedWindowPlacement();
-
-    app.on("activate", () => {
-      if (BrowserWindow.getAllWindows().length === 0) {
-        void runProgram(createWindow(windowOptions));
-      }
-    });
-
-    const runQuitCleanupOnce = makeQuitCleanup({
-      disposeRuntime: disposeElectronRuntime,
-      flushWindowState: flushWindowStateSavesForQuit,
-    });
-
-    app.on(
-      "before-quit",
-      makeBeforeQuitHandler({
-        quit: () => {
-          app.quit();
-        },
-        runQuitCleanupOnce,
-      }),
-    );
-
-    app.on("browser-window-created", (_event, window) => {
-      window.once("session-end", () => {
-        void runQuitCleanupOnce();
-      });
-    });
-
-    app.on("window-all-closed", () => {
-      if (process.platform !== "darwin") {
-        app.quit();
-      }
-    });
-
-    void runProgram(runElectronApplication(windowOptions)).then(exitOnFailure);
+  configureErrorLogging(electronRuntime);
+  configureWebContentsSecurity({
+    appBaseUrl,
+    preloadPath: path.join(currentDirectoryPath, "preload.cjs"),
   });
-}
+  configureWindowIpc(electronRuntime);
+  yield* configureDetachedWindowPlacement();
+
+  app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      void runProgram(createWindow(windowOptions));
+    }
+  });
+
+  const runQuitCleanupOnce = makeQuitCleanup({
+    disposeRuntime: disposeElectronRuntime,
+    flushWindowState: flushWindowStateSavesForQuit,
+  });
+
+  app.on(
+    "before-quit",
+    makeBeforeQuitHandler({
+      quit: () => {
+        app.quit();
+      },
+      runQuitCleanupOnce,
+    }),
+  );
+
+  app.on("browser-window-created", (_event, window) => {
+    window.once("session-end", () => {
+      void runQuitCleanupOnce();
+    });
+  });
+
+  app.on("window-all-closed", () => {
+    if (process.platform !== "darwin") {
+      app.quit();
+    }
+  });
+
+  void runProgram(runElectronApplication(windowOptions)).then(exitOnFailure);
+});
 
 if (hasSingleInstanceLock) {
   void runProgram(runElectronMain()).then(exitOnFailure);

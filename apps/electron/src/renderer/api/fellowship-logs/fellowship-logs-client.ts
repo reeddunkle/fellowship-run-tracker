@@ -8,29 +8,25 @@ import {
 
 import { AppApiClient } from "@/renderer/services/app-api-client/app-api-client";
 
-export function getRateLimitData() {
-  return E.gen(function* () {
-    const client = yield* AppApiClient;
+export const getRateLimitData = E.fn("getRateLimitData")(function* () {
+  const client = yield* AppApiClient;
 
-    return yield* client.fellowshipLogs.getFellowshipLogsRateLimitData();
-  });
-}
+  return yield* client.fellowshipLogs.getFellowshipLogsRateLimitData();
+});
 
-export function getLastKnownRateLimitData() {
-  return E.gen(function* () {
+export const getLastKnownRateLimitData = E.fn("getLastKnownRateLimitData")(
+  function* () {
     const client = yield* AppApiClient;
 
     return yield* client.fellowshipLogs.getFellowshipLogsLastKnownRateLimitData();
-  });
-}
+  },
+);
 
-export function getAnalytics() {
-  return E.gen(function* () {
-    const client = yield* AppApiClient;
+export const getAnalytics = E.fn("getAnalytics")(function* () {
+  const client = yield* AppApiClient;
 
-    return yield* client.fellowshipLogs.getFellowshipLogsAnalytics();
-  });
-}
+  return yield* client.fellowshipLogs.getFellowshipLogsAnalytics();
+});
 
 export const getDungeonRunMetadata = E.fn("getDungeonRunMetadata")(function* (
   options: FellowshipLogsApiDungeonRunReference,
@@ -52,13 +48,13 @@ export const queueDungeonRunImport = E.fn("queueDungeonRunImport")(function* (
   });
 });
 
-export function getImportedDungeonRuns() {
-  return E.gen(function* () {
+export const getImportedDungeonRuns = E.fn("getImportedDungeonRuns")(
+  function* () {
     const client = yield* AppApiClient;
 
     return yield* client.fellowshipLogs.getFellowshipLogsDungeonRuns();
-  });
-}
+  },
+);
 
 export type DeleteImportedDungeonRunArgs = {
   readonly dungeonRunId: DungeonRunId;

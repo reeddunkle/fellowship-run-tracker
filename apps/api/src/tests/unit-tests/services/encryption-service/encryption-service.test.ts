@@ -7,7 +7,7 @@ import { runTest } from "@frt/api/tests/common/run-test.ts";
 
 function roundTrip(plaintext: string) {
   return E.gen(function* () {
-    const { encryption } = yield* makeEncryptionHarness();
+    const { encryption } = yield* makeEncryptionHarness;
 
     const encryptedValue = yield* encryption.encrypt(Redacted.make(plaintext));
     const decryptedValue = yield* encryption.decrypt(encryptedValue);
@@ -32,7 +32,7 @@ describe("Encryption", () => {
   test("produces different encrypted values for the same plaintext", async () => {
     const program = E.scoped(
       E.gen(function* () {
-        const { encryption } = yield* makeEncryptionHarness();
+        const { encryption } = yield* makeEncryptionHarness;
 
         const value = Redacted.make("secret-value");
 

@@ -67,8 +67,7 @@ export const makeFellowshipLogsGatewayFromQuery = E.fn(
   "makeFellowshipLogsGatewayFromQuery",
 )(function* (query: Query) {
   const responseCache = yield* FellowshipLogsGatewayResponseCache;
-  const rateLimitTracker =
-    yield* makeFellowshipLogsGatewayRateLimitDataTracker();
+  const rateLimitTracker = yield* makeFellowshipLogsGatewayRateLimitDataTracker;
   const trackedQuery = makeTrackedQuery(query, rateLimitTracker);
 
   const getDungeonRunMetadata: FellowshipLogsGatewayShape["getDungeonRunMetadata"] =

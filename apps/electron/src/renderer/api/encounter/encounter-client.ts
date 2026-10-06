@@ -9,13 +9,11 @@ type EncounterIdArgs = {
   readonly id: string;
 };
 
-export function getEncounters() {
-  return E.gen(function* () {
-    const client = yield* AppApiClient;
+export const getEncounters = E.fn("getEncounters")(function* () {
+  const client = yield* AppApiClient;
 
-    return yield* client.encounters.getEncounters();
-  });
-}
+  return yield* client.encounters.getEncounters();
+});
 
 export const getEncounter = E.fn("getEncounter")(function* ({
   dungeonId,

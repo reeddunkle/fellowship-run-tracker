@@ -266,9 +266,10 @@ export const makeConfigurationDAO = E.gen(function* () {
     return Option.some(yield* hydrateConfiguration(configuration));
   }, E.mapError(mapConfigurationDAOError));
 
-  const getAll: ConfigurationDAOShape["getAll"] = () => {
-    return E.gen(function* () {
-      const rows = yield* sql`
+  const getAll: ConfigurationDAOShape["getAll"] = E.fn(
+    "ConfigurationDAO.getAll",
+  )(function* () {
+    const rows = yield* sql`
         SELECT
           id,
           configuration_definition_id,
@@ -283,18 +284,15 @@ export const makeConfigurationDAO = E.gen(function* () {
           created_at
       `;
 
-      const configurations = yield* decodeConfigurationRows(rows);
-      const persistedConfigurations: Array<PersistedConfiguration> = [];
+    const configurations = yield* decodeConfigurationRows(rows);
+    const persistedConfigurations: Array<PersistedConfiguration> = [];
 
-      for (const configuration of configurations) {
-        persistedConfigurations.push(
-          yield* hydrateConfiguration(configuration),
-        );
-      }
+    for (const configuration of configurations) {
+      persistedConfigurations.push(yield* hydrateConfiguration(configuration));
+    }
 
-      return persistedConfigurations;
-    }).pipe(E.mapError(mapConfigurationDAOError));
-  };
+    return persistedConfigurations;
+  }, E.mapError(mapConfigurationDAOError));
 
   const getPersistedConfiguration: (
     id: ConfigurationId,

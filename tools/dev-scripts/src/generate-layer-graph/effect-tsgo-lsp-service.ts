@@ -214,392 +214,391 @@ const make = E.gen(function* () {
   const path = yield* Path.Path;
   const childProcessSpawner = yield* ChildProcessSpawner.ChildProcessSpawner;
 
-  const setup = (): E.Effect<LspSetup, EffectTsGoLspError, Scope.Scope> => {
-    return E.gen(function* () {
-      const projectRoot = yield* fileSystem.realPath(".").pipe(
+  const setup: () => E.Effect<LspSetup, EffectTsGoLspError, Scope.Scope> = E.fn(
+    "EffectTsGoLsp.setup",
+  )(function* () {
+    const projectRoot = yield* fileSystem.realPath(".").pipe(
+      E.mapError((cause) => {
+        return new EffectTsGoLspWorkspaceError({
+          cause,
+          operation: "ResolveProjectRoot",
+        });
+      }),
+    );
+
+    const workspaceDirectory = yield* fileSystem
+      .makeTempDirectoryScoped({
+        directory: projectRoot,
+        prefix: ".effect-tsgo-lsp-",
+      })
+      .pipe(
         E.mapError((cause) => {
           return new EffectTsGoLspWorkspaceError({
             cause,
-            operation: "ResolveProjectRoot",
+            operation: "CreateWorkspace",
           });
         }),
       );
 
-      const workspaceDirectory = yield* fileSystem
-        .makeTempDirectoryScoped({
-          directory: projectRoot,
-          prefix: ".effect-tsgo-lsp-",
-        })
-        .pipe(
-          E.mapError((cause) => {
-            return new EffectTsGoLspWorkspaceError({
-              cause,
-              operation: "CreateWorkspace",
-            });
-          }),
-        );
+    const sourceDirectory = path.join(projectRoot, "src");
+    const workspaceSourceDirectory = path.join(workspaceDirectory, "src");
 
-      const sourceDirectory = path.join(projectRoot, "src");
-      const workspaceSourceDirectory = path.join(workspaceDirectory, "src");
+    yield* fileSystem.copy(sourceDirectory, workspaceSourceDirectory).pipe(
+      E.mapError((cause) => {
+        return new EffectTsGoLspWorkspaceError({
+          cause,
+          operation: "CopySourceTree",
+        });
+      }),
+    );
 
-      yield* fileSystem.copy(sourceDirectory, workspaceSourceDirectory).pipe(
+    const effectTsConfigPath = path.join(projectRoot, "tsconfig.effect.json");
+    const workspaceTsConfigPath = path.join(
+      workspaceDirectory,
+      "tsconfig.json",
+    );
+
+    const workspaceTsConfig = encodeWorkspaceTsConfig({
+      compilerOptions: {
+        paths: {
+          "@/*": ["./src/*"],
+        },
+      },
+      extends: effectTsConfigPath,
+      include: ["src/**/*.ts", "src/**/*.tsx"],
+    });
+
+    yield* fileSystem
+      .writeFileString(workspaceTsConfigPath, `${workspaceTsConfig}\n`)
+      .pipe(
         E.mapError((cause) => {
           return new EffectTsGoLspWorkspaceError({
             cause,
-            operation: "CopySourceTree",
+            operation: "WriteTsConfig",
           });
         }),
       );
 
-      const effectTsConfigPath = path.join(projectRoot, "tsconfig.effect.json");
-      const workspaceTsConfigPath = path.join(
-        workspaceDirectory,
-        "tsconfig.json",
+    yield* E.logDebug("Created Effect TS-Go LSP workspace.", {
+      projectRoot,
+      workspaceDirectory,
+    });
+
+    const executableCommand = yield* getTsGoExecutableCommand({
+      projectRoot,
+    });
+
+    const dependencyMessage = getTsGoDependencyMessage(executableCommand);
+
+    const executablePath = yield* childProcessSpawner
+      .string(executableCommand.command)
+      .pipe(
+        E.map((output) => {
+          return output.trim();
+        }),
+        E.mapError((cause) => {
+          return new EffectTsGoLspExecutableError({
+            cause,
+            description: dependencyMessage,
+          });
+        }),
       );
 
-      const workspaceTsConfig = encodeWorkspaceTsConfig({
-        compilerOptions: {
-          paths: {
-            "@/*": ["./src/*"],
-          },
-        },
-        extends: effectTsConfigPath,
-        include: ["src/**/*.ts", "src/**/*.tsx"],
-      });
+    const stdinQueue = yield* Queue.unbounded<Uint8Array>();
 
-      yield* fileSystem
-        .writeFileString(workspaceTsConfigPath, `${workspaceTsConfig}\n`)
-        .pipe(
-          E.mapError((cause) => {
-            return new EffectTsGoLspWorkspaceError({
-              cause,
-              operation: "WriteTsConfig",
-            });
-          }),
-        );
-
-      yield* E.logDebug("Created Effect TS-Go LSP workspace.", {
-        projectRoot,
-        workspaceDirectory,
-      });
-
-      const executableCommand = yield* getTsGoExecutableCommand({
-        projectRoot,
-      });
-
-      const dependencyMessage = getTsGoDependencyMessage(executableCommand);
-
-      const executablePath = yield* childProcessSpawner
-        .string(executableCommand.command)
-        .pipe(
-          E.map((output) => {
-            return output.trim();
-          }),
-          E.mapError((cause) => {
-            return new EffectTsGoLspExecutableError({
-              cause,
-              description: dependencyMessage,
-            });
-          }),
-        );
-
-      const stdinQueue = yield* Queue.unbounded<Uint8Array>();
-
-      const child: ChildProcessHandle = yield* childProcessSpawner
-        .spawn(
-          ChildProcess.make(executablePath, ["--lsp", "--stdio"], {
-            cwd: workspaceDirectory,
-            stderr: "inherit",
-            stdin: Stream.fromQueue(stdinQueue),
-          }),
-        )
-        .pipe(
-          E.mapError((cause) => {
-            return new EffectTsGoLspProcessError({
-              cause,
-              description: dependencyMessage,
-              operation: "Launch",
-            });
-          }),
-        );
-
-      yield* E.logDebug("Started Effect TS-Go LSP process.", {
-        executablePath,
-        pid: child.pid,
-        platform: executableCommand.platform,
-        platformDependency: executableCommand.platformDependency,
-        workspaceDirectory,
-      });
-
-      const nextRequestId = yield* Ref.make(1);
-      const pendingRequests = new Map<number, PendingRequest>();
-
-      let responseBuffer: Buffer<ArrayBufferLike> = Buffer.alloc(0);
-
-      const sendMessage = (message: unknown) => {
-        return encodeMessage(message).pipe(
-          E.flatMap((encodedMessage) => {
-            return Queue.offer(stdinQueue, encodedMessage);
-          }),
-          E.asVoid,
-          E.mapError((cause) => {
-            return new EffectTsGoLspProtocolError({
-              cause,
-              operation: "WriteMessage",
-            });
-          }),
-        );
-      };
-
-      const failPendingRequests = E.fn("EffectTsGoLsp.failPendingRequests")(
-        function* (error: EffectTsGoLspError) {
-          const currentPendingRequests = [...pendingRequests.values()];
-
-          pendingRequests.clear();
-
-          yield* E.forEach(
-            currentPendingRequests,
-            (pendingRequest) => {
-              return Deferred.fail(pendingRequest, error).pipe(E.asVoid);
-            },
-            {
-              discard: true,
-            },
-          );
-        },
+    const child: ChildProcessHandle = yield* childProcessSpawner
+      .spawn(
+        ChildProcess.make(executablePath, ["--lsp", "--stdio"], {
+          cwd: workspaceDirectory,
+          stderr: "inherit",
+          stdin: Stream.fromQueue(stdinQueue),
+        }),
+      )
+      .pipe(
+        E.mapError((cause) => {
+          return new EffectTsGoLspProcessError({
+            cause,
+            description: dependencyMessage,
+            operation: "Launch",
+          });
+        }),
       );
 
-      const respondToServerRequest = (serverRequest: JsonRpcRequest) => {
-        return sendMessage({
-          id: serverRequest.id,
-          jsonrpc: "2.0",
-          result: null,
-        });
-      };
+    yield* E.logDebug("Started Effect TS-Go LSP process.", {
+      executablePath,
+      pid: child.pid,
+      platform: executableCommand.platform,
+      platformDependency: executableCommand.platformDependency,
+      workspaceDirectory,
+    });
 
-      const resolvePendingRequest = (response: JsonRpcResponse) => {
-        if (typeof response.id !== "number") {
-          return E.void;
-        }
+    const nextRequestId = yield* Ref.make(1);
+    const pendingRequests = new Map<number, PendingRequest>();
 
-        const pendingRequest = pendingRequests.get(response.id);
+    let responseBuffer: Buffer<ArrayBufferLike> = Buffer.alloc(0);
 
-        if (pendingRequest === undefined) {
-          return E.void;
-        }
+    const sendMessage = (message: unknown) => {
+      return encodeMessage(message).pipe(
+        E.flatMap((encodedMessage) => {
+          return Queue.offer(stdinQueue, encodedMessage);
+        }),
+        E.asVoid,
+        E.mapError((cause) => {
+          return new EffectTsGoLspProtocolError({
+            cause,
+            operation: "WriteMessage",
+          });
+        }),
+      );
+    };
 
-        pendingRequests.delete(response.id);
+    const failPendingRequests = E.fn("EffectTsGoLsp.failPendingRequests")(
+      function* (error: EffectTsGoLspError) {
+        const currentPendingRequests = [...pendingRequests.values()];
 
-        return Deferred.succeed(pendingRequest, response).pipe(E.asVoid);
-      };
-
-      const handleMessage = (message: JsonRpcMessage) => {
-        if (isServerRequest(message)) {
-          return respondToServerRequest(message);
-        }
-
-        if (isResponse(message)) {
-          return resolvePendingRequest(message);
-        }
-
-        return E.void;
-      };
-
-      const handleData: (
-        chunk: Uint8Array,
-      ) => E.Effect<void, EffectTsGoLspProtocolError> = E.fn(
-        "EffectTsGoLsp.handleData",
-      )(function* (chunk) {
-        responseBuffer = Buffer.concat([responseBuffer, Buffer.from(chunk)]);
-
-        const messages: Array<JsonRpcMessage> = [];
-
-        yield* E.try({
-          catch: (cause) => {
-            return new EffectTsGoLspProtocolError({
-              cause,
-              operation: "ParseMessage",
-            });
-          },
-          try: () => {
-            while (true) {
-              const parsedMessage = parseNextMessage(responseBuffer);
-
-              if (parsedMessage === undefined) {
-                return;
-              }
-
-              responseBuffer = parsedMessage.remaining;
-              messages.push(parsedMessage.message);
-            }
-          },
-        });
+        pendingRequests.clear();
 
         yield* E.forEach(
-          messages,
-          (parsedMessage) => {
-            return handleMessage(parsedMessage);
+          currentPendingRequests,
+          (pendingRequest) => {
+            return Deferred.fail(pendingRequest, error).pipe(E.asVoid);
           },
           {
             discard: true,
           },
         );
-      });
+      },
+    );
 
-      yield* child.stdout.pipe(
-        Stream.runForEach((chunk) => {
-          return handleData(chunk);
-        }),
-        E.catch((cause) => {
-          const error = new EffectTsGoLspProcessError({
+    const respondToServerRequest = (serverRequest: JsonRpcRequest) => {
+      return sendMessage({
+        id: serverRequest.id,
+        jsonrpc: "2.0",
+        result: null,
+      });
+    };
+
+    const resolvePendingRequest = (response: JsonRpcResponse) => {
+      if (typeof response.id !== "number") {
+        return E.void;
+      }
+
+      const pendingRequest = pendingRequests.get(response.id);
+
+      if (pendingRequest === undefined) {
+        return E.void;
+      }
+
+      pendingRequests.delete(response.id);
+
+      return Deferred.succeed(pendingRequest, response).pipe(E.asVoid);
+    };
+
+    const handleMessage = (message: JsonRpcMessage) => {
+      if (isServerRequest(message)) {
+        return respondToServerRequest(message);
+      }
+
+      if (isResponse(message)) {
+        return resolvePendingRequest(message);
+      }
+
+      return E.void;
+    };
+
+    const handleData: (
+      chunk: Uint8Array,
+    ) => E.Effect<void, EffectTsGoLspProtocolError> = E.fn(
+      "EffectTsGoLsp.handleData",
+    )(function* (chunk) {
+      responseBuffer = Buffer.concat([responseBuffer, Buffer.from(chunk)]);
+
+      const messages: Array<JsonRpcMessage> = [];
+
+      yield* E.try({
+        catch: (cause) => {
+          return new EffectTsGoLspProtocolError({
             cause,
-            operation: "ReadOutput",
+            operation: "ParseMessage",
           });
+        },
+        try: () => {
+          while (true) {
+            const parsedMessage = parseNextMessage(responseBuffer);
 
-          return E.gen(function* () {
-            yield* E.logError(error.message, {
-              cause,
-            });
+            if (parsedMessage === undefined) {
+              return;
+            }
 
-            yield* failPendingRequests(error);
-          });
-        }),
-        E.forkScoped,
-      );
-
-      yield* child.exitCode.pipe(
-        E.flatMap((exitCode) => {
-          return failPendingRequests(
-            new EffectTsGoLspProcessError({
-              exitCode,
-              operation: "Exit",
-            }),
-          );
-        }),
-        E.catch((cause) => {
-          return failPendingRequests(
-            new EffectTsGoLspProcessError({
-              cause,
-              operation: "WaitForExit",
-            }),
-          );
-        }),
-        E.forkScoped,
-      );
-
-      const request: EffectTsGoLspService["request"] = E.fn(
-        "EffectTsGoLsp.request",
-      )(function* (lspRequest) {
-        const requestId = yield* Ref.getAndUpdate(
-          nextRequestId,
-          (currentRequestId) => {
-            return currentRequestId + 1;
-          },
-        );
-
-        const responseDeferred = yield* Deferred.make<
-          JsonRpcResponse,
-          EffectTsGoLspError
-        >();
-
-        pendingRequests.set(requestId, responseDeferred);
-
-        yield* sendMessage({
-          id: requestId,
-          jsonrpc: "2.0",
-          method: lspRequest.method,
-          params: lspRequest.params,
-        }).pipe(
-          E.tapError(() => {
-            return E.sync(() => {
-              pendingRequests.delete(requestId);
-            });
-          }),
-        );
-
-        return yield* Deferred.await(responseDeferred).pipe(
-          E.ensuring(
-            E.sync(() => {
-              pendingRequests.delete(requestId);
-            }),
-          ),
-        );
-      });
-
-      const notify: EffectTsGoLspService["notify"] = (notification) => {
-        return sendMessage({
-          jsonrpc: "2.0",
-          method: notification.method,
-          params: notification.params,
-        });
-      };
-
-      const rootUri = pathToFileURL(workspaceDirectory).href;
-
-      yield* request({
-        method: "initialize",
-        params: {
-          capabilities: {
-            textDocument: {
-              documentSymbol: {
-                hierarchicalDocumentSymbolSupport: true,
-              },
-              hover: {
-                contentFormat: ["markdown", "plaintext"],
-              },
-            },
-          },
-          processId: process.pid,
-          rootUri,
+            responseBuffer = parsedMessage.remaining;
+            messages.push(parsedMessage.message);
+          }
         },
       });
 
-      yield* notify({
-        method: "initialized",
-        params: {},
-      });
+      yield* E.forEach(
+        messages,
+        (parsedMessage) => {
+          return handleMessage(parsedMessage);
+        },
+        {
+          discard: true,
+        },
+      );
+    });
 
-      yield* E.logInfo("Initialized Effect TS-Go LSP.", {
-        rootUri,
-      });
+    yield* child.stdout.pipe(
+      Stream.runForEach((chunk) => {
+        return handleData(chunk);
+      }),
+      E.catch((cause) => {
+        const error = new EffectTsGoLspProcessError({
+          cause,
+          operation: "ReadOutput",
+        });
 
-      const shutdown = () => {
         return E.gen(function* () {
-          yield* E.logDebug("Shutting down Effect TS-Go LSP.");
-
-          yield* request({
-            method: "shutdown",
-          }).pipe(E.timeout("2 seconds"));
-
-          yield* notify({
-            method: "exit",
+          yield* E.logError(error.message, {
+            cause,
           });
 
-          yield* E.logDebug("Requested graceful Effect TS-Go LSP exit.");
-        }).pipe(
-          E.catch((cause) => {
-            return E.logWarning(
-              "Failed to gracefully shut down the Effect TS-Go LSP.",
-              {
-                cause,
-              },
-            );
+          yield* failPendingRequests(error);
+        });
+      }),
+      E.forkScoped,
+    );
+
+    yield* child.exitCode.pipe(
+      E.flatMap((exitCode) => {
+        return failPendingRequests(
+          new EffectTsGoLspProcessError({
+            exitCode,
+            operation: "Exit",
           }),
         );
-      };
+      }),
+      E.catch((cause) => {
+        return failPendingRequests(
+          new EffectTsGoLspProcessError({
+            cause,
+            operation: "WaitForExit",
+          }),
+        );
+      }),
+      E.forkScoped,
+    );
 
-      yield* E.addFinalizer(() => {
-        return shutdown();
-      });
+    const request: EffectTsGoLspService["request"] = E.fn(
+      "EffectTsGoLsp.request",
+    )(function* (lspRequest) {
+      const requestId = yield* Ref.getAndUpdate(
+        nextRequestId,
+        (currentRequestId) => {
+          return currentRequestId + 1;
+        },
+      );
 
-      return {
-        notify,
-        projectRoot,
-        request,
-        workspaceDirectory,
-      } satisfies LspSetup;
+      const responseDeferred = yield* Deferred.make<
+        JsonRpcResponse,
+        EffectTsGoLspError
+      >();
+
+      pendingRequests.set(requestId, responseDeferred);
+
+      yield* sendMessage({
+        id: requestId,
+        jsonrpc: "2.0",
+        method: lspRequest.method,
+        params: lspRequest.params,
+      }).pipe(
+        E.tapError(() => {
+          return E.sync(() => {
+            pendingRequests.delete(requestId);
+          });
+        }),
+      );
+
+      return yield* Deferred.await(responseDeferred).pipe(
+        E.ensuring(
+          E.sync(() => {
+            pendingRequests.delete(requestId);
+          }),
+        ),
+      );
     });
-  };
+
+    const notify: EffectTsGoLspService["notify"] = (notification) => {
+      return sendMessage({
+        jsonrpc: "2.0",
+        method: notification.method,
+        params: notification.params,
+      });
+    };
+
+    const rootUri = pathToFileURL(workspaceDirectory).href;
+
+    yield* request({
+      method: "initialize",
+      params: {
+        capabilities: {
+          textDocument: {
+            documentSymbol: {
+              hierarchicalDocumentSymbolSupport: true,
+            },
+            hover: {
+              contentFormat: ["markdown", "plaintext"],
+            },
+          },
+        },
+        processId: process.pid,
+        rootUri,
+      },
+    });
+
+    yield* notify({
+      method: "initialized",
+      params: {},
+    });
+
+    yield* E.logInfo("Initialized Effect TS-Go LSP.", {
+      rootUri,
+    });
+
+    const shutdown = E.fn("EffectTsGoLsp.shutdown")(
+      function* () {
+        yield* E.logDebug("Shutting down Effect TS-Go LSP.");
+
+        yield* request({
+          method: "shutdown",
+        }).pipe(E.timeout("2 seconds"));
+
+        yield* notify({
+          method: "exit",
+        });
+
+        yield* E.logDebug("Requested graceful Effect TS-Go LSP exit.");
+      },
+      E.catch((cause) => {
+        return E.logWarning(
+          "Failed to gracefully shut down the Effect TS-Go LSP.",
+          {
+            cause,
+          },
+        );
+      }),
+    );
+
+    yield* E.addFinalizer(() => {
+      return shutdown();
+    });
+
+    return {
+      notify,
+      projectRoot,
+      request,
+      workspaceDirectory,
+    } satisfies LspSetup;
+  });
 
   const lspSetup = yield* setup();
 

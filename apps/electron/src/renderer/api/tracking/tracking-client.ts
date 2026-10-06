@@ -14,10 +14,8 @@ export const startTracking = E.fn("startTracking")(function* (
   });
 });
 
-export function stopTracking() {
-  return E.gen(function* () {
-    const client = yield* AppApiClient;
+export const stopTracking = E.fn("stopTracking")(function* () {
+  const client = yield* AppApiClient;
 
-    return yield* client.tracking.stopTracking();
-  });
-}
+  return yield* client.tracking.stopTracking();
+});

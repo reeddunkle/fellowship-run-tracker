@@ -16,29 +16,27 @@ export type EncryptionHarness = {
   readonly encryptionKeyDirectory: string;
 };
 
-export function makeEncryptionHarness(): E.Effect<
+export const makeEncryptionHarness: E.Effect<
   EncryptionHarness,
   PlatformError.PlatformError,
   Scope.Scope
-> {
-  return E.gen(function* () {
-    const fileSystem = yield* FileSystem.FileSystem;
+> = E.gen(function* () {
+  const fileSystem = yield* FileSystem.FileSystem;
 
-    const encryptionKeyDirectory = yield* fileSystem.makeTempDirectoryScoped();
+  const encryptionKeyDirectory = yield* fileSystem.makeTempDirectoryScoped();
 
-    const encryptionKeyStorageLive = makeEncryptionKeyStorageTestLayer(
-      encryptionKeyDirectory,
-    );
+  const encryptionKeyStorageLive = makeEncryptionKeyStorageTestLayer(
+    encryptionKeyDirectory,
+  );
 
-    const EncryptionTestLive = Encryption.layerNoDeps.pipe(
-      Layer.provide(encryptionKeyStorageLive),
-    );
+  const EncryptionTestLive = Encryption.layerNoDeps.pipe(
+    Layer.provide(encryptionKeyStorageLive),
+  );
 
-    const encryption = yield* Encryption.pipe(E.provide(EncryptionTestLive));
+  const encryption = yield* Encryption.pipe(E.provide(EncryptionTestLive));
 
-    return {
-      encryption,
-      encryptionKeyDirectory,
-    } satisfies EncryptionHarness;
-  }).pipe(E.provide(NodePlatformLayer));
-}
+  return {
+    encryption,
+    encryptionKeyDirectory,
+  } satisfies EncryptionHarness;
+}).pipe(E.provide(NodePlatformLayer));

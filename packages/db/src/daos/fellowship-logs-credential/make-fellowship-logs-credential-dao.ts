@@ -10,9 +10,10 @@ import { FellowshipLogsCredentialModel } from "@frt/db/models/fellowship-logs-cr
 export const makeFellowshipLogsCredentialDAO = E.gen(function* () {
   const sql = yield* MainDatabase;
 
-  const get: FellowshipLogsCredentialDAOShape["get"] = () => {
-    return E.gen(function* () {
-      const rows = yield* sql`
+  const get: FellowshipLogsCredentialDAOShape["get"] = E.fn(
+    "FellowshipLogsCredentialDAO.get",
+  )(function* () {
+    const rows = yield* sql`
         SELECT
           id,
           client_id,
@@ -25,13 +26,12 @@ export const makeFellowshipLogsCredentialDAO = E.gen(function* () {
           id = 1
       `;
 
-      const [credential] = yield* Schema.decodeUnknownEffect(
-        Schema.Array(FellowshipLogsCredentialModel),
-      )(rows);
+    const [credential] = yield* Schema.decodeUnknownEffect(
+      Schema.Array(FellowshipLogsCredentialModel),
+    )(rows);
 
-      return Option.fromUndefinedOr(credential);
-    });
-  };
+    return Option.fromUndefinedOr(credential);
+  });
 
   const insert: FellowshipLogsCredentialDAOShape["insert"] = E.fn(
     "FellowshipLogsCredentialDAO.insert",

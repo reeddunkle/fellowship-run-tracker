@@ -117,32 +117,28 @@ export const makeConnectionManager: <Connection, AcquireError>(
     );
 
     const connect: ConnectionManager<Connection, AcquireError>["connect"] =
-      () => {
-        return E.gen(function* () {
-          yield* E.logDebug(`Installing ${name} connection.`);
+      E.fn("ConnectionManager.connect")(function* () {
+        yield* E.logDebug(`Installing ${name} connection.`);
 
-          yield* ScopedRef.set(connectionRef, acquireConnection);
+        yield* ScopedRef.set(connectionRef, acquireConnection);
 
-          yield* E.logDebug(`${name} connection installed.`);
+        yield* E.logDebug(`${name} connection installed.`);
 
-          yield* SubscriptionRef.set(statusRef, CONNECTED_STATUS);
+        yield* SubscriptionRef.set(statusRef, CONNECTED_STATUS);
 
-          yield* E.logInfo(`${name} connection status changed to Connected.`);
-        }).pipe(connectionLock.withPermit);
-      };
+        yield* E.logInfo(`${name} connection status changed to Connected.`);
+      }, connectionLock.withPermit);
 
     const disconnect: ConnectionManager<
       Connection,
       AcquireError
-    >["disconnect"] = () => {
-      return E.gen(function* () {
-        yield* E.logDebug(`Disconnecting from ${name}.`);
+    >["disconnect"] = E.fn("ConnectionManager.disconnect")(function* () {
+      yield* E.logDebug(`Disconnecting from ${name}.`);
 
-        yield* ScopedRef.set(connectionRef, E.succeedNone);
+      yield* ScopedRef.set(connectionRef, E.succeedNone);
 
-        yield* setDisconnected;
-      }).pipe(connectionLock.withPermit);
-    };
+      yield* setDisconnected;
+    }, connectionLock.withPermit);
 
     return {
       connect,

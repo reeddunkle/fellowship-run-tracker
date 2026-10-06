@@ -116,7 +116,7 @@ export const makeFellowshipTrackerTestHarness = E.fn(
   });
 
   const dungeonRunWebSocketBroadcasterHarness =
-    yield* makeWebSocketBroadcasterTestHarness();
+    yield* makeWebSocketBroadcasterTestHarness;
 
   const interruptedDungeonRunIds = yield* Ref.make<ReadonlyArray<DungeonRunId>>(
     [],
