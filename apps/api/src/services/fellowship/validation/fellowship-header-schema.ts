@@ -6,5 +6,5 @@ const FellowshipEventTypeSchema = Schema.Literals(fellowshipEventTypes);
 
 export const FellowshipLogHeaderSchema = Schema.TupleWithRest(
   Schema.Tuple([Schema.String, FellowshipEventTypeSchema]),
-  [Schema.String],
+  [Schema.Unknown],
 );

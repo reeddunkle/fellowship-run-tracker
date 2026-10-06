@@ -1,12 +1,12 @@
 import { NodePath } from "@effect/platform-node";
 import * as A from "effect/Array";
 import * as E from "effect/Effect";
-import * as Path from "effect/Path";
 import * as Schema from "effect/Schema";
 import { describe, expect, test } from "vitest";
 
 import { FellowshipTracker } from "@frt/api/application/fellowship-tracker/fellowship-tracker-service.ts";
 import { expectDungeonRunObservations } from "@frt/api/tests/common/expect-dungeon-run-observations.ts";
+import { EVERDAWN_GROVE_64_TIMED_LOG_PATH } from "@frt/api/tests/common/fixtures/fellowship-log-fixtures.ts";
 import { makeFellowshipTrackerIntegrationTestHarness } from "@frt/api/tests/common/harnesses/fellowship-tracker-integration-test-harness.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { DungeonRunApiMessageSchema } from "@frt/api-contract/websocket/dungeon-run/dungeon-run-api-message-schema.ts";
@@ -17,19 +17,15 @@ describe("FellowshipTracker dungeon run WebSocket messages", () => {
   test("broadcasts dungeon run state updates while processing a run", async () => {
     const program = E.scoped(
       E.gen(function* () {
-        const path = yield* Path.Path;
-
         const { dungeonRunWebSocketBroadcasterHarness, layer } =
           yield* makeFellowshipTrackerIntegrationTestHarness();
-
-        const logFilePath = path.join(import.meta.dirname, "log.txt");
 
         yield* E.gen(function* () {
           const fellowshipTracker = yield* FellowshipTracker;
 
           yield* fellowshipTracker.replayLog({
             configuration,
-            logFilePath,
+            logFilePath: EVERDAWN_GROVE_64_TIMED_LOG_PATH,
           });
         }).pipe(E.provide(layer));
 

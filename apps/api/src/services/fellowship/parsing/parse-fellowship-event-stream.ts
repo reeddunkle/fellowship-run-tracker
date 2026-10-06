@@ -3,10 +3,7 @@ import * as Stream from "effect/Stream";
 
 import { type FellowshipEventInvalidError } from "@frt/api/errors/fellowship-event-error.ts";
 import { getEventType } from "@frt/api/services/fellowship/parsing/get-event-type.ts";
-import {
-  type FellowshipEvent,
-  isParsedFellowshipEventType,
-} from "@frt/shared/fellowship/validation/fellowship-event-schema.ts";
+import { type FellowshipEvent } from "@frt/shared/fellowship/validation/fellowship-event-schema.ts";
 
 import { parseFellowshipLogLine } from "./parse-fellowship-log-line.ts";
 
@@ -16,14 +13,19 @@ function getParseIssue(error: FellowshipEventInvalidError) {
     : String(error.cause);
 }
 
-export function parseFellowshipEventStream<Error, R>(
+export type InspectedFellowshipLogLine = {
+  readonly event: FellowshipEvent | undefined;
+  readonly line: string;
+};
+
+export function inspectFellowshipLogLines<Error, R>(
   lines: Stream.Stream<string, Error, R>,
-): Stream.Stream<FellowshipEvent, Error, R> {
+): Stream.Stream<InspectedFellowshipLogLine, Error, R> {
   return Stream.suspend(() => {
     const reportedEventTypes = new Set<string>();
 
     const logInvalidLine = (error: FellowshipEventInvalidError) => {
-      const eventType = getEventType(error.line) ?? "unknown";
+      const eventType = getEventType(error.line.split("|")) ?? "unknown";
 
       const firstForEventType = !reportedEventTypes.has(eventType);
 
@@ -47,22 +49,25 @@ export function parseFellowshipEventStream<Error, R>(
     };
 
     return lines.pipe(
-      Stream.filter((line) => {
-        return isParsedFellowshipEventType(getEventType(line));
-      }),
       Stream.mapEffect((line) => {
         return parseFellowshipLogLine(line).pipe(
-          E.catchTags({
-            FellowshipEventInvalidError: (error) => {
-              return logInvalidLine(error).pipe(E.as(undefined));
-            },
-            FellowshipEventUnsupportedTypeError: () => {
-              return E.void;
-            },
+          E.catchTag("FellowshipEventInvalidError", (error) => {
+            return logInvalidLine(error).pipe(E.as(undefined));
+          }),
+          E.map((event) => {
+            return { event, line };
           }),
         );
       }),
-      Stream.filter((event): event is FellowshipEvent => event !== undefined),
     );
   });
+}
+
+export function parseFellowshipEventStream<Error, R>(
+  lines: Stream.Stream<string, Error, R>,
+): Stream.Stream<FellowshipEvent, Error, R> {
+  return inspectFellowshipLogLines(lines).pipe(
+    Stream.map(({ event }) => event),
+    Stream.filter((event): event is FellowshipEvent => event !== undefined),
+  );
 }

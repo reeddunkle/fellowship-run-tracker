@@ -10,6 +10,7 @@ import { app, BrowserWindow } from "electron";
 import { appConfig } from "@frt/api/app-config.ts";
 import { appPaths } from "@frt/api/helpers/app-paths.ts";
 import { logCause } from "@frt/api/logging/log-cause.ts";
+import { enableFellowshipEventSchemaJit } from "@frt/api/services/fellowship/parsing/enable-fellowship-event-schema-jit.ts";
 
 import { configureErrorLogging } from "@/application/configure-error-logging.ts";
 import { configureWebContentsSecurity } from "@/application/configure-web-contents-security.ts";
@@ -30,6 +31,8 @@ import { createWindow } from "./application/create-window.ts";
 import { runElectronApplication } from "./application/run-electron-application.ts";
 
 const currentDirectoryPath = path.dirname(fileURLToPath(import.meta.url));
+
+enableFellowshipEventSchemaJit();
 
 app.setPath("userData", appPaths.electronUserData);
 

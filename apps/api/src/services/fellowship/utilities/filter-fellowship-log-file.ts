@@ -3,7 +3,7 @@ import * as FileSystem from "effect/FileSystem";
 import type * as PlatformError from "effect/PlatformError";
 import * as Stream from "effect/Stream";
 
-import { parseFellowshipEventStream } from "@frt/api/services/fellowship/parsing/parse-fellowship-event-stream.ts";
+import { inspectFellowshipLogLines } from "@frt/api/services/fellowship/parsing/parse-fellowship-event-stream.ts";
 
 export type FilterFellowshipLogFileOptions = {
   readonly inputFilePath: string;
@@ -16,23 +16,6 @@ export type FilterFellowshipLogFileResult = {
 };
 
 export type FilterFellowshipLogFileError = PlatformError.PlatformError;
-
-type FilterLineResult = {
-  readonly isRelevant: boolean;
-  readonly line: string;
-};
-
-function inspectLogLine(line: string): E.Effect<FilterLineResult> {
-  return parseFellowshipEventStream(Stream.make(line)).pipe(
-    Stream.runCollect,
-    E.map((events) => {
-      return {
-        isRelevant: events.length > 0,
-        line,
-      };
-    }),
-  );
-}
 
 export const filterFellowshipLogFile: (
   options: FilterFellowshipLogFileOptions,
@@ -51,13 +34,13 @@ export const filterFellowshipLogFile: (
     .pipe(
       Stream.decodeText,
       Stream.splitLines,
-      Stream.mapEffect(inspectLogLine),
+      inspectFellowshipLogLines,
       Stream.runCollect,
     );
 
   const relevantLines = results
     .filter((result) => {
-      return result.isRelevant;
+      return result.event !== undefined;
     })
     .map((result) => {
       return result.line;

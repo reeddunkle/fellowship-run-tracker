@@ -3,6 +3,8 @@ import * as NodeRuntime from "@effect/platform-node/NodeRuntime";
 import * as Command from "effect/cli/Command";
 import * as E from "effect/Effect";
 
+import { enableFellowshipEventSchemaJit } from "@frt/api/services/fellowship/parsing/enable-fellowship-event-schema-jit.ts";
+import { benchParseCommand } from "@frt/cli/commands/bench-parse-command.ts";
 import { captureFellowshipLogsReportCommand } from "@frt/cli/commands/capture-fellowship-logs-report-command.ts";
 import { filterLogCommand } from "@frt/cli/commands/filter-log-command.ts";
 import { generateLSSCommand } from "@frt/cli/commands/generate-lss-command.ts";
@@ -14,9 +16,12 @@ import { splitLogCommand } from "@frt/cli/commands/split-log-command.ts";
 
 import packageJson from "../package.json" with { type: "json" };
 
+enableFellowshipEventSchemaJit();
+
 const cli = Command.make("fellowship-run-tracker").pipe(
   Command.withDescription("Developer tools for Fellowship Run Tracker."),
   Command.withSubcommands([
+    benchParseCommand,
     captureFellowshipLogsReportCommand,
     filterLogCommand,
     generateLSSCommand,

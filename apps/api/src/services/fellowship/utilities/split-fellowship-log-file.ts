@@ -1,13 +1,14 @@
-import * as A from "effect/Array";
 import * as E from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
 import * as Path from "effect/Path";
 import * as Stream from "effect/Stream";
 
-import { parseFellowshipEventStream } from "@frt/api/services/fellowship/parsing/parse-fellowship-event-stream.ts";
+import {
+  type InspectedFellowshipLogLine,
+  inspectFellowshipLogLines,
+} from "@frt/api/services/fellowship/parsing/parse-fellowship-event-stream.ts";
 import { FELLOWSHIP_EVENT } from "@frt/shared/fellowship/constants/fellowship-event.ts";
 import { type DungeonStartEvent } from "@frt/shared/fellowship/validation/events/dungeon-start.ts";
-import { type FellowshipEvent } from "@frt/shared/fellowship/validation/fellowship-event-schema.ts";
 
 import { isDungeonExitEvent } from "./is-dungeon-exit-event.ts";
 
@@ -25,11 +26,6 @@ type SplitFellowshipLogFileOutput = {
   readonly retainedLineCount: number;
 };
 
-type InspectedLogLine = {
-  readonly event: FellowshipEvent | undefined;
-  readonly line: string;
-};
-
 type DungeonRunAttempt = {
   readonly isComplete: boolean;
   readonly lines: ReadonlyArray<string>;
@@ -45,20 +41,6 @@ type SplitRunAttemptsState = {
   readonly attempts: DungeonRunAttempt[];
   readonly currentAttempt: MutableDungeonRunAttempt | undefined;
 };
-
-function inspectLogLine(line: string): E.Effect<InspectedLogLine> {
-  return parseFellowshipEventStream(Stream.make(line)).pipe(
-    Stream.runCollect,
-    E.map((events) => {
-      const [event] = A.fromIterable(events);
-
-      return {
-        event,
-        line,
-      };
-    }),
-  );
-}
 
 function createDungeonSlug(dungeonName: string): string {
   return dungeonName
@@ -99,7 +81,7 @@ function completeAttempt({
 }
 
 function splitRunAttempts(
-  inspectedLines: ReadonlyArray<InspectedLogLine>,
+  inspectedLines: ReadonlyArray<InspectedFellowshipLogLine>,
 ): ReadonlyArray<DungeonRunAttempt> {
   const initialState: SplitRunAttemptsState = {
     attempts: [],
@@ -205,7 +187,7 @@ export const splitFellowshipLogFile = E.fn("splitFellowshipLogFile")(
       .pipe(
         Stream.decodeText,
         Stream.splitLines,
-        Stream.mapEffect(inspectLogLine),
+        inspectFellowshipLogLines,
         Stream.runCollect,
       );
 

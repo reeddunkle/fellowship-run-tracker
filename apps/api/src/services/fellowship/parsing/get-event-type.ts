@@ -8,8 +8,10 @@ const decodeFellowshipLogHeader = Schema.decodeUnknownOption(
   FellowshipLogHeaderSchema,
 );
 
-export function getEventType(line: string): FellowshipEventType | undefined {
-  return decodeFellowshipLogHeader(line.split("|")).pipe(
+export function getEventType(
+  fields: ReadonlyArray<string>,
+): FellowshipEventType | undefined {
+  return decodeFellowshipLogHeader(fields).pipe(
     Option.map(([, eventType]) => eventType),
     Option.getOrUndefined,
   );
