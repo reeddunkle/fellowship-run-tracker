@@ -78,7 +78,7 @@ function getQueryName(query: string) {
   return /query\s+(\w+)/.exec(query)?.[1] ?? "RateLimitData";
 }
 
-const makeRecordedFightQuery = E.fn("test.makeRecordedFightQuery")(function* (
+const makeRecordedFightQuery = E.fnUntraced(function* (
   control: FellowshipLogsFetchControl,
 ) {
   const fileSystem = yield* FileSystem.FileSystem;
@@ -199,7 +199,7 @@ const makeRecordedFightQuery = E.fn("test.makeRecordedFightQuery")(function* (
     }
   };
 
-  const query: Query = E.fn("test.query")(function* (request, responseSchema) {
+  const query: Query = E.fnUntraced(function* (request, responseSchema) {
     const queryName = getQueryName(request.query);
 
     control.requests.push(queryName);

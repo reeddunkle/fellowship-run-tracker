@@ -26,7 +26,7 @@ type RecordingFeed = {
   readonly stops: Ref.Ref<number>;
 };
 
-const makeRecordingFeed = E.fn("test.makeRecordingFeed")(function* (
+const makeRecordingFeed = E.fnUntraced(function* (
   afterFirstStatus: (start: number) => Stream.Stream<never> = () => {
     return Stream.never;
   },

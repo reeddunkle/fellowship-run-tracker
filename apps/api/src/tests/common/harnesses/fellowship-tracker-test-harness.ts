@@ -76,9 +76,9 @@ export const MOCK_DUNGEON_RUN_ID = Schema.decodeSync(DungeonRunIdSchema)(
   "0198d56c-9999-7abc-8def-1234567890ab",
 );
 
-export const makeFellowshipTrackerTestHarness = E.fn(
-  "test.makeFellowshipTrackerTestHarness",
-)(function* (options: MakeFellowshipTrackerTestHarnessOptions = {}) {
+export const makeFellowshipTrackerTestHarness = E.fnUntraced(function* (
+  options: MakeFellowshipTrackerTestHarnessOptions = {},
+) {
   const configurationDefinitionId =
     options.configurationDefinitionId ?? MOCK_CONFIGURATION_DEFINITION_ID;
 
@@ -123,6 +123,12 @@ export const makeFellowshipTrackerTestHarness = E.fn(
   );
 
   const getInterruptedDungeonRunIds = Ref.get(interruptedDungeonRunIds);
+
+  const observations = yield* Ref.make<
+    ReadonlyArray<Parameters<DungeonRunObservationDAOShape["observe"]>[0]>
+  >([]);
+
+  const getObservations = Ref.get(observations);
 
   const getLastBroadcastMessage = dungeonRunWebSocketBroadcasterHarness
     .getParsedMessages()
@@ -229,8 +235,10 @@ export const makeFellowshipTrackerTestHarness = E.fn(
     getHistoryByDungeon: () => {
       return E.succeed([]);
     },
-    observe: () => {
-      return E.void;
+    observe: (observation) => {
+      return Ref.update(observations, (currentObservations) => {
+        return [...currentObservations, observation];
+      });
     },
   } satisfies DungeonRunObservationDAOShape;
 
@@ -282,6 +290,7 @@ export const makeFellowshipTrackerTestHarness = E.fn(
     fellowshipHarness,
     getInterruptedDungeonRunIds,
     getLastBroadcastMessage,
+    getObservations,
     layer: FellowshipTrackerTestLive,
     liveSplit,
     trackingInterrupted,

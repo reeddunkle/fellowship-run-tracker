@@ -29,28 +29,33 @@ const renderMermaid: (
   void,
   LayerGraphRenderError,
   ChildProcessSpawner.ChildProcessSpawner
-> = E.fn("renderMermaid")(function* ({ input, output }) {
-  const childProcessSpawner = yield* ChildProcessSpawner.ChildProcessSpawner;
+> = E.fn("renderMermaid")(
+  function* ({ input, output }) {
+    const childProcessSpawner = yield* ChildProcessSpawner.ChildProcessSpawner;
 
-  const command = yield* makePnpmCommand([
-    "exec",
-    "mmdc",
-    "-i",
-    input,
-    "-o",
-    output,
-  ]);
+    const command = yield* makePnpmCommand([
+      "exec",
+      "mmdc",
+      "-i",
+      input,
+      "-o",
+      output,
+    ]);
 
-  yield* childProcessSpawner.string(command).pipe(
-    E.mapError((cause) => {
-      return new LayerGraphRenderError({
-        cause,
-        input,
-        output,
-      });
-    }),
-  );
-});
+    yield* childProcessSpawner.string(command);
+  },
+  (effect, { input, output }) => {
+    return effect.pipe(
+      E.mapError((cause) => {
+        return new LayerGraphRenderError({
+          cause,
+          input,
+          output,
+        });
+      }),
+    );
+  },
+);
 
 const program = E.gen(function* () {
   yield* E.forEach(renderTargets, renderMermaid, {

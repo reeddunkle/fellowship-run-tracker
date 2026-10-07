@@ -11,20 +11,20 @@ import { type FellowshipMilestoneConfiguration } from "@frt/shared/fellowship/co
 
 const mapConfigurationError: (
   error: ConfigurationDAOError,
-) => E.Effect<never, HttpApiError.InternalServerError> = E.fn(
-  "mapConfigurationError",
-)(function* (error) {
-  yield* E.logError("Configuration persistence operation failed.", {
-    error,
-  });
+) => E.Effect<never, HttpApiError.InternalServerError> = E.fnUntraced(
+  function* (error) {
+    yield* E.logError("Configuration persistence operation failed.", {
+      error,
+    });
 
-  return yield* new HttpApiError.InternalServerError();
-});
+    return yield* new HttpApiError.InternalServerError();
+  },
+);
 
 const ConfigurationsApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "configurations",
-  E.fn("ConfigurationsApi.handlers")(function* (handlers) {
+  E.fnUntraced(function* (handlers) {
     const configurationLibrary = yield* ConfigurationLibrary;
 
     return handlers

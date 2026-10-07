@@ -28,18 +28,18 @@ function createDungeonRunApiMessage({
   };
 }
 
-export const publishDungeonRunState = E.fn("publishDungeonRunState")(
-  function* ({ state }: PublishDungeonRunStateOptions) {
-    const webSocketBroadcaster = yield* DungeonRunWebSocketBroadcaster;
+export const publishDungeonRunState = E.fnUntraced(function* ({
+  state,
+}: PublishDungeonRunStateOptions) {
+  const webSocketBroadcaster = yield* DungeonRunWebSocketBroadcaster;
 
-    const message = createDungeonRunApiMessage({
-      state,
-    });
+  const message = createDungeonRunApiMessage({
+    state,
+  });
 
-    const encodedMessage = yield* Schema.encodeEffect(
-      DungeonRunApiMessageFromJsonStringSchema,
-    )(message);
+  const encodedMessage = yield* Schema.encodeEffect(
+    DungeonRunApiMessageFromJsonStringSchema,
+  )(message);
 
-    yield* webSocketBroadcaster.publish(encodedMessage);
-  },
-);
+  yield* webSocketBroadcaster.publish(encodedMessage);
+});

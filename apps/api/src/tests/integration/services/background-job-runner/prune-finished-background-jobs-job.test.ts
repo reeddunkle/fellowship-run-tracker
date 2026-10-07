@@ -8,7 +8,7 @@ import { runBackgroundJob } from "@frt/api/tests/common/run-background-job.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { BackgroundJobDAO } from "@frt/db/daos/background-job/background-job-dao.ts";
 
-const finishJob = E.fn("test.finish-background-job")(function* ({
+const finishJob = E.fnUntraced(function* ({
   queue,
   status,
 }: {

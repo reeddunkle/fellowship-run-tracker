@@ -61,9 +61,11 @@ const makeFellowship = E.gen(function* () {
     );
   };
 
-  const readEvents: FellowshipShape["readEvents"] = (filePath: string) => {
-    return streamEvents(filePath).pipe(Stream.runCollect);
-  };
+  const readEvents: FellowshipShape["readEvents"] = E.fn(
+    "Fellowship.readEvents",
+  )(function* (filePath: string) {
+    return yield* streamEvents(filePath).pipe(Stream.runCollect);
+  });
 
   const liveEvents: FellowshipShape["liveEvents"] = () => {
     return Stream.unwrap(

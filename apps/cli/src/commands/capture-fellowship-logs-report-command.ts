@@ -232,7 +232,7 @@ const captureFellowshipLogsReport = E.fn("captureFellowshipLogsReport")(
 );
 
 const runCaptureFellowshipLogsReportCommand = E.fn(
-  "cli.capture-fellowship-logs-report.credentials",
+  "runCaptureFellowshipLogsReportCommand",
 )(function* (input: CaptureFellowshipLogsReportCommandInput) {
   const clientIdOption = yield* appConfig.fellowshipLogsClientId;
   const clientSecretOption = yield* appConfig.fellowshipLogsClientSecret;

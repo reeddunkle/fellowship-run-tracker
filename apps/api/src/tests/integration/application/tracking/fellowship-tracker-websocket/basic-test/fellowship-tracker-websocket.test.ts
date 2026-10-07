@@ -34,6 +34,17 @@ describe("FellowshipTracker dungeon run WebSocket messages", () => {
 
         expect(messages.length).toBeGreaterThan(0);
 
+        const consecutiveDuplicateMessages = messages.filter(
+          (message, index) => {
+            return (
+              index > 0 &&
+              JSON.stringify(message) === JSON.stringify(messages[index - 1])
+            );
+          },
+        );
+
+        expect(consecutiveDuplicateMessages).toEqual([]);
+
         const firstMessage = messages[0];
 
         const decodedFirstMessage = yield* Schema.decodeUnknownEffect(

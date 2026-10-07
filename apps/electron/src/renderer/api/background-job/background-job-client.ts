@@ -8,15 +8,17 @@ export type BackgroundJobCommandArgs = {
   readonly id: BackgroundJobId;
 };
 
-export const getBackgroundJobs = E.fn("getBackgroundJobs")(function* () {
+export const getBackgroundJobs = E.fn(
+  "BackgroundJobApiClient.getBackgroundJobs",
+)(function* () {
   const client = yield* AppApiClient;
 
   return yield* client.backgroundJob.getBackgroundJobs();
 });
 
-export const cancelBackgroundJob = E.fn("cancelBackgroundJob")(function* ({
-  id,
-}: BackgroundJobCommandArgs) {
+export const cancelBackgroundJob = E.fn(
+  "BackgroundJobApiClient.cancelBackgroundJob",
+)(function* ({ id }: BackgroundJobCommandArgs) {
   const client = yield* AppApiClient;
 
   yield* client.backgroundJob.cancelBackgroundJob({
@@ -24,9 +26,9 @@ export const cancelBackgroundJob = E.fn("cancelBackgroundJob")(function* ({
   });
 });
 
-export const retryBackgroundJob = E.fn("retryBackgroundJob")(function* ({
-  id,
-}: BackgroundJobCommandArgs) {
+export const retryBackgroundJob = E.fn(
+  "BackgroundJobApiClient.retryBackgroundJob",
+)(function* ({ id }: BackgroundJobCommandArgs) {
   const client = yield* AppApiClient;
 
   yield* client.backgroundJob.retryBackgroundJob({
@@ -34,9 +36,9 @@ export const retryBackgroundJob = E.fn("retryBackgroundJob")(function* ({
   });
 });
 
-export const dismissBackgroundJob = E.fn("dismissBackgroundJob")(function* ({
-  id,
-}: BackgroundJobCommandArgs) {
+export const dismissBackgroundJob = E.fn(
+  "BackgroundJobApiClient.dismissBackgroundJob",
+)(function* ({ id }: BackgroundJobCommandArgs) {
   const client = yield* AppApiClient;
 
   yield* client.backgroundJob.dismissBackgroundJob({

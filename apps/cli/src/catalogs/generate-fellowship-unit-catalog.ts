@@ -112,7 +112,7 @@ function createUnitCatalog(
 }
 
 export const generateFellowshipUnitCatalog = E.fn(
-  "generate-fellowship-unit-catalog",
+  "generateFellowshipUnitCatalog",
 )(function* (inputFilePath: string) {
   const fileSystem = yield* FileSystem.FileSystem;
 

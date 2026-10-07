@@ -10,20 +10,20 @@ import { type DungeonDAOError } from "@frt/db/daos/dungeon/dungeon-dao.ts";
 
 const mapDungeonApiError: (
   error: DungeonDAOError,
-) => E.Effect<never, HttpApiError.InternalServerError> = E.fn(
-  "mapDungeonApiError",
-)(function* (error) {
-  yield* E.logError("Dungeon API operation failed.", {
-    error,
-  });
+) => E.Effect<never, HttpApiError.InternalServerError> = E.fnUntraced(
+  function* (error) {
+    yield* E.logError("Dungeon API operation failed.", {
+      error,
+    });
 
-  return yield* new HttpApiError.InternalServerError();
-});
+    return yield* new HttpApiError.InternalServerError();
+  },
+);
 
 const DungeonsApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "dungeons",
-  E.fn("DungeonsApi.handlers")(function* (handlers) {
+  E.fnUntraced(function* (handlers) {
     const dungeonCatalog = yield* DungeonCatalog;
 
     return handlers

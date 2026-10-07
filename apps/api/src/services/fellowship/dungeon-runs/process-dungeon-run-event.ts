@@ -306,6 +306,17 @@ export function processDungeonRunEvent({
 
   const timestamp = getEventTimestamp(event);
 
+  const dungeonRun = getNextConfiguredDungeonRunState({
+    currentState: state.configuredRun.dungeonRun,
+    timestamp,
+    trackerResult,
+    transition,
+  });
+
+  const isConfiguredRunUnchanged =
+    dungeonRun === state.configuredRun.dungeonRun &&
+    requirementResult.state === state.configuredRun.requirementProcessor;
+
   return {
     observation: requirementResult.observation,
     processingEvents: getProcessingEvents({
@@ -314,15 +325,12 @@ export function processDungeonRunEvent({
       transition,
     }),
     state: {
-      configuredRun: {
-        dungeonRun: getNextConfiguredDungeonRunState({
-          currentState: state.configuredRun.dungeonRun,
-          timestamp,
-          trackerResult,
-          transition,
-        }),
-        requirementProcessor: requirementResult.state,
-      },
+      configuredRun: isConfiguredRunUnchanged
+        ? state.configuredRun
+        : {
+            dungeonRun,
+            requirementProcessor: requirementResult.state,
+          },
       runTracker: trackerResult.state,
     },
   };

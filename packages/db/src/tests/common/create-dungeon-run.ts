@@ -6,17 +6,17 @@ import {
   MOCK_DUNGEON_LEVEL,
 } from "@frt/db/tests/common/fixtures/configuration-fixtures.ts";
 
-export const createDungeonRun = E.fn("test.create-dungeon-run")(
-  function* (options?: { readonly isOwnRun?: boolean }) {
-    const dungeonRunDAO = yield* DungeonRunDAO;
+export const createDungeonRun = E.fnUntraced(function* (options?: {
+  readonly isOwnRun?: boolean;
+}) {
+  const dungeonRunDAO = yield* DungeonRunDAO;
 
-    return yield* dungeonRunDAO.create({
-      dungeonId: MOCK_DUNGEON_ID,
-      dungeonLevel: MOCK_DUNGEON_LEVEL,
-      endedAt: null,
-      isOwnRun: options?.isOwnRun ?? true,
-      source: "LOCAL_LOG",
-      startedAt: null,
-    });
-  },
-);
+  return yield* dungeonRunDAO.create({
+    dungeonId: MOCK_DUNGEON_ID,
+    dungeonLevel: MOCK_DUNGEON_LEVEL,
+    endedAt: null,
+    isOwnRun: options?.isOwnRun ?? true,
+    source: "LOCAL_LOG",
+    startedAt: null,
+  });
+});

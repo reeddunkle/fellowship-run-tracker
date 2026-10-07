@@ -18,27 +18,29 @@ export type UpdateConfigurationArgs = {
   readonly request: SaveConfigurationApiRequest;
 };
 
-export const getConfigurations = E.fn("getConfigurations")(function* () {
+export const getConfigurations = E.fn(
+  "ConfigurationApiClient.getConfigurations",
+)(function* () {
   const client = yield* AppApiClient;
 
   return yield* client.configurations.getConfigurations();
 });
 
-export const getConfiguration = E.fn("getConfiguration")(function* ({
-  id,
-}: ConfigurationIdArgs) {
-  const client = yield* AppApiClient;
+export const getConfiguration = E.fn("ConfigurationApiClient.getConfiguration")(
+  function* ({ id }: ConfigurationIdArgs) {
+    const client = yield* AppApiClient;
 
-  return yield* client.configurations.getConfiguration({
-    params: {
-      id,
-    },
-  });
-});
+    return yield* client.configurations.getConfiguration({
+      params: {
+        id,
+      },
+    });
+  },
+);
 
-export const saveConfiguration = E.fn("saveConfiguration")(function* ({
-  request,
-}: SaveConfigurationArgs) {
+export const saveConfiguration = E.fn(
+  "ConfigurationApiClient.saveConfiguration",
+)(function* ({ request }: SaveConfigurationArgs) {
   const client = yield* AppApiClient;
 
   return yield* client.configurations.saveConfiguration({
@@ -46,10 +48,9 @@ export const saveConfiguration = E.fn("saveConfiguration")(function* ({
   });
 });
 
-export const updateConfiguration = E.fn("updateConfiguration")(function* ({
-  id,
-  request,
-}: UpdateConfigurationArgs) {
+export const updateConfiguration = E.fn(
+  "ConfigurationApiClient.updateConfiguration",
+)(function* ({ id, request }: UpdateConfigurationArgs) {
   const client = yield* AppApiClient;
 
   return yield* client.configurations.updateConfiguration({
@@ -60,9 +61,9 @@ export const updateConfiguration = E.fn("updateConfiguration")(function* ({
   });
 });
 
-export const deleteConfiguration = E.fn("deleteConfiguration")(function* ({
-  id,
-}: ConfigurationIdArgs) {
+export const deleteConfiguration = E.fn(
+  "ConfigurationApiClient.deleteConfiguration",
+)(function* ({ id }: ConfigurationIdArgs) {
   const client = yield* AppApiClient;
 
   yield* client.configurations.deleteConfiguration({

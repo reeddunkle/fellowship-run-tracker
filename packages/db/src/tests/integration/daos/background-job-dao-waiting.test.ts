@@ -20,7 +20,7 @@ const EXHAUSTED_ERROR = {
   tag: "Exhausted",
 };
 
-const insertJob = E.fn("test.insert-background-job")(function* (options?: {
+const insertJob = E.fnUntraced(function* (options?: {
   readonly idempotencyKey?: string | null;
 }) {
   const backgroundJobDAO = yield* BackgroundJobDAO;
@@ -35,9 +35,7 @@ const insertJob = E.fn("test.insert-background-job")(function* (options?: {
 });
 
 /** Claims the next job and parks it until `availableAt`. */
-const claimAndPark = E.fn("test.claim-and-park-background-job")(function* (
-  availableAt: DateTime.Utc,
-) {
+const claimAndPark = E.fnUntraced(function* (availableAt: DateTime.Utc) {
   const backgroundJobDAO = yield* BackgroundJobDAO;
 
   const claimed = yield* backgroundJobDAO.claimNext({

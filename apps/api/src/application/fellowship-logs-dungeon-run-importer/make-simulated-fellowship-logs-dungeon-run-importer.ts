@@ -29,34 +29,33 @@ export function makeSimulatedFellowshipLogsDungeonRunImporter(
 ): FellowshipLogsDungeonRunImporterShape {
   const deferredReportCodes = new Set<FellowshipLogsReportCode>();
 
-  const runSteps = E.fn("SimulatedFellowshipLogsDungeonRunImporter.runSteps")(
-    function* (
-      { durationSeconds }: SimulatedImport,
-      { onProgress }: ImportReportOptions,
-      stepCount: number,
-    ) {
-      const stepDuration = Duration.divideUnsafe(
-        Duration.seconds(durationSeconds),
-        PROGRESS_STEPS,
-      );
+  const runSteps = E.fnUntraced(function* (
+    { durationSeconds }: SimulatedImport,
+    { onProgress }: ImportReportOptions,
+    stepCount: number,
+  ) {
+    const stepDuration = Duration.divideUnsafe(
+      Duration.seconds(durationSeconds),
+      PROGRESS_STEPS,
+    );
 
-      yield* E.forEach(
-        Array.from({ length: stepCount }, (_, index) => {
-          return (index + 1) / PROGRESS_STEPS;
-        }),
-        (fraction) => {
-          return E.sleep(stepDuration).pipe(
-            E.andThen(onProgress === undefined ? E.void : onProgress(fraction)),
-          );
-        },
-        { discard: true },
-      );
-    },
-  );
+    yield* E.forEach(
+      Array.from({ length: stepCount }, (_, index) => {
+        return (index + 1) / PROGRESS_STEPS;
+      }),
+      (fraction) => {
+        return E.sleep(stepDuration).pipe(
+          E.andThen(onProgress === undefined ? E.void : onProgress(fraction)),
+        );
+      },
+      { discard: true },
+    );
+  });
 
-  const simulateImport = E.fn(
-    "SimulatedFellowshipLogsDungeonRunImporter.simulateImport",
-  )(function* (simulated: SimulatedImport, options: ImportReportOptions) {
+  const simulateImport = E.fnUntraced(function* (
+    simulated: SimulatedImport,
+    options: ImportReportOptions,
+  ) {
     const { fightId, reportCode } = options;
 
     const succeed = runSteps(simulated, options, PROGRESS_STEPS).pipe(
@@ -105,25 +104,23 @@ export function makeSimulatedFellowshipLogsDungeonRunImporter(
   });
 
   const importReport: FellowshipLogsDungeonRunImporterShape["importReport"] =
-    E.fn("SimulatedFellowshipLogsDungeonRunImporter.importReport")(
-      function* (options) {
-        const simulated = yield* parseSimulatedImportReportCode(
-          options.reportCode,
-        );
+    E.fn("FellowshipLogsDungeonRunImporter.importReport")(function* (options) {
+      const simulated = yield* parseSimulatedImportReportCode(
+        options.reportCode,
+      );
 
-        if (Option.isNone(simulated)) {
-          return yield* realImporter.importReport(options);
-        }
+      if (Option.isNone(simulated)) {
+        return yield* realImporter.importReport(options);
+      }
 
-        yield* E.logInfo("Simulating a Fellowship Logs import.", {
-          durationSeconds: simulated.value.durationSeconds,
-          outcome: simulated.value.outcome,
-          reportCode: options.reportCode,
-        });
+      yield* E.logInfo("Simulating a Fellowship Logs import.", {
+        durationSeconds: simulated.value.durationSeconds,
+        outcome: simulated.value.outcome,
+        reportCode: options.reportCode,
+      });
 
-        return yield* simulateImport(simulated.value, options);
-      },
-    );
+      return yield* simulateImport(simulated.value, options);
+    });
 
   return {
     importReport,

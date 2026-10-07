@@ -18,7 +18,7 @@ const EXHAUSTED_ERROR = {
   tag: "Exhausted",
 };
 
-const insertJob = E.fn("test.insert-background-job")(function* (options?: {
+const insertJob = E.fnUntraced(function* (options?: {
   readonly idempotencyKey?: string | null;
   readonly queue?: string;
 }) {

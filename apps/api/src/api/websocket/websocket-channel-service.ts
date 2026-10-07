@@ -42,9 +42,7 @@ const makeWebSocketChannel = E.gen(function* () {
     );
   };
 
-  const lookupChannel = E.fn("WebSocketChannel.lookupChannel")(function* (
-    channel: WebSocketChannelKey,
-  ) {
+  const lookupChannel = E.fnUntraced(function* (channel: WebSocketChannelKey) {
     const pubsub = yield* E.acquireRelease(
       PubSub.unbounded<string>({ replay: 1 }),
       PubSub.shutdown,

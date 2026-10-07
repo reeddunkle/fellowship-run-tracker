@@ -22,6 +22,7 @@
           "effect/socket",
           "effect/sql"
         ],
+        "effectFn": ["span", "untraced"],
         "diagnosticSeverity": {
           "abortControllerInEffect": "error",
           "acquireReleaseDisposable": "error",

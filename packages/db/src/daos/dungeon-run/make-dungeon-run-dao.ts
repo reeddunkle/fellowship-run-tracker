@@ -166,19 +166,17 @@ export const makeDungeonRunDAO = E.gen(function* () {
     E.mapError(mapDungeonRunDAOError),
   );
 
-  const deleteByDungeon: DungeonRunDAOShape["deleteByDungeon"] = ({
-    dungeonId,
-    dungeonLevel,
-    isOwnRun,
-  }) => {
-    return sql`
+  const deleteByDungeon: DungeonRunDAOShape["deleteByDungeon"] = E.fn(
+    "DungeonRunDAO.deleteByDungeon",
+  )(function* ({ dungeonId, dungeonLevel, isOwnRun }) {
+    yield* sql`
       DELETE FROM dungeon_run
       WHERE
         dungeon_id = ${dungeonId}
         AND dungeon_level = ${dungeonLevel}
         AND is_own_run = ${isOwnRun ? 1 : 0}
-    `.pipe(E.asVoid, E.mapError(mapDungeonRunDAOError));
-  };
+    `;
+  }, E.mapError(mapDungeonRunDAOError));
 
   const start: DungeonRunDAOShape["start"] = E.fn("DungeonRunDAO.start")(
     function* ({ dungeonRunId, startedAt }) {

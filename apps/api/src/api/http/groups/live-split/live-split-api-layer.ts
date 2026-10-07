@@ -16,7 +16,7 @@ function mapLiveSplitConnectionError(): E.Effect<
 const LiveSplitApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "liveSplit",
-  E.fn("LiveSplitApi.handlers")(function* (handlers) {
+  E.fnUntraced(function* (handlers) {
     const liveSplit = yield* LiveSplit;
 
     return handlers

@@ -24,15 +24,13 @@ export const makeLiveSplitGatewayTransportTestHarness = E.gen(function* () {
 
     connected: E.void,
 
-    write: (data) => {
-      return E.gen(function* () {
-        yield* Ref.update(commandHistory, (commands) => {
-          return [...commands, data];
-        });
-
-        yield* Queue.offer(writtenData, data);
+    write: E.fnUntraced(function* (data) {
+      yield* Ref.update(commandHistory, (commands) => {
+        return [...commands, data];
       });
-    },
+
+      yield* Queue.offer(writtenData, data);
+    }),
   };
 
   const transportFactoryLayer = Layer.succeed(
@@ -44,9 +42,7 @@ export const makeLiveSplitGatewayTransportTestHarness = E.gen(function* () {
     } satisfies LiveSplitGatewayTransportFactoryShape,
   );
 
-  const start = E.fn("test.start")(function* <A, Error>(
-    effect: E.Effect<A, Error>,
-  ) {
+  const start = E.fnUntraced(function* <A, Error>(effect: E.Effect<A, Error>) {
     const fiber = yield* effect.pipe(E.forkScoped);
 
     return {

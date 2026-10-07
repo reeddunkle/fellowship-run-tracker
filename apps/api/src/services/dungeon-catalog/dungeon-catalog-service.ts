@@ -29,19 +29,21 @@ export type DungeonCatalogShape = {
 const makeDungeonCatalog = E.gen(function* () {
   const dungeonDAO = yield* DungeonDAO;
 
-  const getAll: DungeonCatalogShape["getAll"] = () => {
-    return dungeonDAO.getAll().pipe(
-      E.map((dungeons) => {
-        return dungeons.map(createDungeonApiResponse);
-      }),
-    );
-  };
+  const getAll: DungeonCatalogShape["getAll"] = E.fn("DungeonCatalog.getAll")(
+    function* () {
+      const dungeons = yield* dungeonDAO.getAll();
 
-  const getById: DungeonCatalogShape["getById"] = ({ id }) => {
-    return dungeonDAO
-      .getById({ id })
-      .pipe(E.map(Option.map(createDungeonApiResponse)));
-  };
+      return dungeons.map(createDungeonApiResponse);
+    },
+  );
+
+  const getById: DungeonCatalogShape["getById"] = E.fn(
+    "DungeonCatalog.getById",
+  )(function* ({ id }) {
+    const dungeon = yield* dungeonDAO.getById({ id });
+
+    return Option.map(dungeon, createDungeonApiResponse);
+  });
 
   return {
     getAll,

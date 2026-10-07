@@ -352,23 +352,23 @@ const make = E.gen(function* () {
       );
     };
 
-    const failPendingRequests = E.fn("EffectTsGoLsp.failPendingRequests")(
-      function* (error: EffectTsGoLspError) {
-        const currentPendingRequests = [...pendingRequests.values()];
+    const failPendingRequests = E.fnUntraced(function* (
+      error: EffectTsGoLspError,
+    ) {
+      const currentPendingRequests = [...pendingRequests.values()];
 
-        pendingRequests.clear();
+      pendingRequests.clear();
 
-        yield* E.forEach(
-          currentPendingRequests,
-          (pendingRequest) => {
-            return Deferred.fail(pendingRequest, error).pipe(E.asVoid);
-          },
-          {
-            discard: true,
-          },
-        );
-      },
-    );
+      yield* E.forEach(
+        currentPendingRequests,
+        (pendingRequest) => {
+          return Deferred.fail(pendingRequest, error).pipe(E.asVoid);
+        },
+        {
+          discard: true,
+        },
+      );
+    });
 
     const respondToServerRequest = (serverRequest: JsonRpcRequest) => {
       return sendMessage({
@@ -408,44 +408,44 @@ const make = E.gen(function* () {
 
     const handleData: (
       chunk: Uint8Array,
-    ) => E.Effect<void, EffectTsGoLspProtocolError> = E.fn(
-      "EffectTsGoLsp.handleData",
-    )(function* (chunk) {
-      responseBuffer = Buffer.concat([responseBuffer, Buffer.from(chunk)]);
+    ) => E.Effect<void, EffectTsGoLspProtocolError> = E.fnUntraced(
+      function* (chunk) {
+        responseBuffer = Buffer.concat([responseBuffer, Buffer.from(chunk)]);
 
-      const messages: Array<JsonRpcMessage> = [];
+        const messages: Array<JsonRpcMessage> = [];
 
-      yield* E.try({
-        catch: (cause) => {
-          return new EffectTsGoLspProtocolError({
-            cause,
-            operation: "ParseMessage",
-          });
-        },
-        try: () => {
-          while (true) {
-            const parsedMessage = parseNextMessage(responseBuffer);
+        yield* E.try({
+          catch: (cause) => {
+            return new EffectTsGoLspProtocolError({
+              cause,
+              operation: "ParseMessage",
+            });
+          },
+          try: () => {
+            while (true) {
+              const parsedMessage = parseNextMessage(responseBuffer);
 
-            if (parsedMessage === undefined) {
-              return;
+              if (parsedMessage === undefined) {
+                return;
+              }
+
+              responseBuffer = parsedMessage.remaining;
+              messages.push(parsedMessage.message);
             }
+          },
+        });
 
-            responseBuffer = parsedMessage.remaining;
-            messages.push(parsedMessage.message);
-          }
-        },
-      });
-
-      yield* E.forEach(
-        messages,
-        (parsedMessage) => {
-          return handleMessage(parsedMessage);
-        },
-        {
-          discard: true,
-        },
-      );
-    });
+        yield* E.forEach(
+          messages,
+          (parsedMessage) => {
+            return handleMessage(parsedMessage);
+          },
+          {
+            discard: true,
+          },
+        );
+      },
+    );
 
     yield* child.stdout.pipe(
       Stream.runForEach((chunk) => {
@@ -527,13 +527,15 @@ const make = E.gen(function* () {
       );
     });
 
-    const notify: EffectTsGoLspService["notify"] = (notification) => {
-      return sendMessage({
-        jsonrpc: "2.0",
-        method: notification.method,
-        params: notification.params,
-      });
-    };
+    const notify: EffectTsGoLspService["notify"] = E.fn("EffectTsGoLsp.notify")(
+      function* (notification) {
+        return yield* sendMessage({
+          jsonrpc: "2.0",
+          method: notification.method,
+          params: notification.params,
+        });
+      },
+    );
 
     const rootUri = pathToFileURL(workspaceDirectory).href;
 

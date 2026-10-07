@@ -74,7 +74,11 @@ function migrateDatabase({
     }
 
     return completedMigrations;
-  });
+  }).pipe(
+    E.withSpan("migrateDatabase", {
+      attributes: { "database.name": database },
+    }),
+  );
 }
 
 export const migrateMainDatabase: MigrateDatabase = migrateDatabase({

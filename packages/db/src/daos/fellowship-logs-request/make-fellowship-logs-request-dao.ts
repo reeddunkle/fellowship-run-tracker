@@ -37,9 +37,11 @@ function mapFellowshipLogsRequestDAOError(
 export const makeFellowshipLogsRequestDAO = E.gen(function* () {
   const sql = yield* AnalyticsDatabase;
 
-  const insertMany: FellowshipLogsRequestDAOShape["insertMany"] = (events) => {
+  const insertMany: FellowshipLogsRequestDAOShape["insertMany"] = E.fn(
+    "FellowshipLogsRequestDAO.insertMany",
+  )(function* (events) {
     if (events.length === 0) {
-      return E.void;
+      return;
     }
 
     const rows = events.map(
@@ -53,21 +55,19 @@ export const makeFellowshipLogsRequestDAO = E.gen(function* () {
       },
     );
 
-    return sql
-      .withTransaction(
-        E.forEach(
-          A.chunksOf(rows, INSERT_BATCH_SIZE),
-          (batch) => {
-            return sql`
-              INSERT INTO
-                fellowship_logs_request ${sql.insert(batch)}
-            `;
-          },
-          { discard: true },
-        ),
-      )
-      .pipe(E.mapError(mapFellowshipLogsRequestDAOError));
-  };
+    yield* sql.withTransaction(
+      E.forEach(
+        A.chunksOf(rows, INSERT_BATCH_SIZE),
+        (batch) => {
+          return sql`
+            INSERT INTO
+              fellowship_logs_request ${sql.insert(batch)}
+          `;
+        },
+        { discard: true },
+      ),
+    );
+  }, E.mapError(mapFellowshipLogsRequestDAOError));
 
   const getSummary: FellowshipLogsRequestDAOShape["getSummary"] = E.fn(
     "FellowshipLogsRequestDAO.getSummary",

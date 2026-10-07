@@ -43,7 +43,7 @@ function runSession<A, Error>(
   return program.pipe(E.provide(makePersistenceTestLayer(databaseFilename)));
 }
 
-const startLocalRun = E.fn("test.startLocalRun")(function* (
+const startLocalRun = E.fnUntraced(function* (
   observedAts: ReadonlyArray<DateTime.Utc>,
 ) {
   const dungeonRunRepository = yield* DungeonRunRepository;
@@ -75,9 +75,7 @@ const startLocalRun = E.fn("test.startLocalRun")(function* (
   return dungeonRun.id;
 });
 
-const getLocalRun = E.fn("test.getLocalRun")(function* (
-  dungeonRunId: DungeonRunId,
-) {
+const getLocalRun = E.fnUntraced(function* (dungeonRunId: DungeonRunId) {
   const dungeonRun = yield* DungeonRunDAO.use((dao) => {
     return dao.getById({ id: dungeonRunId });
   });

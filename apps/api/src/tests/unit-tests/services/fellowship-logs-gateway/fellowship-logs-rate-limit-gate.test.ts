@@ -85,7 +85,7 @@ function makeStubQuery(responses: ReadonlyArray<StubResponse>) {
   const remaining = [...responses];
   const sent = { count: 0 };
 
-  const query: Query = E.fn("test.query")(function* (_request, responseSchema) {
+  const query: Query = E.fnUntraced(function* (_request, responseSchema) {
     sent.count += 1;
 
     const response = remaining.shift();

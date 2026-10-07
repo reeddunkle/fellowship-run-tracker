@@ -6,13 +6,15 @@ type UnitIdArgs = {
   readonly id: string;
 };
 
-export const getUnits = E.fn("getUnits")(function* () {
+export const getUnits = E.fn("UnitApiClient.getUnits")(function* () {
   const client = yield* AppApiClient;
 
   return yield* client.units.getUnits();
 });
 
-export const getUnit = E.fn("getUnit")(function* ({ id }: UnitIdArgs) {
+export const getUnit = E.fn("UnitApiClient.getUnit")(function* ({
+  id,
+}: UnitIdArgs) {
   const client = yield* AppApiClient;
 
   return yield* client.units.getUnit({

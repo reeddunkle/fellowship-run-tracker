@@ -513,7 +513,7 @@ describe("BackgroundJobQueue", () => {
           const release = yield* Deferred.make<void>();
 
           const importReport: FellowshipLogsDungeonRunImporterShape["importReport"] =
-            E.fn("test.importReport")(function* ({ onProgress }) {
+            E.fnUntraced(function* ({ onProgress }) {
               yield* onProgress?.(0.5) ?? E.void;
               yield* Deferred.succeed(reported, undefined);
               yield* Deferred.await(release);
@@ -563,7 +563,7 @@ describe("BackgroundJobQueue", () => {
           const reported = yield* Deferred.make<void>();
 
           const importReport: FellowshipLogsDungeonRunImporterShape["importReport"] =
-            E.fn("test.importReport")(function* ({ onProgress }) {
+            E.fnUntraced(function* ({ onProgress }) {
               yield* onProgress?.(0.25) ?? E.void;
               yield* Deferred.succeed(reported, undefined);
 

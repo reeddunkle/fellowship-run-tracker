@@ -12,12 +12,11 @@ const TableNameRowsSchema = Schema.Array(
   Schema.Struct({ name: Schema.String }),
 );
 
-const createTables = E.fn("FellowshipLogsCacheSchema.createTables")(function* (
-  sql: SqlClient.SqlClient,
-) {
-  // [KEEP] A response from the Fellowship Logs API, keyed by the request that
-  // produced it. `body` is the gzipped JSON of the response's `data`.
-  yield* sql`
+const createFellowshipLogsCacheTables = E.fn("createFellowshipLogsCacheTables")(
+  function* (sql: SqlClient.SqlClient) {
+    // [KEEP] A response from the Fellowship Logs API, keyed by the request that
+    // produced it. `body` is the gzipped JSON of the response's `data`.
+    yield* sql`
     CREATE TABLE fellowship_logs_response (
       request_key TEXT PRIMARY KEY NOT NULL,
       operation TEXT NOT NULL CHECK (
@@ -34,25 +33,25 @@ const createTables = E.fn("FellowshipLogsCacheSchema.createTables")(function* (
     ) STRICT
   `;
 
-  yield* sql`
+    yield* sql`
     CREATE INDEX fellowship_logs_response_report_code_index ON fellowship_logs_response (report_code)
   `;
 
-  yield* sql`
+    yield* sql`
     CREATE INDEX fellowship_logs_response_last_accessed_at_index ON fellowship_logs_response (last_accessed_at)
   `;
 
-  yield* sql`
+    yield* sql`
     CREATE INDEX fellowship_logs_response_expires_at_index ON fellowship_logs_response (expires_at)
     WHERE
       expires_at IS NOT NULL
   `;
-});
+  },
+);
 
-const dropTables = E.fn("FellowshipLogsCacheSchema.dropTables")(function* (
-  sql: SqlClient.SqlClient,
-) {
-  const tables = yield* sql`
+const dropFellowshipLogsCacheTables = E.fn("dropFellowshipLogsCacheTables")(
+  function* (sql: SqlClient.SqlClient) {
+    const tables = yield* sql`
     SELECT
       name
     FROM
@@ -62,17 +61,18 @@ const dropTables = E.fn("FellowshipLogsCacheSchema.dropTables")(function* (
       AND name NOT LIKE 'sqlite_%'
   `.pipe(E.flatMap(Schema.decodeUnknownEffect(TableNameRowsSchema)), E.orDie);
 
-  yield* E.forEach(
-    tables,
-    ({ name }) => {
-      return sql`DROP TABLE ${sql(name)}`;
-    },
-    { discard: true },
-  );
-});
+    yield* E.forEach(
+      tables,
+      ({ name }) => {
+        return sql`DROP TABLE ${sql(name)}`;
+      },
+      { discard: true },
+    );
+  },
+);
 
 export const prepareFellowshipLogsCacheSchema = E.fn(
-  "FellowshipLogsCacheSchema.prepare",
+  "prepareFellowshipLogsCacheSchema",
 )(function* (sql: SqlClient.SqlClient) {
   const [row] = yield* sql`PRAGMA user_version`.pipe(
     E.flatMap(Schema.decodeUnknownEffect(UserVersionRowsSchema)),
@@ -97,8 +97,8 @@ export const prepareFellowshipLogsCacheSchema = E.fn(
 
   yield* sql.withTransaction(
     E.gen(function* () {
-      yield* dropTables(sql);
-      yield* createTables(sql);
+      yield* dropFellowshipLogsCacheTables(sql);
+      yield* createFellowshipLogsCacheTables(sql);
       yield* sql`
         PRAGMA user_version = ${sql.literal(
           String(FELLOWSHIP_LOGS_CACHE_SCHEMA_VERSION),

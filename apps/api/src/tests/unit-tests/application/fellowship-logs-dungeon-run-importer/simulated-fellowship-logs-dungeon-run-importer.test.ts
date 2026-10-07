@@ -41,7 +41,7 @@ function simulatedReportCode(outcome: SimulatedImportOutcome) {
   );
 }
 
-const runImport = E.fn("test.runImport")(function* (
+const runImport = E.fnUntraced(function* (
   importer: FellowshipLogsDungeonRunImporterShape,
   reportCode: ReturnType<typeof toReportCode>,
 ) {

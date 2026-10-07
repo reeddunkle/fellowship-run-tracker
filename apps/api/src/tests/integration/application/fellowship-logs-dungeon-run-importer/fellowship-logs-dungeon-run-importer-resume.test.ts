@@ -37,9 +37,7 @@ const importReport = FellowshipLogsDungeonRunImporter.use((importer) => {
 });
 
 /** Deletes an imported run, so the fight can be imported again. */
-const deleteRun = E.fn("test.deleteRun")(function* (
-  dungeonRunId: DungeonRunId,
-) {
+const deleteRun = E.fnUntraced(function* (dungeonRunId: DungeonRunId) {
   const sql = yield* MainDatabase;
 
   yield* sql`
@@ -75,9 +73,7 @@ const countCachedResponses = E.gen(function* () {
 });
 
 /** What an import produced, minus generated ids and timestamps. */
-const getImportedRun = E.fn("test.getImportedRun")(function* (
-  dungeonRunId: DungeonRunId,
-) {
+const getImportedRun = E.fnUntraced(function* (dungeonRunId: DungeonRunId) {
   const sql = yield* MainDatabase;
 
   const runs = yield* sql`

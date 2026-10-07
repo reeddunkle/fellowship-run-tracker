@@ -147,23 +147,19 @@ export const makeAppStateStore = E.gen(function* () {
         onNone: () => {
           return E.succeed(DEFAULT_APP_STATE);
         },
-        onSome: (persistedAppState) => {
-          return E.gen(function* () {
-            const currentPersistedAppState =
-              migratePersistedAppState(persistedAppState);
+        onSome: E.fnUntraced(function* (persistedAppState) {
+          const currentPersistedAppState =
+            migratePersistedAppState(persistedAppState);
 
-            if (
-              currentPersistedAppState.version !== persistedAppState.version
-            ) {
-              yield* appStateSchemaStore.set(
-                APP_STATE_KEY,
-                currentPersistedAppState,
-              );
-            }
+          if (currentPersistedAppState.version !== persistedAppState.version) {
+            yield* appStateSchemaStore.set(
+              APP_STATE_KEY,
+              currentPersistedAppState,
+            );
+          }
 
-            return currentPersistedAppState.state;
-          });
-        },
+          return currentPersistedAppState.state;
+        }),
       }),
     ),
     E.catchTag("SchemaError", (error) => {
@@ -199,30 +195,35 @@ export const makeAppStateStore = E.gen(function* () {
     E.map((state) => {
       return state.theme;
     }),
+    E.withSpan("AppStateStore.getTheme"),
   );
 
   const getSidebarOpen = readState.pipe(
     E.map((state) => {
       return state.sidebarOpen;
     }),
+    E.withSpan("AppStateStore.getSidebarOpen"),
   );
 
   const getSelectedConfigurationId = readState.pipe(
     E.map((state) => {
       return state.selectedConfigurationId;
     }),
+    E.withSpan("AppStateStore.getSelectedConfigurationId"),
   );
 
   const getDungeonRunTimeColumns = readState.pipe(
     E.map((state) => {
       return state.dungeonRun.timeColumns;
     }),
+    E.withSpan("AppStateStore.getDungeonRunTimeColumns"),
   );
 
   const getDungeonRunComparisonGroup = readState.pipe(
     E.map((state) => {
       return state.dungeonRun.comparisonGroup;
     }),
+    E.withSpan("AppStateStore.getDungeonRunComparisonGroup"),
   );
 
   const write = (state: AppStateValue) => {
@@ -275,9 +276,7 @@ export const makeAppStateStore = E.gen(function* () {
 
   yield* processLoop.pipe(E.tapCause(E.logError), E.forkScoped);
 
-  const update = E.fn("AppStateStore.update")(function* (
-    appStateUpdate: AppStateUpdate,
-  ) {
+  const update = E.fnUntraced(function* (appStateUpdate: AppStateUpdate) {
     const deferred = yield* Deferred.make<void, AppStateStoreError>();
 
     const wasOffered = yield* Queue.offer(queue, {
@@ -293,44 +292,48 @@ export const makeAppStateStore = E.gen(function* () {
   });
 
   const setDungeonRunComparisonGroup: AppStateStoreShape["setDungeonRunComparisonGroup"] =
-    (comparisonGroup) => {
-      return update({
-        _tag: "SetDungeonRunComparisonGroup",
-        comparisonGroup,
-      });
-    };
+    E.fn("AppStateStore.setDungeonRunComparisonGroup")(
+      function* (comparisonGroup) {
+        return yield* update({
+          _tag: "SetDungeonRunComparisonGroup",
+          comparisonGroup,
+        });
+      },
+    );
 
   const setDungeonRunTimeColumns: AppStateStoreShape["setDungeonRunTimeColumns"] =
-    (timeColumns) => {
-      return update({
+    E.fn("AppStateStore.setDungeonRunTimeColumns")(function* (timeColumns) {
+      return yield* update({
         _tag: "SetDungeonRunTimeColumns",
         timeColumns,
       });
-    };
+    });
 
   const setSelectedConfigurationId: AppStateStoreShape["setSelectedConfigurationId"] =
-    (id) => {
-      return update({
+    E.fn("AppStateStore.setSelectedConfigurationId")(function* (id) {
+      return yield* update({
         _tag: "SetSelectedConfigurationId",
         selectedConfigurationId: id,
       });
-    };
+    });
 
-  const setSidebarOpen: AppStateStoreShape["setSidebarOpen"] = (
-    sidebarOpen,
-  ) => {
-    return update({
+  const setSidebarOpen: AppStateStoreShape["setSidebarOpen"] = E.fn(
+    "AppStateStore.setSidebarOpen",
+  )(function* (sidebarOpen) {
+    return yield* update({
       _tag: "SetSidebarOpen",
       sidebarOpen,
     });
-  };
+  });
 
-  const setTheme: AppStateStoreShape["setTheme"] = (theme) => {
-    return update({
+  const setTheme: AppStateStoreShape["setTheme"] = E.fn(
+    "AppStateStore.setTheme",
+  )(function* (theme) {
+    return yield* update({
       _tag: "SetTheme",
       theme,
     });
-  };
+  });
 
   return {
     getDungeonRunComparisonGroup,

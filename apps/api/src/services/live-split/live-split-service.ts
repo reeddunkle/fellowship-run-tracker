@@ -54,69 +54,83 @@ const makeLiveSplit = E.gen(function* () {
     },
   );
 
-  const handleRunEvent: LiveSplitShape["handleRunEvent"] = (
-    processingEvent,
-  ) => {
-    return Match.value(processingEvent).pipe(
-      Match.when(
-        {
-          type: DUNGEON_RUN_PROCESSING_EVENT.RUN_STARTED,
-        },
-        () => {
-          return E.gen(function* () {
-            yield* liveSplitGateway.reset();
-            yield* liveSplitGateway.startTimer();
-          });
-        },
-      ),
-      Match.when(
-        {
-          type: DUNGEON_RUN_PROCESSING_EVENT.REQUIREMENT_SATISFIED,
-        },
-        () => {
-          return E.void;
-        },
-      ),
-      Match.when(
-        {
-          type: DUNGEON_RUN_PROCESSING_EVENT.MILESTONE_COMPLETED,
-        },
-        () => {
-          return liveSplitGateway.split();
-        },
-      ),
-      Match.when(
-        {
-          type: DUNGEON_RUN_PROCESSING_EVENT.RUN_COMPLETED,
-        },
-        () => {
-          return liveSplitGateway.pause();
-        },
-      ),
-      Match.when(
-        {
-          type: DUNGEON_RUN_PROCESSING_EVENT.RUN_EXITED,
-        },
-        () => {
-          return liveSplitGateway.pause();
-        },
-      ),
-      Match.exhaustive,
-      E.catchTag("LiveSplitGatewayNotConnectedError", () => {
-        return E.void;
-      }),
-      E.catch((error) => {
-        return E.gen(function* () {
-          yield* E.logWarning(
-            "LiveSplit failed to handle a dungeon run event; disconnecting.",
-            { error },
-          );
+  const handleConnectedRunEvent: LiveSplitShape["handleRunEvent"] = E.fn(
+    "LiveSplit.handleRunEvent",
+  )(
+    function* (processingEvent) {
+      return yield* Match.value(processingEvent).pipe(
+        Match.when(
+          {
+            type: DUNGEON_RUN_PROCESSING_EVENT.RUN_STARTED,
+          },
+          () => {
+            return E.gen(function* () {
+              yield* liveSplitGateway.reset();
+              yield* liveSplitGateway.startTimer();
+            });
+          },
+        ),
+        Match.when(
+          {
+            type: DUNGEON_RUN_PROCESSING_EVENT.REQUIREMENT_SATISFIED,
+          },
+          () => {
+            return E.void;
+          },
+        ),
+        Match.when(
+          {
+            type: DUNGEON_RUN_PROCESSING_EVENT.MILESTONE_COMPLETED,
+          },
+          () => {
+            return liveSplitGateway.split();
+          },
+        ),
+        Match.when(
+          {
+            type: DUNGEON_RUN_PROCESSING_EVENT.RUN_COMPLETED,
+          },
+          () => {
+            return liveSplitGateway.pause();
+          },
+        ),
+        Match.when(
+          {
+            type: DUNGEON_RUN_PROCESSING_EVENT.RUN_EXITED,
+          },
+          () => {
+            return liveSplitGateway.pause();
+          },
+        ),
+        Match.exhaustive,
+      );
+    },
+    E.catchTag("LiveSplitGatewayNotConnectedError", () => {
+      return E.void;
+    }),
+    E.catch((error) => {
+      return E.gen(function* () {
+        yield* E.logWarning(
+          "LiveSplit failed to handle a dungeon run event; disconnecting.",
+          { error },
+        );
 
-          yield* liveSplitGateway.disconnect();
-        });
-      }),
-    );
-  };
+        yield* liveSplitGateway.disconnect();
+      });
+    }),
+  );
+
+  const handleRunEvent: LiveSplitShape["handleRunEvent"] = E.fnUntraced(
+    function* (processingEvent) {
+      const status = yield* liveSplitGateway.status;
+
+      if (status._tag !== "Connected") {
+        return;
+      }
+
+      yield* handleConnectedRunEvent(processingEvent);
+    },
+  );
 
   return {
     connect,

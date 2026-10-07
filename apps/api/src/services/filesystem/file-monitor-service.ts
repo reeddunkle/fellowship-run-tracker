@@ -94,9 +94,11 @@ const makeFileMonitor = E.gen(function* () {
   const fileSystem = yield* FileSystem.FileSystem;
   const fileMonitorSource = yield* FileMonitorSource;
 
-  const findLatestFile: FileMonitorShape["findLatestFile"] = (options) => {
-    return fileMonitorSource.findLatestFile(options);
-  };
+  const findLatestFile: FileMonitorShape["findLatestFile"] = E.fn(
+    "FileMonitor.findLatestFile",
+  )(function* (options) {
+    return yield* fileMonitorSource.findLatestFile(options);
+  });
 
   const readFileRange = ({
     bytesToRead,
@@ -199,16 +201,13 @@ const makeFileMonitor = E.gen(function* () {
     );
   };
 
-  const readLines = ({
-    filePath,
-  }: ReadLinesOptions): E.Effect<
-    ReadonlyArray<string>,
-    PlatformError.PlatformError
-  > => {
-    return streamLines({
+  const readLines: FileMonitorShape["readLines"] = E.fn(
+    "FileMonitor.readLines",
+  )(function* ({ filePath }) {
+    return yield* streamLines({
       filePath,
     }).pipe(Stream.runCollect);
-  };
+  });
 
   const readLeadingText = (file: FileData) => {
     return readFileRange({

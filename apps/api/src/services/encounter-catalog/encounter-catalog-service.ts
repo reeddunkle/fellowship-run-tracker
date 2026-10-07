@@ -30,22 +30,24 @@ export type EncounterCatalogShape = {
 const makeEncounterCatalog = E.gen(function* () {
   const encounterDAO = yield* EncounterDAO;
 
-  const getAll: EncounterCatalogShape["getAll"] = () => {
-    return encounterDAO.getAll().pipe(
-      E.map((encounters) => {
-        return encounters.map(createEncounterApiResponse);
-      }),
-    );
-  };
+  const getAll: EncounterCatalogShape["getAll"] = E.fn(
+    "EncounterCatalog.getAll",
+  )(function* () {
+    const encounters = yield* encounterDAO.getAll();
 
-  const getById: EncounterCatalogShape["getById"] = ({ dungeonId, id }) => {
-    return encounterDAO
-      .getById({
-        dungeonId,
-        id,
-      })
-      .pipe(E.map(Option.map(createEncounterApiResponse)));
-  };
+    return encounters.map(createEncounterApiResponse);
+  });
+
+  const getById: EncounterCatalogShape["getById"] = E.fn(
+    "EncounterCatalog.getById",
+  )(function* ({ dungeonId, id }) {
+    const encounter = yield* encounterDAO.getById({
+      dungeonId,
+      id,
+    });
+
+    return Option.map(encounter, createEncounterApiResponse);
+  });
 
   return {
     getAll,

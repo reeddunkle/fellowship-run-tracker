@@ -32,7 +32,7 @@ export type MakeNodeLiveSplitGatewayTransportOptions = {
 const SOCKET_OPEN_TIMEOUT = "5 seconds";
 
 export const makeNodeLiveSplitGatewayTransport = E.fn(
-  "LiveSplitGateway.openTransport",
+  "LiveSplitGatewayTransportFactory.open",
 )(function* ({ host, port }: MakeNodeLiveSplitGatewayTransportOptions) {
   yield* E.annotateCurrentSpan("livesplit.host", host);
   yield* E.annotateCurrentSpan("livesplit.port", port);

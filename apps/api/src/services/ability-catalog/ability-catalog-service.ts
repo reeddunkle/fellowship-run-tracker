@@ -28,19 +28,21 @@ export type AbilityCatalogShape = {
 const makeAbilityCatalog = E.gen(function* () {
   const abilityDAO = yield* AbilityDAO;
 
-  const getAll: AbilityCatalogShape["getAll"] = () => {
-    return abilityDAO.getAll().pipe(
-      E.map((abilities) => {
-        return abilities.map(createAbilityApiResponse);
-      }),
-    );
-  };
+  const getAll: AbilityCatalogShape["getAll"] = E.fn("AbilityCatalog.getAll")(
+    function* () {
+      const abilities = yield* abilityDAO.getAll();
 
-  const getById: AbilityCatalogShape["getById"] = ({ id }) => {
-    return abilityDAO
-      .getById({ id })
-      .pipe(E.map(Option.map(createAbilityApiResponse)));
-  };
+      return abilities.map(createAbilityApiResponse);
+    },
+  );
+
+  const getById: AbilityCatalogShape["getById"] = E.fn(
+    "AbilityCatalog.getById",
+  )(function* ({ id }) {
+    const ability = yield* abilityDAO.getById({ id });
+
+    return Option.map(ability, createAbilityApiResponse);
+  });
 
   return {
     getAll,

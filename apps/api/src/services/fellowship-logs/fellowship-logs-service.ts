@@ -91,32 +91,34 @@ const makeFellowshipLogs = E.gen(function* () {
   const fellowshipLogsGateway = yield* FellowshipLogsGateway;
 
   const deleteImportedDungeonRun: FellowshipLogsShape["deleteImportedDungeonRun"] =
-    (options) => {
-      return dungeonRunRepository.delete(options);
-    };
+    E.fn("FellowshipLogs.deleteImportedDungeonRun")(function* (options) {
+      return yield* dungeonRunRepository.delete(options);
+    });
 
-  const getDungeonRunMetadata: FellowshipLogsShape["getDungeonRunMetadata"] = (
-    options,
-  ) => {
-    return fellowshipLogsGateway
-      .getDungeonRunMetadata(options)
-      .pipe(E.map(createFellowshipLogsDungeonRunMetadataApiResponse));
-  };
+  const getDungeonRunMetadata: FellowshipLogsShape["getDungeonRunMetadata"] =
+    E.fn("FellowshipLogs.getDungeonRunMetadata")(function* (options) {
+      const metadata =
+        yield* fellowshipLogsGateway.getDungeonRunMetadata(options);
+
+      return createFellowshipLogsDungeonRunMetadataApiResponse(metadata);
+    });
 
   const getImportedDungeonRuns: FellowshipLogsShape["getImportedDungeonRuns"] =
-    () => {
-      return dungeonRunRepository.listFellowshipLogsDungeonRuns().pipe(
-        E.map((rows) => {
-          return rows.map(createFellowshipLogsImportedDungeonRunApiResponse);
-        }),
-      );
-    };
+    E.fn("FellowshipLogs.getImportedDungeonRuns")(function* () {
+      const rows = yield* dungeonRunRepository.listFellowshipLogsDungeonRuns();
 
-  const getRateLimitData: FellowshipLogsShape["getRateLimitData"] = () => {
-    return fellowshipLogsGateway
-      .getRateLimitData({ force: true })
-      .pipe(E.map(createFellowshipLogsRateLimitDataApiResponse));
-  };
+      return rows.map(createFellowshipLogsImportedDungeonRunApiResponse);
+    });
+
+  const getRateLimitData: FellowshipLogsShape["getRateLimitData"] = E.fn(
+    "FellowshipLogs.getRateLimitData",
+  )(function* () {
+    const rateLimitData = yield* fellowshipLogsGateway.getRateLimitData({
+      force: true,
+    });
+
+    return createFellowshipLogsRateLimitDataApiResponse(rateLimitData);
+  });
 
   const getLastKnownRateLimitData: FellowshipLogsShape["getLastKnownRateLimitData"] =
     () => {

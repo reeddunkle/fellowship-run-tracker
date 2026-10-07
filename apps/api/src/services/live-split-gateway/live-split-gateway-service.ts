@@ -106,75 +106,91 @@ const makeLiveSplitGateway = E.gen(function* () {
 
   const withClient: <A, Error>(
     use: (client: LiveSplitGatewayClient) => E.Effect<A, Error>,
-  ) => E.Effect<A, Error | LiveSplitGatewayNotConnectedError> = E.fn(
-    "LiveSplitGateway.withClient",
-  )(function* <A, Error>(
-    use: (client: LiveSplitGatewayClient) => E.Effect<A, Error>,
-  ) {
-    const client = yield* connectionManager.connection;
+  ) => E.Effect<A, Error | LiveSplitGatewayNotConnectedError> = E.fnUntraced(
+    function* <A, Error>(
+      use: (client: LiveSplitGatewayClient) => E.Effect<A, Error>,
+    ) {
+      const client = yield* connectionManager.connection;
 
-    if (Option.isNone(client)) {
-      return yield* new LiveSplitGatewayNotConnectedError();
-    }
+      if (Option.isNone(client)) {
+        return yield* new LiveSplitGatewayNotConnectedError();
+      }
 
-    return yield* use(client.value);
+      return yield* use(client.value);
+    },
+  );
+
+  const connect: LiveSplitGatewayShape["connect"] = E.fn(
+    "LiveSplitGateway.connect",
+  )(function* () {
+    return yield* connectionManager.connect();
+  });
+
+  const disconnect: LiveSplitGatewayShape["disconnect"] = E.fn(
+    "LiveSplitGateway.disconnect",
+  )(function* () {
+    return yield* connectionManager.disconnect();
   });
 
   return {
-    connect: connectionManager.connect,
-    disconnect: connectionManager.disconnect,
-    getCurrentTime: () => {
-      return withClient((client) => {
+    connect,
+    disconnect,
+    getCurrentTime: E.fn("LiveSplitGateway.getCurrentTime")(function* () {
+      return yield* withClient((client) => {
         return client.getCurrentTime();
       });
-    },
-    getSplitIndex: () => {
-      return withClient((client) => {
+    }),
+    getSplitIndex: E.fn("LiveSplitGateway.getSplitIndex")(function* () {
+      return yield* withClient((client) => {
         return client.getSplitIndex();
       });
-    },
-    getTimerPhase: () => {
-      return withClient((client) => {
+    }),
+    getTimerPhase: E.fn("LiveSplitGateway.getTimerPhase")(function* () {
+      return yield* withClient((client) => {
         return client.getTimerPhase();
       });
-    },
-    pause: () => {
-      return withClient((client) => {
+    }),
+    pause: E.fn("LiveSplitGateway.pause")(function* () {
+      return yield* withClient((client) => {
         return client.pause();
       });
-    },
-    reset: () => {
-      return withClient((client) => {
+    }),
+    reset: E.fn("LiveSplitGateway.reset")(function* () {
+      return yield* withClient((client) => {
         return client.reset();
       });
-    },
-    setComparison: (comparisonName) => {
-      return withClient((client) => {
-        return client.setComparison(comparisonName);
-      });
-    },
-    setCurrentSplitName: (splitName) => {
-      return withClient((client) => {
-        return client.setCurrentSplitName(splitName);
-      });
-    },
-    split: () => {
-      return withClient((client) => {
+    }),
+    setComparison: E.fn("LiveSplitGateway.setComparison")(
+      function* (comparisonName) {
+        return yield* withClient((client) => {
+          return client.setComparison(comparisonName);
+        });
+      },
+    ),
+    setCurrentSplitName: E.fn("LiveSplitGateway.setCurrentSplitName")(
+      function* (splitName) {
+        return yield* withClient((client) => {
+          return client.setCurrentSplitName(splitName);
+        });
+      },
+    ),
+    split: E.fn("LiveSplitGateway.split")(function* () {
+      return yield* withClient((client) => {
         return client.split();
       });
-    },
-    startTimer: () => {
-      return withClient((client) => {
+    }),
+    startTimer: E.fn("LiveSplitGateway.startTimer")(function* () {
+      return yield* withClient((client) => {
         return client.startTimer();
       });
-    },
+    }),
     status: connectionManager.status,
     statusChanges: connectionManager.statusChanges,
-    switchSplits: (filePath) => {
-      return withClient((client) => {
+    switchSplits: E.fn("LiveSplitGateway.switchSplits")(function* (filePath) {
+      return yield* withClient((client) => {
         return client.switchSplits(filePath);
       });
-    },
+    }),
   } satisfies LiveSplitGatewayShape;
 });
 

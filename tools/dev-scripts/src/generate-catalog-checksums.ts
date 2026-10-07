@@ -30,7 +30,7 @@ type JsonSortEntry<Value> = {
   readonly value: Value;
 };
 
-const sortByJson = E.fn("sort-by-json")(function* <Value>(
+const sortByJson = E.fn("sortByJson")(function* <Value>(
   values: Iterable<Value>,
 ) {
   const encodedValues = yield* E.forEach(values, (value) => {
@@ -57,7 +57,7 @@ const sortByJson = E.fn("sort-by-json")(function* <Value>(
   );
 });
 
-const hashCatalog = E.fn("hash-catalog")(function* (
+const hashCatalog = E.fn("hashCatalog")(function* (
   catalog: ReadonlyArray<unknown>,
 ) {
   const crypto = yield* Crypto.Crypto;

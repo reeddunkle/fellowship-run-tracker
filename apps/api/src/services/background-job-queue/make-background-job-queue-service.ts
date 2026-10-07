@@ -348,9 +348,7 @@ export const makeBackgroundJobQueue = E.gen(function* () {
     },
   );
 
-  const awaitWork = E.fn("BackgroundJobQueue.awaitWork")(function* (
-    queue: BackgroundJobQueueName,
-  ) {
+  const awaitWork = E.fnUntraced(function* (queue: BackgroundJobQueueName) {
     const { holdWhileWaiting } = BACKGROUND_JOB_QUEUES[queue];
     const nextAvailableAt = yield* backgroundJobDAO.getNextAvailableAt({
       holdWhileWaiting,
@@ -373,9 +371,7 @@ export const makeBackgroundJobQueue = E.gen(function* () {
     );
   });
 
-  const runWorker = E.fn("BackgroundJobQueue.runWorker")(function* (
-    queue: BackgroundJobQueueName,
-  ) {
+  const runWorker = E.fnUntraced(function* (queue: BackgroundJobQueueName) {
     const latch = latches[queue];
     const { holdWhileWaiting } = BACKGROUND_JOB_QUEUES[queue];
 
@@ -579,43 +575,64 @@ export const makeBackgroundJobQueue = E.gen(function* () {
     }),
   );
 
-  const dismiss: BackgroundJobQueueShape["dismiss"] = ({ id }) => {
-    return backgroundJobDAO
-      .delete({ id, statuses: ["FAILED", "SUCCEEDED"] })
-      .pipe(E.andThen(bumpRevision), mapCommandError("Dismiss", id));
-  };
+  const dismiss: BackgroundJobQueueShape["dismiss"] = E.fn(
+    "BackgroundJobQueue.dismiss",
+  )(
+    function* ({ id }) {
+      yield* backgroundJobDAO.delete({
+        id,
+        statuses: ["FAILED", "SUCCEEDED"],
+      });
 
-  const retry: BackgroundJobQueueShape["retry"] = ({ id }) => {
-    return backgroundJobDAO.retry({ id }).pipe(
-      E.tap((job) => {
-        return wakeQueue(job.queue).pipe(E.andThen(bumpRevision));
-      }),
-      mapCommandError("Retry", id),
-    );
-  };
+      yield* bumpRevision;
+    },
+    (effect, { id }) => {
+      return effect.pipe(mapCommandError("Dismiss", id));
+    },
+  );
 
-  const listVisible: BackgroundJobQueueShape["listVisible"] = () => {
-    if (!A.isReadonlyArrayNonEmpty(VISIBLE_QUEUE_NAMES)) {
-      return E.succeed([]);
-    }
+  const retry: BackgroundJobQueueShape["retry"] = E.fn(
+    "BackgroundJobQueue.retry",
+  )(
+    function* ({ id }) {
+      const job = yield* backgroundJobDAO.retry({ id });
 
-    return backgroundJobDAO.list({ queues: VISIBLE_QUEUE_NAMES }).pipe(
-      E.map((jobs) => {
-        return jobs.map((job) => {
-          return {
-            job,
-            progress:
-              job.status === "RUNNING"
-                ? (progressById.get(job.id) ?? null)
-                : null,
-          };
-        });
-      }),
-      E.mapError((cause) => {
-        return new BackgroundJobQueueError({ cause, operation: "List" });
-      }),
-    );
-  };
+      yield* wakeQueue(job.queue);
+      yield* bumpRevision;
+
+      return job;
+    },
+    (effect, { id }) => {
+      return effect.pipe(mapCommandError("Retry", id));
+    },
+  );
+
+  const listVisible: BackgroundJobQueueShape["listVisible"] = E.fn(
+    "BackgroundJobQueue.listVisible",
+  )(
+    function* () {
+      if (!A.isReadonlyArrayNonEmpty(VISIBLE_QUEUE_NAMES)) {
+        return [];
+      }
+
+      const jobs = yield* backgroundJobDAO.list({
+        queues: VISIBLE_QUEUE_NAMES,
+      });
+
+      return jobs.map((job) => {
+        return {
+          job,
+          progress:
+            job.status === "RUNNING"
+              ? (progressById.get(job.id) ?? null)
+              : null,
+        };
+      });
+    },
+    E.mapError((cause) => {
+      return new BackgroundJobQueueError({ cause, operation: "List" });
+    }),
+  );
 
   return {
     cancel,

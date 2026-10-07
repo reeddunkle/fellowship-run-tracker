@@ -103,7 +103,7 @@ export const makeFileMonitorTestHarness = E.gen(function* () {
     });
   };
 
-  const emitSourceValue = E.fn("test.emitSourceValue")(function* (
+  const emitSourceValue = E.fnUntraced(function* (
     value: FileMonitorSourceValue,
   ) {
     yield* Ref.set(latestSourceValueRef, value);
@@ -114,7 +114,7 @@ export const makeFileMonitorTestHarness = E.gen(function* () {
     });
   });
 
-  const emitFile = E.fn("test.emitFile")(function* (fileName: string) {
+  const emitFile = E.fnUntraced(function* (fileName: string) {
     const file = yield* getFileData(fileName);
 
     yield* emitSourceValue(Option.some(file));
@@ -134,19 +134,19 @@ export const makeFileMonitorTestHarness = E.gen(function* () {
   const awaitSourceRequest = Queue.take(sourceRequests);
 
   const fileMonitorSource = {
-    findLatestFile: ({ directoryPath: directoryPathValue }) => {
-      return E.gen(function* () {
-        const latestSourceValue = yield* Ref.get(latestSourceValueRef);
+    findLatestFile: E.fnUntraced(function* ({
+      directoryPath: directoryPathValue,
+    }) {
+      const latestSourceValue = yield* Ref.get(latestSourceValueRef);
 
-        if (Option.isNone(latestSourceValue)) {
-          return yield* new FileNotFoundError({
-            directoryPath: directoryPathValue,
-          });
-        }
+      if (Option.isNone(latestSourceValue)) {
+        return yield* new FileNotFoundError({
+          directoryPath: directoryPathValue,
+        });
+      }
 
-        return latestSourceValue.value;
-      });
-    },
+      return latestSourceValue.value;
+    }),
     streamLatestFile: () => {
       return Stream.fromEffectRepeat(
         E.gen(function* () {

@@ -80,8 +80,8 @@ function makeApiServicesTestLayer(
   return Layer.mergeAll(ApiServicesTest, ...overrides);
 }
 
-export function makeApiServerTestLayer(
-  apiServicesLayer: Layer.Layer<ApiServices> = ApiServicesTest,
+export function makeApiServerTestLayer<Error = never>(
+  apiServicesLayer: Layer.Layer<ApiServices, Error> = ApiServicesTest,
 ) {
   const ApiServerDependenciesTest = WebSocketChannel.layer.pipe(
     Layer.provideMerge(

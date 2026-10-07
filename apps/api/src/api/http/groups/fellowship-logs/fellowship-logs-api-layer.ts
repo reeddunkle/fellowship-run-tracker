@@ -65,28 +65,28 @@ function mapQueueFellowshipLogsDungeonRunImportError(
 
 const logInternalServerError: (
   error: unknown,
-) => E.Effect<never, HttpApiError.InternalServerError> = E.fn(
-  "logInternalServerError",
-)(function* (error) {
-  yield* E.logError("Fellowship Logs API operation failed.", {
-    error,
-  });
+) => E.Effect<never, HttpApiError.InternalServerError> = E.fnUntraced(
+  function* (error) {
+    yield* E.logError("Fellowship Logs API operation failed.", {
+      error,
+    });
 
-  return yield* new HttpApiError.InternalServerError();
-});
+    return yield* new HttpApiError.InternalServerError();
+  },
+);
 
 const logGatewayFailure: (
   error: FellowshipLogsGatewayRequestOperationError,
-) => E.Effect<never, HttpApiError.InternalServerError> = E.fn(
-  "logGatewayFailure",
-)(function* (error) {
-  yield* E.logWarning("Fellowship Logs request failed.", {
-    errorTag: error._tag,
-    message: error.message,
-  });
+) => E.Effect<never, HttpApiError.InternalServerError> = E.fnUntraced(
+  function* (error) {
+    yield* E.logWarning("Fellowship Logs request failed.", {
+      errorTag: error._tag,
+      message: error.message,
+    });
 
-  return yield* new HttpApiError.InternalServerError();
-});
+    return yield* new HttpApiError.InternalServerError();
+  },
+);
 
 function mapFellowshipLogsRateLimitApiError(
   error: FellowshipLogsGatewayRequestOperationError,
@@ -107,15 +107,15 @@ function mapFellowshipLogsRateLimitApiError(
 
 const mapGetFellowshipLogsDungeonRunsError: (
   error: DungeonRunRepositoryError,
-) => E.Effect<never, HttpApiError.InternalServerError> = E.fn(
-  "mapGetFellowshipLogsDungeonRunsError",
-)(function* (error) {
-  yield* E.logError("Failed to list imported Fellowship Logs runs.", {
-    error,
-  });
+) => E.Effect<never, HttpApiError.InternalServerError> = E.fnUntraced(
+  function* (error) {
+    yield* E.logError("Failed to list imported Fellowship Logs runs.", {
+      error,
+    });
 
-  return yield* new HttpApiError.InternalServerError();
-});
+    return yield* new HttpApiError.InternalServerError();
+  },
+);
 
 function mapDeleteFellowshipLogsDungeonRunError(
   error: DungeonRunDAOError,
@@ -136,7 +136,7 @@ function mapDeleteFellowshipLogsDungeonRunError(
 const FellowshipLogsApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "fellowshipLogs",
-  E.fn("FellowshipLogsApi.handlers")(function* (handlers) {
+  E.fnUntraced(function* (handlers) {
     const fellowshipLogs = yield* FellowshipLogs;
 
     return handlers

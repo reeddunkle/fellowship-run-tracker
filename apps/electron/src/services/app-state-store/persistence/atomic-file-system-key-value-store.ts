@@ -11,9 +11,9 @@ const RENAME_RETRY_COUNT = 3;
 
 const RENAME_RETRY_DELAY = "20 millis";
 
-const makeAtomicFileSystemKeyValueStore = E.fn(
-  "makeAtomicFileSystemKeyValueStore",
-)(function* (directory: string) {
+const makeAtomicFileSystemKeyValueStore = E.fnUntraced(function* (
+  directory: string,
+) {
   const fileStore = yield* KeyValueStore.KeyValueStore;
   const fileSystem = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;

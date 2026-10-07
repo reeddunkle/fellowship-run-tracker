@@ -131,30 +131,30 @@ export const makeFellowshipLogsResponseDAO = E.gen(function* () {
       `;
   }, E.mapError(mapFellowshipLogsResponseDAOError));
 
-  const delete_: FellowshipLogsResponseDAOShape["delete"] = ({ key }) => {
-    return sql`
+  const delete_: FellowshipLogsResponseDAOShape["delete"] = E.fn(
+    "FellowshipLogsResponseDAO.delete",
+  )(function* ({ key }) {
+    yield* sql`
       DELETE FROM fellowship_logs_response
       WHERE
         request_key = ${key}
-    `.pipe(E.asVoid, E.mapError(mapFellowshipLogsResponseDAOError));
-  };
+    `;
+  }, E.mapError(mapFellowshipLogsResponseDAOError));
 
-  const deleteForReport: FellowshipLogsResponseDAOShape["deleteForReport"] = ({
-    reportCode,
-  }) => {
-    return sql`
-      DELETE FROM fellowship_logs_response
-      WHERE
-        report_code = ${reportCode}
-      RETURNING
-        request_key
-    `.pipe(
-      E.map((rows) => {
-        return rows.length;
-      }),
-      E.mapError(mapFellowshipLogsResponseDAOError),
-    );
-  };
+  const deleteForReport: FellowshipLogsResponseDAOShape["deleteForReport"] =
+    E.fn("FellowshipLogsResponseDAO.deleteForReport")(function* ({
+      reportCode,
+    }) {
+      const rows = yield* sql`
+        DELETE FROM fellowship_logs_response
+        WHERE
+          report_code = ${reportCode}
+        RETURNING
+          request_key
+      `;
+
+      return rows.length;
+    }, E.mapError(mapFellowshipLogsResponseDAOError));
 
   const deleteExpired: FellowshipLogsResponseDAOShape["deleteExpired"] = E.fn(
     "FellowshipLogsResponseDAO.deleteExpired",
@@ -173,10 +173,10 @@ export const makeFellowshipLogsResponseDAO = E.gen(function* () {
     return rows.length;
   }, E.mapError(mapFellowshipLogsResponseDAOError));
 
-  const evictToSize: FellowshipLogsResponseDAOShape["evictToSize"] = ({
-    maxBytes,
-  }) => {
-    return sql`
+  const evictToSize: FellowshipLogsResponseDAOShape["evictToSize"] = E.fn(
+    "FellowshipLogsResponseDAO.evictToSize",
+  )(function* ({ maxBytes }) {
+    const rows = yield* sql`
       DELETE FROM fellowship_logs_response
       WHERE
         request_key IN (
@@ -199,20 +199,15 @@ export const makeFellowshipLogsResponseDAO = E.gen(function* () {
         )
       RETURNING
         request_key
-    `.pipe(
-      E.map((rows) => {
-        return rows.length;
-      }),
-      E.mapError(mapFellowshipLogsResponseDAOError),
-    );
-  };
+    `;
+
+    return rows.length;
+  }, E.mapError(mapFellowshipLogsResponseDAOError));
 
   const incrementalVacuum: FellowshipLogsResponseDAOShape["incrementalVacuum"] =
-    () => {
-      return reclaimFreePages(sql).pipe(
-        E.mapError(mapFellowshipLogsResponseDAOError),
-      );
-    };
+    E.fn("FellowshipLogsResponseDAO.incrementalVacuum")(function* () {
+      yield* reclaimFreePages(sql);
+    }, E.mapError(mapFellowshipLogsResponseDAOError));
 
   return {
     delete: delete_,

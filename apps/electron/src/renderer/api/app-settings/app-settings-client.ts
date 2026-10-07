@@ -4,18 +4,20 @@ import { type AppSettingsApiUpdate } from "@frt/shared/app-settings/app-settings
 
 import { AppApiClient } from "@/renderer/services/app-api-client/app-api-client";
 
-export const getAppSettings = E.fn("getAppSettings")(function* () {
-  const client = yield* AppApiClient;
+export const getAppSettings = E.fn("AppSettingsApiClient.getAppSettings")(
+  function* () {
+    const client = yield* AppApiClient;
 
-  return yield* client.appSettings.getAppSettings();
-});
+    return yield* client.appSettings.getAppSettings();
+  },
+);
 
-export const putAppSettings = E.fn("putAppSettings")(function* (
-  appSettings: AppSettingsApiUpdate,
-) {
-  const client = yield* AppApiClient;
+export const putAppSettings = E.fn("AppSettingsApiClient.putAppSettings")(
+  function* (appSettings: AppSettingsApiUpdate) {
+    const client = yield* AppApiClient;
 
-  return yield* client.appSettings.putAppSettings({
-    payload: appSettings,
-  });
-});
+    return yield* client.appSettings.putAppSettings({
+      payload: appSettings,
+    });
+  },
+);

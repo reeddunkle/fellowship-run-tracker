@@ -9,20 +9,20 @@ import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
 
 const mapAppSettingsApiError: (
   error: AppSettingsStoreSetError,
-) => E.Effect<never, HttpApiError.InternalServerError> = E.fn(
-  "mapAppSettingsApiError",
-)(function* (error) {
-  yield* E.logError("App settings API operation failed.", {
-    error,
-  });
+) => E.Effect<never, HttpApiError.InternalServerError> = E.fnUntraced(
+  function* (error) {
+    yield* E.logError("App settings API operation failed.", {
+      error,
+    });
 
-  return yield* new HttpApiError.InternalServerError();
-});
+    return yield* new HttpApiError.InternalServerError();
+  },
+);
 
 const AppSettingsApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "appSettings",
-  E.fn("AppSettingsApi.handlers")(function* (handlers) {
+  E.fnUntraced(function* (handlers) {
     const appSettings = yield* AppSettings;
 
     return handlers

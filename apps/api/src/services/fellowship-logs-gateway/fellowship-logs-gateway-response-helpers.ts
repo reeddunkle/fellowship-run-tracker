@@ -128,9 +128,10 @@ export const makeFellowshipLogsGatewayRateLimitDataTracker = E.gen(
       snapshot: null,
     });
 
-    const updateState = E.fn(
-      "FellowshipLogsGatewayRateLimitDataTracker.updateState",
-    )(function* (rateLimitData: FellowshipLogsRateLimitData, costKey: string) {
+    const updateState = E.fnUntraced(function* (
+      rateLimitData: FellowshipLogsRateLimitData,
+      costKey: string,
+    ) {
       const nowMilliseconds = yield* Clock.currentTimeMillis;
 
       return yield* Ref.modify(stateRef, ({ costByKey, snapshot }) => {
@@ -159,22 +160,21 @@ export const makeFellowshipLogsGatewayRateLimitDataTracker = E.gen(
       });
     });
 
-    const track: FellowshipLogsGatewayRateLimitDataTracker["track"] = E.fn(
-      "FellowshipLogsGatewayRateLimitDataTracker.track",
-    )(function* (rateLimitData, { costKey, operation }) {
-      const pointsSpent =
-        rateLimitData === undefined
-          ? null
-          : yield* updateState(rateLimitData, costKey);
+    const track: FellowshipLogsGatewayRateLimitDataTracker["track"] =
+      E.fnUntraced(function* (rateLimitData, { costKey, operation }) {
+        const pointsSpent =
+          rateLimitData === undefined
+            ? null
+            : yield* updateState(rateLimitData, costKey);
 
-      yield* analytics.record({ operation, pointsSpent, source: "API" });
+        yield* analytics.record({ operation, pointsSpent, source: "API" });
 
-      const { costByKey } = yield* Ref.get(stateRef);
+        const { costByKey } = yield* Ref.get(stateRef);
 
-      yield* addFellowshipLogsGatewayPointsSpent(
-        pointsSpent ?? costByKey[costKey] ?? 0,
-      );
-    });
+        yield* addFellowshipLogsGatewayPointsSpent(
+          pointsSpent ?? costByKey[costKey] ?? 0,
+        );
+      });
 
     const getLastKnown: FellowshipLogsGatewayRateLimitDataTracker["getLastKnown"] =
       () => {
@@ -186,52 +186,48 @@ export const makeFellowshipLogsGatewayRateLimitDataTracker = E.gen(
       };
 
     const checkCapacity: FellowshipLogsGatewayRateLimitDataTracker["checkCapacity"] =
-      E.fn("FellowshipLogsGatewayRateLimitDataTracker.checkCapacity")(
-        function* (costKey) {
-          const { costByKey, snapshot } = yield* Ref.get(stateRef);
+      E.fnUntraced(function* (costKey) {
+        const { costByKey, snapshot } = yield* Ref.get(stateRef);
 
-          if (snapshot === null) {
-            return;
-          }
+        if (snapshot === null) {
+          return;
+        }
 
-          const nowMilliseconds = yield* Clock.currentTimeMillis;
+        const nowMilliseconds = yield* Clock.currentTimeMillis;
+        const status = getFellowshipLogsRateLimitStatus(
+          snapshot,
+          nowMilliseconds,
+        );
+        const estimatedCost = costByKey[costKey] ?? 0;
+
+        if (status.isExhausted || status.pointsRemaining < estimatedCost) {
+          return yield* new FellowshipLogsGatewayRateLimitExceededError({
+            reason: "PreflightExhausted",
+            resetsAt: DateTime.makeUnsafe(status.resetsAtMilliseconds),
+          });
+        }
+      });
+
+    const getRejectedResetsAt: FellowshipLogsGatewayRateLimitDataTracker["getRejectedResetsAt"] =
+      E.fnUntraced(function* () {
+        const { snapshot } = yield* Ref.get(stateRef);
+        const nowMilliseconds = yield* Clock.currentTimeMillis;
+
+        if (snapshot !== null) {
           const status = getFellowshipLogsRateLimitStatus(
             snapshot,
             nowMilliseconds,
           );
-          const estimatedCost = costByKey[costKey] ?? 0;
 
-          if (status.isExhausted || status.pointsRemaining < estimatedCost) {
-            return yield* new FellowshipLogsGatewayRateLimitExceededError({
-              reason: "PreflightExhausted",
-              resetsAt: DateTime.makeUnsafe(status.resetsAtMilliseconds),
-            });
+          if (!status.isStale) {
+            return DateTime.makeUnsafe(status.resetsAtMilliseconds);
           }
-        },
-      );
+        }
 
-    const getRejectedResetsAt: FellowshipLogsGatewayRateLimitDataTracker["getRejectedResetsAt"] =
-      E.fn("FellowshipLogsGatewayRateLimitDataTracker.getRejectedResetsAt")(
-        function* () {
-          const { snapshot } = yield* Ref.get(stateRef);
-          const nowMilliseconds = yield* Clock.currentTimeMillis;
-
-          if (snapshot !== null) {
-            const status = getFellowshipLogsRateLimitStatus(
-              snapshot,
-              nowMilliseconds,
-            );
-
-            if (!status.isStale) {
-              return DateTime.makeUnsafe(status.resetsAtMilliseconds);
-            }
-          }
-
-          return DateTime.makeUnsafe(
-            nowMilliseconds + Duration.toMillis(UNKNOWN_RESET_DELAY),
-          );
-        },
-      );
+        return DateTime.makeUnsafe(
+          nowMilliseconds + Duration.toMillis(UNKNOWN_RESET_DELAY),
+        );
+      });
 
     return {
       checkCapacity,

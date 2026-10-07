@@ -10,20 +10,20 @@ import { type UnitDAOError } from "@frt/db/daos/unit/unit-dao.ts";
 
 const mapUnitApiError: (
   error: UnitDAOError,
-) => E.Effect<never, HttpApiError.InternalServerError> = E.fn(
-  "mapUnitApiError",
-)(function* (error) {
-  yield* E.logError("Unit API operation failed.", {
-    error,
-  });
+) => E.Effect<never, HttpApiError.InternalServerError> = E.fnUntraced(
+  function* (error) {
+    yield* E.logError("Unit API operation failed.", {
+      error,
+    });
 
-  return yield* new HttpApiError.InternalServerError();
-});
+    return yield* new HttpApiError.InternalServerError();
+  },
+);
 
 const UnitsApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "units",
-  E.fn("UnitsApi.handlers")(function* (handlers) {
+  E.fnUntraced(function* (handlers) {
     const unitCatalog = yield* UnitCatalog;
 
     return handlers

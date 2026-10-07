@@ -50,21 +50,17 @@ const BackgroundJobServiceTestLive = Layer.effect(
       changes: Stream.empty,
       dismiss: unexpectedCall("dismiss"),
       listVisible: unexpectedCall("listVisible"),
-      offer: (job) => {
-        return E.gen(function* () {
-          const { job: row, wasInserted } = yield* backgroundJobDAO.insert({
-            idempotencyKey: getBackgroundJobIdempotencyKey(job),
-            kind: job._tag,
-            payload: yield* Schema.encodeEffect(BackgroundJobPayloadSchema)(
-              job,
-            ),
-            queue: "test",
-            traceparent: null,
-          });
+      offer: E.fnUntraced(function* (job) {
+        const { job: row, wasInserted } = yield* backgroundJobDAO.insert({
+          idempotencyKey: getBackgroundJobIdempotencyKey(job),
+          kind: job._tag,
+          payload: yield* Schema.encodeEffect(BackgroundJobPayloadSchema)(job),
+          queue: "test",
+          traceparent: null,
+        });
 
-          return { job: row, wasAlreadyQueued: !wasInserted };
-        }).pipe(E.orDie);
-      },
+        return { job: row, wasAlreadyQueued: !wasInserted };
+      }, E.orDie),
       retry: unexpectedCall("retry"),
       revision: E.succeed(0),
       sessionId: "test",

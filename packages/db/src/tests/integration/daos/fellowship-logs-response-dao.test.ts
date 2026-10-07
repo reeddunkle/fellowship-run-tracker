@@ -22,7 +22,7 @@ const OTHER_REPORT_CODE = Schema.decodeSync(FellowshipLogsReportCodeSchema)(
 
 const FIGHT_ID = Schema.decodeSync(FellowshipLogsFightIdSchema)(15);
 
-const putResponse = E.fn("test.put-fellowship-logs-response")(function* (
+const putResponse = E.fnUntraced(function* (
   key: string,
   options?: {
     readonly byteSize?: number;
@@ -44,7 +44,7 @@ const putResponse = E.fn("test.put-fellowship-logs-response")(function* (
 });
 
 /** Sets when a response was last used, so eviction order is predictable. */
-const setLastAccessedAt = E.fn("test.set-last-accessed-at")(function* (
+const setLastAccessedAt = E.fnUntraced(function* (
   key: string,
   lastAccessedAt: number,
 ) {

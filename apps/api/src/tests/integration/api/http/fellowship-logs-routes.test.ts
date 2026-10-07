@@ -47,7 +47,7 @@ const MOCK_DUNGEON_RUN_ID = Schema.decodeSync(DungeonRunIdSchema)(
   "00000000-0000-7000-8000-000000000000",
 );
 
-const postJson = E.fn("test.postJson")(function* (url: string, body: unknown) {
+const postJson = E.fnUntraced(function* (url: string, body: unknown) {
   const httpClient = yield* HttpClient.HttpClient;
 
   return yield* HttpClientRequest.post(url).pipe(

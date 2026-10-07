@@ -43,9 +43,7 @@ export type SeedDungeonRunOptions = {
   readonly startedAt: DateTime.Utc;
 };
 
-export const seedDungeonRunWithObservations = E.fn(
-  "test.seed-dungeon-run-with-observations",
-)(function* ({
+export const seedDungeonRunWithObservations = E.fnUntraced(function* ({
   dungeonId,
   dungeonLevel,
   isOwnRun,

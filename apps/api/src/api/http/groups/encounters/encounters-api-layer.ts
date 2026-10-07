@@ -10,20 +10,20 @@ import { type EncounterDAOError } from "@frt/db/daos/encounter/encounter-dao.ts"
 
 const mapEncounterApiError: (
   error: EncounterDAOError,
-) => E.Effect<never, HttpApiError.InternalServerError> = E.fn(
-  "mapEncounterApiError",
-)(function* (error) {
-  yield* E.logError("Encounter API operation failed.", {
-    error,
-  });
+) => E.Effect<never, HttpApiError.InternalServerError> = E.fnUntraced(
+  function* (error) {
+    yield* E.logError("Encounter API operation failed.", {
+      error,
+    });
 
-  return yield* new HttpApiError.InternalServerError();
-});
+    return yield* new HttpApiError.InternalServerError();
+  },
+);
 
 const EncountersApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "encounters",
-  E.fn("EncountersApi.handlers")(function* (handlers) {
+  E.fnUntraced(function* (handlers) {
     const encounterCatalog = yield* EncounterCatalog;
 
     return handlers

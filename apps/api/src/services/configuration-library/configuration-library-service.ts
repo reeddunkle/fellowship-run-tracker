@@ -69,67 +69,75 @@ export type ConfigurationLibraryShape = {
 const makeConfigurationLibrary = E.gen(function* () {
   const configurationDAO = yield* ConfigurationDAO;
 
-  const deleteConfiguration: ConfigurationLibraryShape["delete"] = ({ id }) => {
-    return configurationDAO.delete({ id });
-  };
+  const deleteConfiguration: ConfigurationLibraryShape["delete"] = E.fn(
+    "ConfigurationLibrary.delete",
+  )(function* ({ id }) {
+    return yield* configurationDAO.delete({ id });
+  });
 
   const deleteByDungeonAndLevel: ConfigurationLibraryShape["deleteByDungeonAndLevel"] =
-    ({ dungeonId, dungeonLevel }) => {
-      return configurationDAO.deleteByDungeonAndLevel({
+    E.fn("ConfigurationLibrary.deleteByDungeonAndLevel")(function* ({
+      dungeonId,
+      dungeonLevel,
+    }) {
+      return yield* configurationDAO.deleteByDungeonAndLevel({
         dungeonId,
         dungeonLevel,
       });
-    };
+    });
 
-  const getAll: ConfigurationLibraryShape["getAll"] = () => {
-    return configurationDAO.getAll().pipe(
-      E.map((configurations) => {
-        return configurations.map(createConfigurationApiResponse);
-      }),
-    );
-  };
+  const getAll: ConfigurationLibraryShape["getAll"] = E.fn(
+    "ConfigurationLibrary.getAll",
+  )(function* () {
+    const configurations = yield* configurationDAO.getAll();
 
-  const getById: ConfigurationLibraryShape["getById"] = ({ id }) => {
-    return configurationDAO
-      .getById({ id })
-      .pipe(E.map(Option.map(createConfigurationApiResponse)));
-  };
+    return configurations.map(createConfigurationApiResponse);
+  });
 
-  const save: ConfigurationLibraryShape["save"] = ({
-    configuration,
-    label,
-  }) => {
-    return configurationDAO
-      .save({
-        configuration,
-        label,
-      })
-      .pipe(E.map(createConfigurationApiResponse));
-  };
+  const getById: ConfigurationLibraryShape["getById"] = E.fn(
+    "ConfigurationLibrary.getById",
+  )(function* ({ id }) {
+    const configuration = yield* configurationDAO.getById({ id });
+
+    return Option.map(configuration, createConfigurationApiResponse);
+  });
+
+  const save: ConfigurationLibraryShape["save"] = E.fn(
+    "ConfigurationLibrary.save",
+  )(function* ({ configuration, label }) {
+    const savedConfiguration = yield* configurationDAO.save({
+      configuration,
+      label,
+    });
+
+    return createConfigurationApiResponse(savedConfiguration);
+  });
 
   const saveReplacingDungeonAndLevel: ConfigurationLibraryShape["saveReplacingDungeonAndLevel"] =
-    ({ configuration, label }) => {
-      return configurationDAO
-        .saveReplacingDungeonAndLevel({
+    E.fn("ConfigurationLibrary.saveReplacingDungeonAndLevel")(function* ({
+      configuration,
+      label,
+    }) {
+      const savedConfiguration =
+        yield* configurationDAO.saveReplacingDungeonAndLevel({
           configuration,
           label,
-        })
-        .pipe(E.map(createConfigurationApiResponse));
-    };
+        });
 
-  const update: ConfigurationLibraryShape["update"] = ({
-    configuration,
-    id,
-    label,
-  }) => {
-    return configurationDAO
-      .update({
-        configuration,
-        id,
-        label,
-      })
-      .pipe(E.map(createConfigurationApiResponse));
-  };
+      return createConfigurationApiResponse(savedConfiguration);
+    });
+
+  const update: ConfigurationLibraryShape["update"] = E.fn(
+    "ConfigurationLibrary.update",
+  )(function* ({ configuration, id, label }) {
+    const updatedConfiguration = yield* configurationDAO.update({
+      configuration,
+      id,
+      label,
+    });
+
+    return createConfigurationApiResponse(updatedConfiguration);
+  });
 
   return {
     delete: deleteConfiguration,

@@ -25,7 +25,7 @@ function roundMilliseconds(milliseconds: number): number {
   return Math.round(milliseconds * 1_000) / 1_000;
 }
 
-const countFellowshipLogEvents = E.fn("countFellowshipLogEvents")(function* (
+const countFellowshipLogEvents = E.fnUntraced(function* (
   inputFilePath: string,
 ) {
   const fileSystem = yield* FileSystem.FileSystem;

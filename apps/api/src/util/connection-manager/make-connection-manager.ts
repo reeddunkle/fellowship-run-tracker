@@ -48,7 +48,7 @@ const CONNECTED_STATUS = {
 export const makeConnectionManager: <Connection, AcquireError>(
   options: MakeConnectionManagerOptions<Connection, AcquireError>,
 ) => E.Effect<ConnectionManager<Connection, AcquireError>, never, Scope.Scope> =
-  E.fn("makeConnectionManager")(function* <Connection, AcquireError>({
+  E.fnUntraced(function* <Connection, AcquireError>({
     acquire,
     getUnavailability,
     name,
@@ -70,9 +70,9 @@ export const makeConnectionManager: <Connection, AcquireError>(
       yield* E.logInfo(`${name} connection status changed to Disconnected.`);
     });
 
-    const releaseUnavailableConnection = E.fn(
-      "ConnectionManager.releaseUnavailableConnection",
-    )(function* (connection: Connection) {
+    const releaseUnavailableConnection = E.fnUntraced(function* (
+      connection: Connection,
+    ) {
       const currentConnection = yield* ScopedRef.get(connectionRef);
 
       if (
@@ -117,7 +117,7 @@ export const makeConnectionManager: <Connection, AcquireError>(
     );
 
     const connect: ConnectionManager<Connection, AcquireError>["connect"] =
-      E.fn("ConnectionManager.connect")(function* () {
+      E.fnUntraced(function* () {
         yield* E.logDebug(`Installing ${name} connection.`);
 
         yield* ScopedRef.set(connectionRef, acquireConnection);
@@ -132,7 +132,7 @@ export const makeConnectionManager: <Connection, AcquireError>(
     const disconnect: ConnectionManager<
       Connection,
       AcquireError
-    >["disconnect"] = E.fn("ConnectionManager.disconnect")(function* () {
+    >["disconnect"] = E.fnUntraced(function* () {
       yield* E.logDebug(`Disconnecting from ${name}.`);
 
       yield* ScopedRef.set(connectionRef, E.succeedNone);

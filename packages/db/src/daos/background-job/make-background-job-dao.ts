@@ -471,9 +471,11 @@ export const makeBackgroundJobDAO = E.gen(function* () {
       return rows.length;
     }, E.mapError(mapBackgroundJobDAOError));
 
-  const incrementalVacuum: BackgroundJobDAOShape["incrementalVacuum"] = () => {
-    return reclaimFreePages(sql).pipe(E.mapError(mapBackgroundJobDAOError));
-  };
+  const incrementalVacuum: BackgroundJobDAOShape["incrementalVacuum"] = E.fn(
+    "BackgroundJobDAO.incrementalVacuum",
+  )(function* () {
+    yield* reclaimFreePages(sql);
+  }, E.mapError(mapBackgroundJobDAOError));
 
   const list: BackgroundJobDAOShape["list"] = E.fn("BackgroundJobDAO.list")(
     function* ({ queues }) {

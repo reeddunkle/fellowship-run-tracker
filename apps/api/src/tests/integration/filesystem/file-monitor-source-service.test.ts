@@ -356,60 +356,57 @@ describe("FileMonitorSource", () => {
     });
 
     describe("when the watcher stops", () => {
-      const failStreamsThenRecover = E.fn("test.failStreamsThenRecover")(
-        function* (
-          firstWatch: Stream.Stream<
-            FileSystem.WatchEvent,
-            PlatformError.PlatformError
-          >,
-        ) {
-          const watchCounting =
-            yield* makeWatchCountingFileMonitorSourceTestLive({
-              firstWatch,
-            });
+      const failStreamsThenRecover = E.fnUntraced(function* (
+        firstWatch: Stream.Stream<
+          FileSystem.WatchEvent,
+          PlatformError.PlatformError
+        >,
+      ) {
+        const watchCounting = yield* makeWatchCountingFileMonitorSourceTestLive(
+          {
+            firstWatch,
+          },
+        );
 
-          return yield* E.scoped(
-            E.gen(function* () {
-              const harness = yield* makeFileMonitorSourceTestHarness;
+        return yield* E.scoped(
+          E.gen(function* () {
+            const harness = yield* makeFileMonitorSourceTestHarness;
 
-              const options = {
-                directoryPath: harness.directoryPath,
-                matches: matchesTextFile,
-              };
+            const options = {
+              directoryPath: harness.directoryPath,
+              matches: matchesTextFile,
+            };
 
-              const [latestFileError, statusError] = yield* E.all(
-                [
-                  harness.fileMonitorSource
-                    .streamLatestFile(options)
-                    .pipe(Stream.runDrain, E.flip),
-                  harness.fileMonitorSource
-                    .streamStatus(options)
-                    .pipe(Stream.runDrain, E.flip),
-                ],
-                {
-                  concurrency: "unbounded",
-                },
-              );
-
-              const recoveredLatestFiles = yield* makeStreamTestHarness(
+            const [latestFileError, statusError] = yield* E.all(
+              [
                 harness.fileMonitorSource
                   .streamLatestFile(options)
-                  .pipe(Stream.retry(Schedule.recurs(3))),
-              );
+                  .pipe(Stream.runDrain, E.flip),
+                harness.fileMonitorSource
+                  .streamStatus(options)
+                  .pipe(Stream.runDrain, E.flip),
+              ],
+              {
+                concurrency: "unbounded",
+              },
+            );
 
-              yield* recoveredLatestFiles.take;
+            const recoveredLatestFiles = yield* makeStreamTestHarness(
+              harness.fileMonitorSource
+                .streamLatestFile(options)
+                .pipe(Stream.retry(Schedule.recurs(3))),
+            );
 
-              return {
-                latestFileError,
-                openedWatchCount: yield* Ref.get(
-                  watchCounting.openedWatchCount,
-                ),
-                statusError,
-              };
-            }),
-          ).pipe(E.provide(watchCounting.layer), E.timeout("2 seconds"));
-        },
-      );
+            yield* recoveredLatestFiles.take;
+
+            return {
+              latestFileError,
+              openedWatchCount: yield* Ref.get(watchCounting.openedWatchCount),
+              statusError,
+            };
+          }),
+        ).pipe(E.provide(watchCounting.layer), E.timeout("2 seconds"));
+      });
 
       test("fails every stream when the watcher fails and recovers with a fresh watcher", async () => {
         const watchError = PlatformError.systemError({

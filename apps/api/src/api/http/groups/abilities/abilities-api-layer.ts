@@ -10,20 +10,20 @@ import { type AbilityDAOError } from "@frt/db/daos/ability/ability-dao.ts";
 
 const mapAbilityApiError: (
   error: AbilityDAOError,
-) => E.Effect<never, HttpApiError.InternalServerError> = E.fn(
-  "mapAbilityApiError",
-)(function* (error) {
-  yield* E.logError("Ability API operation failed.", {
-    error,
-  });
+) => E.Effect<never, HttpApiError.InternalServerError> = E.fnUntraced(
+  function* (error) {
+    yield* E.logError("Ability API operation failed.", {
+      error,
+    });
 
-  return yield* new HttpApiError.InternalServerError();
-});
+    return yield* new HttpApiError.InternalServerError();
+  },
+);
 
 const AbilitiesApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "abilities",
-  E.fn("AbilitiesApi.handlers")(function* (handlers) {
+  E.fnUntraced(function* (handlers) {
     const abilityCatalog = yield* AbilityCatalog;
 
     return handlers

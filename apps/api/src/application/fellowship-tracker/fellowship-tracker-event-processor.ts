@@ -28,7 +28,7 @@ export const makeFellowshipTrackerEventProcessor = E.gen(function* () {
   const dungeonRunWebSocketBroadcaster = yield* DungeonRunWebSocketBroadcaster;
   const liveSplit = yield* LiveSplit;
 
-  function handleProcessedDungeonRunEvent({
+  const handleProcessedDungeonRunEvent = E.fnUntraced(function* ({
     dungeonRunStateRef,
     localLogDungeonRunPersistence,
     result,
@@ -39,14 +39,20 @@ export const makeFellowshipTrackerEventProcessor = E.gen(function* () {
       | undefined;
     readonly result: ProcessDungeonRunEventStreamResult;
   }) {
-    const updateStateEffect = Ref.set(dungeonRunStateRef, result.state);
+    const previousState = yield* Ref.getAndSet(
+      dungeonRunStateRef,
+      result.state,
+    );
 
     const hasRelevantResult =
       result.observation !== undefined || result.processingEvents.length > 0;
 
     if (!hasRelevantResult) {
-      return updateStateEffect;
+      return;
     }
+
+    const isConfiguredRunChanged =
+      result.state.configuredRun !== previousState.configuredRun;
 
     const persistResultEffect =
       localLogDungeonRunPersistence === undefined
@@ -89,32 +95,30 @@ export const makeFellowshipTrackerEventProcessor = E.gen(function* () {
       },
     );
 
-    const publishStateEffect = publishDungeonRunState({
-      state: result.state,
-    }).pipe(
-      E.provideService(
-        DungeonRunWebSocketBroadcaster,
-        dungeonRunWebSocketBroadcaster,
-      ),
-    );
+    const publishStateEffect = isConfiguredRunChanged
+      ? publishDungeonRunState({
+          state: result.state,
+        }).pipe(
+          E.provideService(
+            DungeonRunWebSocketBroadcaster,
+            dungeonRunWebSocketBroadcaster,
+          ),
+        )
+      : E.void;
 
-    return updateStateEffect.pipe(
-      E.andThen(
-        E.all(
-          [
-            logEffects,
-            sendLiveSplitCommandsEffect,
-            persistResultEffect,
-            publishStateEffect,
-          ],
-          {
-            concurrency: "unbounded",
-            discard: true,
-          },
-        ),
-      ),
+    yield* E.all(
+      [
+        logEffects,
+        sendLiveSplitCommandsEffect,
+        persistResultEffect,
+        publishStateEffect,
+      ],
+      {
+        concurrency: "unbounded",
+        discard: true,
+      },
     );
-  }
+  });
 
   function process({
     configuration,

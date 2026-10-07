@@ -20,78 +20,78 @@ export type MakeFellowshipTrackerIntegrationTestHarnessOptions = {
   readonly databaseFilename?: string;
 };
 
-export const makeFellowshipTrackerIntegrationTestHarness = E.fn(
-  "test.makeFellowshipTrackerIntegrationTestHarness",
-)(function* ({
-  databaseFilename = ":memory:",
-}: MakeFellowshipTrackerIntegrationTestHarnessOptions = {}) {
-  const encryptionHarness = yield* makeEncryptionHarness;
+export const makeFellowshipTrackerIntegrationTestHarness = E.fnUntraced(
+  function* ({
+    databaseFilename = ":memory:",
+  }: MakeFellowshipTrackerIntegrationTestHarnessOptions = {}) {
+    const encryptionHarness = yield* makeEncryptionHarness;
 
-  const liveSplitHarness = yield* makeLiveSplitGatewayTransportTestHarness;
+    const liveSplitHarness = yield* makeLiveSplitGatewayTransportTestHarness;
 
-  const dungeonRunWebSocketBroadcasterHarness =
-    yield* makeWebSocketBroadcasterTestHarness;
+    const dungeonRunWebSocketBroadcasterHarness =
+      yield* makeWebSocketBroadcasterTestHarness;
 
-  const PersistenceTestLive = makePersistenceTestLayer(databaseFilename);
+    const PersistenceTestLive = makePersistenceTestLayer(databaseFilename);
 
-  const EncryptionTestLive = Layer.succeed(
-    Encryption,
-    encryptionHarness.encryption,
-  );
+    const EncryptionTestLive = Layer.succeed(
+      Encryption,
+      encryptionHarness.encryption,
+    );
 
-  const AppSettingsStoreTestLive = AppSettingsStore.layerNoDeps.pipe(
-    Layer.provide(Layer.mergeAll(PersistenceTestLive, EncryptionTestLive)),
-  );
+    const AppSettingsStoreTestLive = AppSettingsStore.layerNoDeps.pipe(
+      Layer.provide(Layer.mergeAll(PersistenceTestLive, EncryptionTestLive)),
+    );
 
-  const FellowshipTestLive = Fellowship.layerNoDeps.pipe(
-    Layer.provide(Layer.mergeAll(FileMonitor.layer, FileMonitorSource.layer)),
-    Layer.provide(AppSettingsStoreTestLive),
-  );
+    const FellowshipTestLive = Fellowship.layerNoDeps.pipe(
+      Layer.provide(Layer.mergeAll(FileMonitor.layer, FileMonitorSource.layer)),
+      Layer.provide(AppSettingsStoreTestLive),
+    );
 
-  const LiveSplitGatewayTestLive = LiveSplitGateway.layerNoDeps.pipe(
-    Layer.provide(
-      Layer.mergeAll(
-        AppSettingsStoreTestLive,
-        liveSplitHarness.transportFactoryLayer,
+    const LiveSplitGatewayTestLive = LiveSplitGateway.layerNoDeps.pipe(
+      Layer.provide(
+        Layer.mergeAll(
+          AppSettingsStoreTestLive,
+          liveSplitHarness.transportFactoryLayer,
+        ),
       ),
-    ),
-  );
+    );
 
-  const LiveSplitTestLive = LiveSplit.layerNoDeps.pipe(
-    Layer.provide(LiveSplitGatewayTestLive),
-  );
+    const LiveSplitTestLive = LiveSplit.layerNoDeps.pipe(
+      Layer.provide(LiveSplitGatewayTestLive),
+    );
 
-  const DungeonRunWebSocketBroadcasterTestLive = Layer.succeed(
-    DungeonRunWebSocketBroadcaster,
-    dungeonRunWebSocketBroadcasterHarness.webSocketBroadcaster,
-  );
+    const DungeonRunWebSocketBroadcasterTestLive = Layer.succeed(
+      DungeonRunWebSocketBroadcaster,
+      dungeonRunWebSocketBroadcasterHarness.webSocketBroadcaster,
+    );
 
-  const FellowshipTrackerDependenciesTestLive = Layer.mergeAll(
-    PersistenceTestLive,
-    FellowshipTestLive,
-    LiveSplitTestLive,
-    DungeonRunWebSocketBroadcasterTestLive,
-  );
+    const FellowshipTrackerDependenciesTestLive = Layer.mergeAll(
+      PersistenceTestLive,
+      FellowshipTestLive,
+      LiveSplitTestLive,
+      DungeonRunWebSocketBroadcasterTestLive,
+    );
 
-  const FellowshipTrackerTestLive = FellowshipTracker.layerNoDeps.pipe(
-    Layer.provide(FellowshipTrackerDependenciesTestLive),
-  );
+    const FellowshipTrackerTestLive = FellowshipTracker.layerNoDeps.pipe(
+      Layer.provide(FellowshipTrackerDependenciesTestLive),
+    );
 
-  const layer = Layer.mergeAll(
-    PersistenceTestLive,
-    EncryptionTestLive,
-    AppSettingsStoreTestLive,
-    FellowshipTestLive,
-    LiveSplitGatewayTestLive,
-    LiveSplitTestLive,
-    DungeonRunWebSocketBroadcasterTestLive,
-    FellowshipTrackerTestLive,
-  );
+    const layer = Layer.mergeAll(
+      PersistenceTestLive,
+      EncryptionTestLive,
+      AppSettingsStoreTestLive,
+      FellowshipTestLive,
+      LiveSplitGatewayTestLive,
+      LiveSplitTestLive,
+      DungeonRunWebSocketBroadcasterTestLive,
+      FellowshipTrackerTestLive,
+    );
 
-  return {
-    dungeonRunWebSocketBroadcasterHarness,
-    encryptionHarness,
-    layer,
-    liveSplitHarness,
-  };
-});
+    return {
+      dungeonRunWebSocketBroadcasterHarness,
+      encryptionHarness,
+      layer,
+      liveSplitHarness,
+    };
+  },
+);

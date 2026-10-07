@@ -63,9 +63,9 @@ type GetReportPageOptions = {
   readonly startTime: number;
 };
 
-export const makeFellowshipLogsGatewayFromQuery = E.fn(
-  "makeFellowshipLogsGatewayFromQuery",
-)(function* (query: Query) {
+export const makeFellowshipLogsGatewayFromQuery = E.fnUntraced(function* (
+  query: Query,
+) {
   const responseCache = yield* FellowshipLogsGatewayResponseCache;
   const rateLimitTracker = yield* makeFellowshipLogsGatewayRateLimitDataTracker;
   const trackedQuery = makeTrackedQuery(query, rateLimitTracker);
@@ -124,21 +124,21 @@ export const makeFellowshipLogsGatewayFromQuery = E.fn(
       };
     });
 
-  const getRateLimitData: FellowshipLogsGatewayShape["getRateLimitData"] = (
-    options,
-  ) => {
-    if (options?.force !== true) {
-      return rateLimitTracker.getLastKnown();
+  const getRateLimitData: FellowshipLogsGatewayShape["getRateLimitData"] = E.fn(
+    "FellowshipLogsGateway.getRateLimitData",
+  )(function* (options) {
+    if (options?.force === true) {
+      yield* trackedQuery(
+        {
+          query: RATE_LIMIT_DATA_QUERY,
+        },
+        FellowshipLogsRateLimitResponseDataSchema,
+        { operation: "RATE_LIMIT_DATA", skipCapacityCheck: true },
+      );
     }
 
-    return trackedQuery(
-      {
-        query: RATE_LIMIT_DATA_QUERY,
-      },
-      FellowshipLogsRateLimitResponseDataSchema,
-      { operation: "RATE_LIMIT_DATA", skipCapacityCheck: true },
-    ).pipe(E.andThen(rateLimitTracker.getLastKnown()));
-  };
+    return yield* rateLimitTracker.getLastKnown();
+  });
 
   const getFight = E.fn("FellowshipLogsGateway.getFight")(function* ({
     fightId,
@@ -365,9 +365,9 @@ export const makeFellowshipLogsGatewayFromQuery = E.fn(
   } satisfies FellowshipLogsGatewayShape;
 });
 
-const makeFellowshipLogsGatewayFromCredentials = E.fn(
-  "makeFellowshipLogsGatewayFromCredentials",
-)(function* (getCredentials: GetCredentials) {
+const makeFellowshipLogsGatewayFromCredentials = E.fnUntraced(function* (
+  getCredentials: GetCredentials,
+) {
   const query = yield* makeFellowshipLogsGatewayHttpQuery(getCredentials);
 
   return yield* makeFellowshipLogsGatewayFromQuery(query);
@@ -376,26 +376,24 @@ const makeFellowshipLogsGatewayFromCredentials = E.fn(
 export const makeFellowshipLogsGateway = E.gen(function* () {
   const appSettingsStore = yield* AppSettingsStore;
 
-  const getCredentials = E.fn("FellowshipLogsGateway.getCredentials")(
-    function* () {
-      const settings = yield* appSettingsStore.get();
+  const getCredentials = E.fnUntraced(function* () {
+    const settings = yield* appSettingsStore.get();
 
-      if (
-        settings.fellowshipLogsClientId === null ||
-        settings.fellowshipLogsClientSecret === null
-      ) {
-        return yield* new FellowshipLogsGatewayRequestError({
-          cause: new Error("Fellowship Logs credentials are not configured."),
-          operation: "GetAccessToken",
-        });
-      }
+    if (
+      settings.fellowshipLogsClientId === null ||
+      settings.fellowshipLogsClientSecret === null
+    ) {
+      return yield* new FellowshipLogsGatewayRequestError({
+        cause: new Error("Fellowship Logs credentials are not configured."),
+        operation: "GetAccessToken",
+      });
+    }
 
-      return {
-        clientId: settings.fellowshipLogsClientId,
-        clientSecret: Redacted.value(settings.fellowshipLogsClientSecret),
-      } satisfies FellowshipLogsGatewayCredentials;
-    },
-  );
+    return {
+      clientId: settings.fellowshipLogsClientId,
+      clientSecret: Redacted.value(settings.fellowshipLogsClientSecret),
+    } satisfies FellowshipLogsGatewayCredentials;
+  });
 
   return yield* makeFellowshipLogsGatewayFromCredentials(getCredentials);
 });

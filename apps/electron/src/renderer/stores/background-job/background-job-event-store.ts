@@ -85,9 +85,7 @@ export function makeBackgroundJobEventStore({
     });
   }
 
-  const refreshFinishedJobQueries = E.fn(
-    "BackgroundJobEventStore.refreshFinishedJobQueries",
-  )(function* ({
+  const refreshFinishedJobQueries = E.fnUntraced(function* ({
     next,
     previous,
   }: {
@@ -116,7 +114,7 @@ export function makeBackgroundJobEventStore({
     }
   });
 
-  const handleSnapshot = E.fn("BackgroundJobEventStore.handleSnapshot")(
+  const handleSnapshot = E.fnUntraced(
     function* (next: BackgroundJobApiSnapshot) {
       const previous = queryClient.getQueryData(
         getBackgroundJobsQueryOptions().queryKey,
@@ -128,17 +126,13 @@ export function makeBackgroundJobEventStore({
 
       setBackgroundJobSnapshot(queryClient, next);
 
-      yield* refreshFinishedJobQueries({ next, previous }).pipe(
-        E.catch((error) => {
-          return E.logWarning(
-            "Failed to refresh queries after a job finished.",
-            {
-              error,
-            },
-          );
-        }),
-      );
+      yield* refreshFinishedJobQueries({ next, previous });
     },
+    E.catch((error) => {
+      return E.logWarning("Failed to refresh queries after a job finished.", {
+        error,
+      });
+    }),
   );
 
   const handleBackgroundJobEvent =

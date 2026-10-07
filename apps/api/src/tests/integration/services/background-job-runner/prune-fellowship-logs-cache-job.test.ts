@@ -12,7 +12,7 @@ import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fell
 
 const REPORT_CODE = Schema.decodeSync(FellowshipLogsReportCodeSchema)("report");
 
-const putResponse = E.fn("test.put-fellowship-logs-response")(function* (
+const putResponse = E.fnUntraced(function* (
   key: string,
   expiresAt: DateTime.Utc | null,
 ) {

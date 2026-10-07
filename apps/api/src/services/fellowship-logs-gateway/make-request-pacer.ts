@@ -4,7 +4,7 @@ import * as E from "effect/Effect";
 import * as Ref from "effect/Ref";
 import * as Semaphore from "effect/Semaphore";
 
-export const makeRequestPacer = E.fn("makeRequestPacer")(function* (
+export const makeRequestPacer = E.fnUntraced(function* (
   minInterval: Duration.Input,
 ) {
   const minIntervalMilliseconds = Duration.toMillis(minInterval);
@@ -17,25 +17,19 @@ export const makeRequestPacer = E.fn("makeRequestPacer")(function* (
     }),
   );
 
-  return function pace<A, Err, R>(
-    effect: E.Effect<A, Err, R>,
-  ): E.Effect<A, Err, R> {
-    return semaphore.withPermit(
-      E.gen(function* () {
-        const lastFinishedAt = yield* Ref.get(lastFinishedAtRef);
+  return E.fnUntraced(function* <A, Err, R>(effect: E.Effect<A, Err, R>) {
+    const lastFinishedAt = yield* Ref.get(lastFinishedAtRef);
 
-        if (lastFinishedAt !== null) {
-          const nowMilliseconds = yield* Clock.currentTimeMillis;
-          const waitMilliseconds =
-            lastFinishedAt + minIntervalMilliseconds - nowMilliseconds;
+    if (lastFinishedAt !== null) {
+      const nowMilliseconds = yield* Clock.currentTimeMillis;
+      const waitMilliseconds =
+        lastFinishedAt + minIntervalMilliseconds - nowMilliseconds;
 
-          if (waitMilliseconds > 0) {
-            yield* E.sleep(Duration.millis(waitMilliseconds));
-          }
-        }
+      if (waitMilliseconds > 0) {
+        yield* E.sleep(Duration.millis(waitMilliseconds));
+      }
+    }
 
-        return yield* effect.pipe(E.ensuring(markFinished));
-      }),
-    );
-  };
+    return yield* effect.pipe(E.ensuring(markFinished));
+  }, semaphore.withPermit);
 });

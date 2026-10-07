@@ -80,26 +80,25 @@ const INVALID_REQUEST_BODY = {
 
 const parseResponseJson: (
   response: HttpClientResponse.HttpClientResponse,
-) => E.Effect<unknown, HttpResponseReadError | HttpResponseParseError> = E.fn(
-  "test.parseResponseJson",
-)(function* (response) {
-  const contents = yield* response.text.pipe(
-    E.mapError((cause) => {
-      return new HttpResponseReadError({
-        cause,
-      });
-    }),
-  );
+) => E.Effect<unknown, HttpResponseReadError | HttpResponseParseError> =
+  E.fnUntraced(function* (response) {
+    const contents = yield* response.text.pipe(
+      E.mapError((cause) => {
+        return new HttpResponseReadError({
+          cause,
+        });
+      }),
+    );
 
-  return yield* parseJson({
-    contents,
-    onError: (cause) => {
-      return new HttpResponseParseError({
-        cause,
-      });
-    },
+    return yield* parseJson({
+      contents,
+      onError: (cause) => {
+        return new HttpResponseParseError({
+          cause,
+        });
+      },
+    });
   });
-});
 
 const request: (
   url: string,
@@ -108,7 +107,7 @@ const request: (
   HttpClientResponse.HttpClientResponse,
   HttpRequestError | Schema.SchemaError,
   HttpClient.HttpClient
-> = E.fn("test.request")(function* (url, options = {}) {
+> = E.fnUntraced(function* (url, options = {}) {
   const httpClient = yield* HttpClient.HttpClient;
   const method = options.method ?? "GET";
 
@@ -133,9 +132,11 @@ const request: (
   );
 });
 
-const requestWithDecodedBody = E.fn("test.requestWithDecodedBody")(function* <
-  A,
->(url: string, schema: Schema.Decoder<A>, options: RequestOptions = {}) {
+const requestWithDecodedBody = E.fnUntraced(function* <A>(
+  url: string,
+  schema: Schema.Decoder<A>,
+  options: RequestOptions = {},
+) {
   const response = yield* request(url, options);
   const json = yield* parseResponseJson(response);
   const body = yield* Schema.decodeUnknownEffect(schema)(json);
@@ -146,7 +147,7 @@ const requestWithDecodedBody = E.fn("test.requestWithDecodedBody")(function* <
   };
 });
 
-const requestWithTextBody = E.fn("test.requestWithTextBody")(function* (
+const requestWithTextBody = E.fnUntraced(function* (
   url: string,
   options: RequestOptions = {},
 ) {

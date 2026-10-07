@@ -142,31 +142,29 @@ function measureNaturalWidth(childContainer: HTMLElement) {
   return width;
 }
 
-const resizeDetachedWindowToContent = E.fn("resizeDetachedWindowToContent")(
-  function* ({
-    childContainer,
-    childWindow,
-  }: {
-    readonly childContainer: HTMLElement;
-    readonly childWindow: Window;
-  }) {
-    yield* waitForAnimationFrame(childWindow);
+const resizeDetachedWindowToContent = E.fnUntraced(function* ({
+  childContainer,
+  childWindow,
+}: {
+  readonly childContainer: HTMLElement;
+  readonly childWindow: Window;
+}) {
+  yield* waitForAnimationFrame(childWindow);
 
-    const childDocument = childWindow.document;
+  const childDocument = childWindow.document;
 
-    childDocument.documentElement.style.overflowY = "hidden";
+  childDocument.documentElement.style.overflowY = "hidden";
 
-    yield* windowClient.resizeWindowToContent({
-      height: childContainer.scrollHeight,
-      width: measureNaturalWidth(childContainer) + SCROLLBAR_GUTTER_WIDTH,
-      window: childWindow,
-    });
+  yield* windowClient.resizeWindowToContent({
+    height: childContainer.scrollHeight,
+    width: measureNaturalWidth(childContainer) + SCROLLBAR_GUTTER_WIDTH,
+    window: childWindow,
+  });
 
-    yield* waitForAnimationFrame(childWindow);
+  yield* waitForAnimationFrame(childWindow);
 
-    childDocument.documentElement.style.overflowY = "auto";
-  },
-);
+  childDocument.documentElement.style.overflowY = "auto";
+});
 
 /** [KEEP]
  * Re-measures height only (e.g. after a milestone expands/collapses),
@@ -180,9 +178,7 @@ const resizeDetachedWindowToContent = E.fn("resizeDetachedWindowToContent")(
  * reflects a manual OS-level resize, since it always matches the window's
  * actual current content width regardless of who last set it.
  */
-const resizeDetachedWindowToContentHeight = E.fn(
-  "resizeDetachedWindowToContentHeight",
-)(function* ({
+const resizeDetachedWindowToContentHeight = E.fnUntraced(function* ({
   childContainer,
   childWindow,
 }: {

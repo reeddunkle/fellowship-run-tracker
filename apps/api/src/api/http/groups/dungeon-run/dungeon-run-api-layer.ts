@@ -11,20 +11,20 @@ import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
 
 const mapDungeonRunApiError: (
   error: DungeonRunHistoryError,
-) => E.Effect<never, HttpApiError.InternalServerError> = E.fn(
-  "mapDungeonRunApiError",
-)(function* (error) {
-  yield* E.logError("Dungeon run API operation failed.", {
-    error,
-  });
+) => E.Effect<never, HttpApiError.InternalServerError> = E.fnUntraced(
+  function* (error) {
+    yield* E.logError("Dungeon run API operation failed.", {
+      error,
+    });
 
-  return yield* new HttpApiError.InternalServerError();
-});
+    return yield* new HttpApiError.InternalServerError();
+  },
+);
 
 const DungeonRunApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "dungeonRun",
-  E.fn("DungeonRunApi.handlers")(function* (handlers) {
+  E.fnUntraced(function* (handlers) {
     const dungeonRunHistory = yield* DungeonRunHistory;
 
     return handlers

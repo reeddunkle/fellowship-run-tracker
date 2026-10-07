@@ -13,13 +13,13 @@ import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
 
 const logInternalServerError: (
   error: BackgroundJobQueueError,
-) => E.Effect<never, HttpApiError.InternalServerError> = E.fn(
-  "logInternalServerError",
-)(function* (error) {
-  yield* E.logError("Background job API operation failed.", { error });
+) => E.Effect<never, HttpApiError.InternalServerError> = E.fnUntraced(
+  function* (error) {
+    yield* E.logError("Background job API operation failed.", { error });
 
-  return yield* new HttpApiError.InternalServerError();
-});
+    return yield* new HttpApiError.InternalServerError();
+  },
+);
 
 function mapBackgroundJobCommandError(
   error: BackgroundJobQueueError | BackgroundJobQueueNotFoundError,
@@ -37,7 +37,7 @@ function mapBackgroundJobCommandError(
 const BackgroundJobApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "backgroundJob",
-  E.fn("BackgroundJobApi.handlers")(function* (handlers) {
+  E.fnUntraced(function* (handlers) {
     const backgroundJob = yield* BackgroundJob;
 
     return handlers

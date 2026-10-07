@@ -58,9 +58,11 @@ const makeBackgroundJob = E.gen(function* () {
     };
   });
 
-  const retry: BackgroundJobShape["retry"] = (options) => {
-    return backgroundJobQueue.retry(options).pipe(E.asVoid);
-  };
+  const retry: BackgroundJobShape["retry"] = E.fn("BackgroundJob.retry")(
+    function* (options) {
+      yield* backgroundJobQueue.retry(options);
+    },
+  );
 
   return {
     cancel: backgroundJobQueue.cancel,

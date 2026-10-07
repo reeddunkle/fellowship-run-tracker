@@ -62,29 +62,29 @@ export const makeFellowshipLogsAnalytics = E.gen(function* () {
     );
   };
 
-  const getSummary: FellowshipLogsAnalyticsShape["getSummary"] = () => {
-    return requestDAO.getSummary().pipe(
-      E.map((summary) => {
-        const cacheableRequestCount =
-          summary.cacheHitCount + summary.apiRequestCount;
+  const getSummary: FellowshipLogsAnalyticsShape["getSummary"] = E.fn(
+    "FellowshipLogsAnalytics.getSummary",
+  )(function* () {
+    const summary = yield* requestDAO.getSummary();
 
-        return {
-          apiRequestCount: summary.apiRequestCount,
-          cacheHitCount: summary.cacheHitCount,
-          cacheHitRate:
-            cacheableRequestCount === 0
-              ? 0
-              : summary.cacheHitCount / cacheableRequestCount,
-          estimatedPointsSaved: Math.round(summary.estimatedPointsSaved),
-          pointsSpent: summary.pointsSpent,
-          trackingSinceMilliseconds:
-            summary.trackingSince === null
-              ? null
-              : DateTime.toEpochMillis(summary.trackingSince),
-        };
-      }),
-    );
-  };
+    const cacheableRequestCount =
+      summary.cacheHitCount + summary.apiRequestCount;
+
+    return {
+      apiRequestCount: summary.apiRequestCount,
+      cacheHitCount: summary.cacheHitCount,
+      cacheHitRate:
+        cacheableRequestCount === 0
+          ? 0
+          : summary.cacheHitCount / cacheableRequestCount,
+      estimatedPointsSaved: Math.round(summary.estimatedPointsSaved),
+      pointsSpent: summary.pointsSpent,
+      trackingSinceMilliseconds:
+        summary.trackingSince === null
+          ? null
+          : DateTime.toEpochMillis(summary.trackingSince),
+    };
+  });
 
   return {
     getSummary,

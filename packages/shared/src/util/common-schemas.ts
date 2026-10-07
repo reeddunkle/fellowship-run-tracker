@@ -20,6 +20,10 @@ export const NonNegativeNumberSchema = Schema.Finite.check(
   Schema.isGreaterThanOrEqualTo(0),
 );
 
+export const PositiveNumberSchema = Schema.Finite.check(
+  Schema.isGreaterThan(0),
+);
+
 export const PositiveIntegerSchema = Schema.Int.check(
   Schema.isGreaterThanOrEqualTo(1),
 );

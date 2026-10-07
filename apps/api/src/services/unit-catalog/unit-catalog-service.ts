@@ -25,19 +25,21 @@ export type UnitCatalogShape = {
 const makeUnitCatalog = E.gen(function* () {
   const unitDAO = yield* UnitDAO;
 
-  const getAll: UnitCatalogShape["getAll"] = () => {
-    return unitDAO.getAll().pipe(
-      E.map((units) => {
-        return units.map(createUnitApiResponse);
-      }),
-    );
-  };
+  const getAll: UnitCatalogShape["getAll"] = E.fn("UnitCatalog.getAll")(
+    function* () {
+      const units = yield* unitDAO.getAll();
 
-  const getById: UnitCatalogShape["getById"] = ({ id }) => {
-    return unitDAO
-      .getById({ id })
-      .pipe(E.map(Option.map(createUnitApiResponse)));
-  };
+      return units.map(createUnitApiResponse);
+    },
+  );
+
+  const getById: UnitCatalogShape["getById"] = E.fn("UnitCatalog.getById")(
+    function* ({ id }) {
+      const unit = yield* unitDAO.getById({ id });
+
+      return Option.map(unit, createUnitApiResponse);
+    },
+  );
 
   return {
     getAll,

@@ -62,9 +62,9 @@ function isLocalLogDungeonRunLifecycleEvent(
   );
 }
 
-export const makeLocalLogDungeonRunPersistence = E.fn(
-  "LocalLogDungeonRunPersistence.make",
-)(function* ({ configuration }: MakeLocalLogDungeonRunPersistenceOptions) {
+export const makeLocalLogDungeonRunPersistence = E.fnUntraced(function* ({
+  configuration,
+}: MakeLocalLogDungeonRunPersistenceOptions) {
   const dungeonRunObservationDAO = yield* DungeonRunObservationDAO;
   const dungeonRunRepository = yield* DungeonRunRepository;
 
@@ -74,31 +74,25 @@ export const makeLocalLogDungeonRunPersistence = E.fn(
 
   const dungeonRunIdSemaphore = yield* Semaphore.make(1);
 
-  const getOrCreateDungeonRunId = E.fn(
-    "LocalLogDungeonRunPersistence.getOrCreateDungeonRunId",
-  )(function* () {
-    return yield* dungeonRunIdSemaphore.withPermit(
-      E.gen(function* () {
-        const dungeonRunId = yield* Ref.get(dungeonRunIdRef);
+  const getOrCreateDungeonRunId = E.fnUntraced(function* () {
+    const dungeonRunId = yield* Ref.get(dungeonRunIdRef);
 
-        if (Option.isSome(dungeonRunId)) {
-          return dungeonRunId.value;
-        }
+    if (Option.isSome(dungeonRunId)) {
+      return dungeonRunId.value;
+    }
 
-        const dungeonRun = yield* dungeonRunRepository.createLocal({
-          dungeonId: configuration.dungeonId,
-          dungeonLevel: configuration.dungeonLevel,
-        });
+    const dungeonRun = yield* dungeonRunRepository.createLocal({
+      dungeonId: configuration.dungeonId,
+      dungeonLevel: configuration.dungeonLevel,
+    });
 
-        yield* Ref.set(dungeonRunIdRef, Option.some(dungeonRun.id));
+    yield* Ref.set(dungeonRunIdRef, Option.some(dungeonRun.id));
 
-        return dungeonRun.id;
-      }),
-    );
-  });
+    return dungeonRun.id;
+  }, dungeonRunIdSemaphore.withPermit);
 
   const persistLifecycleEvent = E.fn(
-    "LocalLogDungeonRunPersistence.persistLifecycleEvent",
+    "FellowshipTracker.persistLocalLogLifecycleEvent",
   )(function* ({
     dungeonRunId,
     processingEvent,
@@ -152,44 +146,44 @@ export const makeLocalLogDungeonRunPersistence = E.fn(
     );
   });
 
-  const persist: LocalLogDungeonRunPersistence["persist"] = E.fn(
-    "LocalLogDungeonRunPersistence.persist",
-  )(function* ({ observation, processingEvents }) {
-    const lifecycleEvents = processingEvents.filter(
-      isLocalLogDungeonRunLifecycleEvent,
-    );
+  const persist: LocalLogDungeonRunPersistence["persist"] = E.fnUntraced(
+    function* ({ observation, processingEvents }) {
+      const lifecycleEvents = processingEvents.filter(
+        isLocalLogDungeonRunLifecycleEvent,
+      );
 
-    if (observation === undefined && lifecycleEvents.length === 0) {
-      return;
-    }
+      if (observation === undefined && lifecycleEvents.length === 0) {
+        return;
+      }
 
-    const dungeonRunId = yield* getOrCreateDungeonRunId();
+      const dungeonRunId = yield* getOrCreateDungeonRunId();
 
-    if (observation !== undefined) {
-      yield* dungeonRunObservationDAO.observe({
-        dungeonRunId,
-        observedAt: observation.timestamp,
-        targetId: observation.targetId,
-        type: observation.type,
-      });
-    }
-
-    yield* E.forEach(
-      lifecycleEvents,
-      (processingEvent) => {
-        return persistLifecycleEvent({
+      if (observation !== undefined) {
+        yield* dungeonRunObservationDAO.observe({
           dungeonRunId,
-          processingEvent,
+          observedAt: observation.timestamp,
+          targetId: observation.targetId,
+          type: observation.type,
         });
-      },
-      {
-        discard: true,
-      },
-    );
-  });
+      }
+
+      yield* E.forEach(
+        lifecycleEvents,
+        (processingEvent) => {
+          return persistLifecycleEvent({
+            dungeonRunId,
+            processingEvent,
+          });
+        },
+        {
+          discard: true,
+        },
+      );
+    },
+  );
 
   const interrupt: LocalLogDungeonRunPersistence["interrupt"] = E.fn(
-    "LocalLogDungeonRunPersistence.interrupt",
+    "FellowshipTracker.interruptLocalLogRun",
   )(function* (endedAt) {
     const dungeonRunId = yield* Ref.get(dungeonRunIdRef);
 

@@ -37,15 +37,14 @@ const makeDungeonRunHistory = E.gen(function* () {
   const dungeonRunObservationDAO = yield* DungeonRunObservationDAO;
   const dungeonRunRepository = yield* DungeonRunRepository;
 
-  const deleteHistory: DungeonRunHistoryShape["deleteHistory"] = ({
-    dungeonId,
-    dungeonLevel,
-  }) => {
-    return dungeonRunRepository.deleteHistory({
+  const deleteHistory: DungeonRunHistoryShape["deleteHistory"] = E.fn(
+    "DungeonRunHistory.deleteHistory",
+  )(function* ({ dungeonId, dungeonLevel }) {
+    return yield* dungeonRunRepository.deleteHistory({
       dungeonId,
       dungeonLevel,
     });
-  };
+  });
 
   const getHistory: DungeonRunHistoryShape["getHistory"] = E.fn(
     "DungeonRunHistory.getHistory",

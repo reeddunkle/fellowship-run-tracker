@@ -58,193 +58,189 @@ export const makeFellowshipTracker = E.gen(function* () {
 
     yield* E.annotateCurrentSpan("fellowship.tracker.source", source._tag);
 
-    return yield* semaphore.withPermit(
-      E.gen(function* () {
-        const activeTracker = yield* trackerState.getActiveTracker;
+    const activeTracker = yield* trackerState.getActiveTracker;
 
-        if (Option.isSome(activeTracker)) {
-          return yield* new FellowshipTrackerAlreadyRunningError();
-        }
+    if (Option.isSome(activeTracker)) {
+      return yield* new FellowshipTrackerAlreadyRunningError();
+    }
 
-        const localLogDungeonRunPersistence =
-          source._tag === "Persisted"
-            ? yield* makeLocalLogDungeonRunPersistence({
-                configuration,
-              }).pipe(
-                E.provideService(
-                  DungeonRunObservationDAO,
-                  dungeonRunObservationDAO,
-                ),
-                E.provideService(DungeonRunRepository, dungeonRunRepository),
-              )
-            : undefined;
-
-        const dungeonRunStateRef = yield* Ref.make(
-          createInitialDungeonRunProcessingState(),
-        );
-
-        const processEventsEffect = eventProcessor.process({
-          configuration,
-          dungeonRunStateRef,
-          events,
-          localLogDungeonRunPersistence,
-        });
-
-        const interruptActiveDungeonRun = E.gen(function* () {
-          const currentState = yield* Ref.get(dungeonRunStateRef);
-
-          if (currentState.configuredRun.dungeonRun?.status !== "ACTIVE") {
-            return;
-          }
-
-          const endedAt = yield* DateTime.now;
-
-          const interruptedState = interruptDungeonRunProcessingState({
-            endedAt,
-            state: currentState,
-          });
-
-          yield* Ref.set(dungeonRunStateRef, interruptedState);
-
-          if (localLogDungeonRunPersistence !== undefined) {
-            yield* localLogDungeonRunPersistence.interrupt(endedAt).pipe(
-              E.catch((error) => {
-                return E.logError(
-                  "Failed to interrupt persisted local log dungeon run.",
-                  {
-                    error,
-                  },
-                );
-              }),
-            );
-          }
-
-          yield* publishDungeonRunState({
-            state: interruptedState,
+    const localLogDungeonRunPersistence =
+      source._tag === "Persisted"
+        ? yield* makeLocalLogDungeonRunPersistence({
+            configuration,
           }).pipe(
             E.provideService(
-              DungeonRunWebSocketBroadcaster,
-              dungeonRunWebSocketBroadcaster,
+              DungeonRunObservationDAO,
+              dungeonRunObservationDAO,
             ),
-            E.catch((error) => {
-              return E.logError(
-                "Failed to publish interrupted dungeon run state.",
-                {
-                  error,
-                },
-              );
-            }),
+            E.provideService(DungeonRunRepository, dungeonRunRepository),
+          )
+        : undefined;
+
+    const dungeonRunStateRef = yield* Ref.make(
+      createInitialDungeonRunProcessingState(),
+    );
+
+    const processEventsEffect = eventProcessor.process({
+      configuration,
+      dungeonRunStateRef,
+      events,
+      localLogDungeonRunPersistence,
+    });
+
+    const interruptActiveDungeonRun = E.gen(function* () {
+      const currentState = yield* Ref.get(dungeonRunStateRef);
+
+      if (currentState.configuredRun.dungeonRun?.status !== "ACTIVE") {
+        return;
+      }
+
+      const endedAt = yield* DateTime.now;
+
+      const interruptedState = interruptDungeonRunProcessingState({
+        endedAt,
+        state: currentState,
+      });
+
+      yield* Ref.set(dungeonRunStateRef, interruptedState);
+
+      if (localLogDungeonRunPersistence !== undefined) {
+        yield* localLogDungeonRunPersistence.interrupt(endedAt).pipe(
+          E.catch((error) => {
+            return E.logError(
+              "Failed to interrupt persisted local log dungeon run.",
+              {
+                error,
+              },
+            );
+          }),
+        );
+      }
+
+      yield* publishDungeonRunState({
+        state: interruptedState,
+      }).pipe(
+        E.provideService(
+          DungeonRunWebSocketBroadcaster,
+          dungeonRunWebSocketBroadcaster,
+        ),
+        E.catch((error) => {
+          return E.logError(
+            "Failed to publish interrupted dungeon run state.",
+            {
+              error,
+            },
           );
-        });
+        }),
+      );
+    });
 
-        const trackingStarted = yield* Deferred.make<void>();
+    const trackingStarted = yield* Deferred.make<void>();
 
-        const runTrackingEffect = E.scoped(
-          E.gen(function* () {
-            if (liveStatus !== undefined) {
-              yield* observeFellowshipLiveStatus({
-                dungeonId: configuration.dungeonId,
-                liveStatus,
-                setTracking: () => {
-                  return trackerState.setTracking({
-                    dungeonId: configuration.dungeonId,
-                    source,
-                  });
-                },
-                setWaitingForLogFile: () => {
-                  return trackerState.setWaitingForLogFile({
-                    dungeonId: configuration.dungeonId,
-                    source,
-                  });
-                },
-                source,
-              }).pipe(E.forkScoped);
-            }
-
-            yield* processEventsEffect;
-          }),
-        );
-
-        const trackingEffect = Deferred.await(trackingStarted).pipe(
-          E.andThen(runTrackingEffect),
-          E.ensuring(interruptActiveDungeonRun),
-          E.tap(() => {
-            return trackerState.setIdle;
-          }),
-          E.catchCause((cause) => {
-            if (Cause.hasInterruptsOnly(cause)) {
-              return E.failCause(cause);
-            }
-
-            const failure = classifyTrackingFailure(cause);
-
-            return trackerState
-              .setFailed({
-                dungeonId: configuration.dungeonId,
-                failure,
-                source,
-              })
-              .pipe(
-                E.andThen(
-                  E.logError("Fellowship tracker failed.", {
-                    cause: Cause.pretty(cause),
-                    dungeonId: configuration.dungeonId,
-                    failure,
-                    source: source._tag,
-                  }),
-                ),
-                E.andThen(E.failCause(cause)),
-              );
-          }),
-          E.ensuring(trackerState.clearActiveTracker),
-        );
-
-        const fiber = yield* E.forkIn(
-          trackingEffect.pipe(
-            withLinkedRootSpan("FellowshipTracker.session", {
-              "fellowship.dungeon_id": configuration.dungeonId,
-              "fellowship.tracker.source": source._tag,
-            }),
-          ),
-          scope,
-        );
-
-        yield* trackerState.setActiveTracker({
-          dungeonId: configuration.dungeonId,
-          fiber,
-          source,
-        });
-
-        if (liveStatus === undefined) {
-          yield* trackerState.setTracking({
+    const runTrackingEffect = E.scoped(
+      E.gen(function* () {
+        if (liveStatus !== undefined) {
+          yield* observeFellowshipLiveStatus({
             dungeonId: configuration.dungeonId,
+            liveStatus,
+            setTracking: () => {
+              return trackerState.setTracking({
+                dungeonId: configuration.dungeonId,
+                source,
+              });
+            },
+            setWaitingForLogFile: () => {
+              return trackerState.setWaitingForLogFile({
+                dungeonId: configuration.dungeonId,
+                source,
+              });
+            },
             source,
-          });
-        } else {
-          yield* trackerState.setWaitingForLogFile({
-            dungeonId: configuration.dungeonId,
-            source,
-          });
+          }).pipe(E.forkScoped);
         }
 
-        /* [KEEP]
-         * Do not allow the tracking fiber to begin until its active tracker
-         * and initial status have been installed. Otherwise an immediately
-         * failing stream could publish Failed and then have that status
-         * overwritten by the startup path above.
-         */
-        yield* Deferred.succeed(trackingStarted, undefined);
-
-        yield* E.logInfo("Started Fellowship tracker.", {
-          dungeonId: configuration.dungeonId,
-          milestoneCount: configuration.milestones.length,
-          source: source._tag,
-        });
-
-        return fiber;
+        yield* processEventsEffect;
       }),
     );
-  });
+
+    const trackingEffect = Deferred.await(trackingStarted).pipe(
+      E.andThen(runTrackingEffect),
+      E.ensuring(interruptActiveDungeonRun),
+      E.tap(() => {
+        return trackerState.setIdle;
+      }),
+      E.catchCause((cause) => {
+        if (Cause.hasInterruptsOnly(cause)) {
+          return E.failCause(cause);
+        }
+
+        const failure = classifyTrackingFailure(cause);
+
+        return trackerState
+          .setFailed({
+            dungeonId: configuration.dungeonId,
+            failure,
+            source,
+          })
+          .pipe(
+            E.andThen(
+              E.logError("Fellowship tracker failed.", {
+                cause: Cause.pretty(cause),
+                dungeonId: configuration.dungeonId,
+                failure,
+                source: source._tag,
+              }),
+            ),
+            E.andThen(E.failCause(cause)),
+          );
+      }),
+      E.ensuring(trackerState.clearActiveTracker),
+    );
+
+    const fiber = yield* E.forkIn(
+      trackingEffect.pipe(
+        withLinkedRootSpan("FellowshipTracker.session", {
+          "fellowship.dungeon_id": configuration.dungeonId,
+          "fellowship.tracker.source": source._tag,
+        }),
+      ),
+      scope,
+    );
+
+    yield* trackerState.setActiveTracker({
+      dungeonId: configuration.dungeonId,
+      fiber,
+      source,
+    });
+
+    if (liveStatus === undefined) {
+      yield* trackerState.setTracking({
+        dungeonId: configuration.dungeonId,
+        source,
+      });
+    } else {
+      yield* trackerState.setWaitingForLogFile({
+        dungeonId: configuration.dungeonId,
+        source,
+      });
+    }
+
+    /* [KEEP]
+     * Do not allow the tracking fiber to begin until its active tracker
+     * and initial status have been installed. Otherwise an immediately
+     * failing stream could publish Failed and then have that status
+     * overwritten by the startup path above.
+     */
+    yield* Deferred.succeed(trackingStarted, undefined);
+
+    yield* E.logInfo("Started Fellowship tracker.", {
+      dungeonId: configuration.dungeonId,
+      milestoneCount: configuration.milestones.length,
+      source: source._tag,
+    });
+
+    return fiber;
+  }, semaphore.withPermit);
 
   const start: FellowshipTrackerShape["start"] = E.fn(
     "FellowshipTracker.start",
@@ -290,36 +286,30 @@ export const makeFellowshipTracker = E.gen(function* () {
 
   const stop: FellowshipTrackerShape["stop"] = E.fn("FellowshipTracker.stop")(
     function* () {
-      yield* semaphore.withPermit(
-        E.gen(function* () {
-          const activeTracker = yield* trackerState.getActiveTracker;
+      const activeTracker = yield* trackerState.getActiveTracker;
 
-          if (Option.isNone(activeTracker)) {
-            return;
-          }
+      if (Option.isNone(activeTracker)) {
+        return;
+      }
 
-          const tracker = activeTracker.value;
+      const tracker = activeTracker.value;
 
-          yield* E.annotateCurrentSpan(
-            "fellowship.dungeon_id",
-            tracker.dungeonId,
-          );
+      yield* E.annotateCurrentSpan("fellowship.dungeon_id", tracker.dungeonId);
 
-          yield* E.annotateCurrentSpan(
-            "fellowship.tracker.source",
-            tracker.source._tag,
-          );
-
-          yield* Fiber.interrupt(tracker.fiber);
-          yield* trackerState.setIdle;
-
-          yield* E.logInfo("Stopped Fellowship tracker.", {
-            dungeonId: tracker.dungeonId,
-            source: tracker.source._tag,
-          });
-        }),
+      yield* E.annotateCurrentSpan(
+        "fellowship.tracker.source",
+        tracker.source._tag,
       );
+
+      yield* Fiber.interrupt(tracker.fiber);
+      yield* trackerState.setIdle;
+
+      yield* E.logInfo("Stopped Fellowship tracker.", {
+        dungeonId: tracker.dungeonId,
+        source: tracker.source._tag,
+      });
     },
+    semaphore.withPermit,
   );
 
   const replayLog: FellowshipTrackerShape["replayLog"] = E.fn(

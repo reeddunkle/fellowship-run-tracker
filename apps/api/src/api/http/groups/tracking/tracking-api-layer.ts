@@ -46,7 +46,7 @@ function mapFellowshipTrackerStartError(
 const TrackingApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "tracking",
-  E.fn("TrackingApi.handlers")(function* (handlers) {
+  E.fnUntraced(function* (handlers) {
     const fellowshipTracker = yield* FellowshipTracker;
 
     return handlers

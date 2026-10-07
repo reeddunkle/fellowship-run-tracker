@@ -174,37 +174,36 @@ const makeAppSettingsStore = E.gen(function* () {
 
   const semaphore = yield* Semaphore.make(1);
 
-  const set: AppSettingsStoreShape["set"] = (appSettings) => {
-    return semaphore.withPermits(1)(
-      E.gen(function* () {
-        const encryptedClientSecret =
-          appSettings.fellowshipLogsClientSecret === null
-            ? null
-            : yield* encryption.encrypt(appSettings.fellowshipLogsClientSecret);
+  const set: AppSettingsStoreShape["set"] = E.fn("AppSettingsStore.set")(
+    function* (appSettings) {
+      const encryptedClientSecret =
+        appSettings.fellowshipLogsClientSecret === null
+          ? null
+          : yield* encryption.encrypt(appSettings.fellowshipLogsClientSecret);
 
-        yield* sql.withTransaction(
-          E.gen(function* () {
-            yield* appSettingDAO.update({
-              fellowshipLogDirectory: appSettings.fellowshipLogDirectory,
-            });
+      yield* sql.withTransaction(
+        E.gen(function* () {
+          yield* appSettingDAO.update({
+            fellowshipLogDirectory: appSettings.fellowshipLogDirectory,
+          });
 
-            yield* liveSplitSettingDAO.update({
-              host: appSettings.liveSplitHost,
-              isEnabled: appSettings.isLiveSplitEnabled,
-              port: appSettings.liveSplitPort,
-            });
+          yield* liveSplitSettingDAO.update({
+            host: appSettings.liveSplitHost,
+            isEnabled: appSettings.isLiveSplitEnabled,
+            port: appSettings.liveSplitPort,
+          });
 
-            yield* fellowshipLogsCredentialDAO.update({
-              clientId: appSettings.fellowshipLogsClientId,
-              clientSecret: encryptedClientSecret,
-            });
-          }),
-        );
+          yield* fellowshipLogsCredentialDAO.update({
+            clientId: appSettings.fellowshipLogsClientId,
+            clientSecret: encryptedClientSecret,
+          });
+        }),
+      );
 
-        yield* Ref.set(appSettingsRef, appSettings);
-      }),
-    );
-  };
+      yield* Ref.set(appSettingsRef, appSettings);
+    },
+    semaphore.withPermits(1),
+  );
 
   return {
     get: () => Ref.get(appSettingsRef),

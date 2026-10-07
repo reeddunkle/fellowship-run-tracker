@@ -125,9 +125,10 @@ export const makeLocalLogDungeonRunDAO = E.gen(function* () {
   const finishRun: (options: {
     readonly dungeonRunId: DungeonRunId;
     readonly status: Exclude<DungeonRunStatus, "ACTIVE">;
-  }) => E.Effect<void, LocalLogDungeonRunDAOError> = E.fn(
-    "LocalLogDungeonRunDAO.finishRun",
-  )(function* ({ dungeonRunId, status }) {
+  }) => E.Effect<void, LocalLogDungeonRunDAOError> = E.fnUntraced(function* ({
+    dungeonRunId,
+    status,
+  }) {
     const updatedAt = yield* DateTime.now;
 
     const encodedUpdatedAt = yield* Schema.encodeEffect(
@@ -151,21 +152,23 @@ export const makeLocalLogDungeonRunDAO = E.gen(function* () {
     }
   }, E.mapError(mapLocalLogDungeonRunDAOError));
 
-  const complete: LocalLogDungeonRunDAOShape["complete"] = ({
-    dungeonRunId,
-  }) => {
-    return finishRun({
+  const complete: LocalLogDungeonRunDAOShape["complete"] = E.fn(
+    "LocalLogDungeonRunDAO.complete",
+  )(function* ({ dungeonRunId }) {
+    return yield* finishRun({
       dungeonRunId,
       status: "COMPLETED",
     });
-  };
+  });
 
-  const exit: LocalLogDungeonRunDAOShape["exit"] = ({ dungeonRunId }) => {
-    return finishRun({
+  const exit: LocalLogDungeonRunDAOShape["exit"] = E.fn(
+    "LocalLogDungeonRunDAO.exit",
+  )(function* ({ dungeonRunId }) {
+    return yield* finishRun({
       dungeonRunId,
       status: "EXITED",
     });
-  };
+  });
 
   const listActive: LocalLogDungeonRunDAOShape["listActive"] = E.fn(
     "LocalLogDungeonRunDAO.listActive",
@@ -190,14 +193,14 @@ export const makeLocalLogDungeonRunDAO = E.gen(function* () {
     return yield* decodeLocalLogDungeonRunRows(rows);
   }, E.mapError(mapLocalLogDungeonRunDAOError));
 
-  const interrupt: LocalLogDungeonRunDAOShape["interrupt"] = ({
-    dungeonRunId,
-  }) => {
-    return finishRun({
+  const interrupt: LocalLogDungeonRunDAOShape["interrupt"] = E.fn(
+    "LocalLogDungeonRunDAO.interrupt",
+  )(function* ({ dungeonRunId }) {
+    return yield* finishRun({
       dungeonRunId,
       status: "INTERRUPTED",
     });
-  };
+  });
 
   return {
     complete,

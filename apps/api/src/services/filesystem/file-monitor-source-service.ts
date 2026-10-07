@@ -116,52 +116,54 @@ const makeFileMonitorSource = E.gen(function* () {
       lookup: lookupDirectoryWatcher,
     });
 
-  const findLatestFile: FileMonitorSourceShape["findLatestFile"] = E.fn(
-    "FileMonitorSource.findLatestFile",
-  )(function* ({ directoryPath, matches }) {
-    const entries = yield* fileSystem.readDirectory(directoryPath);
+  const findLatestFile: FileMonitorSourceShape["findLatestFile"] = E.fnUntraced(
+    function* ({ directoryPath, matches }) {
+      const entries = yield* fileSystem.readDirectory(directoryPath);
 
-    const candidates = yield* E.forEach(entries, (entry) => {
-      return E.gen(function* () {
-        if (!matches(entry)) {
-          return undefined;
-        }
+      const candidates = yield* E.forEach(entries, (entry) => {
+        return E.gen(function* () {
+          if (!matches(entry)) {
+            return undefined;
+          }
 
-        const filePath = path.join(directoryPath, entry);
-        const info = yield* fileSystem.stat(filePath);
+          const filePath = path.join(directoryPath, entry);
+          const info = yield* fileSystem.stat(filePath);
 
-        if (info.type !== "File") {
-          return undefined;
-        }
+          if (info.type !== "File") {
+            return undefined;
+          }
 
-        return {
-          createdAtEpochMilliseconds: getDateEpochMilliseconds(info.birthtime),
-          fileId: getFileId({
+          return {
+            createdAtEpochMilliseconds: getDateEpochMilliseconds(
+              info.birthtime,
+            ),
+            fileId: getFileId({
+              filePath,
+              info,
+            }),
             filePath,
-            info,
-          }),
-          filePath,
-          modifiedAtEpochMilliseconds: getDateEpochMilliseconds(info.mtime),
-          size: info.size,
-        } satisfies FileData;
+            modifiedAtEpochMilliseconds: getDateEpochMilliseconds(info.mtime),
+            size: info.size,
+          } satisfies FileData;
+        });
       });
-    });
 
-    const latestFile = candidates
-      .filter((candidate): candidate is FileData => {
-        return candidate !== undefined;
-      })
-      .toSorted(compareFiles)
-      .at(0);
+      const latestFile = candidates
+        .filter((candidate): candidate is FileData => {
+          return candidate !== undefined;
+        })
+        .toSorted(compareFiles)
+        .at(0);
 
-    if (latestFile === undefined) {
-      return yield* new FileNotFoundError({
-        directoryPath,
-      });
-    }
+      if (latestFile === undefined) {
+        return yield* new FileNotFoundError({
+          directoryPath,
+        });
+      }
 
-    return latestFile;
-  });
+      return latestFile;
+    },
+  );
 
   const getLatestFileOption = (
     options: FindLatestFileOptions,

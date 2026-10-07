@@ -83,272 +83,271 @@ export type LiveSplitGatewayClient = {
   readonly unavailability: Stream.Stream<LiveSplitGatewayClientUnavailabilityCause>;
 };
 
-export const makeLiveSplitGatewayClient = E.fn("makeLiveSplitGatewayClient")(
-  function* ({ transport }: { readonly transport: LiveSplitGatewayTransport }) {
-    const responseQueue =
-      yield* Queue.unbounded<LiveSplitGatewayResponseQueueItem>();
+export const makeLiveSplitGatewayClient = E.fnUntraced(function* ({
+  transport,
+}: {
+  readonly transport: LiveSplitGatewayTransport;
+}) {
+  const responseQueue =
+    yield* Queue.unbounded<LiveSplitGatewayResponseQueueItem>();
 
-    const requestQueue =
-      yield* Queue.unbounded<PendingLiveSplitGatewayRequest>();
+  const requestQueue = yield* Queue.unbounded<PendingLiveSplitGatewayRequest>();
 
-    const responseChannelFailure = yield* Ref.make<
-      LiveSplitGatewayClientUnavailabilityCause | undefined
-    >(undefined);
+  const responseChannelFailure = yield* Ref.make<
+    LiveSplitGatewayClientUnavailabilityCause | undefined
+  >(undefined);
 
-    const unavailabilityDeferred =
-      yield* Deferred.make<LiveSplitGatewayClientUnavailabilityCause>();
+  const unavailabilityDeferred =
+    yield* Deferred.make<LiveSplitGatewayClientUnavailabilityCause>();
 
-    const unavailability: LiveSplitGatewayClient["unavailability"] =
-      unavailabilityDeferred.pipe(Deferred.await, Stream.fromEffect);
+  const unavailability: LiveSplitGatewayClient["unavailability"] =
+    unavailabilityDeferred.pipe(Deferred.await, Stream.fromEffect);
 
-    const markUnavailable: (
-      cause: LiveSplitGatewayClientUnavailabilityCause,
-    ) => E.Effect<void> = E.fn("LiveSplitGatewayClient.markUnavailable")(
-      function* (cause) {
-        const existingFailure = yield* Ref.get(responseChannelFailure);
+  const markUnavailable: (
+    cause: LiveSplitGatewayClientUnavailabilityCause,
+  ) => E.Effect<void> = E.fnUntraced(function* (cause) {
+    const existingFailure = yield* Ref.get(responseChannelFailure);
 
-        if (existingFailure !== undefined) {
-          return;
-        }
+    if (existingFailure !== undefined) {
+      return;
+    }
 
-        yield* Ref.set(responseChannelFailure, cause);
-        yield* Deferred.succeed(unavailabilityDeferred, cause);
+    yield* Ref.set(responseChannelFailure, cause);
+    yield* Deferred.succeed(unavailabilityDeferred, cause);
+  });
+
+  const responseStream = transport.chunks.pipe(
+    Stream.mapAccumEffect(
+      () => "",
+      (responseBuffer, socketChunk) => {
+        const responseParts = `${responseBuffer}${socketChunk}`.split(
+          LIVE_SPLIT_GATEWAY_EOL,
+        );
+
+        const remainingBuffer = responseParts.pop() ?? "";
+
+        return E.succeed([remainingBuffer, responseParts] as const);
       },
-    );
+    ),
+  );
 
-    const responseStream = transport.chunks.pipe(
-      Stream.mapAccumEffect(
-        () => "",
-        (responseBuffer, socketChunk) => {
-          const responseParts = `${responseBuffer}${socketChunk}`.split(
-            LIVE_SPLIT_GATEWAY_EOL,
-          );
-
-          const remainingBuffer = responseParts.pop() ?? "";
-
-          return E.succeed([remainingBuffer, responseParts] as const);
-        },
+  yield* E.gen(function* () {
+    const exit = yield* E.exit(
+      responseStream.pipe(
+        Stream.runForEach((response) => {
+          return Queue.offer(responseQueue, Result.succeed(response));
+        }),
       ),
     );
 
-    yield* E.gen(function* () {
-      const exit = yield* E.exit(
-        responseStream.pipe(
-          Stream.runForEach((response) => {
-            return Queue.offer(responseQueue, Result.succeed(response));
-          }),
-        ),
+    let failureCause: LiveSplitGatewayClientUnavailabilityCause;
+
+    if (Exit.isFailure(exit)) {
+      failureCause = exit.cause;
+    } else {
+      failureCause = Cause.fail(
+        new LiveSplitGatewayUnavailableError({
+          reason: "ResponseStreamEnded",
+        }),
       );
+    }
 
-      let failureCause: LiveSplitGatewayClientUnavailabilityCause;
+    yield* markUnavailable(failureCause);
 
-      if (Exit.isFailure(exit)) {
-        failureCause = exit.cause;
-      } else {
-        failureCause = Cause.fail(
-          new LiveSplitGatewayUnavailableError({
-            reason: "ResponseStreamEnded",
-          }),
-        );
-      }
+    yield* Queue.offer(responseQueue, Result.fail(failureCause));
+  }).pipe(E.forkScoped);
 
-      yield* markUnavailable(failureCause);
+  const writeCommand = E.fn("LiveSplitGateway.writeCommand")(function* (
+    input: LiveSplitGatewayCommandInput,
+  ): E.fn.Return<void, Socket.SocketError> {
+    yield* E.annotateCurrentSpan("livesplit.command", input.command);
 
-      yield* Queue.offer(responseQueue, Result.fail(failureCause));
-    }).pipe(E.forkScoped);
+    yield* transport.write(formatLiveSplitGatewayCommand(input));
+  });
 
-    const writeCommand = E.fn("LiveSplitGateway.send")(function* (
-      input: LiveSplitGatewayCommandInput,
-    ): E.fn.Return<void, Socket.SocketError> {
-      yield* E.annotateCurrentSpan("livesplit.command", input.command);
+  const send = (
+    input: LiveSplitGatewaySendCommandInput,
+  ): E.Effect<void, Socket.SocketError> => {
+    return writeCommand(input).pipe(E.tapCause(markUnavailable));
+  };
 
-      yield* transport.write(formatLiveSplitGatewayCommand(input));
-    });
+  yield* Stream.fromQueue(requestQueue).pipe(
+    Stream.runForEach(({ command, responseDeferred }) => {
+      return E.gen(function* () {
+        const requestEffect = E.gen(function* () {
+          const existingFailure = yield* Ref.get(responseChannelFailure);
 
-    const send = (
-      input: LiveSplitGatewaySendCommandInput,
-    ): E.Effect<void, Socket.SocketError> => {
-      return writeCommand(input).pipe(E.tapCause(markUnavailable));
-    };
+          if (existingFailure !== undefined) {
+            return yield* E.failCause(existingFailure);
+          }
 
-    yield* Stream.fromQueue(requestQueue).pipe(
-      Stream.runForEach(({ command, responseDeferred }) => {
-        return E.gen(function* () {
-          const requestEffect = E.gen(function* () {
-            const existingFailure = yield* Ref.get(responseChannelFailure);
+          yield* writeCommand(command).pipe(E.tapCause(markUnavailable));
 
-            if (existingFailure !== undefined) {
-              return yield* E.failCause(existingFailure);
-            }
+          const responseResult = yield* Queue.take(responseQueue).pipe(
+            E.timeout(RESPONSE_TIMEOUT),
+            E.tapError(() => {
+              const failureCause = Cause.fail(
+                new LiveSplitGatewayUnavailableError({
+                  reason: "ResponseStreamDesynchronized",
+                }),
+              );
 
-            yield* writeCommand(command).pipe(E.tapCause(markUnavailable));
+              return markUnavailable(failureCause);
+            }),
+          );
 
-            const responseResult = yield* Queue.take(responseQueue).pipe(
-              E.timeout(RESPONSE_TIMEOUT),
-              E.tapError(() => {
-                const failureCause = Cause.fail(
-                  new LiveSplitGatewayUnavailableError({
-                    reason: "ResponseStreamDesynchronized",
-                  }),
-                );
-
-                return markUnavailable(failureCause);
-              }),
-            );
-
-            return yield* Result.match(responseResult, {
-              onFailure: (cause) => {
-                return E.failCause(cause);
-              },
-              onSuccess: (response) => {
-                return E.succeed(response);
-              },
-            });
-          });
-
-          const requestExit = yield* E.exit(requestEffect);
-
-          yield* Exit.match(requestExit, {
+          return yield* Result.match(responseResult, {
             onFailure: (cause) => {
-              return Deferred.failCause(responseDeferred, cause);
+              return E.failCause(cause);
             },
             onSuccess: (response) => {
-              return Deferred.succeed(responseDeferred, response);
+              return E.succeed(response);
             },
           });
         });
-      }),
-      E.forkScoped,
-    );
 
-    const request = E.fn("LiveSplitGateway.request")(function* (
-      command: LiveSplitGatewayRequestCommandInput,
-    ): E.fn.Return<string, LiveSplitGatewayRequestError> {
-      yield* E.annotateCurrentSpan("livesplit.command", command.command);
+        const requestExit = yield* E.exit(requestEffect);
 
-      const responseDeferred = yield* Deferred.make<
-        string,
-        LiveSplitGatewayRequestError
-      >();
-
-      yield* Queue.offer(requestQueue, {
-        command,
-        responseDeferred,
+        yield* Exit.match(requestExit, {
+          onFailure: (cause) => {
+            return Deferred.failCause(responseDeferred, cause);
+          },
+          onSuccess: (response) => {
+            return Deferred.succeed(responseDeferred, response);
+          },
+        });
       });
+    }),
+    E.forkScoped,
+  );
 
-      return yield* Deferred.await(responseDeferred);
+  const request = E.fn("LiveSplitGateway.request")(function* (
+    command: LiveSplitGatewayRequestCommandInput,
+  ): E.fn.Return<string, LiveSplitGatewayRequestError> {
+    yield* E.annotateCurrentSpan("livesplit.command", command.command);
+
+    const responseDeferred = yield* Deferred.make<
+      string,
+      LiveSplitGatewayRequestError
+    >();
+
+    yield* Queue.offer(requestQueue, {
+      command,
+      responseDeferred,
     });
 
-    const parseSplitIndex = (
-      response: string,
-    ): E.Effect<number, LiveSplitGatewayInvalidResponseError> => {
-      const splitIndex = Number.parseInt(response, 10);
+    return yield* Deferred.await(responseDeferred);
+  });
 
-      if (Number.isNaN(splitIndex)) {
-        return E.fail(
-          new LiveSplitGatewayInvalidResponseError({
-            command: LiveSplitGatewayRequestCommand.getSplitIndex,
-            response,
-          }),
-        );
-      }
+  const parseSplitIndex = (
+    response: string,
+  ): E.Effect<number, LiveSplitGatewayInvalidResponseError> => {
+    const splitIndex = Number.parseInt(response, 10);
 
-      return E.succeed(splitIndex);
-    };
-
-    const requireSuccessfulBooleanResponse = ({
-      command,
-      response,
-    }: {
-      readonly command: LiveSplitGatewayRequestCommand;
-      readonly response: string;
-    }): E.Effect<void, LiveSplitGatewayInvalidResponseError> => {
-      if (response.trim().toLowerCase() === "true") {
-        return E.void;
-      }
-
+    if (Number.isNaN(splitIndex)) {
       return E.fail(
         new LiveSplitGatewayInvalidResponseError({
-          command,
+          command: LiveSplitGatewayRequestCommand.getSplitIndex,
           response,
         }),
       );
-    };
+    }
 
-    return {
-      getCurrentTime: () => {
-        return request({
-          command: LiveSplitGatewayRequestCommand.getCurrentTime,
-        });
-      },
+    return E.succeed(splitIndex);
+  };
 
-      getSplitIndex: () => {
-        return request({
-          command: LiveSplitGatewayRequestCommand.getSplitIndex,
-        }).pipe(E.flatMap(parseSplitIndex));
-      },
+  const requireSuccessfulBooleanResponse = ({
+    command,
+    response,
+  }: {
+    readonly command: LiveSplitGatewayRequestCommand;
+    readonly response: string;
+  }): E.Effect<void, LiveSplitGatewayInvalidResponseError> => {
+    if (response.trim().toLowerCase() === "true") {
+      return E.void;
+    }
 
-      getTimerPhase: () => {
-        return request({
-          command: LiveSplitGatewayRequestCommand.getTimerPhase,
-        });
-      },
+    return E.fail(
+      new LiveSplitGatewayInvalidResponseError({
+        command,
+        response,
+      }),
+    );
+  };
 
-      pause: () => {
-        return send({
-          command: LiveSplitGatewaySendCommand.pause,
-        });
-      },
+  return {
+    getCurrentTime: () => {
+      return request({
+        command: LiveSplitGatewayRequestCommand.getCurrentTime,
+      });
+    },
 
-      reset: () => {
-        return send({
-          command: LiveSplitGatewaySendCommand.reset,
-        });
-      },
+    getSplitIndex: () => {
+      return request({
+        command: LiveSplitGatewayRequestCommand.getSplitIndex,
+      }).pipe(E.flatMap(parseSplitIndex));
+    },
 
-      setComparison: (comparisonName) => {
-        return send({
-          argument: comparisonName,
-          command: LiveSplitGatewaySendCommand.setComparison,
-        });
-      },
+    getTimerPhase: () => {
+      return request({
+        command: LiveSplitGatewayRequestCommand.getTimerPhase,
+      });
+    },
 
-      setCurrentSplitName: (splitName) => {
-        return send({
-          argument: splitName,
-          command: LiveSplitGatewaySendCommand.setCurrentSplitName,
-        });
-      },
+    pause: () => {
+      return send({
+        command: LiveSplitGatewaySendCommand.pause,
+      });
+    },
 
-      split: () => {
-        return send({
-          command: LiveSplitGatewaySendCommand.split,
-        });
-      },
+    reset: () => {
+      return send({
+        command: LiveSplitGatewaySendCommand.reset,
+      });
+    },
 
-      startTimer: () => {
-        return send({
-          command: LiveSplitGatewaySendCommand.startTimer,
-        });
-      },
+    setComparison: (comparisonName) => {
+      return send({
+        argument: comparisonName,
+        command: LiveSplitGatewaySendCommand.setComparison,
+      });
+    },
 
-      switchSplits: (filePath) => {
-        const command = {
-          argument: filePath,
-          command: LiveSplitGatewayRequestCommand.switchSplits,
-        } satisfies LiveSplitGatewayRequestCommandInput;
+    setCurrentSplitName: (splitName) => {
+      return send({
+        argument: splitName,
+        command: LiveSplitGatewaySendCommand.setCurrentSplitName,
+      });
+    },
 
-        return request(command).pipe(
-          E.flatMap((response) => {
-            return requireSuccessfulBooleanResponse({
-              command: command.command,
-              response,
-            });
-          }),
-        );
-      },
+    split: () => {
+      return send({
+        command: LiveSplitGatewaySendCommand.split,
+      });
+    },
 
-      unavailability,
-    } satisfies LiveSplitGatewayClient;
-  },
-);
+    startTimer: () => {
+      return send({
+        command: LiveSplitGatewaySendCommand.startTimer,
+      });
+    },
+
+    switchSplits: (filePath) => {
+      const command = {
+        argument: filePath,
+        command: LiveSplitGatewayRequestCommand.switchSplits,
+      } satisfies LiveSplitGatewayRequestCommandInput;
+
+      return request(command).pipe(
+        E.flatMap((response) => {
+          return requireSuccessfulBooleanResponse({
+            command: command.command,
+            response,
+          });
+        }),
+      );
+    },
+
+    unavailability,
+  } satisfies LiveSplitGatewayClient;
+});

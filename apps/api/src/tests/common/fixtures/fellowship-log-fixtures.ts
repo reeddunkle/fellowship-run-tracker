@@ -21,7 +21,7 @@ export const EVERDAWN_GROVE_64_TIMED_EVENTS_SNAPSHOT_PATH = path.join(
   "everdawn-grove-64-timed.events.jsonl",
 );
 
-export const readFellowshipLogLines = E.fn("readFellowshipLogLines")(function* (
+export const readFellowshipLogLines = E.fnUntraced(function* (
   logFilePath: string,
 ) {
   const fileSystem = yield* FileSystem.FileSystem;
@@ -32,16 +32,16 @@ export const readFellowshipLogLines = E.fn("readFellowshipLogLines")(function* (
   });
 }, E.provide(NodeFileSystemLayer));
 
-export const decodeFellowshipLogFile = E.fn("decodeFellowshipLogFile")(
-  function* (logFilePath: string) {
-    const lines = yield* readFellowshipLogLines(logFilePath);
+export const decodeFellowshipLogFile = E.fnUntraced(function* (
+  logFilePath: string,
+) {
+  const lines = yield* readFellowshipLogLines(logFilePath);
 
-    return yield* Stream.fromIterable(lines).pipe(
-      parseFellowshipEventStream,
-      Stream.runCollect,
-    );
-  },
-);
+  return yield* Stream.fromIterable(lines).pipe(
+    parseFellowshipEventStream,
+    Stream.runCollect,
+  );
+});
 
 export function formatFellowshipEventsSnapshot(
   events: ReadonlyArray<FellowshipEvent>,

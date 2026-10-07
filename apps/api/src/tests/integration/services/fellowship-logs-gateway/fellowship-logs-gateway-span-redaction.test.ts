@@ -3,10 +3,10 @@ import * as HttpClient from "effect/http/HttpClient";
 import * as HttpClientResponse from "effect/http/HttpClientResponse";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
-import * as Tracer from "effect/Tracer";
 import { describe, expect, test } from "vitest";
 
 import { makeFellowshipLogsGatewayHttpQuery } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-http-query.ts";
+import { makeRecordingTracer } from "@frt/api/tests/common/make-recording-tracer.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 
 const CLIENT_ID = "test-client-id";
@@ -30,20 +30,6 @@ const StubHttpClientLayer = Layer.succeed(
     return E.succeed(HttpClientResponse.fromWeb(request, jsonResponse(body)));
   }),
 );
-
-function makeRecordingTracer() {
-  const spans: Array<Tracer.NativeSpan> = [];
-
-  const tracer = Tracer.make({
-    span: (options) => {
-      const span = new Tracer.NativeSpan(options);
-      spans.push(span);
-      return span;
-    },
-  });
-
-  return { spans, tracer };
-}
 
 describe("Fellowship Logs gateway spans", () => {
   test("never record the client secret or the access token", async () => {
