@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Architecture review for fellowship-run-tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
+    </script>
+    <style>
+      .seam { border-style: dashed; }
+      .deep { background: linear-gradient(135deg, #0f172a, #1e293b); color: #e2e8f0; }
+      .lbl { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; }
+      .diagram { min-height: 300px; }
+    </style>
+  </head>
+  <body class="bg-stone-50 text-slate-900 font-sans">
+    <main class="max-w-6xl mx-auto px-6 py-12 space-y-14">
+      <header class="space-y-4">
+        <h1 class="font-serif text-4xl">fellowship-run-tracker · architecture review</h1>
+        <p class="text-sm text-slate-500">2026-10-13 · scope: recent hot spots across apps/api, apps/electron, packages/db, packages/shared · no CONTEXT.md or ADRs found</p>
+        <div class="flex flex-wrap gap-4 text-xs text-slate-600">
+          <span class="flex items-center gap-2"><span class="inline-block w-5 h-4 border border-slate-400 bg-white"></span>module</span>
+          <span class="flex items-center gap-2"><span class="inline-block w-5 h-0 border-t-2 border-dashed border-slate-500"></span>seam</span>
+          <span class="flex items-center gap-2"><span class="inline-block w-5 h-0 border-t-2 border-red-600"></span>leakage</span>
+          <span class="flex items-center gap-2"><span class="inline-block w-5 h-4 deep"></span>deep module</span>
+        </div>
+        <nav class="text-sm flex flex-wrap gap-x-4 gap-y-1 text-indigo-700">
+          <a href="#c1">1 Live log stream</a><a href="#c2">2 Dungeon-run store</a><a href="#c3">3 Renderer event store</a>
+          <a href="#c4">4 Fixture gateway</a><a href="#c5">5 Tracking session</a><a href="#c6">6 Test wiring</a>
+          <a href="#c7">7 AppState table</a><a href="#c8">8 Renderer action hooks</a><a href="#c9">9 Electron lifecycle</a>
+          <a href="#c10">10 Parser locality</a><a href="#c11">11 Boilerplate factories</a><a href="#quick">Quick wins</a><a href="#top">Top pick</a>
+        </nav>
+      </header>
+
+      <section id="candidates" class="space-y-12">
+
+        <!-- 1 -->
+        <article id="c1" class="bg-white rounded-xl border border-slate-200 p-6 space-y-5 shadow-sm">
+          <div class="flex flex-wrap items-center gap-3">
+            <h2 class="font-serif text-2xl">1 · One live log stream carries status and events</h2>
+            <span class="px-2 py-0.5 rounded text-xs bg-emerald-100 text-emerald-800 font-semibold">Strong</span>
+            <span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-700">local-substitutable</span>
+          </div>
+          <ul class="font-mono text-sm text-slate-700 space-y-0.5">
+            <li>apps/api/src/services/filesystem/file-monitor-source-service.ts (streamStatus)</li>
+            <li>apps/api/src/services/filesystem/file-monitor-service.ts (streamLatestFileLines, findLatestFile)</li>
+            <li>apps/api/src/services/fellowship/fellowship-service.ts (liveStatus, liveEvents)</li>
+            <li>apps/api/src/application/fellowship-tracker/observe-fellowship-live-status.ts</li>
+            <li>apps/api/src/application/fellowship-tracker/make-fellowship-tracker-service.ts (startTracking)</li>
+          </ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="lbl text-slate-500 mb-2">Before: two subscriptions, three renames</div>
+              <pre class="mermaid">
+flowchart TB
+  W[Directory watcher] --> S1[FileMonitorSource.streamStatus<br/>WAITING_FOR_FILE / MONITORING]
+  W --> S2[FileMonitor.streamLatestFileLines]
+  S1 --> L1[Fellowship.liveStatus<br/>WaitingForLogFile / MonitoringLogFile]
+  S2 --> L2[Fellowship.liveEvents]
+  L1 --> O[observeFellowshipLiveStatus]
+  O --> T[Tracker status]
+  L2 --> P[Event processor]
+  T -. can disagree .- P
+  classDef leak stroke:#dc2626,stroke-width:2px;
+  class S1,L1,O leak
+              </pre>
+            </div>
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="lbl text-slate-500 mb-2">After: one tagged stream</div>
+              <pre class="mermaid">
+flowchart TB
+  W[Directory watcher] --> D[Live log stream<br/>WaitingForFile · Attached&#123;file, offset&#125; · Lines]
+  D --> T[Tracker: status from Attached / WaitingForFile]
+  D --> P[Event processor: Lines]
+  classDef deep fill:#0f172a,color:#e2e8f0,stroke:#0f172a;
+  class D deep
+              </pre>
+            </div>
+          </div>
+          <div class="grid md:grid-cols-3 gap-4 text-sm">
+            <p><span class="lbl text-slate-500 block">Problem</span>The same two-state value is translated three times. It comes from a different subscription than the events, so the <code>Tracking</code> status can show up before the event stream has attached (docs/tasks.md).</p>
+            <p><span class="lbl text-slate-500 block">Solution</span>The live log stream emits status transitions in the same stream as the lines. Delete <code>streamStatus</code>, <code>liveStatus</code> and <code>observeFellowshipLiveStatus</code>.</p>
+            <ul class="list-disc pl-4"><span class="lbl text-slate-500 block -ml-4">Wins</span>
+              <li>Locality: status can't drift from events</li>
+              <li>Fixes the tasks.md item</li>
+              <li>Removes the 250 ms e2e delay</li>
+              <li>One fake drives harness status</li>
+              <li>Halves directory scans</li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- 2 -->
+        <article id="c2" class="bg-white rounded-xl border border-slate-200 p-6 space-y-5 shadow-sm">
+          <div class="flex flex-wrap items-center gap-3">
+            <h2 class="font-serif text-2xl">2 · Deepen the dungeon-run store into packages/db</h2>
+            <span class="px-2 py-0.5 rounded text-xs bg-emerald-100 text-emerald-800 font-semibold">Strong</span>
+            <span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-700">local-substitutable (SQLite)</span>
+          </div>
+          <ul class="font-mono text-sm text-slate-700 space-y-0.5">
+            <li>apps/api/src/services/dungeon-run-repository/make-dungeon-run-repository-service.ts</li>
+            <li>apps/api/src/application/dungeon-run-processing/local-log-dungeon-run-persistence.ts</li>
+            <li>packages/db/src/daos/local-log-dungeon-run/make-local-log-dungeon-run-dao.ts</li>
+            <li>packages/db/src/daos/dungeon-run-observation/make-dungeon-run-observation-dao.ts</li>
+            <li>packages/db/src/models/local-log-dungeon-run-model.ts (imports @frt/api-contract)</li>
+          </ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="lbl text-slate-500 mb-3">Before: status → method → status → method</div>
+              <div class="space-y-2 text-xs">
+                <div class="border-l-4 border-slate-400 bg-slate-50 px-3 py-2"><b>Persistence</b>: Match event → completeLocal | exitLocal | interruptLocal<span class="text-red-600 font-semibold"> + direct ObservationDAO.observe</span></div>
+                <div class="border-l-4 border-slate-400 bg-slate-50 px-3 py-2"><b>Repository</b> (apps/api): 3 wrappers → finishLocal(status) → nested ternary</div>
+                <div class="border-l-4 border-slate-400 bg-slate-50 px-3 py-2"><b>DAO</b>: complete | exit | interrupt → private finishRun(status)</div>
+                <div class="border-l-4 border-red-400 bg-red-50 px-3 py-2"><b>db → api-contract</b> for DungeonRunStatusSchema</div>
+                <div class="flex gap-2 pt-2">
+                  <div class="border border-slate-300 px-2 py-1">LocalRunDAO</div><div class="border border-slate-300 px-2 py-1">FLRunDAO</div><div class="border border-slate-300 px-2 py-1">ObservationDAO</div><div class="border border-slate-300 px-2 py-1">RunDAO</div>
+                </div>
+                <div class="text-slate-500">All four exported to apps; the tracker harness fakes them</div>
+              </div>
+            </div>
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="lbl text-slate-500 mb-3">After: one run-level interface</div>
+              <div class="text-xs space-y-3">
+                <div class="border-l-4 border-slate-400 bg-slate-50 px-3 py-2"><b>Persistence</b>: event → status, in one place</div>
+                <div class="deep rounded-lg p-4 space-y-2">
+                  <div class="lbl">Dungeon-run store · packages/db</div>
+                  <div class="font-mono">startLocal · observeLocal(obs[]) · finishLocal(&#123;status&#125;) · …</div>
+                  <div class="flex gap-2 opacity-50 pt-2">
+                    <div class="border border-slate-500 px-2 py-1">LocalRunDAO</div><div class="border border-slate-500 px-2 py-1">ObservationDAO</div><div class="border border-slate-500 px-2 py-1">…</div>
+                  </div>
+                  <div class="opacity-70">Transactions and batching live here</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="grid md:grid-cols-3 gap-4 text-sm">
+            <p><span class="lbl text-slate-500 block">Problem</span>The interface is wider than the behaviour behind it: six wrappers exist only to turn a status back into a method name. Local observation writes skip the repository and its transaction.</p>
+            <p><span class="lbl text-slate-500 block">Solution</span>Move the repository into packages/db as the dungeon-run store. Expose <code>finishLocal(status)</code> and <code>observeLocal</code>, and keep the per-table DAOs internal. Move the status schema to shared.</p>
+            <ul class="list-disc pl-4"><span class="lbl text-slate-500 block -ml-4">Wins</span>
+              <li>Deletes six pass-through methods</li>
+              <li>Atomic observation + lifecycle writes</li>
+              <li>Home for the observation-batching task</li>
+              <li>db tests run lifecycle directly</li>
+              <li>db drops api-contract dependency</li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- 3 -->
+        <article id="c3" class="bg-white rounded-xl border border-slate-200 p-6 space-y-5 shadow-sm">
+          <div class="flex flex-wrap items-center gap-3">
+            <h2 class="font-serif text-2xl">3 · One renderer event-store module, four reducers</h2>
+            <span class="px-2 py-0.5 rounded text-xs bg-emerald-100 text-emerald-800 font-semibold">Strong</span>
+            <span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-700">in-process</span>
+          </div>
+          <ul class="font-mono text-sm text-slate-700 space-y-0.5">
+            <li>apps/electron/src/renderer/stores/tracking/tracking-event-store.ts (119)</li>
+            <li>apps/electron/src/renderer/stores/live-split/live-split-event-store.ts (123)</li>
+            <li>apps/electron/src/renderer/stores/dungeon-run/dungeon-run-event-store.ts (158)</li>
+            <li>apps/electron/src/renderer/stores/background-job/background-job-event-store.ts (184)</li>
+            <li>apps/electron/src/errors/*-event-message-error.ts · renderer/main.tsx (start calls)</li>
+          </ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="lbl text-slate-500 mb-3">Before: four copies, already drifting</div>
+              <div class="grid grid-cols-2 gap-3 text-xs">
+                <div class="border border-slate-300 p-2 space-y-1"><b>tracking</b><div class="h-2 bg-slate-300 w-full"></div><div class="h-2 bg-slate-300 w-5/6"></div><div class="h-2 bg-slate-300 w-4/6"></div><div class="text-red-600">no injection · untested · eager</div></div>
+                <div class="border border-slate-300 p-2 space-y-1"><b>live-split</b><div class="h-2 bg-slate-300 w-full"></div><div class="h-2 bg-slate-300 w-5/6"></div><div class="h-2 bg-slate-300 w-4/6"></div><div class="text-red-600">no injection · untested · onSubscribe</div></div>
+                <div class="border border-slate-300 p-2 space-y-1"><b>dungeon-run</b><div class="h-2 bg-slate-300 w-full"></div><div class="h-2 bg-slate-300 w-5/6"></div><div class="h-2 bg-slate-300 w-4/6"></div><div class="text-slate-500">injectable · eager</div></div>
+                <div class="border border-slate-300 p-2 space-y-1"><b>background-job</b><div class="h-2 bg-slate-300 w-full"></div><div class="h-2 bg-slate-300 w-5/6"></div><div class="h-2 bg-slate-300 w-4/6"></div><div class="text-slate-500">injectable · eager</div></div>
+              </div>
+              <div class="text-xs text-slate-500 mt-3">Gray bars = listeners, emit, snapshot, connection-state Match, restartable fiber, error handling. Copied in all four.</div>
+            </div>
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="lbl text-slate-500 mb-3">After</div>
+              <div class="deep rounded-lg p-4 text-xs space-y-2">
+                <div class="lbl">makeApiEventStore</div>
+                <div class="font-mono">&#123; makeEventStream, initial, onMessage, start: "eager" | "onSubscribe" &#125;</div>
+                <div class="opacity-60">listeners · connection state · restart · error · subscribe/getSnapshot</div>
+              </div>
+              <div class="grid grid-cols-4 gap-2 mt-4 text-xs text-center">
+                <div class="border border-slate-300 py-2">tracking<br/><span class="text-slate-500">onMessage</span></div>
+                <div class="border border-slate-300 py-2">live-split<br/><span class="text-slate-500">onMessage</span></div>
+                <div class="border border-slate-300 py-2">dungeon-run<br/><span class="text-slate-500">onMessage</span></div>
+                <div class="border border-slate-300 py-2">bg-job<br/><span class="text-slate-500">onMessage</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="grid md:grid-cols-3 gap-4 text-sm">
+            <p><span class="lbl text-slate-500 block">Problem</span>About 580 lines repeat the same subscription machinery. The copies already disagree on start/stop policy and on whether they can be tested.</p>
+            <p><span class="lbl text-slate-500 block">Solution</span>One event-store module owns the lifecycle. Each feature supplies a pure message reducer and its side effects (query invalidation).</p>
+            <ul class="list-disc pl-4"><span class="lbl text-slate-500 block -ml-4">Wins</span>
+              <li>Leverage: one interface, four stores</li>
+              <li>Lifecycle tested once</li>
+              <li>Reducers tested as pure functions</li>
+              <li>Tracking and live-split gain coverage</li>
+              <li>Four decode errors collapse into one</li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- 4 -->
+        <article id="c4" class="bg-white rounded-xl border border-slate-200 p-6 space-y-5 shadow-sm">
+          <div class="flex flex-wrap items-center gap-3">
+            <h2 class="font-serif text-2xl">4 · Fixture gateway as a Query adapter, not a parallel gateway</h2>
+            <span class="px-2 py-0.5 rounded text-xs bg-emerald-100 text-emerald-800 font-semibold">Strong</span>
+            <span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-700">ports &amp; adapters</span>
+          </div>
+          <ul class="font-mono text-sm text-slate-700 space-y-0.5">
+            <li>apps/api/src/services/fellowship-logs-gateway/make-fellowship-logs-gateway-fixture.ts (298)</li>
+            <li>apps/api/src/services/fellowship-logs-gateway/make-fellowship-logs-gateway-service.ts (makeFellowshipLogsGatewayFromQuery)</li>
+            <li>apps/api/src/tests/common/layers/controlled-fellowship-logs-fixture-layer.ts (270)</li>
+          </ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="lbl text-slate-500 mb-2">Before: two gateways read the same files</div>
+              <pre class="mermaid">
+flowchart TB
+  F[(recorded fixtures<br/>metadata.json, page-N.json)]
+  F --> FX[Fixture gateway<br/>reimplements every method]
+  F --> TQ[Test fake Query]
+  TQ --> G[Gateway from Query<br/>pagination · cache · rate limit]
+  H[HTTP Query] --> G
+  classDef leak stroke:#dc2626,stroke-width:2px;
+  class FX leak
+              </pre>
+            </div>
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="lbl text-slate-500 mb-2">After: two adapters at the Query seam</div>
+              <pre class="mermaid">
+flowchart TB
+  F[(recorded fixtures)] --> FQ[File-backed Query]
+  FQ -. + failure injection in tests .-> FQ
+  H[HTTP Query] --> G[Gateway from Query]
+  FQ --> G
+  classDef deep fill:#0f172a,color:#e2e8f0,stroke:#0f172a;
+  class G deep
+              </pre>
+            </div>
+          </div>
+          <div class="grid md:grid-cols-3 gap-4 text-sm">
+            <p><span class="lbl text-slate-500 block">Problem</span>Fixture mode skips real pagination, caching and rate-limit handling, and two near-identical fixture readers drift apart.</p>
+            <p><span class="lbl text-slate-500 block">Solution</span>Build <code>fixtureLayer</code> from a file-backed Query passed to the real gateway. Tests add failure injection on top.</p>
+            <ul class="list-disc pl-4"><span class="lbl text-slate-500 block -ml-4">Wins</span>
+              <li>~300 lines deleted</li>
+              <li>Real seam: HTTP and file adapters</li>
+              <li>Fixture mode exercises real logic</li>
+              <li>Drop dead <code>streamEvents</code> too</li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- 5 -->
+        <article id="c5" class="bg-white rounded-xl border border-slate-200 p-6 space-y-5 shadow-sm">
+          <div class="flex flex-wrap items-center gap-3">
+            <h2 class="font-serif text-2xl">5 · Extract a tracking session from startTracking</h2>
+            <span class="px-2 py-0.5 rounded text-xs bg-amber-100 text-amber-800 font-semibold">Worth exploring</span>
+            <span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-700">in-process</span>
+          </div>
+          <ul class="font-mono text-sm text-slate-700 space-y-0.5">
+            <li>apps/api/src/application/fellowship-tracker/make-fellowship-tracker-service.ts (343)</li>
+            <li>apps/api/src/application/fellowship-tracker/fellowship-tracker-event-processor.ts</li>
+            <li>apps/api/src/application/fellowship-tracker/fellowship-tracker-state.ts · classify-tracking-failure.ts</li>
+          </ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="lbl text-slate-500 mb-3">Before: per-session state split across two modules</div>
+              <div class="relative h-56 text-xs">
+                <div class="absolute left-0 top-0 w-[46%] h-full border border-slate-300 p-2 space-y-1"><b>startTracking</b><div>fiber · semaphore · status</div><div>state Ref</div><div>persistence | undefined</div><div class="text-red-600">interruptActiveDungeonRun reads state internals</div><div>publish + provide broadcaster ①</div></div>
+                <div class="absolute right-0 top-0 w-[46%] h-full border border-slate-300 p-2 space-y-1"><b>event processor</b><div>same state Ref</div><div>same persistence | undefined</div><div>publish + provide broadcaster ②</div><div>catch + log ②</div><div>LiveSplit</div></div>
+                <svg class="absolute inset-0 w-full h-full pointer-events-none"><line x1="46%" y1="40%" x2="54%" y2="40%" stroke="#dc2626" stroke-width="2"/><line x1="46%" y1="55%" x2="54%" y2="55%" stroke="#dc2626" stroke-width="2"/></svg>
+              </div>
+            </div>
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="lbl text-slate-500 mb-3">After</div>
+              <div class="text-xs space-y-3">
+                <div class="border border-slate-300 p-2"><b>startTracking</b>: fiber · semaphore · status</div>
+                <div class="border-t-2 border-dashed border-slate-400"></div>
+                <div class="deep rounded-lg p-4 space-y-1">
+                  <div class="lbl">Tracking session</div>
+                  <div class="font-mono">run(events) · interrupt(endedAt)</div>
+                  <div class="opacity-60">state · persistence (no-op for External) · publishing · LiveSplit · failure classification</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="grid md:grid-cols-3 gap-4 text-sm">
+            <p><span class="lbl text-slate-500 block">Problem</span>Two modules share the session's internals, and publishing plus error handling is written out twice.</p>
+            <p><span class="lbl text-slate-500 block">Solution</span>A tracking-session module owns everything per run. The tracker only handles lifecycle and status.</p>
+            <ul class="list-disc pl-4"><span class="lbl text-slate-500 block -ml-4">Wins</span>
+              <li>Session tested with a plain event array</li>
+              <li>Tracker tests shrink to lifecycle</li>
+              <li>Pairs naturally with #1</li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- 6 -->
+        <article id="c6" class="bg-white rounded-xl border border-slate-200 p-6 space-y-5 shadow-sm">
+          <div class="flex flex-wrap items-center gap-3">
+            <h2 class="font-serif text-2xl">6 · Derive test wiring from production wiring</h2>
+            <span class="px-2 py-0.5 rounded text-xs bg-amber-100 text-amber-800 font-semibold">Worth exploring</span>
+            <span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-700">mock</span>
+          </div>
+          <ul class="font-mono text-sm text-slate-700 space-y-0.5">
+            <li>apps/api/src/tests/common/layers/api-server-test-layer.ts (11 services listed 3×)</li>
+            <li>apps/api/src/layers/api-layer.ts · api-services-layer.ts</li>
+            <li>apps/api/src/tests/common/harnesses/fellowship-tracker-test-harness.ts (14 hand-written repo methods)</li>
+            <li>apps/api/src/tests/common/harnesses/fellowship-tracker-integration-test-harness.ts</li>
+          </ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="lbl text-slate-500 mb-3">Before: parallel copies you have to keep in sync</div>
+              <div class="flex gap-3 text-xs">
+                <div class="flex-1 border border-slate-300 p-2 space-y-1"><b>prod</b><div>ApiServicesLayer</div><div>WS channels + broadcaster + shutdown</div></div>
+                <div class="flex-1 border border-red-300 bg-red-50 p-2 space-y-1"><b>test</b><div>ApiServices type</div><div>ApiServiceTestLayer</div><div>mergeAll list</div><div>WS wiring copy</div></div>
+              </div>
+              <div class="text-xs text-slate-500 mt-3">Adding a repository method breaks unrelated harness fakes.</div>
+            </div>
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="lbl text-slate-500 mb-3">After</div>
+              <div class="text-xs space-y-2">
+                <div class="deep rounded-lg p-3"><span class="lbl">makeApiLayer(httpServerLayer)</span><div class="opacity-60">shared by prod and tests</div></div>
+                <div class="border border-slate-300 p-2">Type from <code>Layer.Success&lt;typeof ApiServicesLayer&gt;</code></div>
+                <div class="border border-slate-300 p-2">Base fakes in tests/common/mocks; override one method at a time</div>
+              </div>
+            </div>
+          </div>
+          <div class="grid md:grid-cols-3 gap-4 text-sm">
+            <p><span class="lbl text-slate-500 block">Problem</span>Test layers copy the production wiring and hand-write wide fakes, so every interface change has to be repeated in tests.</p>
+            <p><span class="lbl text-slate-500 block">Solution</span>Export one wiring function that tests reuse, and share base fakes that tests override per method.</p>
+            <ul class="list-disc pl-4"><span class="lbl text-slate-500 block -ml-4">Wins</span>
+              <li>Locality: wiring changes in one place</li>
+              <li>Smaller per-test setup</li>
+              <li>Shrinks further after #2</li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- 7 -->
+        <article id="c7" class="bg-white rounded-xl border border-slate-200 p-6 space-y-5 shadow-sm">
+          <div class="flex flex-wrap items-center gap-3">
+            <h2 class="font-serif text-2xl">7 · AppState as a key → schema table</h2>
+            <span class="px-2 py-0.5 rounded text-xs bg-amber-100 text-amber-800 font-semibold">Worth exploring</span>
+            <span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-700">in-process + IPC</span>
+          </div>
+          <ul class="font-mono text-sm text-slate-700 space-y-0.5">
+            <li>packages/shared/src/app-state/app-state-rpc.ts</li>
+            <li>apps/electron/src/services/app-state-store/app-state-store-service.ts (363)</li>
+            <li>apps/electron/src/services/app-state/app-state-service.ts · app-state-service-layer.ts</li>
+            <li>apps/electron/src/ipc/handlers/app-state-handlers.ts</li>
+            <li>apps/electron/src/renderer/api/electron-ipc/app-state/app-state-client.ts · renderer/api/app-state/*</li>
+          </ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="lbl text-slate-500 mb-3">Before: 10 operations × 8 places</div>
+              <div class="grid grid-cols-8 gap-1">
+                <div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div><div class="h-4 bg-slate-300 rounded-sm"></div>
+              </div>
+              <div class="grid grid-cols-8 gap-1 text-[9px] text-slate-500 mt-1"><span>rpc</span><span>store</span><span>shape</span><span>layer</span><span>ipc</span><span>client</span><span>browser</span><span>query</span></div>
+            </div>
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="lbl text-slate-500 mb-3">After: one table, generic path</div>
+              <div class="deep rounded-lg p-4 text-xs space-y-2">
+                <div class="lbl">AppState table</div>
+                <div class="font-mono">&#123; theme: Schema, windowState: Schema, … &#125;</div>
+                <div class="font-mono">get(key) · set(key, value)</div>
+                <div class="opacity-60">handler, client and query options derived</div>
+              </div>
+            </div>
+          </div>
+          <div class="grid md:grid-cols-3 gap-4 text-sm">
+            <p><span class="lbl text-slate-500 block">Problem</span>Adding one state field means editing about eight modules, most of which are pass-throughs. Theme is also applied in two places.</p>
+            <p><span class="lbl text-slate-500 block">Solution</span>Declare the state once as a key → schema table and derive each hop from it.</p>
+            <ul class="list-disc pl-4"><span class="lbl text-slate-500 block -ml-4">Wins</span>
+              <li>One round-trip test covers every field</li>
+              <li>Delete two duplicate shapes</li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- 8 -->
+        <article id="c8" class="bg-white rounded-xl border border-slate-200 p-6 space-y-5 shadow-sm">
+          <div class="flex flex-wrap items-center gap-3">
+            <h2 class="font-serif text-2xl">8 · Collapse renderer action providers; drop dead context</h2>
+            <span class="px-2 py-0.5 rounded text-xs bg-amber-100 text-amber-800 font-semibold">Worth exploring</span>
+            <span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-700">in-process</span>
+          </div>
+          <ul class="font-mono text-sm text-slate-700 space-y-0.5">
+            <li>apps/electron/src/renderer/stores/tracking/tracking-provider.tsx</li>
+            <li>apps/electron/src/renderer/stores/live-split/live-split-provider.tsx</li>
+            <li>apps/electron/src/renderer/stores/dungeon-run/dungeon-run-provider.tsx (dead DungeonRunState fields)</li>
+            <li>apps/electron/src/renderer/components/providers/settings-provider.tsx · settings/settings-editor.tsx (455)</li>
+          </ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="lbl text-slate-500 mb-3">Before: mass diagram (interface vs implementation)</div>
+              <div class="flex items-end gap-6 h-52">
+                <div class="text-center text-xs"><div class="flex items-end gap-1 h-44"><div class="w-8 bg-amber-300 h-40"></div><div class="w-8 bg-slate-400 h-44"></div></div>tracking</div>
+                <div class="text-center text-xs"><div class="flex items-end gap-1 h-44"><div class="w-8 bg-amber-300 h-40"></div><div class="w-8 bg-slate-400 h-44"></div></div>live-split</div>
+                <div class="text-center text-xs"><div class="flex items-end gap-1 h-44"><div class="w-8 bg-amber-300 h-36"></div><div class="w-8 bg-slate-400 h-40"></div></div>settings</div>
+              </div>
+              <div class="text-xs text-slate-500 mt-2"><span class="inline-block w-3 h-3 bg-amber-300"></span> interface (context, two selector hooks, guard) · <span class="inline-block w-3 h-3 bg-slate-400"></span> implementation (two client calls each)</div>
+            </div>
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="lbl text-slate-500 mb-3">After</div>
+              <div class="flex items-end gap-6 h-52">
+                <div class="text-center text-xs"><div class="flex items-end gap-1 h-44"><div class="w-8 bg-amber-300 h-6"></div><div class="w-8 bg-slate-900 h-44"></div></div>useEffectAction</div>
+                <div class="text-xs text-slate-600 self-center space-y-1"><div>→ <code>&#123;run, error, isPending&#125;</code></div><div>or react-query <code>useMutation</code></div><div>settings → query + mutation</div><div>settings-editor → AppTextField</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="grid md:grid-cols-3 gap-4 text-sm">
+            <p><span class="lbl text-slate-500 block">Problem</span>Each provider's interface is as wide as its body, and DungeonRunProvider exposes hardcoded fields nobody reads. Settings bypass the reactive query convention.</p>
+            <p><span class="lbl text-slate-500 block">Solution</span>One action hook (or <code>useMutation</code>). Move settings onto query + mutation. Delete the dead DungeonRunState context.</p>
+            <ul class="list-disc pl-4"><span class="lbl text-slate-500 block -ml-4">Wins</span>
+              <li>Hook tested once, no provider tree</li>
+              <li>Settings match useQuery convention</li>
+              <li>ClientSecretField becomes testable</li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- 9 -->
+        <article id="c9" class="bg-white rounded-xl border border-slate-200 p-6 space-y-5 shadow-sm">
+          <div class="flex flex-wrap items-center gap-3">
+            <h2 class="font-serif text-2xl">9 · One Electron app-lifecycle module</h2>
+            <span class="px-2 py-0.5 rounded text-xs bg-slate-200 text-slate-700 font-semibold">Speculative</span>
+            <span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-700">ports &amp; adapters (Electron events)</span>
+          </div>
+          <ul class="font-mono text-sm text-slate-700 space-y-0.5">
+            <li>apps/electron/src/main.ts · bootstrap.ts</li>
+            <li>apps/electron/src/application/quit-cleanup.ts · window-state-tracking.ts · fatal-exit-flush.ts</li>
+            <li>apps/electron/src/application/exit-on-startup-failure.ts · settle-within.ts · detached-window-placement.ts</li>
+          </ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="lbl text-slate-500 mb-2">Before</div>
+              <pre class="mermaid">
+flowchart LR
+  BQ[before-quit] --> QC[makeQuitCleanup]
+  SE[session-end] --> QC
+  QC --> WS[window-state-tracking<br/>module globals]
+  QC --> FF[fatal-exit-flush<br/>module global]
+  ACT[activate] --> W[new window<br/>missing theme / focus]
+  classDef leak stroke:#dc2626,stroke-width:2px;
+  class WS,FF,W leak
+              </pre>
+            </div>
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="lbl text-slate-500 mb-2">After</div>
+              <pre class="mermaid">
+flowchart LR
+  E[Injected Electron event source] --> L[App lifecycle<br/>windows · flush registry · quit · fatal flush]
+  F[Fake event source in tests] --> L
+  classDef deep fill:#0f172a,color:#e2e8f0,stroke:#0f172a;
+  class L deep
+              </pre>
+            </div>
+          </div>
+          <div class="grid md:grid-cols-3 gap-4 text-sm">
+            <p><span class="lbl text-slate-500 block">Problem</span>Quit behaviour is spread over six files and relies on module-level state. Window-state saving has no tests.</p>
+            <p><span class="lbl text-slate-500 block">Solution</span>One module built from injected Electron events. Keep the requirement that OS shutdown is never blocked.</p>
+            <ul class="list-disc pl-4"><span class="lbl text-slate-500 block -ml-4">Wins</span>
+              <li>Quit paths testable without globals</li>
+              <li>activate matches startup window</li>
+            </ul>
+          </div>
+          <p class="text-xs text-slate-500">Speculative: the recent run of shutdown commits suggests it works now, and the gain is mostly testability.</p>
+        </article>
+
+        <!-- 10 -->
+        <article id="c10" class="bg-white rounded-xl border border-slate-200 p-6 space-y-5 shadow-sm">
+          <div class="flex flex-wrap items-center gap-3">
+            <h2 class="font-serif text-2xl">10 · Give the combat-log parser locality</h2>
+            <span class="px-2 py-0.5 rounded text-xs bg-amber-100 text-amber-800 font-semibold">Worth exploring</span>
+            <span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-700">in-process</span>
+          </div>
+          <ul class="font-mono text-sm text-slate-700 space-y-0.5">
+            <li>packages/shared/src/fellowship/validation/events/* · fellowship-event-schema.ts</li>
+            <li>apps/api/src/services/fellowship/parsing/* (get-event-type.ts, parse-fellowship-event-stream.ts)</li>
+            <li>apps/cli/src/main.ts:19 · apps/electron/src/main.ts:35 (enableFellowshipEventSchemaJit)</li>
+          </ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4 diagram text-xs space-y-2">
+              <div class="lbl text-slate-500">Before: cross-section</div>
+              <div class="border-l-4 border-red-400 bg-red-50 px-3 py-2">Entry points must remember to enable the JIT, or parsing gets silently slow</div>
+              <div class="border-l-4 border-slate-400 bg-slate-50 px-3 py-2">apps/api parsing: line split, full header decode just to read fields[1]</div>
+              <div class="border-l-4 border-slate-400 bg-slate-50 px-3 py-2">packages/shared event schemas (only apps/api uses them, no tests in shared)</div>
+            </div>
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="lbl text-slate-500 mb-2">After</div>
+              <div class="deep rounded-lg p-4 text-xs space-y-1"><div class="lbl">Combat-log parser</div><div class="font-mono">parse(lines) → events</div><div class="opacity-60">schemas · registry · lazy JIT · set lookup for the event type</div></div>
+            </div>
+          </div>
+          <div class="grid md:grid-cols-3 gap-4 text-sm">
+            <p><span class="lbl text-slate-500 block">Problem</span>The parser lives in two packages, and its performance depends on every caller doing a setup step it knows nothing about.</p>
+            <p><span class="lbl text-slate-500 block">Solution</span>Put the parser in one package, enable the JIT lazily on first use, and replace the header decode with a set lookup.</p>
+            <ul class="list-disc pl-4"><span class="lbl text-slate-500 block -ml-4">Wins</span>
+              <li>Interface shrinks: no setup step</li>
+              <li>Existing benchmarks guard the change</li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- 11 -->
+        <article id="c11" class="bg-white rounded-xl border border-slate-200 p-6 space-y-5 shadow-sm">
+          <div class="flex flex-wrap items-center gap-3">
+            <h2 class="font-serif text-2xl">11 · Boilerplate factories (small, mechanical)</h2>
+            <span class="px-2 py-0.5 rounded text-xs bg-amber-100 text-amber-800 font-semibold">Worth exploring</span>
+            <span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-700">in-process</span>
+          </div>
+          <div class="grid md:grid-cols-2 gap-4 text-sm">
+            <ul class="space-y-2">
+              <li><b>HTTP errors</b>: "log, then fail with InternalServerError" appears 12× across 9 groups (4 variants in fellowship-logs-api-layer.ts). Replace with one <code>internalServerError(message)</code>.</li>
+              <li><b>Catalog groups</b>: the abilities, units and dungeons API layers and their 4 catalog mocks are identical except for names. Replace with one factory each.</li>
+              <li><b>DAO errors and decoding</b>: 8 copies of <code>mapXDAOError</code> (configuration's is duplicated in the same folder) and about 15 <code>decodeXRows</code>. Replace with generic <code>decodeRows(Model)</code> plus a <code>wrapUnexpected</code> static.</li>
+            </ul>
+            <ul class="space-y-2">
+              <li><b>Database wiring</b>: the CLI <code>setup-database</code> command repeats the 4-database mergeAll, and <code>Layer.unwrap(getDatabaseOptions…)</code> appears 4×. Export <code>makeDatabasesLayer</code> from db.</li>
+              <li><b>FileMonitor pass-throughs</b>: <code>findLatestFile</code> only forwards, <code>readLines</code>/<code>readEvents</code> are used only by tests, and the FileData construction is copied into the test harness.</li>
+              <li><b>Wire schemas</b>: <code>*-api-schema</code> files are split between shared and api-contract, and some shared files are used only by Electron.</li>
+            </ul>
+          </div>
+        </article>
+      </section>
+
+      <section id="quick" class="bg-white rounded-xl border border-slate-200 p-6 space-y-3">
+        <h2 class="font-serif text-2xl">Quick wins</h2>
+        <ul class="list-disc pl-5 text-sm space-y-1">
+          <li>Dead code: <code>FellowshipLogsGateway.streamEvents</code> (live + fixture) has no callers. <code>DAO.getByDungeonRunId</code> is unused outside its DAO.</li>
+          <li><code>tools/dev-scripts/src/get-event-type-set.js</code> is referenced nowhere, and its usage message names the wrong file.</li>
+          <li>The root <code>format:sql</code> script has no target. <code>format:db-sql</code> is a pass-through alias.</li>
+          <li>Root <code>tsconfig.json</code> references leave out packages/db, packages/json-schemas and apps/cli.</li>
+          <li>Two identical 116-line <code>configuration.ts</code> test fixtures (livesplit and websocket basic-test).</li>
+          <li>In file-monitor-test-harness.ts, the export <code>FileMonitorTestDependenciesLive</code> shadows a local with the same name and a different meaning.</li>
+          <li>The "already imported" check is duplicated in FellowshipLogs and the importer. Keep the importer's.</li>
+          <li><code>classify-tracking-failure.ts</code> uses Match for a single case.</li>
+          <li>The <code>"detachedWindow=true"</code> string is duplicated between renderer and main. Move it to shared.</li>
+          <li>Context convention is mixed (<code>.Provider</code> vs React 19 <code>&lt;Ctx value&gt;</code>). Some imports lack the <code>.ts</code> extension (the <code>*-client.ts</code> files, main.tsx).</li>
+          <li>6× redundant <code>errors.length &gt; 0</code> guards around <code>FieldError</code>, which already returns null.</li>
+          <li>Nothing checks that the generated milestone JSON schema or the catalog checksums are up to date. Consider "regenerate, then <code>git diff --exit-code</code>" in <code>check</code>.</li>
+          <li>The domain status schema lives in api-contract, which forces packages/db to depend on api-contract. Move it to shared.</li>
+        </ul>
+        <p class="text-xs text-slate-500">Looked at and fine as is: Biome, oxlint and Prettier each have a distinct job. The configuration DAO and the background-job DAO are already deep.</p>
+      </section>
+
+      <section id="top" class="deep rounded-xl p-8 space-y-3">
+        <div class="lbl opacity-70">Top recommendation</div>
+        <h2 class="font-serif text-3xl"><a href="#c1" class="underline decoration-dotted">1 · One live log stream carries status and events</a></h2>
+        <p class="text-slate-300">It removes three translation layers, fixes the known <code>Tracking</code> status bug in docs/tasks.md, drops the 250 ms e2e workaround, and makes it impossible for status and events to disagree. Next, take <a href="#c2" class="underline">#2</a>: it unblocks the observation-batching task.</p>
+      </section>
+    </main>
+  </body>
+</html>
