@@ -6,29 +6,34 @@ Source: [architecture review, 2026-10-13](../architecture-reviews/architecture-r
 
 The API test layers copy production wiring by hand, so every change to it has to be made twice.
 
-- `api-server-test-layer.ts` lists the 11 API services three times: in the `ApiServices` type, in `ApiServiceTestLayer`, and in the `mergeAll` call. All three must match `layers/api-services-layer.ts`.
+- `api-server-test-layer.ts` lists the API services three times: in the `ApiServices` type, in `ApiServiceTestLayer`, and in the `mergeAll` call. The lists must stay in sync with the 10 services in `layers/api-services-layer.ts` plus `FellowshipTracker`, which `api-layer.ts` adds separately.
 - `api-server-test-layer.ts` also repeats the WebSocket channel, broadcaster, and shutdown wiring from `layers/api-layer.ts`.
-- `fellowship-tracker-test-harness.ts` (299 lines) hand-writes 14 repository methods, plus fakes for `ConfigurationDAO` and LiveSplit.
+- `fellowship-tracker-test-harness.ts` (299 lines) hand-writes 11 `DungeonRunRepository` methods and 3 `DungeonRunObservationDAO` methods, plus fakes for `ConfigurationDAO` and LiveSplit.
 - `fellowship-tracker-integration-test-harness.ts` rebuilds `Fellowship.layer` by hand.
 
 Adding a repository method breaks harnesses that never call it.
 
-## Proposed change
+## Direction
 
-- Export one production wiring function that takes the HTTP server layer, and use it in both `ApiLayer` and the test layer.
-- Derive the services type with `Layer.Success<typeof ApiServicesLayer>` instead of writing it out.
-- Put base fakes in `tests/common/mocks` that tests can override one method at a time.
+Tests could reuse a production wiring function that takes the HTTP server layer, derive the services type from `ApiServicesLayer`, and start from shared base fakes that each test overrides one method at a time.
 
-[move-dungeon-run-store-into-db.md](move-dungeon-run-store-into-db.md) shrinks the repository fake, so do this one after it.
+[move-dungeon-run-store-into-db.md](move-dungeon-run-store-into-db.md) shrinks the fakes this task would share, so design this after that task lands.
 
-## Tests
+## Open questions
 
-Wiring changes happen in one place. Each test sets up only the methods it uses.
+- How far should test wiring follow production? Some tests may need to replace pieces that a shared wiring function hides.
+- Should base fakes fail loudly on unexpected calls or return empty defaults?
+
+## Done when
+
+- Adding an API service changes production wiring only.
+- Adding a repository method doesn't break tests that never call it.
 
 ## Relevant code
 
-- `apps/api/src/tests/common/layers/api-server-test-layer.ts` (lines 35-100)
+- `apps/api/src/tests/common/layers/api-server-test-layer.ts`
 - `apps/api/src/layers/api-layer.ts`
 - `apps/api/src/layers/api-services-layer.ts`
-- `apps/api/src/tests/common/harnesses/fellowship-tracker-test-harness.ts` (lines 167-243)
-- `apps/api/src/tests/common/harnesses/fellowship-tracker-integration-test-harness.ts` (lines 45-48)
+- `apps/api/src/tests/common/harnesses/fellowship-tracker-test-harness.ts`
+- `apps/api/src/tests/common/harnesses/fellowship-tracker-integration-test-harness.ts`
+- `apps/api/src/tests/common/mocks/`

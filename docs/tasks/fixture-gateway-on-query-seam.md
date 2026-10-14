@@ -10,20 +10,28 @@ Two separate modules read the recorded Fellowship Logs fixtures (`metadata.json`
 
 `controlled-fellowship-logs-fixture-layer.ts` (270 lines) reads the same files through a fake `Query` and passes it to `makeFellowshipLogsGatewayFromQuery`. The rate-limit tests use this approach too.
 
-## Proposed change
+Nothing calls `FellowshipLogsGateway.streamEvents` in either the live or fixture gateway. Only `fellowship-logs-analytics.test.ts` calls `getReport`.
 
-Rebuild `FellowshipLogsGateway.fixtureLayer` as a file-backed `Query` passed to `makeFellowshipLogsGatewayFromQuery`. The HTTP query and the file query then sit at the same seam. The test layer adds failure injection on top of the file-backed query.
+## Direction
 
-Delete `FellowshipLogsGateway.streamEvents` from both the live and fixture gateways at the same time. Nothing calls it.
+Rebuild `FellowshipLogsGateway.fixtureLayer` as a file-backed `Query` passed to `makeFellowshipLogsGatewayFromQuery`, so the HTTP query and the file query sit at the same seam. The test layer would add failure injection on top. Delete `streamEvents` while making the change.
 
-## Tests
+## Open questions
 
-The change deletes about 300 lines. Fixture mode and tests exercise the same pagination, caching, and rate-limit code as production.
+- Should fixture mode simulate rate-limit headers, or report no rate limit at all?
+- Can the test layer's failure injection wrap the production file query, or does it need its own reader?
+- Is `getReport` still worth keeping when only one test calls it?
+
+## Done when
+
+- Fixture mode runs through `makeFellowshipLogsGatewayFromQuery`.
+- One module reads the recorded fixture files.
+- `streamEvents` is gone from the gateway interface.
 
 ## Relevant code
 
-- `apps/api/src/services/fellowship-logs-gateway/make-fellowship-logs-gateway-fixture.ts` (lines 227-258)
-- `apps/api/src/services/fellowship-logs-gateway/make-fellowship-logs-gateway-service.ts` (lines 326-363)
-- `apps/api/src/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts` (lines 125, 145-153)
+- `apps/api/src/services/fellowship-logs-gateway/make-fellowship-logs-gateway-fixture.ts`
+- `apps/api/src/services/fellowship-logs-gateway/make-fellowship-logs-gateway-service.ts` (`makeFellowshipLogsGatewayFromQuery`, `getReport`, `streamEvents`)
+- `apps/api/src/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts` (`fixtureLayer`, `streamEvents`)
 - `apps/api/src/services/fellowship-logs-gateway/fellowship-logs-gateway-fixture-paths.ts`
 - `apps/api/src/tests/common/layers/controlled-fellowship-logs-fixture-layer.ts`

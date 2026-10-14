@@ -17,13 +17,21 @@ Each of the 10 AppState operations is written out by hand in about 8 places:
 
 Adding one field means editing most of these files. The app also applies the theme twice, once at startup in `run-electron-application.ts` and again in the layer.
 
-## Proposed change
+## Direction
 
-Declare the state once as a table that maps each key to its schema. Expose a generic `get(key)` and `set(key, value)`, and derive the IPC handler, the renderer client, and the query options from the table. Effect RPC with a schema group is one way to do this. Apply the theme in one place.
+Declare the state once as a table that maps each key to its schema, with a generic get and set. Derive the IPC handler, the renderer client, and the query options from that table. Apply the theme in one place.
 
-## Tests
+## Open questions
 
-One round-trip test of the generic path replaces 10 per-field paths. The two duplicate shapes go away.
+- Effect RPC with a schema group, or a custom table? Effect RPC brings its own conventions to the IPC path.
+- Some fields have side effects when set, such as the theme. Where do those hooks live in a generic design?
+- Does every field need its own query key, or can one query hold all AppState?
+
+## Done when
+
+- Adding a field means adding one table entry plus any side effect it needs.
+- One round-trip test covers the generic path.
+- The app applies the theme in one place.
 
 ## Relevant code
 
@@ -36,4 +44,4 @@ One round-trip test of the generic path replaces 10 per-field paths. The two dup
 - `apps/electron/src/renderer/services/app-state/browser-app-state-layer.ts`
 - `apps/electron/src/renderer/api/app-state/app-state-queries.ts`
 - `apps/electron/src/renderer/api/app-state/app-state-mutations.ts`
-- `apps/electron/src/application/run-electron-application.ts` (line 11)
+- `apps/electron/src/application/run-electron-application.ts`

@@ -10,21 +10,27 @@ Every entry point must call `enableFellowshipEventSchemaJit()` once. The CLI and
 
 `getEventType` runs a full header schema decode only to read `fields[1]`. When parsing fails, the error path splits the line a second time.
 
-## Proposed change
+## Direction
 
-- Move the event schemas and the registry into `apps/api/src/services/fellowship/parsing/`, or move the whole parser into `packages/shared`.
-- Enable the JIT inside the parsing module on first use, and remove the explicit calls from the entry points and tests.
-- Replace the header decode in `getEventType` with a lookup in a set of known event types.
+Keep the whole parser in one package, enable the JIT inside the parsing module on first use, and look up the event type without a full header decode. The existing fixture tests and parse benchmarks would guard the change.
 
-## Tests
+## Open questions
 
-The fixture tests (interpreted and JIT) and the parse benchmarks stay as they are and guard the change. Tests no longer need to enable the JIT themselves.
+- Should the parser live in `apps/api` or in `packages/shared`? Shared makes sense only if another app will parse logs.
+- Does enabling the JIT lazily on first use cost anything measurable on the first parse?
+- Do the benchmarks still need a way to run the interpreted path?
+
+## Done when
+
+- One package owns the event schemas, the registry, and the parser.
+- No entry point or test has to enable the JIT.
+- Parse benchmarks show no regression.
 
 ## Relevant code
 
-- `packages/shared/src/fellowship/validation/events/*`
+- `packages/shared/src/fellowship/validation/events/`
 - `packages/shared/src/fellowship/validation/fellowship-event-schema.ts`
-- `apps/api/src/services/fellowship/parsing/*` (`get-event-type.ts`, `parse-fellowship-event-stream.ts` line 29)
+- `apps/api/src/services/fellowship/parsing/` (`get-event-type.ts`, `parse-fellowship-event-stream.ts`)
 - `apps/api/src/services/fellowship/validation/fellowship-header-schema.ts`
-- `apps/cli/src/main.ts` (line 19)
-- `apps/electron/src/main.ts` (line 35)
+- `apps/cli/src/main.ts` (`enableFellowshipEventSchemaJit`)
+- `apps/electron/src/main.ts` (`enableFellowshipEventSchemaJit`)

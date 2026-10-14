@@ -14,25 +14,32 @@ The `activate` handler in `main.ts` creates a window without the theme or the se
 
 `trackWindowStateSaves` has no tests for debouncing, flushing on close, or skipping saves after quit. `quit-cleanup.test.ts` covers only the pure half of quit cleanup.
 
-## Proposed change
+## Direction
 
-Add one app lifecycle module, built from injected Electron event sources. It owns window registration, the window-state flush registry, the quit cleanup sequence, and the fatal-exit flush. The `activate` path creates windows the same way startup does.
+One app lifecycle module, built from injected Electron event sources, could own window registration, the window-state flush registry, the quit cleanup sequence, and the fatal-exit flush. The `activate` path would create windows the same way startup does.
 
-Quit must never block or delay OS shutdown or logoff. Keep that requirement while restructuring.
+Quit must never block or delay OS shutdown or logoff. Any restructuring keeps that requirement.
 
-The strength is speculative because the recent shutdown commits suggest this code works now. The gain is mostly testability.
+The strength is speculative because the recent shutdown commits suggest this code works now. The gain is mostly testability. The `activate` mismatch may be worth fixing on its own first.
 
-## Tests
+## Open questions
 
-Tests can drive the lifecycle with a fake event source instead of resetting module globals. Window-state saving and both quit paths become testable.
+- Is the `activate` mismatch a real bug on Windows, or does it only matter on macOS?
+- Which Electron events need to be injectable for tests, and which can stay direct?
+- Is testability alone enough reason to restructure code that recently became stable?
+
+## Done when
+
+- Tests can drive window-state saving and both quit paths without resetting module globals.
+- Windows created on `activate` match windows created at startup.
 
 ## Relevant code
 
-- `apps/electron/src/main.ts` (lines 39-120)
-- `apps/electron/src/bootstrap.ts` (line 84)
+- `apps/electron/src/main.ts`
+- `apps/electron/src/bootstrap.ts`
 - `apps/electron/src/application/quit-cleanup.ts`
-- `apps/electron/src/application/window-state-tracking.ts` (lines 5-6)
-- `apps/electron/src/application/fatal-exit-flush.ts` (line 5)
+- `apps/electron/src/application/window-state-tracking.ts` (`trackWindowStateSaves`)
+- `apps/electron/src/application/fatal-exit-flush.ts`
 - `apps/electron/src/application/exit-on-startup-failure.ts`
 - `apps/electron/src/application/settle-within.ts`
-- `apps/electron/src/application/detached-window/detached-window-placement.ts` (line 24)
+- `apps/electron/src/application/detached-window/detached-window-placement.ts`
