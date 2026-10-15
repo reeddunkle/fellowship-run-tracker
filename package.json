@@ -24,6 +24,7 @@
     "docs:layers:render": "pnpm -F @frt/api exec tsx ../../tools/dev-scripts/src/generate-layer-graph/render-layer-graphs.ts",
     "docs:layers": "run-s docs:layers:generate docs:layers:render",
     "fellowship-logs:capture-report": "pnpm cli capture-fellowship-logs-report",
+    "fellowship-logs:probe-encounters": "pnpm cli probe-fellowship-logs-encounters",
     "fellowship-logs:validate-event-costs": "pnpm cli validate-fellowship-logs-event-costs",
     "format:db-sql:prettier": "pnpm -F @frt/db format:sql:prettier",
     "format:db-sql": "pnpm -F @frt/db format:sql",

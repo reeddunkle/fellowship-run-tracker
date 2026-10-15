@@ -9,6 +9,7 @@ import { captureFellowshipLogsReportCommand } from "@frt/cli/commands/capture-fe
 import { filterLogCommand } from "@frt/cli/commands/filter-log-command.ts";
 import { generateLSSCommand } from "@frt/cli/commands/generate-lss-command.ts";
 import { generateUnitCatalogCommand } from "@frt/cli/commands/generate-unit-catalog-command.ts";
+import { probeFellowshipLogsEncountersCommand } from "@frt/cli/commands/probe-fellowship-logs-encounters-command.ts";
 import { replayLogCommand } from "@frt/cli/commands/replay-log-command.ts";
 import { serveCommand } from "@frt/cli/commands/serve-command.ts";
 import { setupDatabaseCommand } from "@frt/cli/commands/setup-database-command.ts";
@@ -27,6 +28,7 @@ const cli = Command.make("fellowship-run-tracker").pipe(
     filterLogCommand,
     generateLSSCommand,
     generateUnitCatalogCommand,
+    probeFellowshipLogsEncountersCommand,
     replayLogCommand,
     serveCommand,
     setupDatabaseCommand,
