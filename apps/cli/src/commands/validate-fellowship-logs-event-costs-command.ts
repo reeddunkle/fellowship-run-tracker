@@ -34,9 +34,9 @@ import {
 import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 import { NonEmptyStringSchema } from "@frt/shared/util/common-schemas.ts";
 
-const MAX_ADDITIONAL_POINTS = 100;
-const LARGE_SOURCE_ID = 39;
-const TINY_SOURCE_ID = 13;
+const MAX_ADDITIONAL_POINTS = 300;
+const LARGE_SOURCE_GAME_ID = 1_000_038;
+const TINY_SOURCE_GAME_ID = 115;
 const EVENT_LIMIT = 10_000;
 
 const ValidationPhaseSchema = Schema.Literals(["before", "after"]);
@@ -122,7 +122,7 @@ const COMBINED_EVENTS_SELECTION = `
       large: events(
         startTime: $startTime
         endTime: $endTime
-        filterExpression: "source.id = ${LARGE_SOURCE_ID}"
+        filterExpression: "source.id = ${LARGE_SOURCE_GAME_ID}"
         limit: ${EVENT_LIMIT}
         translate: false
         useAbilityIDs: true
@@ -134,7 +134,7 @@ const COMBINED_EVENTS_SELECTION = `
       tiny: events(
         startTime: $startTime
         endTime: $endTime
-        filterExpression: "source.id = ${TINY_SOURCE_ID}"
+        filterExpression: "source.id = ${TINY_SOURCE_GAME_ID}"
         limit: ${EVENT_LIMIT}
         translate: false
         useAbilityIDs: true
@@ -451,11 +451,11 @@ const validateFellowshipLogsEventCosts = E.fn(
   const runSingles = E.fnUntraced(function* (state: CostState) {
     const afterLarge = yield* runSingleArm(
       "single-large",
-      LARGE_SOURCE_ID,
+      LARGE_SOURCE_GAME_ID,
       state,
     );
 
-    return yield* runSingleArm("single-tiny", TINY_SOURCE_ID, afterLarge);
+    return yield* runSingleArm("single-tiny", TINY_SOURCE_GAME_ID, afterLarge);
   });
 
   const finalState =
@@ -471,6 +471,14 @@ const validateFellowshipLogsEventCosts = E.fn(
   yield* E.forEach(equivalentArmPairs, ([singleArm, combinedArm]) => {
     const singleEvents = finalState.eventsByArm[singleArm] ?? [];
     const combinedEvents = finalState.eventsByArm[combinedArm] ?? [];
+
+    if (singleEvents.length === 0) {
+      return E.fail(
+        failValidation(
+          `${singleArm} returned no events for its source filter.`,
+        ),
+      );
+    }
 
     if (JSON.stringify(singleEvents) !== JSON.stringify(combinedEvents)) {
       return E.fail(
@@ -510,9 +518,9 @@ const validateFellowshipLogsEventCosts = E.fn(
     maxAdditionalPoints: MAX_ADDITIONAL_POINTS,
     phase,
     reportCode,
-    sourceIds: {
-      large: LARGE_SOURCE_ID,
-      tiny: TINY_SOURCE_ID,
+    sourceGameIds: {
+      large: LARGE_SOURCE_GAME_ID,
+      tiny: TINY_SOURCE_GAME_ID,
     },
   };
 
