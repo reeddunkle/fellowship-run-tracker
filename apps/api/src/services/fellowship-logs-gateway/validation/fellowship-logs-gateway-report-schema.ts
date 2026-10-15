@@ -24,26 +24,44 @@ const FellowshipLogsGatewayReportMasterDataSchema = Schema.Struct({
   logVersion: Schema.Int,
 });
 
-const FellowshipLogsGatewayReportEventsSchema = Schema.Struct({
+export const FellowshipLogsGatewayReportEventsSchema = Schema.Struct({
   data: Schema.Array(Schema.Unknown),
   nextPageTimestamp: Schema.Finite.pipe(Schema.NullOr),
 });
 
-const FellowshipLogsGatewayReportSchema = Schema.Struct({
+const FellowshipLogsGatewayReportFields = {
   code: NonEmptyStringSchema,
   endTime: NonNegativeIntegerSchema,
-  events: FellowshipLogsGatewayReportEventsSchema,
   masterData: FellowshipLogsGatewayReportMasterDataSchema,
   revision: NonNegativeIntegerSchema,
   startTime: NonNegativeIntegerSchema,
   title: Schema.String,
+};
+
+const FellowshipLogsGatewayReportSchema = Schema.Struct({
+  ...FellowshipLogsGatewayReportFields,
+  events: FellowshipLogsGatewayReportEventsSchema,
+});
+
+const FellowshipLogsGatewayFilteredReportSchema = Schema.Struct({
+  ...FellowshipLogsGatewayReportFields,
+  casts: FellowshipLogsGatewayReportEventsSchema,
+  deaths: FellowshipLogsGatewayReportEventsSchema,
+  dungeonEnds: FellowshipLogsGatewayReportEventsSchema,
+  dungeonStarts: FellowshipLogsGatewayReportEventsSchema,
 });
 
 export type FellowshipLogsGatewayReport =
   typeof FellowshipLogsGatewayReportSchema.Type;
 
+export type FellowshipLogsGatewayFilteredReport =
+  typeof FellowshipLogsGatewayFilteredReportSchema.Type;
+
 export const FellowshipLogsGatewayReportResponseDataSchema = withRateLimitData({
   reportData: Schema.Struct({
-    report: FellowshipLogsGatewayReportSchema.pipe(Schema.NullOr),
+    report: Schema.Union([
+      FellowshipLogsGatewayReportSchema,
+      FellowshipLogsGatewayFilteredReportSchema,
+    ]).pipe(Schema.NullOr),
   }),
 });

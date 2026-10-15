@@ -20,9 +20,49 @@ export const REPORT_SELECTION = `
         }
       }
 
-      events(
+      dungeonStarts: events(
         startTime: $startTime
         endTime: $endTime
+        filterExpression: "type = \\"dungeonstart\\""
+        limit: 10000
+        translate: false
+        useAbilityIDs: true
+        useActorIDs: true
+      ) {
+        data
+        nextPageTimestamp
+      }
+
+      dungeonEnds: events(
+        startTime: $startTime
+        endTime: $endTime
+        filterExpression: "type = \\"dungeonend\\""
+        limit: 10000
+        translate: false
+        useAbilityIDs: true
+        useActorIDs: true
+      ) {
+        data
+        nextPageTimestamp
+      }
+
+      casts: events(
+        startTime: $startTime
+        endTime: $endTime
+        filterExpression: "type = \\"cast\\""
+        limit: 10000
+        translate: false
+        useAbilityIDs: true
+        useActorIDs: true
+      ) {
+        data
+        nextPageTimestamp
+      }
+
+      deaths: events(
+        startTime: $startTime
+        endTime: $endTime
+        filterExpression: "type = \\"death\\""
         limit: 10000
         translate: false
         useAbilityIDs: true

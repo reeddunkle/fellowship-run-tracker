@@ -23,6 +23,7 @@ import {
   type Query,
 } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
 import { makeFellowshipLogsGatewayFromQuery } from "@frt/api/services/fellowship-logs-gateway/make-fellowship-logs-gateway-service.ts";
+import { normalizeFellowshipLogsGatewayReport } from "@frt/api/services/fellowship-logs-gateway/normalize-fellowship-logs-gateway-report.ts";
 import { FellowshipLogsGatewayDungeonRunMetadataResponseDataSchema } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-dungeon-run-metadata-schema.ts";
 import { makeFellowshipLogsGatewayGraphQLResponseSchema } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-graphql-schema.ts";
 import { FellowshipLogsGatewayReportResponseDataSchema } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-report-schema.ts";
@@ -118,13 +119,29 @@ const makeRecordedFightQuery = E.fnUntraced(function* (
     return yield* E.die(new Error("The recorded fight has no metadata."));
   }
 
+  const pageReports = yield* E.forEach(pages, (page) => {
+    const pageReport = page.data?.reportData.report;
+
+    if (pageReport === undefined || pageReport === null) {
+      return E.die(new Error("A recorded page has no report data."));
+    }
+
+    return normalizeFellowshipLogsGatewayReport(pageReport).pipe(E.orDie);
+  });
+
   const pagesByStartTime = new Map(
     pages.map((page, index) => {
-      const previous = pages[index - 1];
-      const startTime =
-        previous === undefined
-          ? fight.startTime
-          : previous.data?.reportData.report?.events.nextPageTimestamp;
+      const previousReport = pageReports[index - 1];
+
+      if (previousReport === undefined) {
+        return [fight.startTime, page] as const;
+      }
+
+      const startTime = previousReport.events.nextPageTimestamp;
+
+      if (startTime === null) {
+        throw new Error("A recorded non-terminal page has no next cursor.");
+      }
 
       return [startTime, page] as const;
     }),
@@ -163,6 +180,10 @@ const makeRecordedFightQuery = E.fnUntraced(function* (
         ).pipe(
           E.orDie,
           E.flatMap(({ startTime }) => {
+            if (startTime === undefined) {
+              return E.die(new Error("Report page request has no start time."));
+            }
+
             const page = pagesByStartTime.get(startTime);
             const pageReport = page?.data?.reportData.report;
 

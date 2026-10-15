@@ -20,6 +20,7 @@ import {
   getReportOrFail,
 } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-response-helpers.ts";
 import { type FellowshipLogsGatewayCredentials } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
+import { normalizeFellowshipLogsGatewayReport } from "@frt/api/services/fellowship-logs-gateway/normalize-fellowship-logs-gateway-report.ts";
 import {
   DUNGEON_RUN_METADATA_SELECTION,
   DUNGEON_RUN_METADATA_VARIABLES,
@@ -189,10 +190,12 @@ const captureFellowshipLogsReport = E.fn("captureFellowshipLogsReport")(
 
         const pageResponseData = yield* getGraphQLResponseData(pageResponse);
 
-        const reportPage = yield* getReportOrFail({
+        const rawReportPage = yield* getReportOrFail({
           report: pageResponseData.reportData.report,
           reportCode,
         });
+        const reportPage =
+          yield* normalizeFellowshipLogsGatewayReport(rawReportPage);
 
         const nextPageTimestamp = reportPage.events.nextPageTimestamp;
 

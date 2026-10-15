@@ -33,6 +33,7 @@ import {
   type GetCredentials,
   type Query,
 } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
+import { normalizeFellowshipLogsGatewayReport } from "@frt/api/services/fellowship-logs-gateway/normalize-fellowship-logs-gateway-report.ts";
 import {
   DUNGEON_RUN_METADATA_SELECTION,
   DUNGEON_RUN_METADATA_VARIABLES,
@@ -231,10 +232,11 @@ export const makeFellowshipLogsGatewayFromQuery = E.fnUntraced(function* (
         )
       : yield* fetchReportPage;
 
-    const report = yield* getReportOrFail({
+    const rawReport = yield* getReportOrFail({
       report: responseData.reportData.report,
       reportCode,
     });
+    const report = yield* normalizeFellowshipLogsGatewayReport(rawReport);
 
     const pageAttributes = {
       "fellowship_logs.event_count": report.events.data.length,

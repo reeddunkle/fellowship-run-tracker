@@ -23,6 +23,7 @@ import {
   type FellowshipLogsGatewayShape,
   type GetFellowshipLogsGatewayReportOptions,
 } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
+import { normalizeFellowshipLogsGatewayReport } from "@frt/api/services/fellowship-logs-gateway/normalize-fellowship-logs-gateway-report.ts";
 import { FellowshipLogsGatewayDungeonRunMetadataResponseDataSchema } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-dungeon-run-metadata-schema.ts";
 import { makeFellowshipLogsGatewayGraphQLResponseSchema } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-graphql-schema.ts";
 import { FellowshipLogsGatewayReportResponseDataSchema } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-report-schema.ts";
@@ -118,10 +119,12 @@ export const makeFellowshipLogsGatewayFixture = E.fnUntraced(function* ({
       }),
     );
 
-    return yield* getReportOrFail({
+    const report = yield* getReportOrFail({
       report: responseData.reportData.report,
       reportCode,
     });
+
+    return yield* normalizeFellowshipLogsGatewayReport(report);
   });
 
   const getReportPagePaths = E.fn("FellowshipLogsGateway.getReportPagePaths")(
