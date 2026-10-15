@@ -194,9 +194,20 @@ const captureFellowshipLogsReport = E.fn("captureFellowshipLogsReport")(
           reportCode,
         });
 
+        const nextPageTimestamp = reportPage.events.nextPageTimestamp;
+
+        if (nextPageTimestamp !== null && nextPageTimestamp <= startTime) {
+          return yield* new FellowshipLogsGatewayRequestError({
+            cause: new Error(
+              `Fellowship Logs returned a non-advancing report cursor: ${nextPageTimestamp}.`,
+            ),
+            operation: "Query",
+          });
+        }
+
         return [
           [{ pageResponse, reportPage }],
-          Option.fromNullishOr(reportPage.events.nextPageTimestamp),
+          Option.fromNullishOr(nextPageTimestamp),
         ] as const;
       });
     });

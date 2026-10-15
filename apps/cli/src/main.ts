@@ -13,6 +13,7 @@ import { replayLogCommand } from "@frt/cli/commands/replay-log-command.ts";
 import { serveCommand } from "@frt/cli/commands/serve-command.ts";
 import { setupDatabaseCommand } from "@frt/cli/commands/setup-database-command.ts";
 import { splitLogCommand } from "@frt/cli/commands/split-log-command.ts";
+import { validateFellowshipLogsEventCostsCommand } from "@frt/cli/commands/validate-fellowship-logs-event-costs-command.ts";
 
 import packageJson from "../package.json" with { type: "json" };
 
@@ -30,6 +31,7 @@ const cli = Command.make("fellowship-run-tracker").pipe(
     serveCommand,
     setupDatabaseCommand,
     splitLogCommand,
+    validateFellowshipLogsEventCostsCommand,
   ]),
 );
 
