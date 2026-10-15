@@ -37,6 +37,8 @@ function isConvertibleEvent(event: unknown): boolean {
   return (
     event.type === "dungeonstart" ||
     event.type === "dungeonend" ||
+    event.type === "dungeonencounterstart" ||
+    event.type === "dungeonencounterend" ||
     event.type === "cast" ||
     event.type === "death"
   );

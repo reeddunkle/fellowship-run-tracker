@@ -46,6 +46,32 @@ export const REPORT_SELECTION = `
         nextPageTimestamp
       }
 
+      encounterStarts: events(
+        startTime: $startTime
+        endTime: $endTime
+        filterExpression: "type = \\"dungeonencounterstart\\""
+        limit: 10000
+        translate: false
+        useAbilityIDs: true
+        useActorIDs: true
+      ) {
+        data
+        nextPageTimestamp
+      }
+
+      encounterEnds: events(
+        startTime: $startTime
+        endTime: $endTime
+        filterExpression: "type = \\"dungeonencounterend\\""
+        limit: 10000
+        translate: false
+        useAbilityIDs: true
+        useActorIDs: true
+      ) {
+        data
+        nextPageTimestamp
+      }
+
       casts: events(
         startTime: $startTime
         endTime: $endTime

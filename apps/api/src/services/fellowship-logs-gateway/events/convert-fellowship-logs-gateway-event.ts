@@ -121,6 +121,33 @@ export function convertFellowshipLogsGatewayEvent({
     ),
     Match.when(
       {
+        type: "dungeonencounterstart",
+      },
+      (encounterStartEvent) => {
+        return {
+          encounterId: String(encounterStartEvent.encounterID),
+          encounterNames: [encounterStartEvent.name],
+          timestamp,
+          type: FELLOWSHIP_EVENT.ENCOUNTER_START,
+        } satisfies FellowshipEvent;
+      },
+    ),
+    Match.when(
+      {
+        type: "dungeonencounterend",
+      },
+      (encounterEndEvent) => {
+        return {
+          encounterId: String(encounterEndEvent.encounterID),
+          encounterNames: [encounterEndEvent.name],
+          succeeded: encounterEndEvent.kill,
+          timestamp,
+          type: FELLOWSHIP_EVENT.ENCOUNTER_END,
+        } satisfies FellowshipEvent;
+      },
+    ),
+    Match.when(
+      {
         type: "cast",
       },
       (castEvent) => {

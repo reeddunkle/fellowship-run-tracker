@@ -29,6 +29,8 @@ export function normalizeFellowshipLogsGatewayReport(
   const eventFields = [
     report.dungeonStarts,
     report.dungeonEnds,
+    report.encounterStarts,
+    report.encounterEnds,
     report.casts,
     report.deaths,
   ];

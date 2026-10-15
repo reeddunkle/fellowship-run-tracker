@@ -49,6 +49,8 @@ const FellowshipLogsGatewayFilteredReportSchema = Schema.Struct({
   deaths: FellowshipLogsGatewayReportEventsSchema,
   dungeonEnds: FellowshipLogsGatewayReportEventsSchema,
   dungeonStarts: FellowshipLogsGatewayReportEventsSchema,
+  encounterEnds: FellowshipLogsGatewayReportEventsSchema,
+  encounterStarts: FellowshipLogsGatewayReportEventsSchema,
 });
 
 export type FellowshipLogsGatewayReport =

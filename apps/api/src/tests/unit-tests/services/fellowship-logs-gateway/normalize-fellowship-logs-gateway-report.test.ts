@@ -34,6 +34,8 @@ function makeFilteredReport(
     deaths: events,
     dungeonEnds: events,
     dungeonStarts: events,
+    encounterEnds: events,
+    encounterStarts: events,
     ...overrides,
   };
 }
@@ -74,6 +76,14 @@ describe("normalizeFellowshipLogsGatewayReport", () => {
         data: [{ timestamp: 110, type: "dungeonstart" }],
         nextPageTimestamp: 180,
       },
+      encounterEnds: {
+        data: [{ timestamp: 155, type: "dungeonencounterend" }],
+        nextPageTimestamp: 180,
+      },
+      encounterStarts: {
+        data: [{ timestamp: 145, type: "dungeonencounterstart" }],
+        nextPageTimestamp: 180,
+      },
     });
 
     await expect(
@@ -83,6 +93,8 @@ describe("normalizeFellowshipLogsGatewayReport", () => {
         data: [
           { timestamp: 110, type: "dungeonstart" },
           { timestamp: 130, type: "cast" },
+          { timestamp: 145, type: "dungeonencounterstart" },
+          { timestamp: 155, type: "dungeonencounterend" },
           { timestamp: 160, type: "death" },
           { timestamp: 170, type: "cast" },
         ],

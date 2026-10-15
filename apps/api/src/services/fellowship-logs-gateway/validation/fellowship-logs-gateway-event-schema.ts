@@ -22,6 +22,21 @@ const FellowshipLogsGatewayDungeonEndEventSchema = Schema.Struct({
   type: Schema.Literal("dungeonend"),
 });
 
+const FellowshipLogsGatewayEncounterStartEventSchema = Schema.Struct({
+  encounterID: Schema.Int,
+  name: Schema.String,
+  timestamp: NonNegativeIntegerSchema,
+  type: Schema.Literal("dungeonencounterstart"),
+});
+
+const FellowshipLogsGatewayEncounterEndEventSchema = Schema.Struct({
+  encounterID: Schema.Int,
+  kill: Schema.Boolean,
+  name: Schema.String,
+  timestamp: NonNegativeIntegerSchema,
+  type: Schema.Literal("dungeonencounterend"),
+});
+
 const FellowshipLogsGatewayCastEventSchema = Schema.Struct({
   abilityGameID: Schema.Int,
   fight: Schema.Int,
@@ -43,6 +58,8 @@ export const FellowshipLogsGatewayConvertibleEventSchema = Schema.Union([
   FellowshipLogsGatewayDeathEventSchema,
   FellowshipLogsGatewayDungeonEndEventSchema,
   FellowshipLogsGatewayDungeonStartEventSchema,
+  FellowshipLogsGatewayEncounterEndEventSchema,
+  FellowshipLogsGatewayEncounterStartEventSchema,
 ]);
 
 export type FellowshipLogsGatewayConvertibleEvent =
