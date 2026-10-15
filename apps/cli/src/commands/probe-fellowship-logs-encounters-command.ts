@@ -21,67 +21,30 @@ import {
   DUNGEON_RUN_METADATA_VARIABLES,
 } from "@frt/api/services/fellowship-logs-gateway/query/get-dungeon-run-metadata-query.ts";
 import { makeQuery } from "@frt/api/services/fellowship-logs-gateway/query/make-query.ts";
-import { RATE_LIMIT_DATA_SELECTION } from "@frt/api/services/fellowship-logs-gateway/query/rate-limit-data-query.ts";
+import {
+  RATE_LIMIT_DATA_QUERY,
+  RATE_LIMIT_DATA_SELECTION,
+} from "@frt/api/services/fellowship-logs-gateway/query/rate-limit-data-query.ts";
 import { FellowshipLogsGatewayDungeonRunMetadataResponseDataSchema } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-dungeon-run-metadata-schema.ts";
 import { FellowshipLogsGatewayReportEventsSchema } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-report-schema.ts";
 import { FellowshipLogsFightIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
-import { withRateLimitData } from "@frt/shared/fellowship-logs/fellowship-logs-rate-limit-schema.ts";
-import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 import {
-  encodeJson,
-  NonEmptyStringSchema,
-  NonNegativeIntegerSchema,
-} from "@frt/shared/util/common-schemas.ts";
+  FellowshipLogsRateLimitResponseDataSchema,
+  withRateLimitData,
+} from "@frt/shared/fellowship-logs/fellowship-logs-rate-limit-schema.ts";
+import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
+import { NonEmptyStringSchema } from "@frt/shared/util/common-schemas.ts";
 
-const EncounterProbeFightSchema = Schema.Struct({
-  difficultyLevel: Schema.Int.pipe(Schema.NullOr),
-  encounterID: Schema.Int,
-  endTime: NonNegativeIntegerSchema,
-  id: Schema.Int,
-  inProgress: Schema.Boolean,
-  startTime: NonNegativeIntegerSchema,
-});
+const EVENT_LIMIT = 10_000;
+const MAX_ADDITIONAL_POINTS = 300;
 
-const EncounterProbeResponseDataSchema = withRateLimitData({
-  reportData: Schema.Struct({
-    report: Schema.Struct({
-      encounterEnds: FellowshipLogsGatewayReportEventsSchema,
-      encounterStarts: FellowshipLogsGatewayReportEventsSchema,
-      fights: Schema.Array(EncounterProbeFightSchema),
-    }).pipe(Schema.NullOr),
-  }),
-});
-
-const ENCOUNTER_PROBE_SELECTION = `
+const RAW_EVENT_SELECTION = `
   reportData {
     report(code: $reportCode) {
-      fights {
-        id
-        encounterID
-        difficultyLevel
-        startTime
-        endTime
-        inProgress
-      }
-
-      encounterStarts: events(
+      events(
         startTime: $startTime
         endTime: $endTime
-        filterExpression: "type = \\"encounterstart\\""
-        limit: 10000
-        translate: false
-        useAbilityIDs: true
-        useActorIDs: true
-      ) {
-        data
-        nextPageTimestamp
-      }
-
-      encounterEnds: events(
-        startTime: $startTime
-        endTime: $endTime
-        filterExpression: "type = \\"encounterend\\""
-        limit: 10000
+        limit: ${EVENT_LIMIT}
         translate: false
         useAbilityIDs: true
         useActorIDs: true
@@ -93,24 +56,110 @@ const ENCOUNTER_PROBE_SELECTION = `
   }
 `;
 
-const ENCOUNTER_PROBE_VARIABLES = [
+const RAW_EVENT_VARIABLES = [
   "$reportCode: String!",
   "$startTime: Float!",
   "$endTime: Float!",
 ];
 
+const RawEventResponseDataSchema = withRateLimitData({
+  reportData: Schema.Struct({
+    report: Schema.Struct({
+      events: FellowshipLogsGatewayReportEventsSchema,
+    }).pipe(Schema.NullOr),
+  }),
+});
+
 type ProbeOptions = {
   readonly credentials: FellowshipLogsGatewayCredentials;
   readonly fightId: typeof FellowshipLogsFightIdSchema.Type;
-  readonly outputFilePath: string;
+  readonly outputDirectory: string;
   readonly reportCode: typeof FellowshipLogsReportCodeSchema.Type;
 };
+
+type ProbeState = {
+  readonly baselinePoints: number;
+  readonly eventCount: number;
+  readonly fieldsByType: Readonly<Record<string, ReadonlyArray<string>>>;
+  readonly ledger: ReadonlyArray<{
+    readonly cumulativePoints: number;
+    readonly eventCount: number;
+    readonly nextPageTimestamp: number | null;
+    readonly pageNumber: number;
+    readonly requestCost: number;
+  }>;
+  readonly previousPoints: number;
+  readonly typeCounts: Readonly<Record<string, number>>;
+};
+
+function stringifyJson(value: unknown) {
+  return `${JSON.stringify(value, null, 2)}\n`;
+}
+
+function getEventType(event: unknown) {
+  if (
+    typeof event === "object" &&
+    event !== null &&
+    Object.hasOwn(event, "type")
+  ) {
+    const eventRecord = event as Readonly<Record<string, unknown>>;
+
+    if (typeof eventRecord.type === "string") {
+      return eventRecord.type;
+    }
+  }
+
+  return "<missing>";
+}
+
+function getEventFields(event: unknown) {
+  if (typeof event !== "object" || event === null) {
+    return [];
+  }
+
+  return Object.keys(event).toSorted();
+}
+
+function failProbe(message: string) {
+  return new FellowshipLogsGatewayRequestError({
+    cause: new Error(message),
+    operation: "Query",
+  });
+}
+
+function addEventsToInventory(
+  state: ProbeState,
+  events: ReadonlyArray<unknown>,
+) {
+  return events.reduce<ProbeState>((currentState, event) => {
+    const type = getEventType(event);
+    const fields = Array.from(
+      new Set([
+        ...(currentState.fieldsByType[type] ?? []),
+        ...getEventFields(event),
+      ]),
+    ).toSorted();
+
+    return {
+      ...currentState,
+      eventCount: currentState.eventCount + 1,
+      fieldsByType: {
+        ...currentState.fieldsByType,
+        [type]: fields,
+      },
+      typeCounts: {
+        ...currentState.typeCounts,
+        [type]: (currentState.typeCounts[type] ?? 0) + 1,
+      },
+    };
+  }, state);
+}
 
 const probeFellowshipLogsEncounters = E.fn("probeFellowshipLogsEncounters")(
   function* ({
     credentials,
     fightId,
-    outputFilePath,
+    outputDirectory,
     reportCode,
   }: ProbeOptions) {
     const fileSystem = yield* FileSystem.FileSystem;
@@ -118,11 +167,16 @@ const probeFellowshipLogsEncounters = E.fn("probeFellowshipLogsEncounters")(
     const query = yield* makeFellowshipLogsGatewayHttpQuery(() => {
       return E.succeed(credentials);
     });
+    const resolvedOutputDirectory = path.resolve(outputDirectory);
+
+    yield* fileSystem.makeDirectory(resolvedOutputDirectory, {
+      recursive: true,
+    });
 
     const metadataResponse = yield* query(
       {
         query: makeQuery({
-          name: "GetEncounterProbeBounds",
+          name: "GetRawEventCensusBounds",
           selections: [DUNGEON_RUN_METADATA_SELECTION],
           variables: DUNGEON_RUN_METADATA_VARIABLES,
         }),
@@ -141,52 +195,138 @@ const probeFellowshipLogsEncounters = E.fn("probeFellowshipLogsEncounters")(
       reportCode,
     });
 
-    const probeResponse = yield* query(
-      {
-        query: makeQuery({
-          name: "ProbeEncounterDataPaths",
-          selections: [ENCOUNTER_PROBE_SELECTION, RATE_LIMIT_DATA_SELECTION],
-          variables: ENCOUNTER_PROBE_VARIABLES,
-        }),
-        variables: {
-          endTime: fight.endTime,
-          reportCode,
-          startTime: fight.startTime,
-        },
-      },
-      EncounterProbeResponseDataSchema,
+    yield* fileSystem.writeFileString(
+      path.join(resolvedOutputDirectory, "metadata.json"),
+      stringifyJson(metadataResponse),
     );
-    const probeData = yield* getGraphQLResponseData(probeResponse);
-    const probeReport = yield* getReportOrFail({
-      report: probeData.reportData.report,
-      reportCode,
-    });
-    const overlappingFights = probeReport.fights.filter((candidate) => {
-      return (
-        candidate.startTime <= fight.endTime &&
-        candidate.endTime >= fight.startTime
+
+    const baselineResponse = yield* query(
+      { query: RATE_LIMIT_DATA_QUERY },
+      FellowshipLogsRateLimitResponseDataSchema,
+    );
+    const baselineData = yield* getGraphQLResponseData(baselineResponse);
+    const baselinePoints = baselineData.rateLimitData.pointsSpentThisHour;
+    const initialState: ProbeState = {
+      baselinePoints,
+      eventCount: 0,
+      fieldsByType: {},
+      ledger: [],
+      previousPoints: baselinePoints,
+      typeCounts: {},
+    };
+
+    yield* fileSystem.writeFileString(
+      path.join(resolvedOutputDirectory, "baseline.json"),
+      stringifyJson(baselineResponse),
+    );
+
+    const runPage = E.fnUntraced(function* (
+      startTime: number,
+      pageNumber: number,
+      state: ProbeState,
+    ): E.fn.Return<ProbeState, unknown, never> {
+      const response = yield* query(
+        {
+          query: makeQuery({
+            name: "CensusRawEventTypes",
+            selections: [RAW_EVENT_SELECTION, RATE_LIMIT_DATA_SELECTION],
+            variables: RAW_EVENT_VARIABLES,
+          }),
+          variables: {
+            endTime: fight.endTime,
+            reportCode,
+            startTime,
+          },
+        },
+        RawEventResponseDataSchema,
       );
-    });
-    const resolvedOutputPath = path.resolve(outputFilePath);
-    const output = yield* encodeJson({
-      fightBounds: fight,
-      overlappingFights,
-      response: probeResponse,
+      const responseData = yield* getGraphQLResponseData(response);
+      const report = yield* getReportOrFail({
+        report: responseData.reportData.report,
+        reportCode,
+      });
+      const rateLimitData = responseData.rateLimitData;
+
+      if (rateLimitData === undefined) {
+        return yield* failProbe(
+          "The raw event response did not include rate-limit data.",
+        );
+      }
+
+      const cumulativePoints = rateLimitData.pointsSpentThisHour;
+      const requestCost = cumulativePoints - state.previousPoints;
+      const additionalPoints = cumulativePoints - state.baselinePoints;
+
+      if (requestCost < 0) {
+        return yield* failProbe(
+          "The Fellowship Logs point counter reset during the raw event census.",
+        );
+      }
+
+      if (additionalPoints > MAX_ADDITIONAL_POINTS) {
+        return yield* failProbe(
+          `The raw event census exceeded its ${MAX_ADDITIONAL_POINTS}-point ceiling.`,
+        );
+      }
+
+      yield* fileSystem.writeFileString(
+        path.join(resolvedOutputDirectory, `page-${pageNumber}.json`),
+        stringifyJson(response),
+      );
+
+      const inventoriedState = addEventsToInventory(state, report.events.data);
+      const nextState: ProbeState = {
+        ...inventoriedState,
+        ledger: [
+          ...inventoriedState.ledger,
+          {
+            cumulativePoints,
+            eventCount: report.events.data.length,
+            nextPageTimestamp: report.events.nextPageTimestamp,
+            pageNumber,
+            requestCost,
+          },
+        ],
+        previousPoints: cumulativePoints,
+      };
+      const nextPageTimestamp = report.events.nextPageTimestamp;
+
+      if (nextPageTimestamp === null) {
+        return nextState;
+      }
+
+      if (nextPageTimestamp <= startTime) {
+        return yield* failProbe(
+          `Raw events returned a non-advancing cursor: ${nextPageTimestamp}.`,
+        );
+      }
+
+      return yield* runPage(nextPageTimestamp, pageNumber + 1, nextState);
     });
 
-    yield* fileSystem.makeDirectory(path.dirname(resolvedOutputPath), {
-      recursive: true,
-    });
-    yield* fileSystem.writeFileString(resolvedOutputPath, `${output}\n`);
+    const finalState = yield* runPage(fight.startTime, 1, initialState);
+    const summary = {
+      additionalPoints: finalState.previousPoints - finalState.baselinePoints,
+      eventCount: finalState.eventCount,
+      fieldsByType: finalState.fieldsByType,
+      fight,
+      ledger: finalState.ledger,
+      maxAdditionalPoints: MAX_ADDITIONAL_POINTS,
+      reportCode,
+      typeCounts: finalState.typeCounts,
+    };
 
-    yield* E.logInfo("Captured Fellowship Logs encounter path probe.", {
-      encounterEndCount: probeReport.encounterEnds.data.length,
-      encounterEndCursor: probeReport.encounterEnds.nextPageTimestamp,
-      encounterStartCount: probeReport.encounterStarts.data.length,
-      encounterStartCursor: probeReport.encounterStarts.nextPageTimestamp,
-      outputFilePath: resolvedOutputPath,
-      overlappingFightCount: overlappingFights.length,
-      reportFightCount: probeReport.fights.length,
+    yield* fileSystem.writeFileString(
+      path.join(resolvedOutputDirectory, "summary.json"),
+      stringifyJson(summary),
+    );
+
+    yield* E.logInfo("Captured Fellowship Logs raw event census.", {
+      additionalPoints: summary.additionalPoints,
+      eventCount: summary.eventCount,
+      outputDirectory: resolvedOutputDirectory,
+      pageCount: summary.ledger.length,
+      types: Object.keys(summary.typeCounts).toSorted(),
     });
   },
 );
@@ -195,7 +335,7 @@ const runProbeFellowshipLogsEncountersCommand = E.fn(
   "runProbeFellowshipLogsEncountersCommand",
 )(function* (input: {
   readonly fightId: typeof FellowshipLogsFightIdSchema.Type;
-  readonly outputFilePath: string;
+  readonly outputDirectory: string;
   readonly reportCode: typeof FellowshipLogsReportCodeSchema.Type;
 }) {
   const clientIdOption = yield* appConfig.fellowshipLogsClientId;
@@ -226,11 +366,13 @@ export const probeFellowshipLogsEncountersCommand = Command.make(
       Flag.withSchema(FellowshipLogsFightIdSchema),
       Flag.withDescription("Fight ID within the report."),
     ),
-    outputFilePath: Flag.String("output").pipe(
+    outputDirectory: Flag.String("output").pipe(
       Flag.withAlias("o"),
       Flag.withSchema(NonEmptyStringSchema),
-      Flag.withDefault("data/fellowship-logs-encounter-probe/result.json"),
-      Flag.withDescription("Raw encounter probe evidence file."),
+      Flag.withDefault("data/fellowship-logs-encounter-probe/raw-event-census"),
+      Flag.withDescription(
+        "Directory for raw event pages and the census summary.",
+      ),
     ),
     reportCode: Flag.String("report-code").pipe(
       Flag.withSchema(FellowshipLogsReportCodeSchema),
@@ -240,7 +382,7 @@ export const probeFellowshipLogsEncountersCommand = Command.make(
   runProbeFellowshipLogsEncountersCommand,
 ).pipe(
   Command.withDescription(
-    "Probe Fellowship Logs event and fight paths for encounter boundaries.",
+    "Capture every normalized event type in a Fellowship Logs dungeon run.",
   ),
   Command.provide(NodeHttpClientLayer),
 );
