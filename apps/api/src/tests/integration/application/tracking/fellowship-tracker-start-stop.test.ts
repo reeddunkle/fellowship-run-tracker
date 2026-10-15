@@ -10,6 +10,7 @@ import {
   DUNGEON_START_CONFIGURATION,
   DUNGEON_START_EVENTS,
 } from "@frt/api/tests/common/fixtures/dungeon-start-fixtures.ts";
+import { makeTestLiveLog } from "@frt/api/tests/common/harnesses/fellowship-test-harness.ts";
 import {
   MOCK_DUNGEON_RUN_ID,
   makeFellowshipTrackerTestHarness,
@@ -73,13 +74,15 @@ describe("FellowshipTracker start and stop", () => {
 
       const harness = yield* makeFellowshipTrackerTestHarness({
         configuration: DUNGEON_START_CONFIGURATION,
-        liveEvents: DUNGEON_START_EVENTS.pipe(
-          Stream.concat(
-            Stream.fromEffect(Deferred.succeed(runStarted, undefined)).pipe(
-              Stream.drain,
+        liveLog: makeTestLiveLog(
+          DUNGEON_START_EVENTS.pipe(
+            Stream.concat(
+              Stream.fromEffect(Deferred.succeed(runStarted, undefined)).pipe(
+                Stream.drain,
+              ),
             ),
+            Stream.concat(Stream.never),
           ),
-          Stream.concat(Stream.never),
         ),
       });
 

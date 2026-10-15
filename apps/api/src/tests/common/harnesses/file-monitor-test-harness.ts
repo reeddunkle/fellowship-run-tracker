@@ -16,10 +16,9 @@ import {
   type FileMonitorSourceShape,
 } from "@frt/api/services/filesystem/file-monitor-source-service.ts";
 import {
+  createFileData,
   type FileData,
-  getFileId,
 } from "@frt/api/services/filesystem/filesystem.ts";
-import { getDateEpochMilliseconds } from "@frt/api/util/get-date-epoch-milliseconds.ts";
 
 export type FileMonitorSourceValue = Option.Option<FileData>;
 
@@ -87,20 +86,14 @@ export const makeFileMonitorTestHarness = E.gen(function* () {
   const getFileData = (fileName: string) => {
     const filePath = getFilePath(fileName);
 
-    return E.gen(function* () {
-      const info = yield* fileSystem.stat(filePath);
-
-      return {
-        createdAtEpochMilliseconds: getDateEpochMilliseconds(info.birthtime),
-        fileId: getFileId({
+    return fileSystem.stat(filePath).pipe(
+      E.map((info) => {
+        return createFileData({
           filePath,
           info,
-        }),
-        filePath,
-        modifiedAtEpochMilliseconds: getDateEpochMilliseconds(info.mtime),
-        size: info.size,
-      } satisfies FileData;
-    });
+        });
+      }),
+    );
   };
 
   const emitSourceValue = E.fnUntraced(function* (
@@ -166,9 +159,6 @@ export const makeFileMonitorTestHarness = E.gen(function* () {
           return signal.value;
         }),
       );
-    },
-    streamStatus: () => {
-      return Stream.empty;
     },
   } satisfies FileMonitorSourceShape;
 

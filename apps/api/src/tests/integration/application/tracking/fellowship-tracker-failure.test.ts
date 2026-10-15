@@ -10,6 +10,7 @@ import {
   DUNGEON_START_CONFIGURATION,
   DUNGEON_START_EVENTS,
 } from "@frt/api/tests/common/fixtures/dungeon-start-fixtures.ts";
+import { makeTestLiveLog } from "@frt/api/tests/common/harnesses/fellowship-test-harness.ts";
 import { makeFellowshipTrackerTestHarness } from "@frt/api/tests/common/harnesses/fellowship-tracker-test-harness.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 
@@ -24,7 +25,7 @@ describe("FellowshipTracker failures", () => {
 
     const failedStatus = await E.gen(function* () {
       const harness = yield* makeFellowshipTrackerTestHarness({
-        liveEvents: Stream.fail(fileSystemError),
+        liveLog: Stream.fail(fileSystemError),
       });
 
       return yield* E.gen(function* () {
@@ -70,7 +71,7 @@ describe("FellowshipTracker failures", () => {
   test("transitions to an unexpected failure when the live event stream defects", async () => {
     const failedStatus = await E.gen(function* () {
       const harness = yield* makeFellowshipTrackerTestHarness({
-        liveEvents: Stream.fromEffect(
+        liveLog: Stream.fromEffect(
           E.die(new Error("Test Fellowship tracker defect.")),
         ),
       });
@@ -125,7 +126,7 @@ describe("FellowshipTracker failures", () => {
 
     const result = await E.gen(function* () {
       const harness = yield* makeFellowshipTrackerTestHarness({
-        liveEvents: Stream.fail(fileSystemError),
+        liveLog: Stream.fail(fileSystemError),
       });
 
       return yield* E.gen(function* () {
@@ -180,8 +181,10 @@ describe("FellowshipTracker failures", () => {
     const lastMessage = await E.gen(function* () {
       const harness = yield* makeFellowshipTrackerTestHarness({
         configuration: DUNGEON_START_CONFIGURATION,
-        liveEvents: DUNGEON_START_EVENTS.pipe(
-          Stream.concat(Stream.fail(fileSystemError)),
+        liveLog: makeTestLiveLog(
+          DUNGEON_START_EVENTS.pipe(
+            Stream.concat(Stream.fail(fileSystemError)),
+          ),
         ),
       });
 

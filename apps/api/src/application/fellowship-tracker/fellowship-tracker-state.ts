@@ -53,6 +53,17 @@ export const makeFellowshipTrackerState = E.gen(function* () {
     _tag: "Idle",
   });
 
+  const setStarting = ({
+    dungeonId,
+    source,
+  }: FellowshipTrackerStatusContext) => {
+    return SubscriptionRef.set(statusRef, {
+      _tag: "Starting",
+      dungeonId,
+      source,
+    });
+  };
+
   const setTracking = ({
     dungeonId,
     source,
@@ -85,6 +96,7 @@ export const makeFellowshipTrackerState = E.gen(function* () {
     setActiveTracker,
     setFailed,
     setIdle,
+    setStarting,
     setTracking,
     setWaitingForLogFile,
     status,

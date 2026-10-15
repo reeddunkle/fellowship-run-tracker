@@ -9,6 +9,7 @@ import {
   DUNGEON_START_CONFIGURATION,
   DUNGEON_START_LINE,
 } from "@frt/api/tests/common/fixtures/dungeon-start-fixtures.ts";
+import { makeTestLiveLog } from "@frt/api/tests/common/harnesses/fellowship-test-harness.ts";
 import { makeFellowshipTrackerTestHarness } from "@frt/api/tests/common/harnesses/fellowship-tracker-test-harness.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 
@@ -22,15 +23,18 @@ describe("FellowshipTracker dungeon run publishing", () => {
 
       const harness = yield* makeFellowshipTrackerTestHarness({
         configuration: DUNGEON_START_CONFIGURATION,
-        liveEvents: parseFellowshipEventStream(
-          Stream.make(DUNGEON_START_LINE, UNREFERENCED_ABILITY_ACTIVATED_LINE),
+        liveLog: Stream.make(
+          DUNGEON_START_LINE,
+          UNREFERENCED_ABILITY_ACTIVATED_LINE,
         ).pipe(
+          parseFellowshipEventStream,
           Stream.concat(
             Stream.fromEffect(
               Deferred.succeed(eventsProcessed, undefined),
             ).pipe(Stream.drain),
           ),
           Stream.concat(Stream.never),
+          makeTestLiveLog,
         ),
       });
 

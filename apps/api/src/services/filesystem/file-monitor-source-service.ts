@@ -14,20 +14,8 @@ import * as Stream from "effect/Stream";
 
 import { FileNotFoundError } from "@frt/api/errors/file-not-found-error.ts";
 import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
-import { getDateEpochMilliseconds } from "@frt/api/util/get-date-epoch-milliseconds.ts";
 
-import { compareFiles, type FileData, getFileId } from "./filesystem.ts";
-
-type FileMonitorSourceStatus =
-  | {
-      readonly _tag: "WAITING_FOR_FILE";
-      readonly directoryPath: string;
-    }
-  | {
-      readonly _tag: "MONITORING";
-      readonly directoryPath: string;
-      readonly filePath: string;
-    };
+import { compareFiles, createFileData, type FileData } from "./filesystem.ts";
 
 type DirectoryWatcher = {
   readonly events: PubSub.PubSub<FileSystem.WatchEvent>;
@@ -41,8 +29,6 @@ type FindLatestFileOptions = {
 
 type StreamLatestFileOptions = FindLatestFileOptions;
 
-type StreamStatusOptions = FindLatestFileOptions;
-
 export type FileMonitorSourceShape = {
   readonly findLatestFile: (
     options: FindLatestFileOptions,
@@ -51,10 +37,6 @@ export type FileMonitorSourceShape = {
   readonly streamLatestFile: (
     options: StreamLatestFileOptions,
   ) => Stream.Stream<Option.Option<FileData>, PlatformError.PlatformError>;
-
-  readonly streamStatus: (
-    options: StreamStatusOptions,
-  ) => Stream.Stream<FileMonitorSourceStatus, PlatformError.PlatformError>;
 };
 
 const makeFileMonitorSource = E.gen(function* () {
@@ -133,18 +115,10 @@ const makeFileMonitorSource = E.gen(function* () {
             return undefined;
           }
 
-          return {
-            createdAtEpochMilliseconds: getDateEpochMilliseconds(
-              info.birthtime,
-            ),
-            fileId: getFileId({
-              filePath,
-              info,
-            }),
+          return createFileData({
             filePath,
-            modifiedAtEpochMilliseconds: getDateEpochMilliseconds(info.mtime),
-            size: info.size,
-          } satisfies FileData;
+            info,
+          });
         });
       });
 
@@ -214,40 +188,9 @@ const makeFileMonitorSource = E.gen(function* () {
     Stream.scoped,
   );
 
-  const streamStatus: FileMonitorSourceShape["streamStatus"] = (options) => {
-    return streamLatestFile(options).pipe(
-      Stream.map((latestFile) => {
-        return Option.match(latestFile, {
-          onNone: () => {
-            return {
-              _tag: "WAITING_FOR_FILE",
-              directoryPath: options.directoryPath,
-            } satisfies FileMonitorSourceStatus;
-          },
-          onSome: (file) => {
-            return {
-              _tag: "MONITORING",
-              directoryPath: options.directoryPath,
-              filePath: file.filePath,
-            } satisfies FileMonitorSourceStatus;
-          },
-        });
-      }),
-      Stream.changesWith((left, right) => {
-        return (
-          left._tag === right._tag &&
-          left.directoryPath === right.directoryPath &&
-          (left._tag !== "MONITORING" ||
-            (right._tag === "MONITORING" && left.filePath === right.filePath))
-        );
-      }),
-    );
-  };
-
   return {
     findLatestFile,
     streamLatestFile,
-    streamStatus,
   } satisfies FileMonitorSourceShape;
 });
 

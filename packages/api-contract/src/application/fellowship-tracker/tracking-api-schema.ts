@@ -49,6 +49,12 @@ const IdleTrackingApiStatusSchema = Schema.Struct({
   status: Schema.Literal("Idle"),
 });
 
+const StartingTrackingApiStatusSchema = Schema.Struct({
+  dungeonId: DungeonIdSchema,
+  source: TrackingApiSourceSchema,
+  status: Schema.Literal("Starting"),
+});
+
 const WaitingForLogFileTrackingApiStatusSchema = Schema.Struct({
   dungeonId: DungeonIdSchema,
   source: TrackingApiSourceSchema,
@@ -70,6 +76,7 @@ const FailedTrackingApiStatusSchema = Schema.Struct({
 
 export const TrackingApiStatusSchema = Schema.Union([
   IdleTrackingApiStatusSchema,
+  StartingTrackingApiStatusSchema,
   WaitingForLogFileTrackingApiStatusSchema,
   ActiveTrackingApiStatusSchema,
   FailedTrackingApiStatusSchema,

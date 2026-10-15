@@ -10,10 +10,8 @@ import {
   type FellowshipTrackerConfigurationNotFoundError,
 } from "@frt/api/errors/fellowship-tracker-error.ts";
 import { DungeonRunRepository } from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
-import {
-  Fellowship,
-  type FellowshipLiveStatus,
-} from "@frt/api/services/fellowship/fellowship-service.ts";
+import { type FellowshipLiveLogItem } from "@frt/api/services/fellowship/fellowship-live-log.ts";
+import { Fellowship } from "@frt/api/services/fellowship/fellowship-service.ts";
 import { LiveSplit } from "@frt/api/services/live-split/live-split-service.ts";
 import { ConfigurationDAO } from "@frt/db/daos/configuration/configuration-dao.ts";
 import { DungeonRunObservationDAO } from "@frt/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
@@ -21,7 +19,6 @@ import { type ConfigurationDAOError } from "@frt/db/errors/configuration-dao-err
 import { type ConfigurationId } from "@frt/shared/configuration/configuration-id-schema.ts";
 import { type FellowshipMilestoneConfiguration } from "@frt/shared/fellowship/configurations/configuration-types.ts";
 import { type DungeonId } from "@frt/shared/fellowship/validation/fellowship-common.ts";
-import { type FellowshipEvent } from "@frt/shared/fellowship/validation/fellowship-event-schema.ts";
 
 import { makeFellowshipTracker } from "./make-fellowship-tracker-service.ts";
 
@@ -42,6 +39,11 @@ export type FellowshipTrackerFailure =
 export type FellowshipTrackerStatus =
   | {
       readonly _tag: "Idle";
+    }
+  | {
+      readonly _tag: "Starting";
+      readonly dungeonId: DungeonId;
+      readonly source: FellowshipTrackerConfigurationSource;
     }
   | {
       readonly _tag: "WaitingForLogFile";
@@ -86,8 +88,7 @@ export type ActiveTracker = {
 
 export type StartTrackingOptions = {
   readonly configuration: FellowshipMilestoneConfiguration;
-  readonly events: Stream.Stream<FellowshipEvent, unknown>;
-  readonly liveStatus?: Stream.Stream<FellowshipLiveStatus, unknown>;
+  readonly liveLog: Stream.Stream<FellowshipLiveLogItem, unknown>;
   readonly source: FellowshipTrackerConfigurationSource;
 };
 

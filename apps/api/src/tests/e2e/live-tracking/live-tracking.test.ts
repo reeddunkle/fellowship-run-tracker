@@ -102,7 +102,7 @@ describe("live tracking", () => {
         }).pipe(E.provide(harness.layer));
       }).pipe(E.scoped, E.provide(NodePlatformLayer), runTest);
 
-      expect(result.trackingStatus.status).toBe("WaitingForLogFile");
+      expect(result.trackingStatus.status).toBe("Starting");
       expect(result.isReplayFinishedWhenActive).toBe(false);
       expect(result.activeMessage.state.dungeonRun?.endedAtMilliseconds).toBe(
         null,

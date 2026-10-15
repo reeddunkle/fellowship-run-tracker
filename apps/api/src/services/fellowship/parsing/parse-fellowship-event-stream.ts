@@ -18,48 +18,52 @@ export type InspectedFellowshipLogLine = {
   readonly line: string;
 };
 
+export function makeFellowshipLogLineInspector(): (
+  line: string,
+) => E.Effect<InspectedFellowshipLogLine> {
+  const reportedEventTypes = new Set<string>();
+
+  const logInvalidLine = (error: FellowshipEventInvalidError) => {
+    const eventType = getEventType(error.line.split("|")) ?? "unknown";
+
+    const firstForEventType = !reportedEventTypes.has(eventType);
+
+    reportedEventTypes.add(eventType);
+
+    return E.all(
+      [
+        firstForEventType
+          ? E.logWarning(
+              "Fellowship log lines of this type can't be parsed; later failures are logged at debug level.",
+              { eventType, issue: getParseIssue(error) },
+            )
+          : E.void,
+        E.logDebug("Failed to parse Fellowship log line.", {
+          eventType,
+          line: error.line,
+        }),
+      ],
+      { discard: true },
+    );
+  };
+
+  return (line) => {
+    return parseFellowshipLogLine(line).pipe(
+      E.catchTag("FellowshipEventInvalidError", (error) => {
+        return logInvalidLine(error).pipe(E.as(undefined));
+      }),
+      E.map((event) => {
+        return { event, line };
+      }),
+    );
+  };
+}
+
 export function inspectFellowshipLogLines<Error, R>(
   lines: Stream.Stream<string, Error, R>,
 ): Stream.Stream<InspectedFellowshipLogLine, Error, R> {
   return Stream.suspend(() => {
-    const reportedEventTypes = new Set<string>();
-
-    const logInvalidLine = (error: FellowshipEventInvalidError) => {
-      const eventType = getEventType(error.line.split("|")) ?? "unknown";
-
-      const firstForEventType = !reportedEventTypes.has(eventType);
-
-      reportedEventTypes.add(eventType);
-
-      return E.all(
-        [
-          firstForEventType
-            ? E.logWarning(
-                "Fellowship log lines of this type can't be parsed; later failures are logged at debug level.",
-                { eventType, issue: getParseIssue(error) },
-              )
-            : E.void,
-          E.logDebug("Failed to parse Fellowship log line.", {
-            eventType,
-            line: error.line,
-          }),
-        ],
-        { discard: true },
-      );
-    };
-
-    return lines.pipe(
-      Stream.mapEffect((line) => {
-        return parseFellowshipLogLine(line).pipe(
-          E.catchTag("FellowshipEventInvalidError", (error) => {
-            return logInvalidLine(error).pipe(E.as(undefined));
-          }),
-          E.map((event) => {
-            return { event, line };
-          }),
-        );
-      }),
-    );
+    return lines.pipe(Stream.mapEffect(makeFellowshipLogLineInspector()));
   });
 }
 

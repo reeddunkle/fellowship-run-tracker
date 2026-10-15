@@ -1,13 +1,41 @@
+import * as ByteSize from "effect/ByteSize";
 import * as Deferred from "effect/Deferred";
 import * as E from "effect/Effect";
 import * as Fiber from "effect/Fiber";
 import * as Option from "effect/Option";
+import * as Queue from "effect/Queue";
 import * as Stream from "effect/Stream";
 import { describe, expect, test } from "vitest";
 
-import { FellowshipTracker } from "@frt/api/application/fellowship-tracker/fellowship-tracker-service.ts";
+import {
+  FellowshipTracker,
+  type FellowshipTrackerShape,
+  type FellowshipTrackerStatus,
+} from "@frt/api/application/fellowship-tracker/fellowship-tracker-service.ts";
+import { type FellowshipLiveLogItem } from "@frt/api/services/fellowship/fellowship-live-log.ts";
+import { TEST_LIVE_LOG_FILE_PATH } from "@frt/api/tests/common/harnesses/fellowship-test-harness.ts";
 import { makeFellowshipTrackerTestHarness } from "@frt/api/tests/common/harnesses/fellowship-tracker-test-harness.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
+
+const awaitStatus = (
+  tracker: FellowshipTrackerShape,
+  tag: FellowshipTrackerStatus["_tag"],
+) => {
+  return tracker.statusChanges.pipe(
+    Stream.filter((status) => {
+      return status._tag === tag;
+    }),
+    Stream.runHead,
+    E.flatMap((status) => {
+      return Option.match(status, {
+        onNone: () => {
+          return E.die(`Expected FellowshipTracker to report ${tag}.`);
+        },
+        onSome: E.succeed,
+      });
+    }),
+  );
+};
 
 describe("FellowshipTracker status", () => {
   test("starts idle", async () => {
@@ -26,26 +54,12 @@ describe("FellowshipTracker status", () => {
     });
   });
 
-  test("changes from waiting for log file to tracking when a log file becomes available", async () => {
+  test("follows the live log from starting to waiting for a log file to tracking", async () => {
     const result = await E.gen(function* () {
-      const logFileAvailable = yield* Deferred.make<void>();
-
-      const liveStatus = Stream.concat(
-        Stream.succeed({
-          _tag: "WaitingForLogFile",
-        } as const),
-        Stream.fromEffect(
-          Deferred.await(logFileAvailable).pipe(
-            E.as({
-              _tag: "MonitoringLogFile",
-              filePath: "/logs/fellowship.txt",
-            } as const),
-          ),
-        ),
-      );
+      const liveLogItems = yield* Queue.make<FellowshipLiveLogItem>();
 
       const harness = yield* makeFellowshipTrackerTestHarness({
-        liveStatus,
+        liveLog: Stream.fromQueue(liveLogItems),
       });
 
       return yield* E.gen(function* () {
@@ -55,54 +69,68 @@ describe("FellowshipTracker status", () => {
           configurationId: harness.configurationId,
         });
 
-        yield* Deferred.await(harness.trackingStarted);
+        const startingStatus = yield* tracker.status;
 
-        const waitingStatus = yield* tracker.status;
+        yield* Queue.offer(liveLogItems, {
+          _tag: "WaitingForLogFile",
+        });
 
-        const trackingStatusEffect = tracker.statusChanges.pipe(
-          Stream.filter((status) => {
-            return status._tag === "Tracking";
-          }),
-          Stream.runHead,
-          E.forkScoped,
+        const waitingStatus = yield* awaitStatus(tracker, "WaitingForLogFile");
+
+        yield* Queue.offer(liveLogItems, {
+          _tag: "AttachedLogFile",
+          filePath: TEST_LIVE_LOG_FILE_PATH,
+          startOffset: ByteSize.bytes(0),
+        });
+
+        const trackingStatus = yield* awaitStatus(tracker, "Tracking");
+
+        yield* Queue.offer(liveLogItems, {
+          _tag: "WaitingForLogFile",
+        });
+
+        const waitingAgainStatus = yield* awaitStatus(
+          tracker,
+          "WaitingForLogFile",
         );
-
-        yield* Deferred.succeed(logFileAvailable, undefined);
-
-        const trackingStatusFiber = yield* trackingStatusEffect;
-        const trackingStatusOption = yield* Fiber.join(trackingStatusFiber);
-
-        if (Option.isNone(trackingStatusOption)) {
-          return yield* E.die(
-            "Expected FellowshipTracker to transition to Tracking.",
-          );
-        }
 
         return {
           configurationId: harness.configurationId,
           dungeonId: harness.configuration.dungeonId,
-          trackingStatus: trackingStatusOption.value,
+          startingStatus,
+          trackingStatus,
+          waitingAgainStatus,
           waitingStatus,
         };
       }).pipe(E.provide(harness.layer));
     }).pipe(E.scoped, runTest);
 
-    expect(result.waitingStatus).toEqual({
-      _tag: "WaitingForLogFile",
+    const statusContext = {
       dungeonId: result.dungeonId,
       source: {
         _tag: "Persisted",
         configurationId: result.configurationId,
       },
+    } as const;
+
+    expect(result.startingStatus).toEqual({
+      _tag: "Starting",
+      ...statusContext,
+    });
+
+    expect(result.waitingStatus).toEqual({
+      _tag: "WaitingForLogFile",
+      ...statusContext,
     });
 
     expect(result.trackingStatus).toEqual({
       _tag: "Tracking",
-      dungeonId: result.dungeonId,
-      source: {
-        _tag: "Persisted",
-        configurationId: result.configurationId,
-      },
+      ...statusContext,
+    });
+
+    expect(result.waitingAgainStatus).toEqual({
+      _tag: "WaitingForLogFile",
+      ...statusContext,
     });
   });
 
@@ -133,7 +161,7 @@ describe("FellowshipTracker status", () => {
   test("returns to idle when the tracking effect completes", async () => {
     const status = await E.gen(function* () {
       const harness = yield* makeFellowshipTrackerTestHarness({
-        liveEvents: Stream.empty,
+        liveLog: Stream.empty,
       });
 
       return yield* E.gen(function* () {

@@ -41,7 +41,6 @@ const WEBSOCKET_OPEN_TIMEOUT = "1 second";
 
 const LIVE_REPLAY_OPTIONS = {
   batchIntervalMilliseconds: 10,
-  initialDelayMilliseconds: 250,
   maxDelayMilliseconds: 50,
   speed: 200,
 } as const;
@@ -197,6 +196,7 @@ export const replayScenarioLog = E.fnUntraced(function* ({
 
   yield* replayFellowshipLogFile({
     ...LIVE_REPLAY_OPTIONS,
+    initialDelayMilliseconds: 0,
     inputFilePath: scenario.logFilePath,
     outputFilePath: path.join(logDirectory, LIVE_LOG_FILE_NAME),
   });

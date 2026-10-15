@@ -1,34 +1,35 @@
-import * as E from "effect/Effect";
 import * as Stream from "effect/Stream";
 
+import { makeFellowshipLiveLogFromEvents } from "@frt/api/services/fellowship/fellowship-live-log.ts";
 import { type FellowshipShape } from "@frt/api/services/fellowship/fellowship-service.ts";
+import { type FellowshipEvent } from "@frt/shared/fellowship/validation/fellowship-event-schema.ts";
 
-type FellowshipLiveEvents = ReturnType<FellowshipShape["liveEvents"]>;
-type FellowshipLiveStatus = ReturnType<FellowshipShape["liveStatus"]>;
+type FellowshipLiveLog = ReturnType<FellowshipShape["liveLog"]>;
 type FellowshipReplayEvents = ReturnType<FellowshipShape["streamEvents"]>;
 
+export const TEST_LIVE_LOG_FILE_PATH = "/logs/fellowship.txt";
+
+export function makeTestLiveLog<Error>(
+  events: Stream.Stream<FellowshipEvent, Error>,
+) {
+  return makeFellowshipLiveLogFromEvents({
+    events,
+    filePath: TEST_LIVE_LOG_FILE_PATH,
+  });
+}
+
 export type MakeFellowshipTestHarnessOptions = {
-  readonly liveEvents?: FellowshipLiveEvents;
-  readonly liveStatus?: FellowshipLiveStatus;
+  readonly liveLog?: FellowshipLiveLog;
   readonly replayEvents?: FellowshipReplayEvents;
 };
 
 export function makeFellowshipTestHarness({
-  liveEvents = Stream.never,
-  liveStatus = Stream.never,
+  liveLog = Stream.never,
   replayEvents = Stream.empty,
 }: MakeFellowshipTestHarnessOptions = {}) {
   const fellowship = {
-    liveEvents: () => {
-      return liveEvents;
-    },
-
-    liveStatus: () => {
-      return liveStatus;
-    },
-
-    readEvents: () => {
-      return E.succeed([]);
+    liveLog: () => {
+      return liveLog;
     },
 
     streamEvents: () => {

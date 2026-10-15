@@ -10,56 +10,63 @@ import * as Option from "effect/Option";
 import type * as PlatformError from "effect/PlatformError";
 import * as Stream from "effect/Stream";
 
-import { type FileNotFoundError } from "@frt/api/errors/file-not-found-error.ts";
 import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
 
 import { FileMonitorSource } from "./file-monitor-source-service.ts";
 import {
   createFileReadState,
-  createFileReadStateFromBeginning,
   type FileData,
+  type FileReadState,
   isSameFile,
-  type ReadAppendedLinesOptions,
   type ReadAppendedLinesResult,
   splitCompleteLines,
 } from "./filesystem.ts";
-
-export type FileMonitorError = FileNotFoundError | PlatformError.PlatformError;
-
-type FindLatestFileOptions = {
-  readonly directoryPath: string;
-  readonly matches: (fileName: string) => boolean;
-};
-
-type ReadLinesOptions = {
-  readonly filePath: string;
-};
 
 type StreamLinesOptions = {
   readonly filePath: string;
 };
 
-type StreamLatestFileLinesOptions = {
+type StreamLatestFileOptions = {
   readonly directoryPath: string;
   readonly getContentStartedAt?: (leadingText: string) => Option.Option<number>;
   readonly matches: (fileName: string) => boolean;
   readonly startFrom: "end" | "start";
 };
 
+export type LatestFileItem =
+  | {
+      readonly _tag: "WaitingForFile";
+    }
+  | {
+      readonly _tag: "Attached";
+      readonly file: FileData;
+      readonly startOffset: ByteSize.ByteSize;
+    }
+  | {
+      readonly _tag: "Line";
+      readonly line: string;
+    };
+
+type LatestFileState =
+  | {
+      readonly _tag: "Starting";
+    }
+  | {
+      readonly _tag: "WaitingForFile";
+    }
+  | {
+      readonly _tag: "Reading";
+      readonly readState: FileReadState;
+    };
+
+type LatestFileStep = readonly [LatestFileState, ReadonlyArray<LatestFileItem>];
+
 const LEADING_TEXT_BYTES = ByteSize.bytes(1_024);
 
 export type FileMonitorShape = {
-  readonly findLatestFile: (
-    options: FindLatestFileOptions,
-  ) => E.Effect<FileData, FileMonitorError>;
-
-  readonly readLines: (
-    options: ReadLinesOptions,
-  ) => E.Effect<ReadonlyArray<string>, PlatformError.PlatformError>;
-
-  readonly streamLatestFileLines: (
-    options: StreamLatestFileLinesOptions,
-  ) => Stream.Stream<string, PlatformError.PlatformError>;
+  readonly streamLatestFile: (
+    options: StreamLatestFileOptions,
+  ) => Stream.Stream<LatestFileItem, PlatformError.PlatformError>;
 
   readonly streamLines: (
     options: StreamLinesOptions,
@@ -94,12 +101,6 @@ const makeFileMonitor = E.gen(function* () {
   const fileSystem = yield* FileSystem.FileSystem;
   const fileMonitorSource = yield* FileMonitorSource;
 
-  const findLatestFile: FileMonitorShape["findLatestFile"] = E.fn(
-    "FileMonitor.findLatestFile",
-  )(function* (options) {
-    return yield* fileMonitorSource.findLatestFile(options);
-  });
-
   const readFileRange = ({
     bytesToRead,
     filePath,
@@ -127,39 +128,22 @@ const makeFileMonitor = E.gen(function* () {
   };
 
   const readAppendedLines: (
-    options: ReadAppendedLinesOptions,
+    state: FileReadState,
   ) => E.Effect<ReadAppendedLinesResult, PlatformError.PlatformError> = E.fn(
     "FileMonitor.readAppendedLines",
-  )(function* ({ file, state }) {
-    if (!isSameFile(file, state.file)) {
-      return yield* readAppendedLines({
-        file,
-        state: createFileReadStateFromBeginning(file),
-      });
-    }
-
-    if (file.size < state.byteOffset) {
-      return yield* readAppendedLines({
-        file,
-        state: createFileReadStateFromBeginning(file),
-      });
-    }
-
-    const bytesToRead = ByteSize.bytes(file.size - state.byteOffset);
+  )(function* (state) {
+    const bytesToRead = ByteSize.bytes(state.file.size - state.byteOffset);
 
     if (bytesToRead === ByteSize.bytes(0)) {
       return {
         lines: [],
-        state: {
-          ...state,
-          file,
-        },
+        state,
       };
     }
 
     const chunks = yield* readFileRange({
       bytesToRead,
-      filePath: file.filePath,
+      filePath: state.file.filePath,
       offset: state.byteOffset,
     });
 
@@ -182,7 +166,7 @@ const makeFileMonitor = E.gen(function* () {
       state: {
         byteOffset: ByteSize.bytes(state.byteOffset + bytesRead),
         decoder: state.decoder,
-        file,
+        file: state.file,
         incompleteLine: splitResult.incompleteLine,
       },
     };
@@ -201,14 +185,6 @@ const makeFileMonitor = E.gen(function* () {
     );
   };
 
-  const readLines: FileMonitorShape["readLines"] = E.fn(
-    "FileMonitor.readLines",
-  )(function* ({ filePath }) {
-    return yield* streamLines({
-      filePath,
-    }).pipe(Stream.runCollect);
-  });
-
   const readLeadingText = (file: FileData) => {
     return readFileRange({
       bytesToRead:
@@ -225,7 +201,7 @@ const makeFileMonitor = E.gen(function* () {
     );
   };
 
-  const streamLatestFileLines: FileMonitorShape["streamLatestFileLines"] = ({
+  const streamLatestFile: FileMonitorShape["streamLatestFile"] = ({
     directoryPath,
     getContentStartedAt,
     matches,
@@ -273,23 +249,85 @@ const makeFileMonitor = E.gen(function* () {
           );
         };
 
-        const readFrom = (state: ReturnType<typeof createFileReadState>) => {
-          return readAppendedLines({
-            file: state.file,
-            state,
-          }).pipe(
+        const readFrom = (
+          readState: FileReadState,
+        ): E.Effect<LatestFileStep, PlatformError.PlatformError> => {
+          return readAppendedLines(readState).pipe(
             E.map((result) => {
-              return [Option.some(result.state), result.lines] as const;
+              return [
+                {
+                  _tag: "Reading",
+                  readState: result.state,
+                },
+                result.lines.map((line) => {
+                  return {
+                    _tag: "Line",
+                    line,
+                  } satisfies LatestFileItem;
+                }),
+              ] as const;
             }),
           );
         };
 
-        const readFromNewFile = (file: FileData) => {
-          return getStartingByteOffset(file).pipe(
-            E.flatMap((byteOffset) => {
-              return readFrom(createFileReadState({ byteOffset, file }));
+        const attach = ({
+          file,
+          startOffset,
+        }: {
+          readonly file: FileData;
+          readonly startOffset: ByteSize.ByteSize;
+        }): E.Effect<LatestFileStep, PlatformError.PlatformError> => {
+          return readFrom(
+            createFileReadState({ byteOffset: startOffset, file }),
+          ).pipe(
+            E.map(([state, lines]) => {
+              return [
+                state,
+                [
+                  {
+                    _tag: "Attached",
+                    file,
+                    startOffset,
+                  } satisfies LatestFileItem,
+                  ...lines,
+                ],
+              ] as const;
             }),
           );
+        };
+
+        const handleLatestFile = (
+          state: LatestFileState,
+          latestFile: Option.Option<FileData>,
+        ): E.Effect<LatestFileStep, PlatformError.PlatformError> => {
+          return Option.match(latestFile, {
+            onNone: () => {
+              if (state._tag === "WaitingForFile") {
+                return E.succeed([state, []] as const);
+              }
+
+              return E.succeed([
+                { _tag: "WaitingForFile" },
+                [{ _tag: "WaitingForFile" }],
+              ] as const);
+            },
+            onSome: (file) => {
+              if (
+                state._tag === "Reading" &&
+                isSameFile(file, state.readState.file)
+              ) {
+                return file.size < state.readState.byteOffset
+                  ? attach({ file, startOffset: ByteSize.bytes(0) })
+                  : readFrom({ ...state.readState, file });
+              }
+
+              return getStartingByteOffset(file).pipe(
+                E.flatMap((startOffset) => {
+                  return attach({ file, startOffset });
+                }),
+              );
+            },
+          });
         };
 
         return fileMonitorSource
@@ -298,37 +336,16 @@ const makeFileMonitor = E.gen(function* () {
             matches,
           })
           .pipe(
-            Stream.mapAccumEffect(
-              () => Option.none<ReturnType<typeof createFileReadState>>(),
-              (state, latestFile) => {
-                return Option.match(latestFile, {
-                  onNone: () => {
-                    return E.succeed([state, []] as const);
-                  },
-                  onSome: (file) => {
-                    return Option.match(state, {
-                      onNone: () => {
-                        return readFromNewFile(file);
-                      },
-                      onSome: (currentState) => {
-                        return isSameFile(file, currentState.file)
-                          ? readFrom({ ...currentState, file })
-                          : readFromNewFile(file);
-                      },
-                    });
-                  },
-                });
-              },
-            ),
+            Stream.mapAccumEffect((): LatestFileState => {
+              return { _tag: "Starting" };
+            }, handleLatestFile),
           );
       }),
     );
   };
 
   return {
-    findLatestFile,
-    readLines,
-    streamLatestFileLines,
+    streamLatestFile,
     streamLines,
   } satisfies FileMonitorShape;
 });

@@ -1,13 +1,23 @@
+import * as ByteSize from "effect/ByteSize";
 import * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
 import * as Fiber from "effect/Fiber";
+import * as FileSystem from "effect/FileSystem";
+import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import * as Path from "effect/Path";
 import * as PlatformError from "effect/PlatformError";
 import * as Result from "effect/Result";
 import * as Stream from "effect/Stream";
 import { describe, expect, test } from "vitest";
 
+import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
 import { getFellowshipLogStartedAt } from "@frt/api/services/fellowship/parsing/get-fellowship-log-started-at.ts";
+import {
+  FileMonitor,
+  type FileMonitorShape,
+  type LatestFileItem,
+} from "@frt/api/services/filesystem/file-monitor-service.ts";
 import { DUNGEON_START_LINE } from "@frt/api/tests/common/fixtures/dungeon-start-fixtures.ts";
 import {
   FileMonitorTestDependenciesLive,
@@ -26,54 +36,27 @@ const OLD_MODIFIED_TIME = DateTime.toDateUtc(
   DateTime.makeUnsafe("2020-01-01T00:00:00.000Z"),
 );
 
+type LineItem = Extract<LatestFileItem, { readonly _tag: "Line" }>;
+
+type StreamLatestFileOptions = Parameters<
+  FileMonitorShape["streamLatestFile"]
+>[0];
+
+function streamLatestFileLines(
+  harness: { readonly fileMonitor: FileMonitorShape },
+  options: StreamLatestFileOptions,
+) {
+  return harness.fileMonitor.streamLatestFile(options).pipe(
+    Stream.filter((item): item is LineItem => {
+      return item._tag === "Line";
+    }),
+    Stream.map((item) => {
+      return item.line;
+    }),
+  );
+}
+
 describe("FileMonitor", () => {
-  describe("findLatestFile", () => {
-    test("delegates latest file discovery to FileMonitorSource", async () => {
-      const program = E.scoped(
-        E.gen(function* () {
-          const harness = yield* makeFileMonitorTestHarness;
-
-          const filePath = harness.getFilePath("fellowship.txt");
-
-          yield* harness.writeFile("fellowship.txt", "first line\n");
-          yield* harness.emitFile("fellowship.txt");
-
-          const file = yield* harness.fileMonitor.findLatestFile({
-            directoryPath: harness.directoryPath,
-            matches: matchesTextFile,
-          });
-
-          expect(file.filePath).toBe(filePath);
-        }),
-      ).pipe(E.provide(FileMonitorTestDependenciesLive));
-
-      await runTest(program);
-    });
-  });
-
-  describe("readLines", () => {
-    test("reads all non-empty lines from a file", async () => {
-      const program = E.scoped(
-        E.gen(function* () {
-          const harness = yield* makeFileMonitorTestHarness;
-
-          yield* harness.writeFile(
-            "fellowship.txt",
-            "first line\n\nsecond line\nthird line\n",
-          );
-
-          const lines = yield* harness.fileMonitor.readLines({
-            filePath: harness.getFilePath("fellowship.txt"),
-          });
-
-          expect(lines).toEqual(["first line", "second line", "third line"]);
-        }),
-      ).pipe(E.provide(FileMonitorTestDependenciesLive));
-
-      await runTest(program);
-    });
-  });
-
   describe("streamLines", () => {
     test("streams all non-empty lines from a file", async () => {
       const program = E.scoped(
@@ -99,7 +82,227 @@ describe("FileMonitor", () => {
     });
   });
 
-  describe("streamLatestFileLines", () => {
+  describe("streamLatestFile file states", () => {
+    test("emits WaitingForFile once while no file exists, then attaches a new file from its beginning", async () => {
+      const program = E.scoped(
+        E.gen(function* () {
+          const harness = yield* makeFileMonitorTestHarness;
+
+          const items = yield* makeStreamTestHarness(
+            harness.fileMonitor.streamLatestFile({
+              directoryPath: harness.directoryPath,
+              matches: matchesTextFile,
+              startFrom: "end",
+            }),
+          );
+
+          yield* harness.awaitSourceRequest;
+          yield* harness.emitNoFile;
+
+          const waiting = yield* items.take;
+
+          yield* harness.awaitSourceRequest;
+          yield* harness.emitNoFile;
+          yield* harness.awaitSourceRequest;
+
+          yield* E.sleep(FILE_TIMESTAMP_SEPARATION);
+
+          yield* harness.writeFile("fellowship.txt", "first line\n");
+          const file = yield* harness.emitFile("fellowship.txt");
+
+          const attached = yield* items.take;
+          const line = yield* items.take;
+
+          expect(waiting).toEqual({ _tag: "WaitingForFile" });
+          expect(attached).toEqual({
+            _tag: "Attached",
+            file,
+            startOffset: ByteSize.bytes(0),
+          });
+          expect(line).toEqual({ _tag: "Line", line: "first line" });
+        }),
+      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+
+      await runTest(program);
+    });
+
+    test("emits Attached again when it switches to a newer file", async () => {
+      const program = E.scoped(
+        E.gen(function* () {
+          const harness = yield* makeFileMonitorTestHarness;
+
+          yield* harness.writeFile("first.txt", "");
+
+          const items = yield* makeStreamTestHarness(
+            harness.fileMonitor.streamLatestFile({
+              directoryPath: harness.directoryPath,
+              matches: matchesTextFile,
+              startFrom: "end",
+            }),
+          );
+
+          yield* harness.awaitSourceRequest;
+          const firstFile = yield* harness.emitFile("first.txt");
+
+          const firstAttached = yield* items.take;
+
+          yield* harness.awaitSourceRequest;
+
+          yield* E.sleep(FILE_TIMESTAMP_SEPARATION);
+
+          yield* harness.writeFile("second.txt", "second file line\n");
+          const secondFile = yield* harness.emitFile("second.txt");
+
+          const secondAttached = yield* items.take;
+          const line = yield* items.take;
+
+          expect(firstAttached).toEqual({
+            _tag: "Attached",
+            file: firstFile,
+            startOffset: firstFile.size,
+          });
+          expect(secondAttached).toEqual({
+            _tag: "Attached",
+            file: secondFile,
+            startOffset: ByteSize.bytes(0),
+          });
+          expect(line).toEqual({ _tag: "Line", line: "second file line" });
+        }),
+      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+
+      await runTest(program);
+    });
+
+    test("emits Attached from the beginning when the attached file is truncated", async () => {
+      const program = E.scoped(
+        E.gen(function* () {
+          const harness = yield* makeFileMonitorTestHarness;
+
+          yield* harness.writeFile(
+            "fellowship.txt",
+            "existing content that is intentionally longer\n",
+          );
+
+          const items = yield* makeStreamTestHarness(
+            harness.fileMonitor.streamLatestFile({
+              directoryPath: harness.directoryPath,
+              matches: matchesTextFile,
+              startFrom: "end",
+            }),
+          );
+
+          yield* harness.awaitSourceRequest;
+          yield* harness.emitFile("fellowship.txt");
+
+          yield* items.take;
+
+          yield* harness.awaitSourceRequest;
+
+          yield* harness.truncateFile("fellowship.txt");
+          yield* harness.appendFile("fellowship.txt", "after truncate\n");
+          const truncatedFile = yield* harness.emitFile("fellowship.txt");
+
+          const reattached = yield* items.take;
+          const line = yield* items.take;
+
+          expect(reattached).toEqual({
+            _tag: "Attached",
+            file: truncatedFile,
+            startOffset: ByteSize.bytes(0),
+          });
+          expect(line).toEqual({ _tag: "Line", line: "after truncate" });
+        }),
+      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+
+      await runTest(program);
+    });
+
+    test("emits WaitingForFile when the attached file disappears", async () => {
+      const program = E.scoped(
+        E.gen(function* () {
+          const harness = yield* makeFileMonitorTestHarness;
+
+          yield* harness.writeFile("fellowship.txt", "");
+
+          const items = yield* makeStreamTestHarness(
+            harness.fileMonitor.streamLatestFile({
+              directoryPath: harness.directoryPath,
+              matches: matchesTextFile,
+              startFrom: "end",
+            }),
+          );
+
+          yield* harness.awaitSourceRequest;
+          yield* harness.emitFile("fellowship.txt");
+
+          const attached = yield* items.take;
+
+          yield* harness.awaitSourceRequest;
+
+          yield* harness.removeFile("fellowship.txt");
+          yield* harness.emitNoFile;
+
+          const waiting = yield* items.take;
+
+          expect(attached._tag).toBe("Attached");
+          expect(waiting).toEqual({ _tag: "WaitingForFile" });
+        }),
+      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+
+      await runTest(program);
+    });
+
+    test("reads a log file from its beginning when it is written right after WaitingForFile", async () => {
+      const program = E.scoped(
+        E.gen(function* () {
+          const fileSystem = yield* FileSystem.FileSystem;
+          const path = yield* Path.Path;
+          const fileMonitor = yield* FileMonitor;
+
+          const directoryPath = yield* fileSystem.makeTempDirectoryScoped({
+            prefix: "file-monitor-race-",
+          });
+
+          const items = yield* makeStreamTestHarness(
+            fileMonitor.streamLatestFile({
+              directoryPath,
+              getContentStartedAt: getFellowshipLogStartedAt,
+              matches: matchesTextFile,
+              startFrom: "end",
+            }),
+          );
+
+          const waiting = yield* items.take;
+
+          yield* E.sleep(FILE_TIMESTAMP_SEPARATION);
+
+          const contentStartedAt = DateTime.formatIso(yield* DateTime.now);
+          const line = `${contentStartedAt}|DUNGEON_START|`;
+
+          yield* fileSystem.writeFileString(
+            path.join(directoryPath, "fellowship.txt"),
+            `${line}\n`,
+          );
+
+          const attached = yield* items.take;
+          const lineItem = yield* items.take;
+
+          expect(waiting).toEqual({ _tag: "WaitingForFile" });
+          expect(attached._tag === "Attached" && attached.startOffset).toBe(
+            ByteSize.bytes(0),
+          );
+          expect(lineItem).toEqual({ _tag: "Line", line });
+        }),
+      ).pipe(
+        E.timeout("5 seconds"),
+        E.provide(Layer.mergeAll(FileMonitor.layer, NodePlatformLayer)),
+      );
+
+      await runTest(program);
+    });
+  });
+
+  describe("streamLatestFile lines", () => {
     test('with startFrom "end" emits only lines appended after monitoring starts', async () => {
       const program = E.scoped(
         E.gen(function* () {
@@ -111,7 +314,7 @@ describe("FileMonitor", () => {
           );
 
           const lines = yield* makeStreamTestHarness(
-            harness.fileMonitor.streamLatestFileLines({
+            streamLatestFileLines(harness, {
               directoryPath: harness.directoryPath,
               matches: matchesTextFile,
               startFrom: "end",
@@ -158,7 +361,7 @@ describe("FileMonitor", () => {
           );
 
           const lines = yield* makeStreamTestHarness(
-            harness.fileMonitor.streamLatestFileLines({
+            streamLatestFileLines(harness, {
               directoryPath: harness.directoryPath,
               matches: matchesTextFile,
               startFrom: "start",
@@ -202,7 +405,7 @@ describe("FileMonitor", () => {
           yield* harness.writeFile("fellowship.txt", "");
 
           const lines = yield* makeStreamTestHarness(
-            harness.fileMonitor.streamLatestFileLines({
+            streamLatestFileLines(harness, {
               directoryPath: harness.directoryPath,
               matches: matchesTextFile,
               startFrom: "end",
@@ -261,7 +464,7 @@ describe("FileMonitor", () => {
           yield* harness.writeFile("fellowship.txt", "");
 
           const lines = yield* makeStreamTestHarness(
-            harness.fileMonitor.streamLatestFileLines({
+            streamLatestFileLines(harness, {
               directoryPath: harness.directoryPath,
               matches: matchesTextFile,
               startFrom: "end",
@@ -317,7 +520,7 @@ describe("FileMonitor", () => {
           const harness = yield* makeFileMonitorTestHarness;
 
           const lines = yield* makeStreamTestHarness(
-            harness.fileMonitor.streamLatestFileLines({
+            streamLatestFileLines(harness, {
               directoryPath: harness.directoryPath,
               matches: matchesTextFile,
               startFrom: "end",
@@ -364,7 +567,7 @@ describe("FileMonitor", () => {
           yield* harness.writeFile("current.txt", "");
 
           const lines = yield* makeStreamTestHarness(
-            harness.fileMonitor.streamLatestFileLines({
+            streamLatestFileLines(harness, {
               directoryPath: harness.directoryPath,
               matches: matchesTextFile,
               startFrom: "end",
@@ -404,7 +607,7 @@ describe("FileMonitor", () => {
           yield* harness.writeFile("current.txt", "");
 
           const lines = yield* makeStreamTestHarness(
-            harness.fileMonitor.streamLatestFileLines({
+            streamLatestFileLines(harness, {
               directoryPath: harness.directoryPath,
               getContentStartedAt: getFellowshipLogStartedAt,
               matches: matchesTextFile,
@@ -446,7 +649,7 @@ describe("FileMonitor", () => {
           yield* harness.writeFile("current.txt", "");
 
           const lines = yield* makeStreamTestHarness(
-            harness.fileMonitor.streamLatestFileLines({
+            streamLatestFileLines(harness, {
               directoryPath: harness.directoryPath,
               getContentStartedAt: getFellowshipLogStartedAt,
               matches: matchesTextFile,
@@ -489,7 +692,7 @@ describe("FileMonitor", () => {
           yield* harness.writeFile("fellowship.txt", "existing line\n");
 
           const lines = yield* makeStreamTestHarness(
-            harness.fileMonitor.streamLatestFileLines({
+            streamLatestFileLines(harness, {
               directoryPath: harness.directoryPath,
               matches: matchesTextFile,
               startFrom: "end",
@@ -534,7 +737,7 @@ describe("FileMonitor", () => {
           yield* harness.writeFile("fellowship.txt", "");
 
           const lines = yield* makeStreamTestHarness(
-            harness.fileMonitor.streamLatestFileLines({
+            streamLatestFileLines(harness, {
               directoryPath: harness.directoryPath,
               matches: matchesTextFile,
               startFrom: "end",
@@ -594,7 +797,7 @@ describe("FileMonitor", () => {
           yield* harness.writeFile("fellowship.txt", "");
 
           const lines = yield* makeStreamTestHarness(
-            harness.fileMonitor.streamLatestFileLines({
+            streamLatestFileLines(harness, {
               directoryPath: harness.directoryPath,
               matches: matchesTextFile,
               startFrom: "end",
@@ -646,7 +849,7 @@ describe("FileMonitor", () => {
           yield* harness.writeFile("first.txt", "");
 
           const lines = yield* makeStreamTestHarness(
-            harness.fileMonitor.streamLatestFileLines({
+            streamLatestFileLines(harness, {
               directoryPath: harness.directoryPath,
               matches: matchesTextFile,
               startFrom: "end",
@@ -720,7 +923,7 @@ describe("FileMonitor", () => {
           );
 
           const lines = yield* makeStreamTestHarness(
-            harness.fileMonitor.streamLatestFileLines({
+            streamLatestFileLines(harness, {
               directoryPath: harness.directoryPath,
               matches: matchesTextFile,
               startFrom: "end",
@@ -775,7 +978,7 @@ describe("FileMonitor", () => {
         E.gen(function* () {
           const harness = yield* makeFileMonitorTestHarness;
 
-          const lines = harness.fileMonitor.streamLatestFileLines({
+          const lines = streamLatestFileLines(harness, {
             directoryPath: harness.directoryPath,
             matches: matchesTextFile,
             startFrom: "end",
@@ -814,7 +1017,7 @@ describe("FileMonitor", () => {
           yield* harness.writeFile("fellowship.txt", "");
 
           const lines = yield* makeStreamTestHarness(
-            harness.fileMonitor.streamLatestFileLines({
+            streamLatestFileLines(harness, {
               directoryPath: harness.directoryPath,
               matches: matchesTextFile,
               startFrom: "end",
@@ -865,7 +1068,7 @@ describe("FileMonitor", () => {
           yield* harness.writeFile("first.txt", "");
 
           const lines = yield* makeStreamTestHarness(
-            harness.fileMonitor.streamLatestFileLines({
+            streamLatestFileLines(harness, {
               directoryPath: harness.directoryPath,
               matches: matchesTextFile,
               startFrom: "end",
@@ -916,7 +1119,7 @@ describe("FileMonitor", () => {
 
           yield* harness.writeFile("fellowship.txt", "");
 
-          const lines = harness.fileMonitor.streamLatestFileLines({
+          const lines = streamLatestFileLines(harness, {
             directoryPath: harness.directoryPath,
             matches: matchesTextFile,
             startFrom: "end",

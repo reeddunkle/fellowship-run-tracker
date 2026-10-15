@@ -16,6 +16,7 @@ import {
   useSelectedConfiguration,
   useSelectedConfigurationId,
 } from "@/renderer/stores/configuration/configuration-provider.tsx";
+import { isTrackingActive } from "@/renderer/stores/tracking/is-tracking-active.ts";
 import {
   useTrackingActionState,
   useTrackingServerState,
@@ -40,6 +41,10 @@ function getTrackingMessage({
 }: TrackingMessageProps): string {
   if (trackingStatus === undefined || trackingStatus.status === "Idle") {
     return `Start tracking a dungeon run using "${configurationLabel}"`;
+  }
+
+  if (trackingStatus.status === "Starting") {
+    return "Starting tracker…";
   }
 
   if (trackingStatus.status === "WaitingForLogFile") {
@@ -70,9 +75,7 @@ function TrackingMessage({
         "text-destructive": isFailed,
         "text-muted-foreground":
           trackingStatus === undefined || trackingStatus.status === "Idle",
-        "text-muted-foreground/60":
-          trackingStatus?.status === "WaitingForLogFile" ||
-          trackingStatus?.status === "Tracking",
+        "text-muted-foreground/60": isTrackingActive(trackingStatus),
       })}
     >
       {message}
@@ -90,12 +93,11 @@ export function TrackingControls() {
   const detachedWindow = useDetachedWindow();
 
   const isTracking = trackingStatus?.status === "Tracking";
-  const isWaitingForFile = trackingStatus?.status === "WaitingForLogFile";
 
   const actionErrorMessage = isPending
     ? undefined
     : getTrackingActionErrorMessage({
-        isTrackingActive: isTracking || isWaitingForFile,
+        isTrackingActive: isTrackingActive(trackingStatus),
         startError,
         stopError,
       });

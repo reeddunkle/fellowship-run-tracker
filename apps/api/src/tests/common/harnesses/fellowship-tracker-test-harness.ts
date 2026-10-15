@@ -48,8 +48,7 @@ import { type FellowshipMilestoneConfiguration } from "@frt/shared/fellowship/co
 import { makeFellowshipTestHarness } from "./fellowship-test-harness.ts";
 import { makeWebSocketBroadcasterTestHarness } from "./websocket-broadcaster-test-harness.ts";
 
-type FellowshipLiveEvents = ReturnType<FellowshipShape["liveEvents"]>;
-type FellowshipLiveStatus = ReturnType<FellowshipShape["liveStatus"]>;
+type FellowshipLiveLog = ReturnType<FellowshipShape["liveLog"]>;
 type FellowshipReplayEvents = ReturnType<FellowshipShape["streamEvents"]>;
 
 type MakeFellowshipTrackerTestHarnessOptions = {
@@ -58,8 +57,7 @@ type MakeFellowshipTrackerTestHarnessOptions = {
   readonly configurationId?: ConfigurationId;
   readonly configurationLabel?: ConfigurationLabel;
   readonly handleRunEvent?: LiveSplitShape["handleRunEvent"];
-  readonly liveEvents?: FellowshipLiveEvents;
-  readonly liveStatus?: FellowshipLiveStatus;
+  readonly liveLog?: FellowshipLiveLog;
   readonly replayEvents?: FellowshipReplayEvents;
 };
 
@@ -102,7 +100,7 @@ export const makeFellowshipTrackerTestHarness = E.fnUntraced(function* (
   const trackingStarted = yield* Deferred.make<void>();
   const trackingInterrupted = yield* Deferred.make<void>();
 
-  const defaultLiveEvents = Stream.fromEffect(
+  const defaultLiveLog = Stream.fromEffect(
     Deferred.succeed(trackingStarted, undefined).pipe(
       E.andThen(E.never),
       E.ensuring(Deferred.succeed(trackingInterrupted, undefined)),
@@ -110,8 +108,7 @@ export const makeFellowshipTrackerTestHarness = E.fnUntraced(function* (
   );
 
   const fellowshipHarness = makeFellowshipTestHarness({
-    liveEvents: options.liveEvents ?? defaultLiveEvents,
-    liveStatus: options.liveStatus ?? Stream.never,
+    liveLog: options.liveLog ?? defaultLiveLog,
     replayEvents: options.replayEvents ?? Stream.empty,
   });
 

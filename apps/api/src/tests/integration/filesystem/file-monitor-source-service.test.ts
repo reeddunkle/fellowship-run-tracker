@@ -294,7 +294,7 @@ describe("FileMonitorSource", () => {
             );
 
             const secondLatestFiles = yield* makeStreamTestHarness(
-              harness.fileMonitorSource.streamStatus(options),
+              harness.fileMonitorSource.streamLatestFile(options),
             );
 
             yield* firstLatestFiles.take;
@@ -306,7 +306,7 @@ describe("FileMonitorSource", () => {
             const secondUpdate = yield* secondLatestFiles.take;
 
             expect(Option.isSome(firstUpdate)).toBe(true);
-            expect(secondUpdate._tag).toBe("MONITORING");
+            expect(Option.isSome(secondUpdate)).toBe(true);
             expect(yield* Ref.get(watchCounting.openedWatchCount)).toBe(1);
           }),
         ).pipe(E.provide(watchCounting.layer));
@@ -377,13 +377,13 @@ describe("FileMonitorSource", () => {
               matches: matchesTextFile,
             };
 
-            const [latestFileError, statusError] = yield* E.all(
+            const [firstLatestFileError, secondLatestFileError] = yield* E.all(
               [
                 harness.fileMonitorSource
                   .streamLatestFile(options)
                   .pipe(Stream.runDrain, E.flip),
                 harness.fileMonitorSource
-                  .streamStatus(options)
+                  .streamLatestFile(options)
                   .pipe(Stream.runDrain, E.flip),
               ],
               {
@@ -400,9 +400,9 @@ describe("FileMonitorSource", () => {
             yield* recoveredLatestFiles.take;
 
             return {
-              latestFileError,
+              firstLatestFileError,
               openedWatchCount: yield* Ref.get(watchCounting.openedWatchCount),
-              statusError,
+              secondLatestFileError,
             };
           }),
         ).pipe(E.provide(watchCounting.layer), E.timeout("2 seconds"));
@@ -421,18 +421,18 @@ describe("FileMonitorSource", () => {
           runTest,
         );
 
-        expect(result.latestFileError).toBe(watchError);
-        expect(result.statusError).toBe(watchError);
+        expect(result.firstLatestFileError).toBe(watchError);
+        expect(result.secondLatestFileError).toBe(watchError);
         expect(result.openedWatchCount).toBe(2);
       });
 
       test("fails every stream when the watcher closes and recovers with a fresh watcher", async () => {
         const result = await Stream.empty.pipe(failStreamsThenRecover, runTest);
 
-        expect(result.latestFileError.message).toContain(
+        expect(result.firstLatestFileError.message).toContain(
           "The directory watcher closed unexpectedly.",
         );
-        expect(result.statusError.message).toContain(
+        expect(result.secondLatestFileError.message).toContain(
           "The directory watcher closed unexpectedly.",
         );
         expect(result.openedWatchCount).toBe(2);
@@ -516,98 +516,6 @@ describe("FileMonitorSource", () => {
           }),
         ).pipe(E.provide(watchCounting.layer));
       });
-
-      await runTest(program);
-    });
-  });
-
-  describe("streamStatus", () => {
-    test("transitions from waiting for a file to monitoring", async () => {
-      const program = E.scoped(
-        E.gen(function* () {
-          const harness = yield* makeFileMonitorSourceTestHarness;
-
-          const filePath = harness.getFilePath("fellowship.txt");
-
-          const statuses = yield* makeStreamTestHarness(
-            harness.fileMonitorSource.streamStatus({
-              directoryPath: harness.directoryPath,
-              matches: matchesTextFile,
-            }),
-          );
-
-          const waitingStatus = yield* statuses.take;
-
-          expect(waitingStatus).toEqual({
-            _tag: "WAITING_FOR_FILE",
-            directoryPath: harness.directoryPath,
-          });
-
-          yield* harness.writeFile("fellowship.txt", "first line\n");
-
-          const monitoringStatus = yield* statuses.take;
-
-          expect(monitoringStatus).toEqual({
-            _tag: "MONITORING",
-            directoryPath: harness.directoryPath,
-            filePath,
-          });
-        }),
-      ).pipe(E.provide(FileMonitorSourceTestLive));
-
-      await runTest(program);
-    });
-
-    test("does not emit another status when the monitored file is only updated", async () => {
-      const program = E.scoped(
-        E.gen(function* () {
-          const harness = yield* makeFileMonitorSourceTestHarness;
-
-          const filePath = harness.getFilePath("fellowship.txt");
-
-          yield* harness.writeFile("fellowship.txt", "first line\n");
-
-          const statuses = yield* makeStreamTestHarness(
-            harness.fileMonitorSource.streamStatus({
-              directoryPath: harness.directoryPath,
-              matches: matchesTextFile,
-            }),
-          );
-
-          const latestFiles = yield* makeStreamTestHarness(
-            harness.fileMonitorSource.streamLatestFile({
-              directoryPath: harness.directoryPath,
-              matches: matchesTextFile,
-            }),
-          );
-
-          const initialStatus = yield* statuses.take;
-          const initialLatestFile = yield* latestFiles.take;
-
-          expect(initialStatus).toEqual({
-            _tag: "MONITORING",
-            directoryPath: harness.directoryPath,
-            filePath,
-          });
-
-          expect(Option.isSome(initialLatestFile)).toBe(true);
-
-          yield* harness.appendFile("fellowship.txt", "second line\n");
-
-          const updatedLatestFile = yield* latestFiles.take;
-
-          expect(Option.isSome(updatedLatestFile)).toBe(true);
-
-          yield* harness.removeFile("fellowship.txt");
-
-          const nextStatus = yield* statuses.take;
-
-          expect(nextStatus).toEqual({
-            _tag: "WAITING_FOR_FILE",
-            directoryPath: harness.directoryPath,
-          });
-        }),
-      ).pipe(E.provide(FileMonitorSourceTestLive));
 
       await runTest(program);
     });

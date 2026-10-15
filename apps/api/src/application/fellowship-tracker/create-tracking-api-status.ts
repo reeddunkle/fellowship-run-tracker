@@ -95,6 +95,18 @@ export function createTrackingApiStatus(
     ),
     Match.when(
       {
+        _tag: "Starting",
+      },
+      ({ dungeonId, source }): TrackingApiStatus => {
+        return {
+          dungeonId,
+          source: createTrackingApiSource(source),
+          status: "Starting",
+        };
+      },
+    ),
+    Match.when(
+      {
         _tag: "WaitingForLogFile",
       },
       ({ dungeonId, source }): TrackingApiStatus => {

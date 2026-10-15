@@ -1,6 +1,6 @@
 import { TextDecoder } from "node:util";
 
-import * as ByteSize from "effect/ByteSize";
+import type * as ByteSize from "effect/ByteSize";
 import type * as FileSystem from "effect/FileSystem";
 import * as Option from "effect/Option";
 
@@ -21,17 +21,12 @@ export type FileReadState = {
   readonly incompleteLine: string;
 };
 
-export type ReadAppendedLinesOptions = {
-  readonly file: FileData;
-  readonly state: FileReadState;
-};
-
 export type ReadAppendedLinesResult = {
   readonly lines: ReadonlyArray<string>;
   readonly state: FileReadState;
 };
 
-export function getFileId({
+function getFileId({
   filePath,
   info,
 }: {
@@ -44,6 +39,25 @@ export function getFileId({
   return [filePath, inode ?? "unknown-inode", createdAtEpochMilliseconds].join(
     ":",
   );
+}
+
+export function createFileData({
+  filePath,
+  info,
+}: {
+  readonly filePath: string;
+  readonly info: FileSystem.File.Info;
+}): FileData {
+  return {
+    createdAtEpochMilliseconds: getDateEpochMilliseconds(info.birthtime),
+    fileId: getFileId({
+      filePath,
+      info,
+    }),
+    filePath,
+    modifiedAtEpochMilliseconds: getDateEpochMilliseconds(info.mtime),
+    size: info.size,
+  };
 }
 
 export function splitCompleteLines({
@@ -79,13 +93,6 @@ export function createFileReadState({
     file,
     incompleteLine: "",
   };
-}
-
-export function createFileReadStateFromBeginning(file: FileData) {
-  return createFileReadState({
-    byteOffset: ByteSize.bytes(0),
-    file,
-  });
 }
 
 export function isSameFile(left: FileData, right: FileData): boolean {

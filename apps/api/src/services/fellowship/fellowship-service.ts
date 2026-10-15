@@ -1,18 +1,17 @@
 import * as Context from "effect/Context";
 import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Match from "effect/Match";
 import type * as PlatformError from "effect/PlatformError";
 import * as Stream from "effect/Stream";
 
 import { AppSettingsStore } from "@frt/api/services/app-settings-store/app-settings-store-service.ts";
-import {
-  FileMonitor,
-  type FileMonitorError,
-} from "@frt/api/services/filesystem/file-monitor-service.ts";
-import { FileMonitorSource } from "@frt/api/services/filesystem/file-monitor-source-service.ts";
+import { FileMonitor } from "@frt/api/services/filesystem/file-monitor-service.ts";
 import { type FellowshipEvent } from "@frt/shared/fellowship/validation/fellowship-event-schema.ts";
 
+import {
+  type FellowshipLiveLogItem,
+  parseFellowshipLiveLog,
+} from "./fellowship-live-log.ts";
 import { getFellowshipLogStartedAt } from "./parsing/get-fellowship-log-started-at.ts";
 import { parseFellowshipEventStream } from "./parsing/parse-fellowship-event-stream.ts";
 
@@ -22,36 +21,20 @@ const isFellowshipLogFile = (fileName: string): boolean => {
   return fileName.toLowerCase().endsWith(FELLOWSHIP_LOG_FILE_EXTENSION);
 };
 
-export type FellowshipLiveStatus =
-  | {
-      readonly _tag: "WaitingForLogFile";
-    }
-  | {
-      readonly _tag: "MonitoringLogFile";
-      readonly filePath: string;
-    };
-
 export type FellowshipShape = {
-  readonly liveEvents: () => Stream.Stream<FellowshipEvent, FileMonitorError>;
-
-  readonly liveStatus: () => Stream.Stream<
-    FellowshipLiveStatus,
+  readonly liveLog: () => Stream.Stream<
+    FellowshipLiveLogItem,
     PlatformError.PlatformError
   >;
 
-  readonly readEvents: (
-    filePath: string,
-  ) => E.Effect<ReadonlyArray<FellowshipEvent>, FileMonitorError>;
-
   readonly streamEvents: (
     filePath: string,
-  ) => Stream.Stream<FellowshipEvent, FileMonitorError>;
+  ) => Stream.Stream<FellowshipEvent, PlatformError.PlatformError>;
 };
 
 const makeFellowship = E.gen(function* () {
   const appSettingsStore = yield* AppSettingsStore;
   const fileMonitor = yield* FileMonitor;
-  const fileMonitorSource = yield* FileMonitorSource;
 
   const streamEvents: FellowshipShape["streamEvents"] = (filePath: string) => {
     return parseFellowshipEventStream(
@@ -61,65 +44,25 @@ const makeFellowship = E.gen(function* () {
     );
   };
 
-  const readEvents: FellowshipShape["readEvents"] = E.fn(
-    "Fellowship.readEvents",
-  )(function* (filePath: string) {
-    return yield* streamEvents(filePath).pipe(Stream.runCollect);
-  });
-
-  const liveEvents: FellowshipShape["liveEvents"] = () => {
+  const liveLog: FellowshipShape["liveLog"] = () => {
     return Stream.unwrap(
       E.gen(function* () {
         const settings = yield* appSettingsStore.get();
 
         return fileMonitor
-          .streamLatestFileLines({
+          .streamLatestFile({
             directoryPath: settings.fellowshipLogDirectory,
             getContentStartedAt: getFellowshipLogStartedAt,
             matches: isFellowshipLogFile,
             startFrom: "end",
           })
-          .pipe(parseFellowshipEventStream);
-      }),
-    );
-  };
-
-  const liveStatus: FellowshipShape["liveStatus"] = () => {
-    return Stream.unwrap(
-      E.gen(function* () {
-        const settings = yield* appSettingsStore.get();
-
-        return fileMonitorSource
-          .streamStatus({
-            directoryPath: settings.fellowshipLogDirectory,
-            matches: isFellowshipLogFile,
-          })
-          .pipe(
-            Stream.map((status) => {
-              return Match.value(status).pipe(
-                Match.tag("WAITING_FOR_FILE", () => {
-                  return {
-                    _tag: "WaitingForLogFile",
-                  } satisfies FellowshipLiveStatus;
-                }),
-                Match.tag("MONITORING", (monitoringStatus) => {
-                  return {
-                    _tag: "MonitoringLogFile",
-                    filePath: monitoringStatus.filePath,
-                  } satisfies FellowshipLiveStatus;
-                }),
-                Match.exhaustive,
-              );
-            }),
-          );
+          .pipe(parseFellowshipLiveLog);
       }),
     );
   };
 
   return {
-    liveEvents,
-    liveStatus,
-    readEvents,
+    liveLog,
     streamEvents,
   } satisfies FellowshipShape;
 });
@@ -130,7 +73,7 @@ export class Fellowship extends Context.Service<Fellowship, FellowshipShape>()(
   static readonly layerNoDeps = Layer.effect(this, makeFellowship);
 
   static readonly layer = this.layerNoDeps.pipe(
-    Layer.provide(Layer.mergeAll(FileMonitor.layer, FileMonitorSource.layer)),
+    Layer.provide(FileMonitor.layer),
     Layer.provide(AppSettingsStore.layer),
   );
 }

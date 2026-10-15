@@ -10,8 +10,8 @@ import * as Semaphore from "effect/Semaphore";
 import { DungeonRunWebSocketBroadcaster } from "@frt/api/api/websocket/dungeon-run/dungeon-run-websocket-broadcaster-service.ts";
 import { publishDungeonRunState } from "@frt/api/api/websocket/dungeon-run/publish-dungeon-run-state.ts";
 import { makeLocalLogDungeonRunPersistence } from "@frt/api/application/dungeon-run-processing/local-log-dungeon-run-persistence.ts";
+import { applyFellowshipLiveLogStatus } from "@frt/api/application/fellowship-tracker/apply-fellowship-live-log-status.ts";
 import { classifyTrackingFailure } from "@frt/api/application/fellowship-tracker/classify-tracking-failure.ts";
-import { observeFellowshipLiveStatus } from "@frt/api/application/fellowship-tracker/observe-fellowship-live-status.ts";
 import {
   FellowshipTrackerAlreadyRunningError,
   FellowshipTrackerConfigurationNotFoundError,
@@ -22,6 +22,7 @@ import {
   createInitialDungeonRunProcessingState,
   interruptDungeonRunProcessingState,
 } from "@frt/api/services/fellowship/dungeon-runs/dungeon-run-processing-state.ts";
+import { makeFellowshipLiveLogFromEvents } from "@frt/api/services/fellowship/fellowship-live-log.ts";
 import { Fellowship } from "@frt/api/services/fellowship/fellowship-service.ts";
 import { ConfigurationDAO } from "@frt/db/daos/configuration/configuration-dao.ts";
 import { DungeonRunObservationDAO } from "@frt/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
@@ -47,8 +48,7 @@ export const makeFellowshipTracker = E.gen(function* () {
 
   const startTracking = E.fn("FellowshipTracker.startTracking")(function* ({
     configuration,
-    events,
-    liveStatus,
+    liveLog,
     source,
   }: StartTrackingOptions) {
     yield* E.annotateCurrentSpan(
@@ -80,6 +80,22 @@ export const makeFellowshipTracker = E.gen(function* () {
     const dungeonRunStateRef = yield* Ref.make(
       createInitialDungeonRunProcessingState(),
     );
+
+    const events = applyFellowshipLiveLogStatus({
+      liveLog,
+      setTracking: () => {
+        return trackerState.setTracking({
+          dungeonId: configuration.dungeonId,
+          source,
+        });
+      },
+      setWaitingForLogFile: () => {
+        return trackerState.setWaitingForLogFile({
+          dungeonId: configuration.dungeonId,
+          source,
+        });
+      },
+    });
 
     const processEventsEffect = eventProcessor.process({
       configuration,
@@ -137,34 +153,8 @@ export const makeFellowshipTracker = E.gen(function* () {
 
     const trackingStarted = yield* Deferred.make<void>();
 
-    const runTrackingEffect = E.scoped(
-      E.gen(function* () {
-        if (liveStatus !== undefined) {
-          yield* observeFellowshipLiveStatus({
-            dungeonId: configuration.dungeonId,
-            liveStatus,
-            setTracking: () => {
-              return trackerState.setTracking({
-                dungeonId: configuration.dungeonId,
-                source,
-              });
-            },
-            setWaitingForLogFile: () => {
-              return trackerState.setWaitingForLogFile({
-                dungeonId: configuration.dungeonId,
-                source,
-              });
-            },
-            source,
-          }).pipe(E.forkScoped);
-        }
-
-        yield* processEventsEffect;
-      }),
-    );
-
     const trackingEffect = Deferred.await(trackingStarted).pipe(
-      E.andThen(runTrackingEffect),
+      E.andThen(processEventsEffect),
       E.ensuring(interruptActiveDungeonRun),
       E.tap(() => {
         return trackerState.setIdle;
@@ -213,17 +203,10 @@ export const makeFellowshipTracker = E.gen(function* () {
       source,
     });
 
-    if (liveStatus === undefined) {
-      yield* trackerState.setTracking({
-        dungeonId: configuration.dungeonId,
-        source,
-      });
-    } else {
-      yield* trackerState.setWaitingForLogFile({
-        dungeonId: configuration.dungeonId,
-        source,
-      });
-    }
+    yield* trackerState.setStarting({
+      dungeonId: configuration.dungeonId,
+      source,
+    });
 
     /* [KEEP]
      * Do not allow the tracking fiber to begin until its active tracker
@@ -262,8 +245,7 @@ export const makeFellowshipTracker = E.gen(function* () {
 
     yield* startTracking({
       configuration: persistedConfiguration.value.configuration,
-      events: fellowship.liveEvents(),
-      liveStatus: fellowship.liveStatus(),
+      liveLog: fellowship.liveLog(),
       source: {
         _tag: "Persisted",
         configurationId,
@@ -276,8 +258,7 @@ export const makeFellowshipTracker = E.gen(function* () {
   )(function* ({ configuration }) {
     yield* startTracking({
       configuration,
-      events: fellowship.liveEvents(),
-      liveStatus: fellowship.liveStatus(),
+      liveLog: fellowship.liveLog(),
       source: {
         _tag: "External",
       },
@@ -319,7 +300,10 @@ export const makeFellowshipTracker = E.gen(function* () {
 
     const fiber = yield* startTracking({
       configuration,
-      events: fellowship.streamEvents(logFilePath),
+      liveLog: makeFellowshipLiveLogFromEvents({
+        events: fellowship.streamEvents(logFilePath),
+        filePath: logFilePath,
+      }),
       source: {
         _tag: "External",
       },

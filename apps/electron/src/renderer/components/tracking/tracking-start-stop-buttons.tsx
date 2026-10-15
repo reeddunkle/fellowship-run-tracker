@@ -5,6 +5,7 @@ import { Spinner } from "@frt/ui/primitives/spinner.tsx";
 
 import { useSelectedConfigurationId } from "@/renderer/stores/configuration/configuration-provider.tsx";
 import { useDungeonRunServerState } from "@/renderer/stores/dungeon-run/dungeon-run-provider.tsx";
+import { isTrackingActive } from "@/renderer/stores/tracking/is-tracking-active.ts";
 import {
   useTrackingActionState,
   useTrackingActions,
@@ -26,7 +27,6 @@ export function TrackingStartStopButtons({
   const { isActiveRun } = useDungeonRunServerState();
 
   const isTracking = trackingStatus?.status === "Tracking";
-  const isWaitingForFile = trackingStatus?.status === "WaitingForLogFile";
 
   return (
     <>
@@ -34,9 +34,8 @@ export function TrackingStartStopButtons({
         className="min-w-32"
         disabled={
           selectedConfigurationId === null ||
-          isTracking ||
           isPending ||
-          isWaitingForFile
+          isTrackingActive(trackingStatus)
         }
         onClick={() => {
           if (selectedConfigurationId === null) {
