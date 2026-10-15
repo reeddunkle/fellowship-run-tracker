@@ -36,7 +36,7 @@ import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fell
 import { NonEmptyStringSchema } from "@frt/shared/util/common-schemas.ts";
 
 const EVENT_LIMIT = 10_000;
-const MAX_ADDITIONAL_POINTS = 300;
+const MAX_ADDITIONAL_POINTS = 200;
 
 const RAW_EVENT_SELECTION = `
   reportData {
