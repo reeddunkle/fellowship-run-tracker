@@ -50,7 +50,7 @@ import {
   ConfigurationSortOptionContent,
   DEFAULT_CONFIGURATION_SORT,
   getConfigurationSortOption,
-} from "./configuration-sort";
+} from "./configuration-sort.tsx";
 
 export function ConfigurationSidebar() {
   const [sort, setSort] = useState<ConfigurationSort>(

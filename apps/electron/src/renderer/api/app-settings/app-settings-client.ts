@@ -2,7 +2,7 @@ import * as E from "effect/Effect";
 
 import { type AppSettingsApiUpdate } from "@frt/shared/app-settings/app-settings-api-schema.ts";
 
-import { AppApiClient } from "@/renderer/services/app-api-client/app-api-client";
+import { AppApiClient } from "@/renderer/services/app-api-client/app-api-client.ts";
 
 export const getAppSettings = E.fn("AppSettingsApiClient.getAppSettings")(
   function* () {

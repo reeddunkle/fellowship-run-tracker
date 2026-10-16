@@ -2,7 +2,7 @@ import * as E from "effect/Effect";
 
 import { type StartTrackingApiRequest } from "@frt/api-contract/application/fellowship-tracker/tracking-api-schema.ts";
 
-import { AppApiClient } from "@/renderer/services/app-api-client/app-api-client";
+import { AppApiClient } from "@/renderer/services/app-api-client/app-api-client.ts";
 
 export const startTracking = E.fn("TrackingApiClient.startTracking")(function* (
   request: StartTrackingApiRequest,

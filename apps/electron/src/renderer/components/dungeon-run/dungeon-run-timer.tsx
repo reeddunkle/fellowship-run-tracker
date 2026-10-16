@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { TimerDisplay } from "@frt/ui/composites/time.tsx";
 
-import { formatDuration } from "@/renderer/components/dungeon-run/helpers/dungeon-run-time";
+import { formatDuration } from "@/renderer/components/dungeon-run/helpers/dungeon-run-time.ts";
 
 const TIMER_INTERVAL_MILLISECONDS = 1000 / 30;
 

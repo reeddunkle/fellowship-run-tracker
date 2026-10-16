@@ -10,7 +10,7 @@ import { RendererInvariantError } from "@/errors/renderer-invariant-error.ts";
 import { primeAppStateQueries } from "@/renderer/api/app-state/app-state-queries.ts";
 import { configureRendererErrorLogging } from "@/renderer/logging/renderer-error-logging.ts";
 import { queryClient } from "@/renderer/query/query-client.ts";
-import { router } from "@/renderer/router/router";
+import { router } from "@/renderer/router/router.ts";
 import { browserRuntime } from "@/renderer/runtimes/browser-runtime.ts";
 import { backgroundJobEventStore } from "@/renderer/stores/background-job/background-job-event-store.ts";
 import { dungeonRunEventStore } from "@/renderer/stores/dungeon-run/dungeon-run-event-store.ts";

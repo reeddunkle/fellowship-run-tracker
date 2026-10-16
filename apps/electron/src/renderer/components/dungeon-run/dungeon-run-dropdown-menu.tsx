@@ -24,7 +24,7 @@ import {
   useDungeonRunComparisonGroup,
   useDungeonRunTimeColumns,
 } from "@/renderer/api/app-state/app-state-queries.ts";
-import { useDetachedWindow } from "@/renderer/components/detached-window/detached-window-provider";
+import { useDetachedWindow } from "@/renderer/components/detached-window/detached-window-provider.tsx";
 import { useDungeonRunTimeColumnsForm } from "@/renderer/components/dungeon-run/dungeon-run-time-columns-form.ts";
 import { DUNGEON_RUN_COMPARISON_GROUP_OPTIONS } from "@/renderer/components/dungeon-run/helpers/dungeon-run-comparison-group.ts";
 

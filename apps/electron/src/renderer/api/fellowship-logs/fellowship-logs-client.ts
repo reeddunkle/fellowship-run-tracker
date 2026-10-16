@@ -6,7 +6,7 @@ import {
   type FellowshipLogsApiQueueDungeonRunImportOptions,
 } from "@frt/shared/fellowship-logs/fellowship-logs-api-schema.ts";
 
-import { AppApiClient } from "@/renderer/services/app-api-client/app-api-client";
+import { AppApiClient } from "@/renderer/services/app-api-client/app-api-client.ts";
 
 export const getRateLimitData = E.fn(
   "FellowshipLogsApiClient.getRateLimitData",

@@ -2,7 +2,7 @@ import * as E from "effect/Effect";
 
 import { type DungeonId } from "@frt/shared/fellowship/validation/fellowship-common.ts";
 
-import { AppApiClient } from "@/renderer/services/app-api-client/app-api-client";
+import { AppApiClient } from "@/renderer/services/app-api-client/app-api-client.ts";
 
 type EncounterIdArgs = {
   readonly dungeonId: DungeonId;

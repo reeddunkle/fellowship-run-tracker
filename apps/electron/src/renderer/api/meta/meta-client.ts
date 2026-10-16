@@ -1,6 +1,6 @@
 import * as E from "effect/Effect";
 
-import { AppApiClient } from "@/renderer/services/app-api-client/app-api-client";
+import { AppApiClient } from "@/renderer/services/app-api-client/app-api-client.ts";
 
 export const getMeta = E.fn("MetaApiClient.getMeta")(function* () {
   const client = yield* AppApiClient;

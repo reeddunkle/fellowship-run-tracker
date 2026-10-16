@@ -55,9 +55,10 @@ export default defineConfig({
       },
     },
   ],
-  plugins: [],
+  plugins: ["import"],
   rules: {
     "comment-policy/require-comment-marker": "error",
+    "import/extensions": ["error", "always", { ignorePackages: true }],
     "shadcn/no-arbitrary-values": ["warn", { allow: ["layout"] }],
     "shadcn/no-inline-styles": "warn",
     "shadcn/no-raw-colors": "warn",

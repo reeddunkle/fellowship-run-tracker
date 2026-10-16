@@ -2,7 +2,7 @@ import * as E from "effect/Effect";
 
 import { type BackgroundJobId } from "@frt/shared/background-job/background-job-id-schema.ts";
 
-import { AppApiClient } from "@/renderer/services/app-api-client/app-api-client";
+import { AppApiClient } from "@/renderer/services/app-api-client/app-api-client.ts";
 
 export type BackgroundJobCommandArgs = {
   readonly id: BackgroundJobId;

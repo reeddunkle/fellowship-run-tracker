@@ -8,8 +8,8 @@ import { QueryClientOperationError } from "@/errors/query-client-operation-error
 import { getAppSettings } from "@/renderer/api/app-settings/app-settings-client.ts";
 import { getConfigurationsQueryOptions } from "@/renderer/api/configuration/configuration-queries.ts";
 import { getMetaQueryOptions } from "@/renderer/api/meta/meta-queries.ts";
-import { RootLayout } from "@/renderer/components/core/root-layout";
-import { type RouterContext } from "@/renderer/router/router-context";
+import { RootLayout } from "@/renderer/components/core/root-layout.tsx";
+import { type RouterContext } from "@/renderer/router/router-context.ts";
 import { FellowshipCatalogData } from "@/renderer/services/fellowship-catalog-data/fellowship-catalog-data-service.ts";
 
 export const Route = createRootRouteWithContext<RouterContext>()({

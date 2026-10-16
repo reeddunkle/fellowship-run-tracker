@@ -95,6 +95,9 @@
           }
         }
       },
+      "correctness": {
+        "useImportExtensions": "on"
+      },
       "nursery": {
         "noContinue": "on",
         "noShadow": "on"

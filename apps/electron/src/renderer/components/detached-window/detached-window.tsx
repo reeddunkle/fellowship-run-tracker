@@ -3,7 +3,7 @@ import { type ReactNode, useCallback } from "react";
 import { createPortal } from "react-dom";
 
 import * as windowClient from "@/renderer/api/electron-ipc/window/window-client.ts";
-import { useDetachedWindow } from "@/renderer/components/detached-window/detached-window-provider";
+import { useDetachedWindow } from "@/renderer/components/detached-window/detached-window-provider.tsx";
 import {
   makeScopedBrowserRunner,
   type ScopedBrowserRunner,

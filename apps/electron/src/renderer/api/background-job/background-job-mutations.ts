@@ -12,7 +12,7 @@ import {
 } from "@frt/shared/background-job/background-job-api-schema.ts";
 
 import { browserRuntime } from "@/renderer/runtimes/browser-runtime.ts";
-import { type AppApiClient } from "@/renderer/services/app-api-client/app-api-client";
+import { type AppApiClient } from "@/renderer/services/app-api-client/app-api-client.ts";
 
 import {
   type BackgroundJobCommandArgs,

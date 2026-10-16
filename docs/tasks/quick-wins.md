@@ -21,7 +21,7 @@ Each item is small and independent. Check an item off when it lands. If an item 
 - [x] `file-monitor-test-harness.ts` exports `FileMonitorTestDependenciesLive = NodePlatformLayer`, and a local in the same file has the same name with a different meaning. Rename one of them.
 - [x] `classify-tracking-failure.ts` uses `Match` for a single case. Replace it with an `if`, or leave it for [extract-tracking-session.md](extract-tracking-session.md).
 - [x] Eight provider files use `<Ctx.Provider value>`, and two files use the React 19 form `<Ctx value>` (`detached-window-provider.tsx` and `dungeon-run-table.tsx`). Pick one.
-- [ ] Add the missing `.ts` extension to the `app-api-client` import in the 12 `*-client.ts` files and `background-job-mutations.ts`, and to the imports in `renderer/main.tsx`, `dashboard-page.tsx`, and `dungeon-run-timer.tsx`.
+- [x] Add the missing `.ts` extension to the `app-api-client` import in the 12 `*-client.ts` files and `background-job-mutations.ts`, and to the imports in `renderer/main.tsx`, `dashboard-page.tsx`, and `dungeon-run-timer.tsx`.
 - [x] `renderer/main.tsx` has a `QueryClientProvider` import that splits the import block.
 - [x] Remove the six `errors.length > 0` guards around `FieldError`, five in `settings-editor.tsx` and one in `import-url-form.tsx`. `FieldError` already returns null when there are no errors. This overlaps with [move-settings-to-react-query.md](move-settings-to-react-query.md).
 - [ ] Most `renderer/api/*/*-client.ts` files contain one to seven methods that each only forward to `AppApiClient`. Consider having the query and mutation modules call `AppApiClient` directly.
@@ -34,6 +34,6 @@ Each item is small and independent. Check an item off when it lands. If an item 
 
 ## Reviewed and left as is
 
-- Biome, oxlint, and Prettier each have a distinct job. Prettier formats only embedded SQL, oxlint runs only the comment-policy and shadcn plugins, and Biome does the rest.
+- Biome, oxlint, and Prettier each have a distinct job. Prettier formats only embedded SQL, oxlint runs the comment-policy and shadcn plugins plus `import/extensions` (which, unlike Biome's `useImportExtensions`, also catches `@/` alias imports), and Biome does the rest.
 - The configuration DAO (with `configuration-persistence.ts`) and the background-job DAO already hide their complexity behind small interfaces.
 - Both `FellowshipLogs.queueDungeonRunImport` and the importer service check whether a run is already imported, and both checks stay. The queue check makes the import route respond 409, which the import confirmation card shows as "This run has already been imported." The importer's check guards the write.

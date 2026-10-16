@@ -7,7 +7,7 @@ import * as Socket from "effect/socket/Socket";
 import { RendererLoggerLayer } from "@/renderer/logging/renderer-logger-layer.ts";
 import { AppApiClientLayer } from "@/renderer/services/app-api-client/app-api-client.ts";
 import { BrowserAppStateLayer } from "@/renderer/services/app-state/browser-app-state-layer.ts";
-import { FellowshipCatalogDataLayer } from "@/renderer/services/fellowship-catalog-data/fellowship-catalog-data-service";
+import { FellowshipCatalogDataLayer } from "@/renderer/services/fellowship-catalog-data/fellowship-catalog-data-service.ts";
 
 const AppApiClientWithDependencies = AppApiClientLayer.pipe(
   Layer.provide(FetchHttpClient.layer),
