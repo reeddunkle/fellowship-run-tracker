@@ -20,8 +20,6 @@
     "apps/api": {
       // Every file is a package entry via the `./*.ts` wildcard export; still
       // report exports no other file or workspace uses.
-      // Reference list of every Fellowship combat log event; kept on purpose.
-      "ignore": ["src/services/fellowship/constants/all-fellowship-events.ts"],
       "includeEntryExports": true,
       "project": ["src/**/*.ts"]
     },

@@ -6,8 +6,8 @@ Each item is small and independent. Check an item off when it lands. If an item 
 
 ## Dead code and stale scripts
 
-- [ ] Delete `tools/dev-scripts/src/get-event-type-set.js`, or make it a CLI subcommand next to `filter-log` and `split-log`. Nothing references it, and its usage message names the wrong file (`list-event-types.js`).
-- [ ] Remove the root `format:sql` script. It runs `prettier --write` with no target, and nothing references it. `format:db-sql` is a pass-through alias.
+- [x] Delete `tools/dev-scripts/src/get-event-type-set.js`, or make it a CLI subcommand next to `filter-log` and `split-log`. Nothing references it, and its usage message names the wrong file (`list-event-types.js`).
+- [x] Remove the root `format:sql` script. It runs `prettier --write` with no target, and nothing references it. `format:db-sql` is a pass-through alias.
 - [ ] Delete the unused `DungeonRunState` fields from `DungeonRunProvider`'s context: `eventConnectionState: DISCONNECTED`, `history: null`, `runState: null`, and `comparisonGroup`. `useDungeonRunContext` reads only the four milestone-expansion fields. The value for `DungeonRunSourcesContext` is a new object on every render, so memoize it too.
 
 ## Duplication
@@ -15,7 +15,7 @@ Each item is small and independent. Check an item off when it lands. If an item 
 - [ ] `tests/integration/application/tracking/fellowship-tracker-livesplit/configuration.ts` and `fellowship-tracker-websocket/basic-test/configuration.ts` are identical (116 lines each). Share one file.
 - [ ] Both `FellowshipLogs.queueDungeonRunImport` and the importer service check whether a run is already imported. Keep the importer's check, since it runs right before the write.
 - [ ] `dungeon-run-websocket-broadcaster.test.ts` calls `makeApiServerTestLayer(ApiServicesTest)`, which is the same as the exported `ApiServerTest`.
-- [ ] `ALL_FELLOWSHIP_EVENT` in `apps/api` partly duplicates `FELLOWSHIP_EVENT` in shared, and knip ignores it.
+- [x] `ALL_FELLOWSHIP_EVENT` in `apps/api` partly duplicates `FELLOWSHIP_EVENT` in shared, and knip ignores it.
 
 ## Naming and conventions
 

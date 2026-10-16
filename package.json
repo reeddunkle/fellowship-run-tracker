@@ -28,8 +28,6 @@
     "fellowship-logs:probe-encounters": "pnpm cli probe-fellowship-logs-encounters",
     "fellowship-logs:validate-event-costs": "pnpm cli validate-fellowship-logs-event-costs",
     "format:db-sql:prettier": "pnpm -F @frt/db format:sql:prettier",
-    "format:db-sql": "pnpm -F @frt/db format:sql",
-    "format:sql": "prettier --write",
     "format:test-sql": "pnpm -F @frt/api format:test-sql",
     "generate:catalog-checksums": "pnpm -F @frt/dev-scripts generate:catalog-checksums",
     "generate:json-schemas": "pnpm -F @frt/json-schemas generate",
