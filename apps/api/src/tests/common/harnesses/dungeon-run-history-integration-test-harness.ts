@@ -1,3 +1,5 @@
+import * as NodeCrypto from "@effect/platform-node/NodeCrypto";
+import * as Crypto from "effect/Crypto";
 import type * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -24,7 +26,11 @@ export function makeDungeonRunHistoryIntegrationTestHarness({
     Layer.provide(PersistenceTestLive),
   );
 
-  const layer = Layer.mergeAll(PersistenceTestLive, DungeonRunHistoryTestLive);
+  const layer = Layer.mergeAll(
+    PersistenceTestLive,
+    DungeonRunHistoryTestLive,
+    NodeCrypto.layer,
+  );
 
   return {
     layer,
@@ -57,9 +63,10 @@ export const seedDungeonRunWithObservations = E.fnUntraced(function* ({
   const dungeonRunStore = yield* DungeonRunStore;
 
   if (!isOwnRun) {
+    const { randomUUIDv4 } = yield* Crypto.Crypto;
     const reportCode = yield* Schema.decodeEffect(
       FellowshipLogsReportCodeSchema,
-    )(crypto.randomUUID());
+    )(yield* randomUUIDv4);
 
     return yield* dungeonRunStore.importFellowshipLogs({
       dungeonId,
