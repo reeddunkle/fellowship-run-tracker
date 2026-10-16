@@ -131,28 +131,35 @@ function addEventsToInventory(
   state: ProbeState,
   events: ReadonlyArray<unknown>,
 ) {
-  return events.reduce<ProbeState>((currentState, event) => {
-    const type = getEventType(event);
-    const fields = Array.from(
-      new Set([
-        ...(currentState.fieldsByType[type] ?? []),
-        ...getEventFields(event),
-      ]),
-    ).toSorted();
+  const fieldsByType = new Map(
+    Object.entries(state.fieldsByType).map(([type, fields]) => {
+      return [type, new Set(fields)];
+    }),
+  );
+  const typeCounts = new Map(Object.entries(state.typeCounts));
 
-    return {
-      ...currentState,
-      eventCount: currentState.eventCount + 1,
-      fieldsByType: {
-        ...currentState.fieldsByType,
-        [type]: fields,
-      },
-      typeCounts: {
-        ...currentState.typeCounts,
-        [type]: (currentState.typeCounts[type] ?? 0) + 1,
-      },
-    };
-  }, state);
+  for (const event of events) {
+    const type = getEventType(event);
+    const fields = fieldsByType.get(type) ?? new Set<string>();
+
+    for (const field of getEventFields(event)) {
+      fields.add(field);
+    }
+
+    fieldsByType.set(type, fields);
+    typeCounts.set(type, (typeCounts.get(type) ?? 0) + 1);
+  }
+
+  return {
+    ...state,
+    eventCount: state.eventCount + events.length,
+    fieldsByType: Object.fromEntries(
+      Array.from(fieldsByType, ([type, fields]) => {
+        return [type, Array.from(fields).toSorted()];
+      }),
+    ),
+    typeCounts: Object.fromEntries(typeCounts),
+  };
 }
 
 const probeFellowshipLogsEncounters = E.fn("probeFellowshipLogsEncounters")(

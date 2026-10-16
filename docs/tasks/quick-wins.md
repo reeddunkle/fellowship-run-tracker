@@ -29,9 +29,9 @@ Each item is small and independent. Check an item off when it lands. If an item 
 
 ## Config and checks
 
-- [ ] The root `tsconfig.json` references leave out `packages/db`, `packages/json-schemas`, and `apps/cli`. `tsconfig.packages.json` includes them.
-- [ ] Nothing checks that `packages/json-schemas/generated/milestone-configuration.json` or the catalog checksums are up to date. Add a step to `check` that regenerates them and runs `git diff --exit-code`.
-- [ ] `pnpm run lint` fails on a `lint/performance/noAccumulatingSpread` warning in `addEventsToInventory` in `apps/cli/src/commands/probe-fellowship-logs-encounters-command.ts`. Its `reduce` spreads `currentState`, `fieldsByType`, and `typeCounts` into a new object for every event. Accumulate into local `Map`s or mutable records and build the `ProbeState` once at the end.
+- [x] The root `tsconfig.json` references leave out `packages/db`, `packages/json-schemas`, and `apps/cli`. `tsconfig.packages.json` includes them.
+- [x] Nothing checks that `packages/json-schemas/generated/milestone-configuration.json` or the catalog checksums are up to date. Add a step to `check` that regenerates them and runs `git diff --exit-code`.
+- [x] `pnpm run lint` fails on a `lint/performance/noAccumulatingSpread` warning in `addEventsToInventory` in `apps/cli/src/commands/probe-fellowship-logs-encounters-command.ts`. Its `reduce` spreads `currentState`, `fieldsByType`, and `typeCounts` into a new object for every event. Accumulate into local `Map`s or mutable records and build the `ProbeState` once at the end.
 
 ## Reviewed and left as is
 
