@@ -47,7 +47,7 @@ Review tasks come before the tasks that existed before the review.
 9. [decide-wire-schema-placement.md](decide-wire-schema-placement.md). Worth exploring. Ends in an ADR.
 10. [shared-boilerplate-helpers.md](shared-boilerplate-helpers.md). Worth exploring. Each section can land on its own.
 11. [clean-up-detached-window.md](clean-up-detached-window.md). Worth exploring.
-12. [quick-wins.md](quick-wins.md). Small independent items. Pick these up between larger tasks.
+12. [renderer-api-client-seam.md](renderer-api-client-seam.md). Worth exploring. Split out of the quick wins.
 13. [electron-app-lifecycle-module.md](electron-app-lifecycle-module.md). Speculative.
 
 ### Existing tasks
@@ -62,6 +62,7 @@ Review tasks come before the tasks that existed before the review.
 ## Dependencies
 
 - Task 5 and task 6 should agree on how the renderer runs mutations.
+- Task 12 depends on how tasks 5 and 6 settle the renderer's use of react-query.
 - Task 2 and task 16 change the same fixture-reading code. Do one before the other, not in parallel.
 
 ## When a task is finished or rejected
