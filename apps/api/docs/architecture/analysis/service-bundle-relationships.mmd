@@ -6,6 +6,14 @@ flowchart LR
   ApiRuntimeLayer["ApiRuntimeLayer"]
   FellowshipTracker_layer["FellowshipTracker.layer"]
   BackgroundJobQueue_layer["BackgroundJobQueue.layer"]
+  UnitCatalog_layer["UnitCatalog.layer"]
+  FellowshipLogs_layer["FellowshipLogs.layer"]
+  EncounterCatalog_layer["EncounterCatalog.layer"]
+  DungeonRunHistory_layer["DungeonRunHistory.layer"]
+  DungeonCatalog_layer["DungeonCatalog.layer"]
+  ConfigurationLibrary_layer["ConfigurationLibrary.layer"]
+  AppSettings_layer["AppSettings.layer"]
+  AbilityCatalog_layer["AbilityCatalog.layer"]
   LiveSplit_layer -->|"strict subset · 1 shared"| Layer_provideMerge_BackgroundJobQueue_layer_
   LiveSplit_layer -->|"strict subset · 1 shared"| ApiServicesLayer
   LiveSplit_layer -->|"strict subset · 1 shared"| ApiServicesWithBackgroundJobQueueLayer
@@ -14,9 +22,41 @@ flowchart LR
   BackgroundJobQueue_layer -->|"strict subset · 1 shared"| Layer_provideMerge_BackgroundJobQueue_layer_
   BackgroundJobQueue_layer -->|"strict subset · 1 shared"| ApiServicesWithBackgroundJobQueueLayer
   BackgroundJobQueue_layer -->|"strict subset · 1 shared"| ApiRuntimeLayer
+  UnitCatalog_layer -->|"strict subset · 1 shared"| Layer_provideMerge_BackgroundJobQueue_layer_
+  FellowshipLogs_layer -->|"strict subset · 1 shared"| Layer_provideMerge_BackgroundJobQueue_layer_
+  EncounterCatalog_layer -->|"strict subset · 1 shared"| Layer_provideMerge_BackgroundJobQueue_layer_
+  DungeonRunHistory_layer -->|"strict subset · 1 shared"| Layer_provideMerge_BackgroundJobQueue_layer_
+  DungeonCatalog_layer -->|"strict subset · 1 shared"| Layer_provideMerge_BackgroundJobQueue_layer_
+  ConfigurationLibrary_layer -->|"strict subset · 1 shared"| Layer_provideMerge_BackgroundJobQueue_layer_
+  AppSettings_layer -->|"strict subset · 1 shared"| Layer_provideMerge_BackgroundJobQueue_layer_
+  AbilityCatalog_layer -->|"strict subset · 1 shared"| Layer_provideMerge_BackgroundJobQueue_layer_
   ApiServicesLayer -->|"strict subset · 10 shared"| Layer_provideMerge_BackgroundJobQueue_layer_
   Layer_provideMerge_BackgroundJobQueue_layer_ ---|"equal · 11 services"| ApiServicesWithBackgroundJobQueueLayer
   Layer_provideMerge_BackgroundJobQueue_layer_ -->|"strict subset · 11 shared"| ApiRuntimeLayer
+  UnitCatalog_layer -->|"strict subset · 1 shared"| ApiServicesLayer
+  UnitCatalog_layer -->|"strict subset · 1 shared"| ApiServicesWithBackgroundJobQueueLayer
+  UnitCatalog_layer -->|"strict subset · 1 shared"| ApiRuntimeLayer
+  FellowshipLogs_layer -->|"strict subset · 1 shared"| ApiServicesLayer
+  FellowshipLogs_layer -->|"strict subset · 1 shared"| ApiServicesWithBackgroundJobQueueLayer
+  FellowshipLogs_layer -->|"strict subset · 1 shared"| ApiRuntimeLayer
+  EncounterCatalog_layer -->|"strict subset · 1 shared"| ApiServicesLayer
+  EncounterCatalog_layer -->|"strict subset · 1 shared"| ApiServicesWithBackgroundJobQueueLayer
+  EncounterCatalog_layer -->|"strict subset · 1 shared"| ApiRuntimeLayer
+  DungeonRunHistory_layer -->|"strict subset · 1 shared"| ApiServicesLayer
+  DungeonRunHistory_layer -->|"strict subset · 1 shared"| ApiServicesWithBackgroundJobQueueLayer
+  DungeonRunHistory_layer -->|"strict subset · 1 shared"| ApiRuntimeLayer
+  DungeonCatalog_layer -->|"strict subset · 1 shared"| ApiServicesLayer
+  DungeonCatalog_layer -->|"strict subset · 1 shared"| ApiServicesWithBackgroundJobQueueLayer
+  DungeonCatalog_layer -->|"strict subset · 1 shared"| ApiRuntimeLayer
+  ConfigurationLibrary_layer -->|"strict subset · 1 shared"| ApiServicesLayer
+  ConfigurationLibrary_layer -->|"strict subset · 1 shared"| ApiServicesWithBackgroundJobQueueLayer
+  ConfigurationLibrary_layer -->|"strict subset · 1 shared"| ApiRuntimeLayer
+  AppSettings_layer -->|"strict subset · 1 shared"| ApiServicesLayer
+  AppSettings_layer -->|"strict subset · 1 shared"| ApiServicesWithBackgroundJobQueueLayer
+  AppSettings_layer -->|"strict subset · 1 shared"| ApiRuntimeLayer
+  AbilityCatalog_layer -->|"strict subset · 1 shared"| ApiServicesLayer
+  AbilityCatalog_layer -->|"strict subset · 1 shared"| ApiServicesWithBackgroundJobQueueLayer
+  AbilityCatalog_layer -->|"strict subset · 1 shared"| ApiRuntimeLayer
   ApiServicesLayer -->|"strict subset · 10 shared"| ApiServicesWithBackgroundJobQueueLayer
   ApiServicesLayer -->|"strict subset · 10 shared"| ApiRuntimeLayer
   ApiServicesWithBackgroundJobQueueLayer -->|"strict subset · 11 shared"| ApiRuntimeLayer

@@ -29,7 +29,7 @@
     "rootDir": "src"
   },
 
-  "references": [{ "path": "../shared" }, { "path": "../api-contract" }],
+  "references": [{ "path": "../shared" }],
 
   "include": ["src/**/*.ts", "src/catalogs/unit/fellowship-unit-catalog.json"]
 }

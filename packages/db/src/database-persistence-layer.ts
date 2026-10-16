@@ -8,20 +8,17 @@ import { BackgroundJobDAO } from "@frt/db/daos/background-job/background-job-dao
 import { CatalogSyncDAO } from "@frt/db/daos/catalog-sync/catalog-sync-dao.ts";
 import { ConfigurationDAO } from "@frt/db/daos/configuration/configuration-dao.ts";
 import { DungeonDAO } from "@frt/db/daos/dungeon/dungeon-dao.ts";
-import { DungeonRunDAO } from "@frt/db/daos/dungeon-run/dungeon-run-dao.ts";
-import { DungeonRunObservationDAO } from "@frt/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
 import { EncounterDAO } from "@frt/db/daos/encounter/encounter-dao.ts";
 import { FellowshipLogsCredentialDAO } from "@frt/db/daos/fellowship-logs-credential/fellowship-logs-credential-dao.ts";
-import { FellowshipLogsDungeonRunDAO } from "@frt/db/daos/fellowship-logs-dungeon-run/fellowship-logs-dungeon-run-dao.ts";
 import { FellowshipLogsRequestDAO } from "@frt/db/daos/fellowship-logs-request/fellowship-logs-request-dao.ts";
 import { FellowshipLogsResponseDAO } from "@frt/db/daos/fellowship-logs-response/fellowship-logs-response-dao.ts";
 import { LiveSplitSettingDAO } from "@frt/db/daos/live-split-setting/live-split-setting-dao.ts";
-import { LocalLogDungeonRunDAO } from "@frt/db/daos/local-log-dungeon-run/local-log-dungeon-run-dao.ts";
 import { UnitDAO } from "@frt/db/daos/unit/unit-dao.ts";
 import { makeAnalyticsDatabaseLayer } from "@frt/db/databases/analytics-database.ts";
 import { makeFellowshipLogsCacheDatabaseLayer } from "@frt/db/databases/fellowship-logs-cache-database.ts";
 import { makeMainDatabaseLayer } from "@frt/db/databases/main-database.ts";
 import { makeStateDatabaseLayer } from "@frt/db/databases/state-database.ts";
+import { DungeonRunStore } from "@frt/db/stores/dungeon-run/dungeon-run-store.ts";
 import { type DatabaseOptions } from "@frt/db/types/database-options.ts";
 
 const MainDatabaseDAOsLayer = Layer.mergeAll(
@@ -30,13 +27,9 @@ const MainDatabaseDAOsLayer = Layer.mergeAll(
   CatalogSyncDAO.layer,
   ConfigurationDAO.layer,
   DungeonDAO.layer,
-  DungeonRunDAO.layer,
-  DungeonRunObservationDAO.layer,
   EncounterDAO.layer,
   FellowshipLogsCredentialDAO.layer,
-  FellowshipLogsDungeonRunDAO.layer,
   LiveSplitSettingDAO.layer,
-  LocalLogDungeonRunDAO.layer,
   UnitDAO.layer,
 );
 
@@ -46,9 +39,10 @@ export function makeDatabasePersistenceLayer({
   fellowshipLogsCacheDatabaseFilename,
   stateDatabaseFilename,
 }: DatabaseOptions) {
-  const MainPersistenceLayer = MainDatabaseDAOsLayer.pipe(
-    Layer.provideMerge(makeMainDatabaseLayer(databaseFilename)),
-  );
+  const MainPersistenceLayer = Layer.mergeAll(
+    MainDatabaseDAOsLayer,
+    DungeonRunStore.layer,
+  ).pipe(Layer.provideMerge(makeMainDatabaseLayer(databaseFilename)));
 
   const StatePersistenceLayer = BackgroundJobDAO.layer.pipe(
     Layer.provideMerge(makeStateDatabaseLayer(stateDatabaseFilename)),

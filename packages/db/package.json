@@ -18,7 +18,6 @@
   "dependencies": {
     "@effect/platform-node": "catalog:effect",
     "@effect/sql-sqlite-node": "catalog:effect",
-    "@frt/api-contract": "workspace:*",
     "@frt/shared": "workspace:*",
     "effect": "catalog:effect"
   },

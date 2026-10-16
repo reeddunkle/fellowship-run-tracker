@@ -17,7 +17,6 @@ import {
   FellowshipTrackerConfigurationNotFoundError,
 } from "@frt/api/errors/fellowship-tracker-error.ts";
 import { withLinkedRootSpan } from "@frt/api/logging/with-linked-root-span.ts";
-import { DungeonRunRepository } from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
 import {
   createInitialDungeonRunProcessingState,
   interruptDungeonRunProcessingState,
@@ -25,7 +24,7 @@ import {
 import { makeFellowshipLiveLogFromEvents } from "@frt/api/services/fellowship/fellowship-live-log.ts";
 import { Fellowship } from "@frt/api/services/fellowship/fellowship-service.ts";
 import { ConfigurationDAO } from "@frt/db/daos/configuration/configuration-dao.ts";
-import { DungeonRunObservationDAO } from "@frt/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
+import { DungeonRunStore } from "@frt/db/stores/dungeon-run/dungeon-run-store.ts";
 
 import { makeFellowshipTrackerEventProcessor } from "./fellowship-tracker-event-processor.ts";
 import {
@@ -36,8 +35,7 @@ import { makeFellowshipTrackerState } from "./fellowship-tracker-state.ts";
 
 export const makeFellowshipTracker = E.gen(function* () {
   const configurationDAO = yield* ConfigurationDAO;
-  const dungeonRunObservationDAO = yield* DungeonRunObservationDAO;
-  const dungeonRunRepository = yield* DungeonRunRepository;
+  const dungeonRunStore = yield* DungeonRunStore;
   const dungeonRunWebSocketBroadcaster = yield* DungeonRunWebSocketBroadcaster;
   const fellowship = yield* Fellowship;
   const scope = yield* E.scope;
@@ -68,13 +66,7 @@ export const makeFellowshipTracker = E.gen(function* () {
       source._tag === "Persisted"
         ? yield* makeLocalLogDungeonRunPersistence({
             configuration,
-          }).pipe(
-            E.provideService(
-              DungeonRunObservationDAO,
-              dungeonRunObservationDAO,
-            ),
-            E.provideService(DungeonRunRepository, dungeonRunRepository),
-          )
+          }).pipe(E.provideService(DungeonRunStore, dungeonRunStore))
         : undefined;
 
     const dungeonRunStateRef = yield* Ref.make(

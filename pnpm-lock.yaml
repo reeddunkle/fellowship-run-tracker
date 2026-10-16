@@ -650,9 +650,6 @@ importers:
       '@effect/sql-sqlite-node':
         specifier: catalog:effect
         version: 4.0.1(effect@4.0.1)
-      '@frt/api-contract':
-        specifier: workspace:*
-        version: link:../api-contract
       '@frt/shared':
         specifier: workspace:*
         version: link:../shared

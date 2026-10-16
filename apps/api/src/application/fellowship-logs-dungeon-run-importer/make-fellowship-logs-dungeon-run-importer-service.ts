@@ -2,15 +2,15 @@ import * as E from "effect/Effect";
 import * as Option from "effect/Option";
 
 import { FellowshipLogsDungeonRunImportAlreadyImportedError } from "@frt/api/errors/fellowship-logs-dungeon-run-import-error.ts";
-import { DungeonRunRepository } from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
 import { streamFellowshipLogsGatewayEvents } from "@frt/api/services/fellowship-logs-gateway/events/stream-fellowship-logs-gateway-events.ts";
 import { FellowshipLogsGateway } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
+import { DungeonRunStore } from "@frt/db/stores/dungeon-run/dungeon-run-store.ts";
 
 import { type FellowshipLogsDungeonRunImporterShape } from "./fellowship-logs-dungeon-run-importer-service.ts";
 import { processFellowshipLogsDungeonRun } from "./process-fellowship-logs-dungeon-run.ts";
 
 export const makeFellowshipLogsDungeonRunImporter = E.gen(function* () {
-  const dungeonRunRepository = yield* DungeonRunRepository;
+  const dungeonRunStore = yield* DungeonRunStore;
   const fellowshipLogsGateway = yield* FellowshipLogsGateway;
 
   const importReport: FellowshipLogsDungeonRunImporterShape["importReport"] =
@@ -20,7 +20,7 @@ export const makeFellowshipLogsDungeonRunImporter = E.gen(function* () {
       onProgress,
       reportCode,
     }) {
-      const existing = yield* dungeonRunRepository.getFellowshipLogsDungeonRun({
+      const existing = yield* dungeonRunStore.getFellowshipLogsRun({
         fightId,
         reportCode,
       });
@@ -45,23 +45,22 @@ export const makeFellowshipLogsDungeonRunImporter = E.gen(function* () {
         reportCode,
       });
 
-      const dungeonRun =
-        yield* dungeonRunRepository.createFellowshipLogsDungeonRun({
-          dungeonId: processedRun.dungeonId,
-          dungeonLevel: processedRun.dungeonLevel,
-          endedAt: processedRun.endedAt,
-          fightId,
-          isOwnRun,
-          observations: processedRun.observations.map((observation) => {
-            return {
-              observedAt: observation.timestamp,
-              targetId: observation.targetId,
-              type: observation.type,
-            };
-          }),
-          reportCode,
-          startedAt: processedRun.startedAt,
-        });
+      const dungeonRun = yield* dungeonRunStore.importFellowshipLogs({
+        dungeonId: processedRun.dungeonId,
+        dungeonLevel: processedRun.dungeonLevel,
+        endedAt: processedRun.endedAt,
+        fightId,
+        isOwnRun,
+        observations: processedRun.observations.map((observation) => {
+          return {
+            observedAt: observation.timestamp,
+            targetId: observation.targetId,
+            type: observation.type,
+          };
+        }),
+        reportCode,
+        startedAt: processedRun.startedAt,
+      });
 
       yield* E.logInfo("Imported Fellowship Logs dungeon run.", {
         dungeonId: processedRun.dungeonId,

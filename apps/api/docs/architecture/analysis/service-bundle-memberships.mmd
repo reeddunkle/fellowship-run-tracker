@@ -6,6 +6,14 @@ flowchart LR
   ApiRuntimeLayer["ApiRuntimeLayer"]
   FellowshipTracker_layer["FellowshipTracker.layer"]
   BackgroundJobQueue_layer["BackgroundJobQueue.layer"]
+  AbilityCatalog_layer["AbilityCatalog.layer"]
+  AppSettings_layer["AppSettings.layer"]
+  ConfigurationLibrary_layer["ConfigurationLibrary.layer"]
+  DungeonCatalog_layer["DungeonCatalog.layer"]
+  DungeonRunHistory_layer["DungeonRunHistory.layer"]
+  EncounterCatalog_layer["EncounterCatalog.layer"]
+  FellowshipLogs_layer["FellowshipLogs.layer"]
+  UnitCatalog_layer["UnitCatalog.layer"]
   LiveSplit["LiveSplit"]
   FellowshipTracker["FellowshipTracker"]
   BackgroundJobQueue["BackgroundJobQueue"]
@@ -30,10 +38,12 @@ flowchart LR
   ApiServicesWithBackgroundJobQueueLayer -.-> BackgroundJobQueue
   ApiRuntimeLayer -.-> BackgroundJobQueue
   Layer_provideMerge_BackgroundJobQueue_layer_ -.-> AbilityCatalog
+  AbilityCatalog_layer -.-> AbilityCatalog
   ApiServicesLayer -.-> AbilityCatalog
   ApiServicesWithBackgroundJobQueueLayer -.-> AbilityCatalog
   ApiRuntimeLayer -.-> AbilityCatalog
   Layer_provideMerge_BackgroundJobQueue_layer_ -.-> AppSettings
+  AppSettings_layer -.-> AppSettings
   ApiServicesLayer -.-> AppSettings
   ApiServicesWithBackgroundJobQueueLayer -.-> AppSettings
   ApiRuntimeLayer -.-> AppSettings
@@ -42,26 +52,32 @@ flowchart LR
   ApiServicesWithBackgroundJobQueueLayer -.-> BackgroundJob
   ApiRuntimeLayer -.-> BackgroundJob
   Layer_provideMerge_BackgroundJobQueue_layer_ -.-> ConfigurationLibrary
+  ConfigurationLibrary_layer -.-> ConfigurationLibrary
   ApiServicesLayer -.-> ConfigurationLibrary
   ApiServicesWithBackgroundJobQueueLayer -.-> ConfigurationLibrary
   ApiRuntimeLayer -.-> ConfigurationLibrary
   Layer_provideMerge_BackgroundJobQueue_layer_ -.-> DungeonCatalog
+  DungeonCatalog_layer -.-> DungeonCatalog
   ApiServicesLayer -.-> DungeonCatalog
   ApiServicesWithBackgroundJobQueueLayer -.-> DungeonCatalog
   ApiRuntimeLayer -.-> DungeonCatalog
   Layer_provideMerge_BackgroundJobQueue_layer_ -.-> DungeonRunHistory
+  DungeonRunHistory_layer -.-> DungeonRunHistory
   ApiServicesLayer -.-> DungeonRunHistory
   ApiServicesWithBackgroundJobQueueLayer -.-> DungeonRunHistory
   ApiRuntimeLayer -.-> DungeonRunHistory
   Layer_provideMerge_BackgroundJobQueue_layer_ -.-> EncounterCatalog
+  EncounterCatalog_layer -.-> EncounterCatalog
   ApiServicesLayer -.-> EncounterCatalog
   ApiServicesWithBackgroundJobQueueLayer -.-> EncounterCatalog
   ApiRuntimeLayer -.-> EncounterCatalog
   Layer_provideMerge_BackgroundJobQueue_layer_ -.-> FellowshipLogs
+  FellowshipLogs_layer -.-> FellowshipLogs
   ApiServicesLayer -.-> FellowshipLogs
   ApiServicesWithBackgroundJobQueueLayer -.-> FellowshipLogs
   ApiRuntimeLayer -.-> FellowshipLogs
   Layer_provideMerge_BackgroundJobQueue_layer_ -.-> UnitCatalog
+  UnitCatalog_layer -.-> UnitCatalog
   ApiServicesLayer -.-> UnitCatalog
   ApiServicesWithBackgroundJobQueueLayer -.-> UnitCatalog
   ApiRuntimeLayer -.-> UnitCatalog

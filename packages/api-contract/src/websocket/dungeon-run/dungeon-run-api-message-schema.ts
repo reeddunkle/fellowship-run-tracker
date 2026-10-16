@@ -1,6 +1,6 @@
 import * as Schema from "effect/Schema";
 
-import { DungeonRunStatusSchema } from "@frt/api-contract/validation/dungeon-run/dungeon-run-status-schema.ts";
+import { DungeonRunStatusSchema } from "@frt/shared/dungeon-run/dungeon-run-status-schema.ts";
 import { RequirementEventTypeSchema } from "@frt/shared/fellowship/validation/requirement-event-type-schema.ts";
 import {
   NonEmptyStringSchema,

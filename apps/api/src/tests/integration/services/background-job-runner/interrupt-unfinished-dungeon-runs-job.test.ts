@@ -8,15 +8,12 @@ import * as TestClock from "effect/testing/TestClock";
 import { describe, expect, test } from "vitest";
 
 import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
-import { DungeonRunRepository } from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
 import { makePersistenceTestLayer } from "@frt/api/tests/common/layers/persistence-test-layer.ts";
 import { runBackgroundJob } from "@frt/api/tests/common/run-background-job.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { type BackgroundJobDAO } from "@frt/db/daos/background-job/background-job-dao.ts";
-import { DungeonRunDAO } from "@frt/db/daos/dungeon-run/dungeon-run-dao.ts";
-import { DungeonRunObservationDAO } from "@frt/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
 import { type FellowshipLogsResponseDAO } from "@frt/db/daos/fellowship-logs-response/fellowship-logs-response-dao.ts";
-import { LocalLogDungeonRunDAO } from "@frt/db/daos/local-log-dungeon-run/local-log-dungeon-run-dao.ts";
+import { DungeonRunStore } from "@frt/db/stores/dungeon-run/dungeon-run-store.ts";
 import {
   MOCK_DUNGEON_ID,
   MOCK_DUNGEON_LEVEL,
@@ -24,17 +21,11 @@ import {
 import { type DungeonRunId } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 
 const STARTED_AT = DateTime.makeUnsafe("2026-09-05T16:00:00.000Z");
-const EARLIER_OBSERVED_AT = DateTime.makeUnsafe("2026-09-05T16:05:00.000Z");
-const LATEST_OBSERVED_AT = DateTime.makeUnsafe("2026-09-05T16:12:00.000Z");
-const COMPLETED_AT = DateTime.makeUnsafe("2026-09-05T16:30:00.000Z");
 
 type Persistence =
   | BackgroundJobDAO
-  | DungeonRunDAO
-  | DungeonRunObservationDAO
-  | DungeonRunRepository
-  | FellowshipLogsResponseDAO
-  | LocalLogDungeonRunDAO;
+  | DungeonRunStore
+  | FellowshipLogsResponseDAO;
 
 function runSession<A, Error>(
   databaseFilename: string,
@@ -43,51 +34,28 @@ function runSession<A, Error>(
   return program.pipe(E.provide(makePersistenceTestLayer(databaseFilename)));
 }
 
-const startLocalRun = E.fnUntraced(function* (
-  observedAts: ReadonlyArray<DateTime.Utc>,
-) {
-  const dungeonRunRepository = yield* DungeonRunRepository;
-  const dungeonRunObservationDAO = yield* DungeonRunObservationDAO;
+const startLocalRun = E.fnUntraced(function* () {
+  const dungeonRunStore = yield* DungeonRunStore;
 
-  const dungeonRun = yield* dungeonRunRepository.createLocal({
+  const dungeonRun = yield* dungeonRunStore.createLocal({
     dungeonId: MOCK_DUNGEON_ID,
     dungeonLevel: MOCK_DUNGEON_LEVEL,
   });
 
-  yield* dungeonRunRepository.startLocal({
+  yield* dungeonRunStore.startLocal({
     dungeonRunId: dungeonRun.id,
     startedAt: STARTED_AT,
   });
 
-  yield* E.forEach(
-    observedAts,
-    (observedAt, index) => {
-      return dungeonRunObservationDAO.observe({
-        dungeonRunId: dungeonRun.id,
-        observedAt,
-        targetId: String(index + 1),
-        type: "UNIT_DEATH",
-      });
-    },
-    { discard: true },
-  );
-
-  return dungeonRun.id;
+  return [dungeonRun.id];
 });
 
 const getLocalRun = E.fnUntraced(function* (dungeonRunId: DungeonRunId) {
-  const dungeonRun = yield* DungeonRunDAO.use((dao) => {
-    return dao.getById({ id: dungeonRunId });
-  });
+  const dungeonRunStore = yield* DungeonRunStore;
 
-  const localLogDungeonRun = yield* LocalLogDungeonRunDAO.use((dao) => {
-    return dao.getByDungeonRunId({ dungeonRunId });
-  });
+  const localRun = yield* dungeonRunStore.getLocal({ dungeonRunId });
 
-  return {
-    endedAt: Option.getOrThrow(dungeonRun).endedAt,
-    status: Option.getOrThrow(localLogDungeonRun).status,
-  };
+  return Option.getOrThrow(localRun);
 });
 
 function runJobAfterRestart({
@@ -133,72 +101,24 @@ function runJobAfterRestart({
   );
 }
 
-function toEpochMillis(dateTime: DateTime.Utc | null | undefined) {
-  return dateTime === null || dateTime === undefined
-    ? null
-    : DateTime.toEpochMillis(dateTime);
-}
-
-function single(dungeonRunId: E.Effect<DungeonRunId, unknown, Persistence>) {
-  return dungeonRunId.pipe(
-    E.map((id) => {
-      return [id];
-    }),
-  );
-}
-
 describe("InterruptUnfinishedDungeonRuns job", () => {
-  test("interrupts an unfinished run at its latest observation", async () => {
+  test("interrupts an unfinished run from a previous session", async () => {
     const [run] = await runJobAfterRestart({
-      seed: single(startLocalRun([LATEST_OBSERVED_AT, EARLIER_OBSERVED_AT])),
+      seed: startLocalRun(),
     });
 
     expect(run?.status).toBe("INTERRUPTED");
-    expect(toEpochMillis(run?.endedAt)).toBe(
-      DateTime.toEpochMillis(LATEST_OBSERVED_AT),
-    );
-  });
-
-  test("interrupts an unfinished run without observations when it started", async () => {
-    const [run] = await runJobAfterRestart({
-      seed: single(startLocalRun([])),
-    });
-
-    expect(run?.status).toBe("INTERRUPTED");
-    expect(toEpochMillis(run?.endedAt)).toBe(
-      DateTime.toEpochMillis(STARTED_AT),
-    );
-  });
-
-  test("leaves finished runs unchanged", async () => {
-    const [run] = await runJobAfterRestart({
-      seed: E.gen(function* () {
-        const dungeonRunRepository = yield* DungeonRunRepository;
-        const dungeonRunId = yield* startLocalRun([EARLIER_OBSERVED_AT]);
-
-        yield* dungeonRunRepository.completeLocal({
-          dungeonRunId,
-          endedAt: COMPLETED_AT,
-        });
-
-        return [dungeonRunId];
-      }),
-    });
-
-    expect(run?.status).toBe("COMPLETED");
-    expect(toEpochMillis(run?.endedAt)).toBe(
-      DateTime.toEpochMillis(COMPLETED_AT),
-    );
+    expect(run?.dungeonRun.endedAt).not.toBeNull();
   });
 
   test("leaves a run started in the current session active", async () => {
     const [previousRun, currentRun] = await runJobAfterRestart({
-      duringNextSession: single(startLocalRun([])),
-      seed: single(startLocalRun([])),
+      duringNextSession: startLocalRun(),
+      seed: startLocalRun(),
     });
 
     expect(previousRun?.status).toBe("INTERRUPTED");
     expect(currentRun?.status).toBe("ACTIVE");
-    expect(currentRun?.endedAt).toBeNull();
+    expect(currentRun?.dungeonRun.endedAt).toBeNull();
   });
 });

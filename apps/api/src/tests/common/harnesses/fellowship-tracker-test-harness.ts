@@ -9,10 +9,6 @@ import * as Stream from "effect/Stream";
 import { DungeonRunWebSocketBroadcaster } from "@frt/api/api/websocket/dungeon-run/dungeon-run-websocket-broadcaster-service.ts";
 import { FellowshipTracker } from "@frt/api/application/fellowship-tracker/fellowship-tracker-service.ts";
 import {
-  DungeonRunRepository,
-  type DungeonRunRepositoryShape,
-} from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
-import {
   Fellowship,
   type FellowshipShape,
 } from "@frt/api/services/fellowship/fellowship-service.ts";
@@ -25,11 +21,12 @@ import {
   type ConfigurationDAOShape,
   type PersistedConfiguration,
 } from "@frt/db/daos/configuration/configuration-dao.ts";
-import {
-  DungeonRunObservationDAO,
-  type DungeonRunObservationDAOShape,
-} from "@frt/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
 import { type DungeonRunModel } from "@frt/db/models/dungeon-run-model.ts";
+import {
+  DungeonRunStore,
+  type DungeonRunStoreObservation,
+  type DungeonRunStoreShape,
+} from "@frt/db/stores/dungeon-run/dungeon-run-store.ts";
 import {
   MOCK_CONFIGURATION_DEFINITION_ID,
   MOCK_CONFIGURATION_FINGERPRINT,
@@ -122,7 +119,9 @@ export const makeFellowshipTrackerTestHarness = E.fnUntraced(function* (
   const getInterruptedDungeonRunIds = Ref.get(interruptedDungeonRunIds);
 
   const observations = yield* Ref.make<
-    ReadonlyArray<Parameters<DungeonRunObservationDAOShape["observe"]>[0]>
+    ReadonlyArray<
+      DungeonRunStoreObservation & { readonly dungeonRunId: DungeonRunId }
+    >
   >([]);
 
   const getObservations = Ref.get(observations);
@@ -161,29 +160,7 @@ export const makeFellowshipTrackerTestHarness = E.fnUntraced(function* (
     },
   } satisfies ConfigurationDAOShape;
 
-  const dungeonRunRepository = {
-    completeLocal: () => {
-      return E.void;
-    },
-    createFellowshipLogsDungeonRun: ({
-      dungeonId,
-      dungeonLevel,
-      endedAt,
-      isOwnRun,
-      startedAt,
-    }) => {
-      return E.succeed({
-        createdAt: MOCK_CREATED_AT,
-        dungeonId,
-        dungeonLevel,
-        endedAt,
-        id: MOCK_DUNGEON_RUN_ID,
-        isOwnRun,
-        source: "FELLOWSHIP_LOGS",
-        startedAt,
-        updatedAt: MOCK_UPDATED_AT,
-      } satisfies DungeonRunModel);
-    },
+  const dungeonRunStore = {
     createLocal: ({ dungeonId, dungeonLevel }) => {
       return E.succeed({
         createdAt: MOCK_CREATED_AT,
@@ -203,41 +180,61 @@ export const makeFellowshipTrackerTestHarness = E.fnUntraced(function* (
     deleteHistory: () => {
       return E.void;
     },
-    exitLocal: () => {
-      return E.void;
+    finishLocal: ({ dungeonRunId, status }) => {
+      return status === "INTERRUPTED"
+        ? Ref.update(interruptedDungeonRunIds, (dungeonRunIds) => {
+            return [...dungeonRunIds, dungeonRunId];
+          })
+        : E.void;
     },
-    getFellowshipLogsDungeonRun: () => {
+    getFellowshipLogsRun: () => {
       return E.succeedNone;
     },
-    interruptLocal: ({ dungeonRunId }) => {
-      return Ref.update(interruptedDungeonRunIds, (dungeonRunIds) => {
-        return [...dungeonRunIds, dungeonRunId];
-      });
+    getHistory: () => {
+      return E.succeed([]);
+    },
+    getLocal: () => {
+      return E.succeedNone;
+    },
+    importFellowshipLogs: ({
+      dungeonId,
+      dungeonLevel,
+      endedAt,
+      isOwnRun,
+      startedAt,
+    }) => {
+      return E.succeed({
+        createdAt: MOCK_CREATED_AT,
+        dungeonId,
+        dungeonLevel,
+        endedAt,
+        id: MOCK_DUNGEON_RUN_ID,
+        isOwnRun,
+        source: "FELLOWSHIP_LOGS",
+        startedAt,
+        updatedAt: MOCK_UPDATED_AT,
+      } satisfies DungeonRunModel);
     },
     interruptUnfinishedLocal: () => {
       return E.succeed([]);
     },
-    listFellowshipLogsDungeonRuns: () => {
+    listFellowshipLogsRuns: () => {
       return E.succeed([]);
+    },
+    observeLocal: ({ dungeonRunId, observations: newObservations }) => {
+      return Ref.update(observations, (currentObservations) => {
+        return [
+          ...currentObservations,
+          ...newObservations.map((observation) => {
+            return { ...observation, dungeonRunId };
+          }),
+        ];
+      });
     },
     startLocal: () => {
       return E.void;
     },
-  } satisfies DungeonRunRepositoryShape;
-
-  const dungeonRunObservationDAO = {
-    getByDungeonRunId: () => {
-      return E.succeed([]);
-    },
-    getHistoryByDungeon: () => {
-      return E.succeed([]);
-    },
-    observe: (observation) => {
-      return Ref.update(observations, (currentObservations) => {
-        return [...currentObservations, observation];
-      });
-    },
-  } satisfies DungeonRunObservationDAOShape;
+  } satisfies DungeonRunStoreShape;
 
   const liveSplitStatus = {
     status: "Disconnected",
@@ -263,8 +260,7 @@ export const makeFellowshipTrackerTestHarness = E.fnUntraced(function* (
 
   const FellowshipTrackerDependenciesTestLive = Layer.mergeAll(
     Layer.succeed(ConfigurationDAO, configurationDAO),
-    Layer.succeed(DungeonRunObservationDAO, dungeonRunObservationDAO),
-    Layer.succeed(DungeonRunRepository, dungeonRunRepository),
+    Layer.succeed(DungeonRunStore, dungeonRunStore),
     Layer.succeed(Fellowship, fellowshipHarness.fellowship),
     Layer.succeed(LiveSplit, liveSplit),
     Layer.succeed(
@@ -282,7 +278,7 @@ export const makeFellowshipTrackerTestHarness = E.fnUntraced(function* (
     configurationDefinitionId,
     configurationId,
     configurationLabel,
-    dungeonRunRepository,
+    dungeonRunStore,
     dungeonRunWebSocketBroadcasterHarness,
     fellowshipHarness,
     getInterruptedDungeonRunIds,

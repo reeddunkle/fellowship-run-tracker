@@ -4,13 +4,11 @@ import * as Layer from "effect/Layer";
 
 import { DungeonRunApiResponseError } from "@frt/api/errors/dungeon-run-api-response-error.ts";
 import { createDungeonRunApiResponse } from "@frt/api/services/dungeon-run-history/create-dungeon-run-api-response.ts";
-import {
-  DungeonRunRepository,
-  type DungeonRunRepositoryError,
-} from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
-import { DungeonRunObservationDAO } from "@frt/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
-import { type DungeonRunObservationDAOError } from "@frt/db/errors/dungeon-run-observation-dao-error.ts";
 import { type DungeonRunModel } from "@frt/db/models/dungeon-run-model.ts";
+import {
+  DungeonRunStore,
+  type DungeonRunStoreError,
+} from "@frt/db/stores/dungeon-run/dungeon-run-store.ts";
 import { type DungeonRunApiHistory } from "@frt/shared/dungeon-run/dungeon-run-api-schema.ts";
 
 type DungeonRunHistoryOptions = {
@@ -20,8 +18,7 @@ type DungeonRunHistoryOptions = {
 
 export type DungeonRunHistoryError =
   | DungeonRunApiResponseError
-  | DungeonRunObservationDAOError
-  | DungeonRunRepositoryError;
+  | DungeonRunStoreError;
 
 export type DungeonRunHistoryShape = {
   readonly deleteHistory: (
@@ -34,13 +31,12 @@ export type DungeonRunHistoryShape = {
 };
 
 const makeDungeonRunHistory = E.gen(function* () {
-  const dungeonRunObservationDAO = yield* DungeonRunObservationDAO;
-  const dungeonRunRepository = yield* DungeonRunRepository;
+  const dungeonRunStore = yield* DungeonRunStore;
 
   const deleteHistory: DungeonRunHistoryShape["deleteHistory"] = E.fn(
     "DungeonRunHistory.deleteHistory",
   )(function* ({ dungeonId, dungeonLevel }) {
-    return yield* dungeonRunRepository.deleteHistory({
+    return yield* dungeonRunStore.deleteHistory({
       dungeonId,
       dungeonLevel,
     });
@@ -49,7 +45,7 @@ const makeDungeonRunHistory = E.gen(function* () {
   const getHistory: DungeonRunHistoryShape["getHistory"] = E.fn(
     "DungeonRunHistory.getHistory",
   )(function* ({ dungeonId, dungeonLevel }) {
-    const observations = yield* dungeonRunObservationDAO.getHistoryByDungeon({
+    const observations = yield* dungeonRunStore.getHistory({
       dungeonId,
       dungeonLevel,
     });
@@ -80,7 +76,6 @@ export class DungeonRunHistory extends Context.Service<
   static readonly layerNoDeps = Layer.effect(this, makeDungeonRunHistory);
 
   static readonly layer = this.layerNoDeps.pipe(
-    Layer.provide(DungeonRunObservationDAO.layer),
-    Layer.provide(DungeonRunRepository.layer),
+    Layer.provide(DungeonRunStore.layer),
   );
 }

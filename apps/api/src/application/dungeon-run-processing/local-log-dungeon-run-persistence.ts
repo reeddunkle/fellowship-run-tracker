@@ -6,22 +6,17 @@ import * as Ref from "effect/Ref";
 import * as Semaphore from "effect/Semaphore";
 
 import {
-  DungeonRunRepository,
-  type DungeonRunRepositoryError,
-} from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
-import {
   DUNGEON_RUN_PROCESSING_EVENT,
   type DungeonRunProcessingEvent,
 } from "@frt/api/services/fellowship/dungeon-runs/process-dungeon-run-event.ts";
 import { type DungeonRunObservation } from "@frt/api/services/fellowship/requirements/create-dungeon-run-observation.ts";
-import { DungeonRunObservationDAO } from "@frt/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
-import { type DungeonRunObservationDAOError } from "@frt/db/errors/dungeon-run-observation-dao-error.ts";
+import {
+  DungeonRunStore,
+  type DungeonRunStoreError,
+  type FinishedDungeonRunStatus,
+} from "@frt/db/stores/dungeon-run/dungeon-run-store.ts";
 import { type DungeonRunId } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 import { type FellowshipMilestoneConfiguration } from "@frt/shared/fellowship/configurations/configuration-types.ts";
-
-type LocalLogDungeonRunPersistenceError =
-  | DungeonRunObservationDAOError
-  | DungeonRunRepositoryError;
 
 type PersistLocalLogDungeonRunEventResultOptions = {
   readonly observation: DungeonRunObservation | undefined;
@@ -38,14 +33,25 @@ type LocalLogDungeonRunLifecycleEvent = Extract<
   }
 >;
 
+const FINISHED_DUNGEON_RUN_STATUS_BY_EVENT_TYPE = {
+  [DUNGEON_RUN_PROCESSING_EVENT.RUN_COMPLETED]: "COMPLETED",
+  [DUNGEON_RUN_PROCESSING_EVENT.RUN_EXITED]: "EXITED",
+} as const satisfies Record<
+  Exclude<
+    LocalLogDungeonRunLifecycleEvent["type"],
+    typeof DUNGEON_RUN_PROCESSING_EVENT.RUN_STARTED
+  >,
+  FinishedDungeonRunStatus
+>;
+
 export type LocalLogDungeonRunPersistence = {
   readonly interrupt: (
     endedAt: DateTime.Utc,
-  ) => E.Effect<void, LocalLogDungeonRunPersistenceError>;
+  ) => E.Effect<void, DungeonRunStoreError>;
 
   readonly persist: (
     options: PersistLocalLogDungeonRunEventResultOptions,
-  ) => E.Effect<void, LocalLogDungeonRunPersistenceError>;
+  ) => E.Effect<void, DungeonRunStoreError>;
 };
 
 type MakeLocalLogDungeonRunPersistenceOptions = {
@@ -65,8 +71,7 @@ function isLocalLogDungeonRunLifecycleEvent(
 export const makeLocalLogDungeonRunPersistence = E.fnUntraced(function* ({
   configuration,
 }: MakeLocalLogDungeonRunPersistenceOptions) {
-  const dungeonRunObservationDAO = yield* DungeonRunObservationDAO;
-  const dungeonRunRepository = yield* DungeonRunRepository;
+  const dungeonRunStore = yield* DungeonRunStore;
 
   const dungeonRunIdRef = yield* Ref.make<Option.Option<DungeonRunId>>(
     Option.none(),
@@ -81,7 +86,7 @@ export const makeLocalLogDungeonRunPersistence = E.fnUntraced(function* ({
       return dungeonRunId.value;
     }
 
-    const dungeonRun = yield* dungeonRunRepository.createLocal({
+    const dungeonRun = yield* dungeonRunStore.createLocal({
       dungeonId: configuration.dungeonId,
       dungeonLevel: configuration.dungeonLevel,
     });
@@ -90,6 +95,16 @@ export const makeLocalLogDungeonRunPersistence = E.fnUntraced(function* ({
 
     return dungeonRun.id;
   }, dungeonRunIdSemaphore.withPermit);
+
+  const finishLocalRun = E.fnUntraced(function* (options: {
+    readonly dungeonRunId: DungeonRunId;
+    readonly endedAt: DateTime.Utc;
+    readonly status: FinishedDungeonRunStatus;
+  }) {
+    yield* dungeonRunStore.finishLocal(options);
+
+    yield* Ref.set(dungeonRunIdRef, Option.none<DungeonRunId>());
+  });
 
   const persistLifecycleEvent = E.fn(
     "FellowshipTracker.persistLocalLogLifecycleEvent",
@@ -106,43 +121,20 @@ export const makeLocalLogDungeonRunPersistence = E.fnUntraced(function* ({
           type: DUNGEON_RUN_PROCESSING_EVENT.RUN_STARTED,
         },
         (runStartedEvent) => {
-          return dungeonRunRepository.startLocal({
+          return dungeonRunStore.startLocal({
             dungeonRunId,
             startedAt: runStartedEvent.timestamp,
           });
         },
       ),
-      Match.when(
-        {
-          type: DUNGEON_RUN_PROCESSING_EVENT.RUN_COMPLETED,
-        },
-        (runCompletedEvent) => {
-          return dungeonRunRepository
-            .completeLocal({
-              dungeonRunId,
-              endedAt: runCompletedEvent.timestamp,
-            })
-            .pipe(
-              E.andThen(Ref.set(dungeonRunIdRef, Option.none<DungeonRunId>())),
-            );
-        },
-      ),
-      Match.when(
-        {
-          type: DUNGEON_RUN_PROCESSING_EVENT.RUN_EXITED,
-        },
-        (runExitedEvent) => {
-          return dungeonRunRepository
-            .exitLocal({
-              dungeonRunId,
-              endedAt: runExitedEvent.timestamp,
-            })
-            .pipe(
-              E.andThen(Ref.set(dungeonRunIdRef, Option.none<DungeonRunId>())),
-            );
-        },
-      ),
-      Match.exhaustive,
+      Match.orElse((runFinishedEvent) => {
+        return finishLocalRun({
+          dungeonRunId,
+          endedAt: runFinishedEvent.timestamp,
+          status:
+            FINISHED_DUNGEON_RUN_STATUS_BY_EVENT_TYPE[runFinishedEvent.type],
+        });
+      }),
     );
   });
 
@@ -159,11 +151,15 @@ export const makeLocalLogDungeonRunPersistence = E.fnUntraced(function* ({
       const dungeonRunId = yield* getOrCreateDungeonRunId();
 
       if (observation !== undefined) {
-        yield* dungeonRunObservationDAO.observe({
+        yield* dungeonRunStore.observeLocal({
           dungeonRunId,
-          observedAt: observation.timestamp,
-          targetId: observation.targetId,
-          type: observation.type,
+          observations: [
+            {
+              observedAt: observation.timestamp,
+              targetId: observation.targetId,
+              type: observation.type,
+            },
+          ],
         });
       }
 
@@ -191,12 +187,11 @@ export const makeLocalLogDungeonRunPersistence = E.fnUntraced(function* ({
       return;
     }
 
-    yield* dungeonRunRepository.interruptLocal({
+    yield* finishLocalRun({
       dungeonRunId: dungeonRunId.value,
       endedAt,
+      status: "INTERRUPTED",
     });
-
-    yield* Ref.set(dungeonRunIdRef, Option.none<DungeonRunId>());
   });
 
   return {

@@ -3,7 +3,6 @@ import * as E from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { type DungeonRunStatusSchema } from "@frt/api-contract/validation/dungeon-run/dungeon-run-status-schema.ts";
 import { type LocalLogDungeonRunDAOShape } from "@frt/db/daos/local-log-dungeon-run/local-log-dungeon-run-dao.ts";
 import { MainDatabase } from "@frt/db/databases/main-database.ts";
 import {
@@ -14,8 +13,6 @@ import { LocalLogDungeonRunDAOError } from "@frt/db/errors/local-log-dungeon-run
 import { UnexpectedDatabaseError } from "@frt/db/errors/unexpected-database-error.ts";
 import { LocalLogDungeonRunModel } from "@frt/db/models/local-log-dungeon-run-model.ts";
 import { type DungeonRunId } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
-
-type DungeonRunStatus = typeof DungeonRunStatusSchema.Type;
 
 function mapLocalLogDungeonRunDAOError(
   cause: unknown,
@@ -122,13 +119,9 @@ export const makeLocalLogDungeonRunDAO = E.gen(function* () {
     return persistedLocalLogDungeonRun;
   }, E.mapError(mapLocalLogDungeonRunDAOError));
 
-  const finishRun: (options: {
-    readonly dungeonRunId: DungeonRunId;
-    readonly status: Exclude<DungeonRunStatus, "ACTIVE">;
-  }) => E.Effect<void, LocalLogDungeonRunDAOError> = E.fnUntraced(function* ({
-    dungeonRunId,
-    status,
-  }) {
+  const finish: LocalLogDungeonRunDAOShape["finish"] = E.fn(
+    "LocalLogDungeonRunDAO.finish",
+  )(function* ({ dungeonRunId, status }) {
     const updatedAt = yield* DateTime.now;
 
     const encodedUpdatedAt = yield* Schema.encodeEffect(
@@ -151,24 +144,6 @@ export const makeLocalLogDungeonRunDAO = E.gen(function* () {
       return yield* makeRunNotFoundOrInactiveError(dungeonRunId);
     }
   }, E.mapError(mapLocalLogDungeonRunDAOError));
-
-  const complete: LocalLogDungeonRunDAOShape["complete"] = E.fn(
-    "LocalLogDungeonRunDAO.complete",
-  )(function* ({ dungeonRunId }) {
-    return yield* finishRun({
-      dungeonRunId,
-      status: "COMPLETED",
-    });
-  });
-
-  const exit: LocalLogDungeonRunDAOShape["exit"] = E.fn(
-    "LocalLogDungeonRunDAO.exit",
-  )(function* ({ dungeonRunId }) {
-    return yield* finishRun({
-      dungeonRunId,
-      status: "EXITED",
-    });
-  });
 
   const listActive: LocalLogDungeonRunDAOShape["listActive"] = E.fn(
     "LocalLogDungeonRunDAO.listActive",
@@ -193,21 +168,10 @@ export const makeLocalLogDungeonRunDAO = E.gen(function* () {
     return yield* decodeLocalLogDungeonRunRows(rows);
   }, E.mapError(mapLocalLogDungeonRunDAOError));
 
-  const interrupt: LocalLogDungeonRunDAOShape["interrupt"] = E.fn(
-    "LocalLogDungeonRunDAO.interrupt",
-  )(function* ({ dungeonRunId }) {
-    return yield* finishRun({
-      dungeonRunId,
-      status: "INTERRUPTED",
-    });
-  });
-
   return {
-    complete,
     create,
-    exit,
+    finish,
     getByDungeonRunId,
-    interrupt,
     listActive,
   } satisfies LocalLogDungeonRunDAOShape;
 });

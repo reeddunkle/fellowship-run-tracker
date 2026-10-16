@@ -2,29 +2,28 @@
 
 ## Problem
 
-A `Persisted` run calls `DungeonRunObservationDAO.observe` once per observation, about 3,400 times for Godfall Quarry. Each call is a separate SQLite insert with its own `DungeonRunObservationDAO.observe` span.
+A `Persisted` run calls `DungeonRunStore.observeLocal` with a one-observation batch, about 3,400 times for Godfall Quarry. Each call opens its own SQLite transaction and runs one `DungeonRunObservationDAO.observe` insert, each with its own span.
 
 ## Direction
 
-Buffer observations in `LocalLogDungeonRunPersistence` and write each batch with one multi-row insert or transaction. Flush before lifecycle writes (`startLocal`, `completeLocal`, `exitLocal`) and when tracking stops.
+Buffer observations in `LocalLogDungeonRunPersistence` and pass each buffer to `observeLocal` as one batch. `observeLocal` already writes a batch in one transaction, so the first step changes only its caller. A multi-row insert in the store's `insertObservations` could follow. Flush before lifecycle writes (`startLocal`, `finishLocal`) and when tracking stops.
 
 A crash loses whatever is still buffered. Crash recovery uses the latest persisted `observed_at` as the interrupted run's end time, so a large buffer makes that end time earlier than the real one.
-
-Design this after [move-dungeon-run-store-into-db.md](move-dungeon-run-store-into-db.md). That task routes local observations through one store operation, which is where the buffering belongs.
 
 ## Open questions
 
 - Should the flush trigger be a count, a time, or both? Weigh it against the crash-recovery cost above.
 - Does the buffer live in persistence or inside the store?
+- Is one transaction per batch enough, or does `insertObservations` also need a multi-row insert?
 
 ## Done when
 
-- A run writes observations in batches, not one insert per observation.
+- A run writes observations in batches, not one transaction per observation.
 - Lifecycle writes and stopping tracking flush the buffer first.
 
 ## Relevant code
 
-- `apps/api/src/application/dungeon-run-processing/local-log-dungeon-run-persistence.ts` (`persist`)
+- `apps/api/src/application/dungeon-run-processing/local-log-dungeon-run-persistence.ts` (`persist`, `finishLocalRun`)
+- `packages/db/src/stores/dungeon-run/make-dungeon-run-store.ts` (`observeLocal`, `insertObservations`, `getUnfinishedLocalRunEndedAt`)
 - `packages/db/src/daos/dungeon-run-observation/make-dungeon-run-observation-dao.ts` (`observe`)
-- `apps/api/src/services/dungeon-run-repository/make-dungeon-run-repository-service.ts` (`getUnfinishedLocalRunEndedAt`)
 - `apps/api/src/application/fellowship-tracker/make-fellowship-tracker-service.ts` (stop and interrupt paths)

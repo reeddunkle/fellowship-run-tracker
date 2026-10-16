@@ -20,7 +20,6 @@ import { FellowshipLogsDungeonRunImportRunNotFoundError } from "@frt/api/errors/
 import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
 import { BackgroundJobQueue } from "@frt/api/services/background-job-queue/background-job-queue-service.ts";
 import { BackgroundJobRunner } from "@frt/api/services/background-job-runner/background-job-runner-service.ts";
-import { DungeonRunRepository } from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
 import { makeFellowshipLogsDungeonRunImporterIntegrationTestHarness } from "@frt/api/tests/common/harnesses/fellowship-logs-dungeon-run-importer-integration-test-harness.ts";
 import { makePersistenceTestLayer } from "@frt/api/tests/common/layers/persistence-test-layer.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
@@ -29,8 +28,8 @@ import {
   type BackgroundJobDAOShape,
 } from "@frt/db/daos/background-job/background-job-dao.ts";
 import { makeBackgroundJobDAO } from "@frt/db/daos/background-job/make-background-job-dao.ts";
-import { LocalLogDungeonRunDAO } from "@frt/db/daos/local-log-dungeon-run/local-log-dungeon-run-dao.ts";
 import { type BackgroundJobModel } from "@frt/db/models/background-job-model.ts";
+import { DungeonRunStore } from "@frt/db/stores/dungeon-run/dungeon-run-store.ts";
 import {
   MOCK_DUNGEON_ID,
   MOCK_DUNGEON_LEVEL,
@@ -147,9 +146,9 @@ describe("BackgroundJobQueue", () => {
     const { finalJob, status } = await withTempDatabase((databaseFilename) => {
       return E.gen(function* () {
         const backgroundJobQueue = yield* BackgroundJobQueue;
-        const dungeonRunRepository = yield* DungeonRunRepository;
+        const dungeonRunStore = yield* DungeonRunStore;
 
-        const dungeonRun = yield* dungeonRunRepository.createLocal({
+        const dungeonRun = yield* dungeonRunStore.createLocal({
           dungeonId: MOCK_DUNGEON_ID,
           dungeonLevel: MOCK_DUNGEON_LEVEL,
         });
@@ -161,8 +160,8 @@ describe("BackgroundJobQueue", () => {
 
         const settled = yield* waitForJob(job.id, hasStatus("SUCCEEDED"));
 
-        const localRun = yield* LocalLogDungeonRunDAO.use((dao) => {
-          return dao.getByDungeonRunId({ dungeonRunId: dungeonRun.id });
+        const localRun = yield* dungeonRunStore.getLocal({
+          dungeonRunId: dungeonRun.id,
         });
 
         return {

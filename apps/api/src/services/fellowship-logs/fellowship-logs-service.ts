@@ -8,10 +8,6 @@ import { FellowshipLogsDungeonRunImportAlreadyImportedError } from "@frt/api/err
 import { createImportFellowshipLogsDungeonRunBackgroundJobApiItem } from "@frt/api/services/background-job/create-background-job-api-response.ts";
 import { BackgroundJobQueue } from "@frt/api/services/background-job-queue/background-job-queue-service.ts";
 import {
-  DungeonRunRepository,
-  type DungeonRunRepositoryError,
-} from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
-import {
   createFellowshipLogsDungeonRunMetadataApiResponse,
   createFellowshipLogsImportedDungeonRunApiResponse,
   createFellowshipLogsRateLimitDataApiResponse,
@@ -24,6 +20,10 @@ import {
 import { type DungeonRunDAOError } from "@frt/db/errors/dungeon-run-dao-error.ts";
 import { type FellowshipLogsDungeonRunDAOError } from "@frt/db/errors/fellowship-logs-dungeon-run-dao-error.ts";
 import { type FellowshipLogsRequestDAOError } from "@frt/db/errors/fellowship-logs-request-dao-error.ts";
+import {
+  DungeonRunStore,
+  type DungeonRunStoreError,
+} from "@frt/db/stores/dungeon-run/dungeon-run-store.ts";
 import { type DungeonRunId } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 import {
   type FellowshipLogsApiAnalyticsSummary,
@@ -63,7 +63,7 @@ export type FellowshipLogsShape = {
 
   readonly getImportedDungeonRuns: () => E.Effect<
     FellowshipLogsApiImportedDungeonRunList,
-    DungeonRunRepositoryError
+    DungeonRunStoreError
   >;
 
   readonly getLastKnownRateLimitData: () => E.Effect<
@@ -87,12 +87,12 @@ export type FellowshipLogsShape = {
 const makeFellowshipLogs = E.gen(function* () {
   const analytics = yield* FellowshipLogsAnalytics;
   const backgroundJobQueue = yield* BackgroundJobQueue;
-  const dungeonRunRepository = yield* DungeonRunRepository;
+  const dungeonRunStore = yield* DungeonRunStore;
   const fellowshipLogsGateway = yield* FellowshipLogsGateway;
 
   const deleteImportedDungeonRun: FellowshipLogsShape["deleteImportedDungeonRun"] =
     E.fn("FellowshipLogs.deleteImportedDungeonRun")(function* (options) {
-      return yield* dungeonRunRepository.delete(options);
+      return yield* dungeonRunStore.delete(options);
     });
 
   const getDungeonRunMetadata: FellowshipLogsShape["getDungeonRunMetadata"] =
@@ -105,7 +105,7 @@ const makeFellowshipLogs = E.gen(function* () {
 
   const getImportedDungeonRuns: FellowshipLogsShape["getImportedDungeonRuns"] =
     E.fn("FellowshipLogs.getImportedDungeonRuns")(function* () {
-      const rows = yield* dungeonRunRepository.listFellowshipLogsDungeonRuns();
+      const rows = yield* dungeonRunStore.listFellowshipLogsRuns();
 
       return rows.map(createFellowshipLogsImportedDungeonRunApiResponse);
     });
@@ -129,7 +129,7 @@ const makeFellowshipLogs = E.gen(function* () {
 
   const queueDungeonRunImport: FellowshipLogsShape["queueDungeonRunImport"] =
     E.fn("FellowshipLogs.queueDungeonRunImport")(function* (options) {
-      const existing = yield* dungeonRunRepository.getFellowshipLogsDungeonRun({
+      const existing = yield* dungeonRunStore.getFellowshipLogsRun({
         fightId: options.fightId,
         reportCode: options.reportCode,
       });
@@ -186,7 +186,7 @@ export class FellowshipLogs extends Context.Service<
    * it's the single instance that runs the queue workers.
    */
   static readonly layer = this.layerNoDeps.pipe(
-    Layer.provide(DungeonRunRepository.layer),
+    Layer.provide(DungeonRunStore.layer),
     Layer.provide(FellowshipLogsAnalytics.layer),
     Layer.provide(FellowshipLogsGateway.layer),
   );

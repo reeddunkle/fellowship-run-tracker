@@ -16,11 +16,11 @@ import { SESSION_LOG_FILE_PATH } from "@frt/api/logging/log-file-path.ts";
 import { pruneLogFiles } from "@frt/api/logging/prune-log-files.ts";
 import { type BackgroundJobPayload } from "@frt/api/services/background-job-queue/background-job-payload-schema.ts";
 import { HIDDEN_BACKGROUND_JOB_QUEUE_NAMES } from "@frt/api/services/background-job-queue/background-job-queues.ts";
-import { DungeonRunRepository } from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
 import { pruneFellowshipLogsGatewayCache } from "@frt/api/services/fellowship-logs-gateway/cache/prune-fellowship-logs-gateway-cache.ts";
 import { withFellowshipLogsGatewayPointsSpent } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-points-spent.ts";
 import { BackgroundJobDAO } from "@frt/db/daos/background-job/background-job-dao.ts";
 import { type FellowshipLogsResponseDAO } from "@frt/db/daos/fellowship-logs-response/fellowship-logs-response-dao.ts";
+import { DungeonRunStore } from "@frt/db/stores/dungeon-run/dungeon-run-store.ts";
 
 const IMPORT_RETRY_SCHEDULE = Schedule.exponential("1 second");
 const IMPORT_RETRY_TIMES = 2;
@@ -31,7 +31,7 @@ type RunBackgroundJobOptions = {
 
 const makeBackgroundJobRunner = E.gen(function* () {
   const backgroundJobDAO = yield* BackgroundJobDAO;
-  const dungeonRunRepository = yield* DungeonRunRepository;
+  const dungeonRunStore = yield* DungeonRunStore;
   const fellowshipLogsDungeonRunImporter =
     yield* FellowshipLogsDungeonRunImporter;
   const maintenanceContext = yield* E.context<
@@ -93,19 +93,17 @@ const makeBackgroundJobRunner = E.gen(function* () {
         },
       ),
       Match.tag("InterruptUnfinishedDungeonRuns", ({ createdBefore }) => {
-        return dungeonRunRepository
-          .interruptUnfinishedLocal({ createdBefore })
-          .pipe(
-            E.flatMap((dungeonRunIds) => {
-              return A.isReadonlyArrayNonEmpty(dungeonRunIds)
-                ? E.logInfo(
-                    "Interrupted dungeon runs left unfinished by a previous session.",
-                    { dungeonRunCount: dungeonRunIds.length },
-                  )
-                : E.void;
-            }),
-            E.as(null),
-          );
+        return dungeonRunStore.interruptUnfinishedLocal({ createdBefore }).pipe(
+          E.flatMap((dungeonRunIds) => {
+            return A.isReadonlyArrayNonEmpty(dungeonRunIds)
+              ? E.logInfo(
+                  "Interrupted dungeon runs left unfinished by a previous session.",
+                  { dungeonRunCount: dungeonRunIds.length },
+                )
+              : E.void;
+          }),
+          E.as(null),
+        );
       }),
       Match.tag("PruneFinishedBackgroundJobs", ({ finishedBefore }) => {
         return E.gen(function* () {
@@ -162,7 +160,7 @@ export class BackgroundJobRunner extends Context.Service<
 
   static readonly layer = this.layerNoDeps.pipe(
     Layer.provide(BackgroundJobDAO.layer),
-    Layer.provide(DungeonRunRepository.layer),
+    Layer.provide(DungeonRunStore.layer),
     Layer.provide(FellowshipLogsDungeonRunImporter.layer),
     Layer.provide(NodePlatformLayer),
   );

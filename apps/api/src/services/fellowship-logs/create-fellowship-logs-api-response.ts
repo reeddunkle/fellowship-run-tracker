@@ -1,7 +1,7 @@
 import * as DateTime from "effect/DateTime";
 
 import { type FellowshipLogsGatewayDungeonRunMetadata } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
-import { type FellowshipLogsImportedDungeonRunRow } from "@frt/db/daos/fellowship-logs-dungeon-run/fellowship-logs-imported-dungeon-run-row-schema.ts";
+import { type FellowshipLogsImportedDungeonRunRow } from "@frt/db/stores/dungeon-run/dungeon-run-store.ts";
 import {
   type FellowshipLogsApiDungeonRunMetadata,
   type FellowshipLogsApiImportedDungeonRun,

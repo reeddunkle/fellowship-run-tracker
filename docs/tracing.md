@@ -19,7 +19,7 @@ A span is worth having when it does I/O (filesystem, SQL, HTTP, WebSocket), pers
 | HttpApi group builder (`XApi.handlers`) | `E.fnUntraced`. It runs at layer build, and the platform middleware already traces each request. |
 | Error mappers and recovery callbacks (`map*ApiError`, `logInternalServerError`, `catchCause` / `catch` / `catchTag` callbacks) | `E.fnUntraced` |
 | Private helper inside a constructor | `E.fnUntraced`. Exception: a helper that does I/O gets `E.fn("ServiceClass.helper")`. |
-| Private helper shared by traced public methods (`finishLocal` behind `completeLocal` / `exitLocal` / `interruptLocal`) | `E.fnUntraced`. The public method's span already names the operation. |
+| Private helper shared by traced public methods (`insertObservations` behind `DungeonRunStore.observeLocal` / `DungeonRunStore.importFellowshipLogs`) | `E.fnUntraced`. The public method's span already names the operation. |
 | Per-item hot path (once per log line, once per gateway event, once per directory watcher event) | `E.fnUntraced` |
 | Function whose body is a log call | `E.fnUntraced`. The log line already records it. |
 | Renderer code other than API client calls | `E.fnUntraced` |

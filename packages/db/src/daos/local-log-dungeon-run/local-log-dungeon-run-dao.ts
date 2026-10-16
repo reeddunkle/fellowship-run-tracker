@@ -8,6 +8,9 @@ import { makeLocalLogDungeonRunDAO } from "@frt/db/daos/local-log-dungeon-run/ma
 import { type LocalLogDungeonRunDAOError } from "@frt/db/errors/local-log-dungeon-run-dao-error.ts";
 import { type LocalLogDungeonRunModel } from "@frt/db/models/local-log-dungeon-run-model.ts";
 import { type DungeonRunId } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
+import { type DungeonRunStatus } from "@frt/shared/dungeon-run/dungeon-run-status-schema.ts";
+
+export type FinishedDungeonRunStatus = Exclude<DungeonRunStatus, "ACTIVE">;
 
 type CreateLocalLogDungeonRunOptions = {
   readonly dungeonRunId: DungeonRunId;
@@ -19,6 +22,7 @@ type GetLocalLogDungeonRunByDungeonRunIdOptions = {
 
 type FinishLocalLogDungeonRunOptions = {
   readonly dungeonRunId: DungeonRunId;
+  readonly status: FinishedDungeonRunStatus;
 };
 
 type ListActiveLocalLogDungeonRunsOptions = {
@@ -26,15 +30,11 @@ type ListActiveLocalLogDungeonRunsOptions = {
 };
 
 export type LocalLogDungeonRunDAOShape = {
-  readonly complete: (
-    options: FinishLocalLogDungeonRunOptions,
-  ) => E.Effect<void, LocalLogDungeonRunDAOError>;
-
   readonly create: (
     options: CreateLocalLogDungeonRunOptions,
   ) => E.Effect<LocalLogDungeonRunModel, LocalLogDungeonRunDAOError>;
 
-  readonly exit: (
+  readonly finish: (
     options: FinishLocalLogDungeonRunOptions,
   ) => E.Effect<void, LocalLogDungeonRunDAOError>;
 
@@ -44,10 +44,6 @@ export type LocalLogDungeonRunDAOShape = {
     Option.Option<LocalLogDungeonRunModel>,
     LocalLogDungeonRunDAOError
   >;
-
-  readonly interrupt: (
-    options: FinishLocalLogDungeonRunOptions,
-  ) => E.Effect<void, LocalLogDungeonRunDAOError>;
 
   readonly listActive: (
     options: ListActiveLocalLogDungeonRunsOptions,

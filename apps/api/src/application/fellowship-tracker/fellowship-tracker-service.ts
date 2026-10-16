@@ -9,13 +9,12 @@ import {
   type FellowshipTrackerAlreadyRunningError,
   type FellowshipTrackerConfigurationNotFoundError,
 } from "@frt/api/errors/fellowship-tracker-error.ts";
-import { DungeonRunRepository } from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
 import { type FellowshipLiveLogItem } from "@frt/api/services/fellowship/fellowship-live-log.ts";
 import { Fellowship } from "@frt/api/services/fellowship/fellowship-service.ts";
 import { LiveSplit } from "@frt/api/services/live-split/live-split-service.ts";
 import { ConfigurationDAO } from "@frt/db/daos/configuration/configuration-dao.ts";
-import { DungeonRunObservationDAO } from "@frt/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
 import { type ConfigurationDAOError } from "@frt/db/errors/configuration-dao-error.ts";
+import { DungeonRunStore } from "@frt/db/stores/dungeon-run/dungeon-run-store.ts";
 import { type ConfigurationId } from "@frt/shared/configuration/configuration-id-schema.ts";
 import { type FellowshipMilestoneConfiguration } from "@frt/shared/fellowship/configurations/configuration-types.ts";
 import { type DungeonId } from "@frt/shared/fellowship/validation/fellowship-common.ts";
@@ -122,8 +121,7 @@ export class FellowshipTracker extends Context.Service<
 
   static readonly layer = this.layerNoDeps.pipe(
     Layer.provide(ConfigurationDAO.layer),
-    Layer.provide(DungeonRunObservationDAO.layer),
-    Layer.provide(DungeonRunRepository.layer),
+    Layer.provide(DungeonRunStore.layer),
     Layer.provide(DungeonRunWebSocketBroadcaster.layer),
     Layer.provide(Fellowship.layer),
     Layer.provide(LiveSplit.layer),

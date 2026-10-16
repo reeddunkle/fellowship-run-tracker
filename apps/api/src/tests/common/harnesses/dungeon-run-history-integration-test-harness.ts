@@ -1,13 +1,15 @@
 import type * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Schema from "effect/Schema";
 
 import { DungeonRunHistory } from "@frt/api/services/dungeon-run-history/dungeon-run-history-service.ts";
 import { makePersistenceTestLayer } from "@frt/api/tests/common/layers/persistence-test-layer.ts";
-import { DungeonRunDAO } from "@frt/db/daos/dungeon-run/dungeon-run-dao.ts";
-import { DungeonRunObservationDAO } from "@frt/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
+import { DungeonRunStore } from "@frt/db/stores/dungeon-run/dungeon-run-store.ts";
 import { type DungeonId } from "@frt/shared/fellowship/validation/fellowship-common.ts";
 import { type RequirementEventType } from "@frt/shared/fellowship/validation/requirement-event-type-schema.ts";
+import { FellowshipLogsFightIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
+import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
 export type MakeDungeonRunHistoryIntegrationTestHarnessOptions = {
   readonly databaseFilename?: string;
@@ -28,6 +30,8 @@ export function makeDungeonRunHistoryIntegrationTestHarness({
     layer,
   };
 }
+
+const SEED_FIGHT_ID = Schema.decodeSync(FellowshipLogsFightIdSchema)(1);
 
 type SeedDungeonRunObservation = {
   readonly observedAt: DateTime.Utc;
@@ -50,35 +54,39 @@ export const seedDungeonRunWithObservations = E.fnUntraced(function* ({
   observations,
   startedAt,
 }: SeedDungeonRunOptions) {
-  const dungeonRunDAO = yield* DungeonRunDAO;
-  const dungeonRunObservationDAO = yield* DungeonRunObservationDAO;
+  const dungeonRunStore = yield* DungeonRunStore;
 
-  const dungeonRun = yield* dungeonRunDAO.create({
+  if (!isOwnRun) {
+    const reportCode = yield* Schema.decodeEffect(
+      FellowshipLogsReportCodeSchema,
+    )(crypto.randomUUID());
+
+    return yield* dungeonRunStore.importFellowshipLogs({
+      dungeonId,
+      dungeonLevel,
+      endedAt: startedAt,
+      fightId: SEED_FIGHT_ID,
+      isOwnRun,
+      observations,
+      reportCode,
+      startedAt,
+    });
+  }
+
+  const dungeonRun = yield* dungeonRunStore.createLocal({
     dungeonId,
     dungeonLevel,
-    endedAt: null,
-    isOwnRun,
-    source: "LOCAL_LOG",
-    startedAt: null,
   });
 
-  yield* dungeonRunDAO.start({
+  yield* dungeonRunStore.startLocal({
     dungeonRunId: dungeonRun.id,
     startedAt,
   });
 
-  yield* E.forEach(
+  yield* dungeonRunStore.observeLocal({
+    dungeonRunId: dungeonRun.id,
     observations,
-    (observation) => {
-      return dungeonRunObservationDAO.observe({
-        dungeonRunId: dungeonRun.id,
-        observedAt: observation.observedAt,
-        targetId: observation.targetId,
-        type: observation.type,
-      });
-    },
-    { discard: true },
-  );
+  });
 
   return dungeonRun;
 });

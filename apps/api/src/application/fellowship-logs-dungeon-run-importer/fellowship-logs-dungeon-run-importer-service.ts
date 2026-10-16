@@ -16,11 +16,11 @@ import {
   type FellowshipLogsGatewayReportChangedError,
   type FellowshipLogsGatewayRequestError,
 } from "@frt/api/errors/fellowship-logs-gateway-error.ts";
-import {
-  DungeonRunRepository,
-  type DungeonRunRepositoryError,
-} from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
 import { FellowshipLogsGateway } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
+import {
+  DungeonRunStore,
+  type DungeonRunStoreError,
+} from "@frt/db/stores/dungeon-run/dungeon-run-store.ts";
 import { type DungeonRunId } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 import { type FellowshipLogsFightId } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
 import { type FellowshipLogsReportCode } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
@@ -44,7 +44,7 @@ type ImportFellowshipLogsDungeonRunResult = {
 };
 
 type ImportFellowshipLogsDungeonRunError =
-  | DungeonRunRepositoryError
+  | DungeonRunStoreError
   | FellowshipLogsDungeonRunImportAlreadyImportedError
   | FellowshipLogsDungeonRunImportDungeonLevelNotFoundError
   | FellowshipLogsDungeonRunImportRunNotFinishedError
@@ -76,7 +76,7 @@ export class FellowshipLogsDungeonRunImporter extends Context.Service<
   );
 
   static readonly liveLayer = this.layerNoDeps.pipe(
-    Layer.provide(DungeonRunRepository.layer),
+    Layer.provide(DungeonRunStore.layer),
     Layer.provide(FellowshipLogsGateway.layer),
   );
 
@@ -87,7 +87,7 @@ export class FellowshipLogsDungeonRunImporter extends Context.Service<
       makeSimulatedFellowshipLogsDungeonRunImporter,
     ),
   ).pipe(
-    Layer.provide(DungeonRunRepository.layer),
+    Layer.provide(DungeonRunStore.layer),
     Layer.provide(FellowshipLogsGateway.layer),
   );
 

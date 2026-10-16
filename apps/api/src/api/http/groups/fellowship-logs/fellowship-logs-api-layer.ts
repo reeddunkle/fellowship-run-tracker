@@ -4,7 +4,6 @@ import * as HttpApiBuilder from "effect/http-api/HttpApiBuilder";
 import * as HttpApiError from "effect/http-api/HttpApiError";
 import type * as Layer from "effect/Layer";
 
-import { type DungeonRunRepositoryError } from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
 import {
   FellowshipLogs,
   type QueueFellowshipLogsDungeonRunImportError,
@@ -17,6 +16,7 @@ import {
 } from "@frt/api-contract/errors/fellowship-logs-api-error.ts";
 import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
 import { type DungeonRunDAOError } from "@frt/db/errors/dungeon-run-dao-error.ts";
+import { type DungeonRunStoreError } from "@frt/db/stores/dungeon-run/dungeon-run-store.ts";
 import { type FellowshipLogsApiDungeonRunReference } from "@frt/shared/fellowship-logs/fellowship-logs-api-schema.ts";
 
 function mapFellowshipLogsMetadataApiError({
@@ -106,7 +106,7 @@ function mapFellowshipLogsRateLimitApiError(
 }
 
 const mapGetFellowshipLogsDungeonRunsError: (
-  error: DungeonRunRepositoryError,
+  error: DungeonRunStoreError,
 ) => E.Effect<never, HttpApiError.InternalServerError> = E.fnUntraced(
   function* (error) {
     yield* E.logError("Failed to list imported Fellowship Logs runs.", {

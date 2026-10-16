@@ -4,12 +4,11 @@ import * as Schema from "effect/Schema";
 import { describe, expect, test } from "vitest";
 
 import { DungeonRunHistory } from "@frt/api/services/dungeon-run-history/dungeon-run-history-service.ts";
-import { DungeonRunRepository } from "@frt/api/services/dungeon-run-repository/dungeon-run-repository-service.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import {
-  DungeonRunObservationDAO,
   type DungeonRunObservationHistory,
-} from "@frt/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
+  DungeonRunStore,
+} from "@frt/db/stores/dungeon-run/dungeon-run-store.ts";
 import {
   MOCK_DUNGEON_ID,
   MOCK_DUNGEON_LEVEL,
@@ -74,19 +73,16 @@ function makeTestLayer({
 } = {}) {
   return DungeonRunHistory.layerNoDeps.pipe(
     Layer.provide(
-      Layer.mergeAll(
-        Layer.mock(DungeonRunObservationDAO, {
-          getHistoryByDungeon: ({ dungeonId, dungeonLevel }) => {
-            return E.sync(() => {
-              expect(dungeonId).toBe(MOCK_DUNGEON_ID);
-              expect(dungeonLevel).toBe(MOCK_DUNGEON_LEVEL);
+      Layer.mock(DungeonRunStore, {
+        getHistory: ({ dungeonId, dungeonLevel }) => {
+          return E.sync(() => {
+            expect(dungeonId).toBe(MOCK_DUNGEON_ID);
+            expect(dungeonLevel).toBe(MOCK_DUNGEON_LEVEL);
 
-              return history;
-            });
-          },
-        }),
-        Layer.mock(DungeonRunRepository, {}),
-      ),
+            return history;
+          });
+        },
+      }),
     ),
   );
 }

@@ -7,7 +7,7 @@ import * as Schema from "effect/Schema";
 import { getMean } from "@frt/api/util/statistics/get-mean.ts";
 import { getMedian } from "@frt/api/util/statistics/get-median.ts";
 import { getMinimum } from "@frt/api/util/statistics/get-minimum.ts";
-import { type DungeonRunObservationHistory } from "@frt/db/daos/dungeon-run-observation/dungeon-run-observation-dao.ts";
+import { type DungeonRunObservationHistory } from "@frt/db/stores/dungeon-run/dungeon-run-store.ts";
 import {
   type DungeonRunApiComparisonGroup,
   type DungeonRunApiHistory,
