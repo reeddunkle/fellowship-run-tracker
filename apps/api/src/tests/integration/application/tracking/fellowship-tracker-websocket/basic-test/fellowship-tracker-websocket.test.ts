@@ -6,12 +6,11 @@ import { describe, expect, test } from "vitest";
 
 import { FellowshipTracker } from "@frt/api/application/fellowship-tracker/fellowship-tracker-service.ts";
 import { expectDungeonRunObservations } from "@frt/api/tests/common/expect-dungeon-run-observations.ts";
+import { EVERDAWN_GROVE_64_CONFIGURATION } from "@frt/api/tests/common/fixtures/everdawn-grove-configuration-fixtures.ts";
 import { EVERDAWN_GROVE_64_TIMED_LOG_PATH } from "@frt/api/tests/common/fixtures/fellowship-log-fixtures.ts";
 import { makeFellowshipTrackerIntegrationTestHarness } from "@frt/api/tests/common/harnesses/fellowship-tracker-integration-test-harness.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { DungeonRunApiMessageSchema } from "@frt/api-contract/websocket/dungeon-run/dungeon-run-api-message-schema.ts";
-
-import { configuration } from "./configuration.ts";
 
 describe("FellowshipTracker dungeon run WebSocket messages", () => {
   test("broadcasts dungeon run state updates while processing a run", async () => {
@@ -24,7 +23,7 @@ describe("FellowshipTracker dungeon run WebSocket messages", () => {
           const fellowshipTracker = yield* FellowshipTracker;
 
           yield* fellowshipTracker.replayLog({
-            configuration,
+            configuration: EVERDAWN_GROVE_64_CONFIGURATION,
             logFilePath: EVERDAWN_GROVE_64_TIMED_LOG_PATH,
           });
         }).pipe(E.provide(layer));

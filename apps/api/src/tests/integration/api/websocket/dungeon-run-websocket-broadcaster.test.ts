@@ -3,10 +3,7 @@ import * as HttpServer from "effect/http/HttpServer";
 import { describe, expect, test } from "vitest";
 
 import { DungeonRunWebSocketBroadcaster } from "@frt/api/api/websocket/dungeon-run/dungeon-run-websocket-broadcaster-service.ts";
-import {
-  ApiServicesTest,
-  makeApiServerTestLayer,
-} from "@frt/api/tests/common/layers/api-server-test-layer.ts";
+import { ApiServerTest } from "@frt/api/tests/common/layers/api-server-test-layer.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import {
   getWebSocketUrl,
@@ -17,8 +14,6 @@ import {
 import { ROUTES } from "@frt/api-contract/constants/routes.ts";
 
 const MOCK_TIMEOUT = "1 second";
-
-const ApiServerTest = makeApiServerTestLayer(ApiServicesTest);
 
 describe("DungeonRunWebSocketBroadcaster integration", () => {
   test("sends the latest published message to a newly connected client", async () => {

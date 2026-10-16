@@ -1,5 +1,4 @@
 import * as Cause from "effect/Cause";
-import * as Match from "effect/Match";
 import * as Option from "effect/Option";
 
 import { getErrorTag } from "@frt/shared/util/get-error-tag.ts";
@@ -15,18 +14,15 @@ const classifyError = (error: unknown): FellowshipTrackerFailure => {
     };
   }
 
-  return Match.value(errorTag).pipe(
-    Match.when("DuplicateMilestoneRequirementsError", () => {
-      return {
-        _tag: "Configuration",
-      } satisfies FellowshipTrackerFailure;
-    }),
-    Match.orElse(() => {
-      return {
-        _tag: "Unexpected",
-      } satisfies FellowshipTrackerFailure;
-    }),
-  );
+  if (errorTag === "DuplicateMilestoneRequirementsError") {
+    return {
+      _tag: "Configuration",
+    };
+  }
+
+  return {
+    _tag: "Unexpected",
+  };
 };
 
 export const classifyTrackingFailure = (

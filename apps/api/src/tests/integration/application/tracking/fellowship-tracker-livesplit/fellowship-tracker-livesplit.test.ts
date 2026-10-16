@@ -8,6 +8,7 @@ import {
   appendEOL,
   LiveSplitGatewaySendCommand,
 } from "@frt/api/services/live-split-gateway/live-split-gateway-command.ts";
+import { EVERDAWN_GROVE_64_CONFIGURATION } from "@frt/api/tests/common/fixtures/everdawn-grove-configuration-fixtures.ts";
 import { EVERDAWN_GROVE_64_TIMED_LOG_PATH } from "@frt/api/tests/common/fixtures/fellowship-log-fixtures.ts";
 import { makeFellowshipTrackerIntegrationTestHarness } from "@frt/api/tests/common/harnesses/fellowship-tracker-integration-test-harness.ts";
 import {
@@ -15,8 +16,6 @@ import {
   dungeonStartCommands,
 } from "@frt/api/tests/common/live-split-gateway-test-commands.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
-
-import { configuration } from "./configuration.ts";
 
 describe("FellowshipTracker LiveSplit", () => {
   test("sends LiveSplit commands for the configured run", async () => {
@@ -32,7 +31,7 @@ describe("FellowshipTracker LiveSplit", () => {
           yield* liveSplit.connect();
 
           yield* fellowshipTracker.replayLog({
-            configuration,
+            configuration: EVERDAWN_GROVE_64_CONFIGURATION,
             logFilePath: EVERDAWN_GROVE_64_TIMED_LOG_PATH,
           });
         }).pipe(E.provide(layer));
@@ -41,9 +40,10 @@ describe("FellowshipTracker LiveSplit", () => {
 
         const splitCommand = appendEOL(LiveSplitGatewaySendCommand.split);
 
-        const configuredMilestoneCommands = configuration.milestones.map(() => {
-          return splitCommand;
-        });
+        const configuredMilestoneCommands =
+          EVERDAWN_GROVE_64_CONFIGURATION.milestones.map(() => {
+            return splitCommand;
+          });
 
         const expectedCommands = [
           ...dungeonStartCommands,

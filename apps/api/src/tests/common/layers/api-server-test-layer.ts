@@ -60,7 +60,7 @@ type ApiServiceTestLayer =
 
 export const TEST_APP_VERSION = "0.0.0-test";
 
-export const ApiServicesTest: Layer.Layer<ApiServices> = Layer.mergeAll(
+const ApiServicesTest: Layer.Layer<ApiServices> = Layer.mergeAll(
   AbilityCatalogMock,
   AppSettingsMock,
   BackgroundJobMock,

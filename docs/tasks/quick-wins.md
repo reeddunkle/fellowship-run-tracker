@@ -12,15 +12,14 @@ Each item is small and independent. Check an item off when it lands. If an item 
 
 ## Duplication
 
-- [ ] `tests/integration/application/tracking/fellowship-tracker-livesplit/configuration.ts` and `fellowship-tracker-websocket/basic-test/configuration.ts` are identical (116 lines each). Share one file.
-- [ ] Both `FellowshipLogs.queueDungeonRunImport` and the importer service check whether a run is already imported. Keep the importer's check, since it runs right before the write.
-- [ ] `dungeon-run-websocket-broadcaster.test.ts` calls `makeApiServerTestLayer(ApiServicesTest)`, which is the same as the exported `ApiServerTest`.
+- [x] `tests/integration/application/tracking/fellowship-tracker-livesplit/configuration.ts` and `fellowship-tracker-websocket/basic-test/configuration.ts` are identical (116 lines each). Share one file.
+- [x] `dungeon-run-websocket-broadcaster.test.ts` calls `makeApiServerTestLayer(ApiServicesTest)`, which is the same as the exported `ApiServerTest`.
 - [x] `ALL_FELLOWSHIP_EVENT` in `apps/api` partly duplicates `FELLOWSHIP_EVENT` in shared, and knip ignores it.
 
 ## Naming and conventions
 
-- [ ] `file-monitor-test-harness.ts` exports `FileMonitorTestDependenciesLive = NodePlatformLayer`, and a local in the same file has the same name with a different meaning. Rename one of them.
-- [ ] `classify-tracking-failure.ts` uses `Match` for a single case. Replace it with an `if`, or leave it for [extract-tracking-session.md](extract-tracking-session.md).
+- [x] `file-monitor-test-harness.ts` exports `FileMonitorTestDependenciesLive = NodePlatformLayer`, and a local in the same file has the same name with a different meaning. Rename one of them.
+- [x] `classify-tracking-failure.ts` uses `Match` for a single case. Replace it with an `if`, or leave it for [extract-tracking-session.md](extract-tracking-session.md).
 - [ ] Eight provider files use `<Ctx.Provider value>`, and two files use the React 19 form `<Ctx value>` (`detached-window-provider.tsx` and `dungeon-run-table.tsx`). Pick one.
 - [ ] Add the missing `.ts` extension to the `app-api-client` import in the 12 `*-client.ts` files and `background-job-mutations.ts`, and to the imports in `renderer/main.tsx`, `dashboard-page.tsx`, and `dungeon-run-timer.tsx`.
 - [ ] `renderer/main.tsx` has a `QueryClientProvider` import that splits the import block.
@@ -37,3 +36,4 @@ Each item is small and independent. Check an item off when it lands. If an item 
 
 - Biome, oxlint, and Prettier each have a distinct job. Prettier formats only embedded SQL, oxlint runs only the comment-policy and shadcn plugins, and Biome does the rest.
 - The configuration DAO (with `configuration-persistence.ts`) and the background-job DAO already hide their complexity behind small interfaces.
+- Both `FellowshipLogs.queueDungeonRunImport` and the importer service check whether a run is already imported, and both checks stay. The queue check makes the import route respond 409, which the import confirmation card shows as "This run has already been imported." The importer's check guards the write.

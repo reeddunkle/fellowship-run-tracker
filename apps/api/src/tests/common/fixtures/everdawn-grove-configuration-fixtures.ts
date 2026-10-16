@@ -1,6 +1,6 @@
 import { type FellowshipMilestoneConfiguration } from "@frt/shared/fellowship/configurations/configuration-types.ts";
 
-export const configuration = {
+export const EVERDAWN_GROVE_64_CONFIGURATION = {
   dungeonId: "11",
   dungeonLevel: 64,
   milestones: [

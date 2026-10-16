@@ -19,10 +19,7 @@ import {
   type LatestFileItem,
 } from "@frt/api/services/filesystem/file-monitor-service.ts";
 import { DUNGEON_START_LINE } from "@frt/api/tests/common/fixtures/dungeon-start-fixtures.ts";
-import {
-  FileMonitorTestDependenciesLive,
-  makeFileMonitorTestHarness,
-} from "@frt/api/tests/common/harnesses/file-monitor-test-harness.ts";
+import { makeFileMonitorTestHarness } from "@frt/api/tests/common/harnesses/file-monitor-test-harness.ts";
 import { makeStreamTestHarness } from "@frt/api/tests/common/harnesses/stream-test-harness.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 
@@ -76,7 +73,7 @@ describe("FileMonitor", () => {
 
           expect(lines).toEqual(["first line", "second line", "third line"]);
         }),
-      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+      ).pipe(E.provide(NodePlatformLayer));
 
       await runTest(program);
     });
@@ -121,7 +118,7 @@ describe("FileMonitor", () => {
           });
           expect(line).toEqual({ _tag: "Line", line: "first line" });
         }),
-      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+      ).pipe(E.provide(NodePlatformLayer));
 
       await runTest(program);
     });
@@ -168,7 +165,7 @@ describe("FileMonitor", () => {
           });
           expect(line).toEqual({ _tag: "Line", line: "second file line" });
         }),
-      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+      ).pipe(E.provide(NodePlatformLayer));
 
       await runTest(program);
     });
@@ -212,7 +209,7 @@ describe("FileMonitor", () => {
           });
           expect(line).toEqual({ _tag: "Line", line: "after truncate" });
         }),
-      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+      ).pipe(E.provide(NodePlatformLayer));
 
       await runTest(program);
     });
@@ -247,7 +244,7 @@ describe("FileMonitor", () => {
           expect(attached._tag).toBe("Attached");
           expect(waiting).toEqual({ _tag: "WaitingForFile" });
         }),
-      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+      ).pipe(E.provide(NodePlatformLayer));
 
       await runTest(program);
     });
@@ -345,7 +342,7 @@ describe("FileMonitor", () => {
             "appended second line",
           ]);
         }),
-      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+      ).pipe(E.provide(NodePlatformLayer));
 
       await runTest(program);
     });
@@ -392,7 +389,7 @@ describe("FileMonitor", () => {
 
           expect(thirdLine).toBe("third line");
         }),
-      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+      ).pipe(E.provide(NodePlatformLayer));
 
       await runTest(program);
     });
@@ -451,7 +448,7 @@ describe("FileMonitor", () => {
           expect(yield* lines.take).toBe("batch 3 line 1");
           expect(yield* lines.take).toBe("batch 3 line 2");
         }),
-      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+      ).pipe(E.provide(NodePlatformLayer));
 
       await runTest(program);
     });
@@ -509,7 +506,7 @@ describe("FileMonitor", () => {
             "batch 2 line 2",
           ]);
         }),
-      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+      ).pipe(E.provide(NodePlatformLayer));
 
       await runTest(program);
     });
@@ -554,7 +551,7 @@ describe("FileMonitor", () => {
             "appended line",
           ]);
         }),
-      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+      ).pipe(E.provide(NodePlatformLayer));
 
       await runTest(program);
     });
@@ -594,7 +591,7 @@ describe("FileMonitor", () => {
 
           expect(line).toBe("appended line");
         }),
-      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+      ).pipe(E.provide(NodePlatformLayer));
 
       await runTest(program);
     });
@@ -636,7 +633,7 @@ describe("FileMonitor", () => {
 
           expect(line).toBe(`${contentStartedAt}|DUNGEON_START|`);
         }),
-      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+      ).pipe(E.provide(NodePlatformLayer));
 
       await runTest(program);
     });
@@ -679,7 +676,7 @@ describe("FileMonitor", () => {
 
           expect(line).toBe("appended line");
         }),
-      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+      ).pipe(E.provide(NodePlatformLayer));
 
       await runTest(program);
     });
@@ -724,7 +721,7 @@ describe("FileMonitor", () => {
 
           expect(line).toBe("appended line");
         }),
-      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+      ).pipe(E.provide(NodePlatformLayer));
 
       await runTest(program);
     });
@@ -784,7 +781,7 @@ describe("FileMonitor", () => {
            */
           yield* harness.awaitSourceRequest;
         }),
-      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+      ).pipe(E.provide(NodePlatformLayer));
 
       await runTest(program);
     });
@@ -836,7 +833,7 @@ describe("FileMonitor", () => {
             "second line",
           ]);
         }),
-      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+      ).pipe(E.provide(NodePlatformLayer));
 
       await runTest(program);
     });
@@ -907,7 +904,7 @@ describe("FileMonitor", () => {
             "second file appended line",
           ]);
         }),
-      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+      ).pipe(E.provide(NodePlatformLayer));
 
       await runTest(program);
     });
@@ -961,7 +958,7 @@ describe("FileMonitor", () => {
             "after truncate",
           ]);
         }),
-      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+      ).pipe(E.provide(NodePlatformLayer));
 
       await runTest(program);
     });
@@ -1004,7 +1001,7 @@ describe("FileMonitor", () => {
             expect(result.failure).toBe(sourceError);
           }
         }),
-      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+      ).pipe(E.provide(NodePlatformLayer));
 
       await runTest(program);
     });
@@ -1055,7 +1052,7 @@ describe("FileMonitor", () => {
 
           expect(line).toBe("café");
         }),
-      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+      ).pipe(E.provide(NodePlatformLayer));
 
       await runTest(program);
     });
@@ -1107,7 +1104,7 @@ describe("FileMonitor", () => {
 
           expect(secondFileLine).toBe("second file existing line");
         }),
-      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+      ).pipe(E.provide(NodePlatformLayer));
 
       await runTest(program);
     });
@@ -1159,7 +1156,7 @@ describe("FileMonitor", () => {
 
           expect(Result.isFailure(result)).toBe(true);
         }),
-      ).pipe(E.provide(FileMonitorTestDependenciesLive));
+      ).pipe(E.provide(NodePlatformLayer));
 
       await runTest(program);
     });

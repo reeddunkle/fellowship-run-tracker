@@ -195,5 +195,3 @@ export const makeFileMonitorTestHarness = E.gen(function* () {
     writeFileBytes,
   };
 });
-
-export const FileMonitorTestDependenciesLive = NodePlatformLayer;
