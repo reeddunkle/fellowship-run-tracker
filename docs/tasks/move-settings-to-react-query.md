@@ -6,7 +6,7 @@ Source: [architecture review, 2026-10-13](../architecture-reviews/architecture-r
 
 The root route loader loads settings, and the app changes them through `useActionState`, `useOptimistic`, and `router.invalidate()`. Every other server value uses react-query, which goes against the project's reactive `useQuery` convention.
 
-`settings-editor.tsx` (455 lines) hand-writes six `form.Field` blocks. Five of them wrap `FieldError` in `field.state.meta.errors.length > 0 ? ... : null`, but `FieldError` already returns null when there are no errors. `AppTextField` already exists in `components/form/fields/text-field.tsx`. The client-secret field has about 90 lines of branching.
+`settings-editor.tsx` (445 lines) hand-writes six `form.Field` blocks. `AppTextField` already exists in `components/form/fields/text-field.tsx`. The client-secret field has about 90 lines of branching.
 
 Neither the settings editor nor the settings provider has tests.
 
@@ -32,4 +32,3 @@ Load settings with a query and save them with a mutation, like other server valu
 - `apps/electron/src/renderer/components/providers/settings-provider.tsx`
 - `apps/electron/src/renderer/components/settings/settings-editor.tsx`
 - `apps/electron/src/renderer/components/form/fields/text-field.tsx`
-- `packages/ui/src/primitives/field.tsx` (`FieldError`)

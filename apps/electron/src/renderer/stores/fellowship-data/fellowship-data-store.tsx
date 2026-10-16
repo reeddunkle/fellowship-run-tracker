@@ -89,9 +89,7 @@ export function FellowshipDataProvider({
   });
 
   return (
-    <FellowshipDataContext.Provider value={store}>
-      {children}
-    </FellowshipDataContext.Provider>
+    <FellowshipDataContext value={store}>{children}</FellowshipDataContext>
   );
 }
 

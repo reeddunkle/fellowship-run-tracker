@@ -87,9 +87,7 @@ export function ImportUrlForm({
                   spellCheck={false}
                   value={field.state.value}
                 />
-                {field.state.meta.errors.length > 0 ? (
-                  <FieldError errors={field.state.meta.errors} />
-                ) : null}
+                <FieldError errors={field.state.meta.errors} />
               </Field>
             );
           }}

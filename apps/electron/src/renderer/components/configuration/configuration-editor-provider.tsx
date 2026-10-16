@@ -358,9 +358,9 @@ function ConfigurationEditorProviderInner({
   ]);
 
   return (
-    <ConfigurationEditorContext.Provider value={contextValue}>
+    <ConfigurationEditorContext value={contextValue}>
       {children}
-    </ConfigurationEditorContext.Provider>
+    </ConfigurationEditorContext>
   );
 }
 

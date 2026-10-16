@@ -187,11 +187,11 @@ export function ConfigurationProvider({
   ]);
 
   return (
-    <ConfigurationActionContext.Provider value={actionContextValue}>
-      <ConfigurationStateContext.Provider value={stateContextValue}>
+    <ConfigurationActionContext value={actionContextValue}>
+      <ConfigurationStateContext value={stateContextValue}>
         {children}
-      </ConfigurationStateContext.Provider>
-    </ConfigurationActionContext.Provider>
+      </ConfigurationStateContext>
+    </ConfigurationActionContext>
   );
 }
 

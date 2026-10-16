@@ -130,11 +130,7 @@ export function TrackingProvider({ children }: TrackingProviderProps) {
     stopState.error,
   ]);
 
-  return (
-    <TrackingContext.Provider value={contextValue}>
-      {children}
-    </TrackingContext.Provider>
-  );
+  return <TrackingContext value={contextValue}>{children}</TrackingContext>;
 }
 
 function useTrackingContext(): TrackingContextValue {

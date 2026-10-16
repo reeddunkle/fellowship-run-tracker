@@ -52,14 +52,14 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   }, [theme]);
 
   return (
-    <ThemeProviderContext.Provider
+    <ThemeProviderContext
       value={{
         setTheme,
         theme,
       }}
     >
       {children}
-    </ThemeProviderContext.Provider>
+    </ThemeProviderContext>
   );
 }
 

@@ -130,11 +130,7 @@ export function LiveSplitProvider({ children }: LiveSplitProviderProps) {
     isDisconnecting,
   ]);
 
-  return (
-    <LiveSplitContext.Provider value={contextValue}>
-      {children}
-    </LiveSplitContext.Provider>
-  );
+  return <LiveSplitContext value={contextValue}>{children}</LiveSplitContext>;
 }
 
 function useLiveSplitContext(): LiveSplitContextValue {

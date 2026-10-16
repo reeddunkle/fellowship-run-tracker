@@ -170,11 +170,11 @@ export function SettingsProvider({
   }, [optimisticAppSettings]);
 
   return (
-    <SettingsActionContext.Provider value={actionContextValue}>
-      <SettingsStateContext.Provider value={stateContextValue}>
+    <SettingsActionContext value={actionContextValue}>
+      <SettingsStateContext value={stateContextValue}>
         {children}
-      </SettingsStateContext.Provider>
-    </SettingsActionContext.Provider>
+      </SettingsStateContext>
+    </SettingsActionContext>
   );
 }
 

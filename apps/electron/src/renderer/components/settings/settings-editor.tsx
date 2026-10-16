@@ -165,9 +165,7 @@ export function SettingsEditor() {
                       }}
                       value={field.state.value}
                     />
-                    {field.state.meta.errors.length > 0 ? (
-                      <FieldError errors={field.state.meta.errors} />
-                    ) : null}
+                    <FieldError errors={field.state.meta.errors} />
                   </Field>
                 );
               }}
@@ -214,9 +212,7 @@ export function SettingsEditor() {
                                 placeholder="localhost"
                                 value={field.state.value}
                               />
-                              {field.state.meta.errors.length > 0 ? (
-                                <FieldError errors={field.state.meta.errors} />
-                              ) : null}
+                              <FieldError errors={field.state.meta.errors} />
                             </Field>
                           );
                         }}
@@ -240,9 +236,7 @@ export function SettingsEditor() {
                                 placeholder="16834"
                                 value={field.state.value}
                               />
-                              {field.state.meta.errors.length > 0 ? (
-                                <FieldError errors={field.state.meta.errors} />
-                              ) : null}
+                              <FieldError errors={field.state.meta.errors} />
                             </Field>
                           );
                         }}
@@ -277,9 +271,7 @@ export function SettingsEditor() {
                         spellCheck={false}
                         value={field.state.value}
                       />
-                      {field.state.meta.errors.length > 0 ? (
-                        <FieldError errors={field.state.meta.errors} />
-                      ) : null}
+                      <FieldError errors={field.state.meta.errors} />
                     </Field>
                   );
                 }}
@@ -374,9 +366,7 @@ export function SettingsEditor() {
                         requests on your behalf. It is stored encrypted on your
                         computer.
                       </p>
-                      {field.state.meta.errors.length > 0 ? (
-                        <FieldError errors={field.state.meta.errors} />
-                      ) : null}
+                      <FieldError errors={field.state.meta.errors} />
                     </Field>
                   );
                 }}

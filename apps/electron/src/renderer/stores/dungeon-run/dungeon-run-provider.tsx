@@ -24,10 +24,7 @@ import {
   useDungeonRunComparisonGroup,
   useSelectedConfigurationId,
 } from "@/renderer/api/app-state/app-state-queries.ts";
-import {
-  API_EVENT_CONNECTION_STATE,
-  type ApiEventConnectionState,
-} from "@/renderer/api/common.ts";
+import { type ApiEventConnectionState } from "@/renderer/api/common.ts";
 import { useConfigurationsQuery } from "@/renderer/api/configuration/configuration-queries.ts";
 import { useDungeonRunHistoryQuery } from "@/renderer/api/dungeon-run/dungeon-run-queries.ts";
 import {
@@ -70,15 +67,6 @@ function getHistoryConfigurationId({
   return selectedConfigurationId;
 }
 
-type DungeonRunState = {
-  readonly comparisonGroup: DungeonRunApiComparisonGroup;
-  readonly eventConnectionState: ApiEventConnectionState;
-  readonly history: DungeonRunApiHistory | null;
-  readonly runState: DungeonRunEventStoreSnapshot["runState"];
-};
-
-type DungeonRunContextValue = DungeonRunDisplayState & DungeonRunState;
-
 type DungeonRunProviderProps = {
   readonly children: ReactNode;
   readonly eventStore?: DungeonRunEventStore;
@@ -96,7 +84,7 @@ type DungeonRunServerState = {
   readonly runState: DungeonRunEventStoreSnapshot["runState"];
 };
 
-const DungeonRunContext = createContext<DungeonRunContextValue | undefined>(
+const DungeonRunContext = createContext<DungeonRunDisplayState | undefined>(
   undefined,
 );
 
@@ -114,7 +102,6 @@ export function DungeonRunProvider({
   eventStore = dungeonRunEventStore,
   trackingEventStore: trackingEventStoreOverride = defaultTrackingEventStore,
 }: DungeonRunProviderProps) {
-  const comparisonGroup = useDungeonRunComparisonGroup();
   const {
     collapseAllMilestones,
     expandAllMilestones,
@@ -122,36 +109,31 @@ export function DungeonRunProvider({
     setMilestoneExpanded,
   } = useDungeonRunMilestoneExpansion();
 
-  const contextValue = useMemo<DungeonRunContextValue>(() => {
+  const contextValue = useMemo<DungeonRunDisplayState>(() => {
     return {
       collapseAllMilestones,
-      comparisonGroup,
-      eventConnectionState: API_EVENT_CONNECTION_STATE.DISCONNECTED,
       expandAllMilestones,
-      history: null,
       isMilestoneExpanded,
-      runState: null,
       setMilestoneExpanded,
     };
   }, [
     collapseAllMilestones,
-    comparisonGroup,
     expandAllMilestones,
     isMilestoneExpanded,
     setMilestoneExpanded,
   ]);
 
+  const sources = useMemo<DungeonRunSources>(() => {
+    return {
+      eventStore,
+      trackingEventStore: trackingEventStoreOverride,
+    };
+  }, [eventStore, trackingEventStoreOverride]);
+
   return (
-    <DungeonRunSourcesContext.Provider
-      value={{
-        eventStore,
-        trackingEventStore: trackingEventStoreOverride,
-      }}
-    >
-      <DungeonRunContext.Provider value={contextValue}>
-        {children}
-      </DungeonRunContext.Provider>
-    </DungeonRunSourcesContext.Provider>
+    <DungeonRunSourcesContext value={sources}>
+      <DungeonRunContext value={contextValue}>{children}</DungeonRunContext>
+    </DungeonRunSourcesContext>
   );
 }
 
@@ -168,7 +150,7 @@ function useDungeonRunSources(): DungeonRunSources {
   return sources;
 }
 
-function useDungeonRunContext(): DungeonRunContextValue {
+function useDungeonRunContext(): DungeonRunDisplayState {
   const context = useContext(DungeonRunContext);
 
   if (context === undefined) {
@@ -246,17 +228,5 @@ export function useDungeonRunInterpretationState(): DungeonRunInterpretationStat
 }
 
 export function useDungeonRunDisplayState(): DungeonRunDisplayState {
-  const {
-    collapseAllMilestones,
-    expandAllMilestones,
-    isMilestoneExpanded,
-    setMilestoneExpanded,
-  } = useDungeonRunContext();
-
-  return {
-    collapseAllMilestones,
-    expandAllMilestones,
-    isMilestoneExpanded,
-    setMilestoneExpanded,
-  };
+  return useDungeonRunContext();
 }
