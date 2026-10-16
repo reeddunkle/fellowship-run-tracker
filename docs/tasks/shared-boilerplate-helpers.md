@@ -22,7 +22,7 @@ Open question: can the factory handle the `encounters` parameter without getting
 
 ## Tracking status mapping
 
-`create-tracking-api-status.ts` spends 135 lines mapping `_tag` to `type` and `status`. Revisit after [unify-live-log-stream.md](unify-live-log-stream.md), which changes the status model.
+`create-tracking-api-status.ts` spends 147 lines mapping `_tag` to `type` and `status`. The status model now has five cases: `Idle`, `Starting`, `WaitingForLogFile`, `Tracking` and `Failed`. All of them except `Idle` carry the same `dungeonId` and `source`.
 
 ## DAO errors and row decoding
 
