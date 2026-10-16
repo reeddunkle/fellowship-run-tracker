@@ -1,15 +1,10 @@
 import { type QueryClient } from "@tanstack/react-query";
 import * as E from "effect/Effect";
-import * as Match from "effect/Match";
-import * as Stream from "effect/Stream";
+import type * as Stream from "effect/Stream";
 import type * as Socket from "effect/socket/Socket";
 
 import { type DungeonRunStateApi } from "@frt/api-contract/websocket/dungeon-run/dungeon-run-api-message-schema.ts";
 
-import {
-  API_EVENT_CONNECTION_STATE,
-  type ApiEventConnectionState,
-} from "@/renderer/api/common.ts";
 import {
   type DungeonRunEventStreamError,
   type DungeonRunEventStreamEvent,
@@ -17,14 +12,18 @@ import {
 } from "@/renderer/api/dungeon-run/dungeon-run-event-stream.ts";
 import { invalidateDungeonRunHistory } from "@/renderer/api/fellowship-logs/fellowship-logs-invalidation.ts";
 import { queryClient as defaultQueryClient } from "@/renderer/query/query-client.ts";
-import { makeRestartableBrowserProgram } from "@/renderer/runtimes/make-restartable-browser-program.ts";
+import {
+  type ApiEventStoreSnapshot,
+  type ManualApiEventStore,
+  makeApiEventStore,
+} from "@/renderer/stores/make-api-event-store.ts";
 
-export type DungeonRunEventStoreSnapshot = {
-  readonly eventConnectionState: ApiEventConnectionState;
+type DungeonRunEventState = {
   readonly runState: DungeonRunStateApi | null;
 };
 
-type Listener = () => void;
+export type DungeonRunEventStoreSnapshot =
+  ApiEventStoreSnapshot<DungeonRunEventState>;
 
 type DungeonRunEventStreamFactory = () => Stream.Stream<
   DungeonRunEventStreamEvent,
@@ -37,15 +36,10 @@ export type MakeDungeonRunEventStoreOptions = {
   readonly queryClient?: QueryClient;
 };
 
-export type DungeonRunEventStore = {
-  readonly getSnapshot: () => DungeonRunEventStoreSnapshot;
-  readonly start: () => void;
-  readonly stop: () => void;
-  readonly subscribe: (listener: Listener) => () => void;
-};
+export type DungeonRunEventStore =
+  ManualApiEventStore<DungeonRunEventStoreSnapshot>;
 
-const initialSnapshot: DungeonRunEventStoreSnapshot = {
-  eventConnectionState: API_EVENT_CONNECTION_STATE.DISCONNECTED,
+const initialState: DungeonRunEventState = {
   runState: null,
 };
 
@@ -53,106 +47,37 @@ export function makeDungeonRunEventStore({
   makeEventStream = makeDungeonRunEventStream,
   queryClient = defaultQueryClient,
 }: MakeDungeonRunEventStoreOptions = {}): DungeonRunEventStore {
-  let snapshot = initialSnapshot;
+  return makeApiEventStore({
+    initialState,
+    label: "Dungeon run",
+    lifecycle: "manual",
+    makeEventStream,
+    onMessage: ({ next, previous }) => {
+      const previousStatus = previous.runState?.dungeonRun?.status;
+      const nextStatus = next.runState?.dungeonRun?.status;
 
-  const listeners = new Set<Listener>();
+      if (previousStatus !== "ACTIVE" || nextStatus === "ACTIVE") {
+        return E.void;
+      }
 
-  function emit(): void {
-    listeners.forEach((listener) => {
-      listener();
-    });
-  }
-
-  function updateSnapshot(
-    update: (
-      currentSnapshot: DungeonRunEventStoreSnapshot,
-    ) => DungeonRunEventStoreSnapshot,
-  ): E.Effect<void> {
-    return E.sync(() => {
-      snapshot = update(snapshot);
-
-      emit();
-    });
-  }
-
-  const handleDungeonRunEvent = Match.type<DungeonRunEventStreamEvent>().pipe(
-    Match.when({ type: "CONNECTION_STATE_CHANGED" }, (event) => {
-      return updateSnapshot((currentSnapshot) => {
-        return {
-          ...currentSnapshot,
-          eventConnectionState: event.state,
-        };
-      });
-    }),
-    Match.when({ type: "MESSAGE_RECEIVED" }, (event) => {
-      const previousStatus = snapshot.runState?.dungeonRun?.status;
-      const nextStatus = event.message.state.dungeonRun?.status;
-
-      return updateSnapshot((currentSnapshot) => {
-        return {
-          ...currentSnapshot,
-          runState: event.message.state,
-        };
-      }).pipe(
-        E.andThen(() => {
-          if (previousStatus !== "ACTIVE" || nextStatus === "ACTIVE") {
-            return E.void;
-          }
-
-          return invalidateDungeonRunHistory(queryClient).pipe(
-            E.catch((error) => {
-              return E.logWarning(
-                "Failed to refresh dungeon run history after a run finished.",
-                {
-                  error,
-                },
-              );
-            }),
+      return invalidateDungeonRunHistory(queryClient).pipe(
+        E.catch((error) => {
+          return E.logWarning(
+            "Failed to refresh dungeon run history after a run finished.",
+            {
+              error,
+            },
           );
         }),
       );
-    }),
-    Match.exhaustive,
-  );
-
-  const { start, stop } = makeRestartableBrowserProgram(() => {
-    return makeEventStream().pipe(
-      Stream.runForEach(handleDungeonRunEvent),
-      E.catch((error) => {
-        return E.gen(function* () {
-          yield* E.logError("Dungeon run event stream failed.", {
-            error,
-          });
-
-          yield* updateSnapshot((currentSnapshot) => {
-            return {
-              ...currentSnapshot,
-              eventConnectionState: API_EVENT_CONNECTION_STATE.ERROR,
-            };
-          });
-        });
-      }),
-    );
+    },
+    reduce: (state, message) => {
+      return {
+        ...state,
+        runState: message.state,
+      };
+    },
   });
-
-  function subscribe(listener: Listener): () => void {
-    listeners.add(listener);
-
-    return () => {
-      listeners.delete(listener);
-    };
-  }
-
-  function getSnapshot(): DungeonRunEventStoreSnapshot {
-    return snapshot;
-  }
-
-  return {
-    getSnapshot,
-    start,
-    stop,
-    subscribe,
-  };
 }
 
 export const dungeonRunEventStore = makeDungeonRunEventStore();

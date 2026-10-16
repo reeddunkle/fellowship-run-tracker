@@ -1,7 +1,6 @@
 import { type QueryClient } from "@tanstack/react-query";
 import * as E from "effect/Effect";
-import * as Match from "effect/Match";
-import * as Stream from "effect/Stream";
+import type * as Stream from "effect/Stream";
 import type * as Socket from "effect/socket/Socket";
 
 import { type BackgroundJobApiSnapshot } from "@frt/shared/background-job/background-job-api-schema.ts";
@@ -17,27 +16,26 @@ import {
   setBackgroundJobSnapshot,
 } from "@/renderer/api/background-job/background-job-queries.ts";
 import {
-  API_EVENT_CONNECTION_STATE,
-  type ApiEventConnectionState,
-} from "@/renderer/api/common.ts";
-import {
   invalidateDungeonRunHistory,
   invalidateFellowshipLogsRateLimitData,
   invalidateImportedDungeonRuns,
 } from "@/renderer/api/fellowship-logs/fellowship-logs-invalidation.ts";
 import { queryClient as defaultQueryClient } from "@/renderer/query/query-client.ts";
-import { makeRestartableBrowserProgram } from "@/renderer/runtimes/make-restartable-browser-program.ts";
+import {
+  type ApiEventStoreSnapshot,
+  type ManualApiEventStore,
+  makeApiEventStore,
+} from "@/renderer/stores/make-api-event-store.ts";
 
 import {
   getNewlyFinishedBackgroundJobs,
   getNewlyWaitingBackgroundJobs,
 } from "./get-newly-finished-background-jobs.ts";
 
-type BackgroundJobEventStoreSnapshot = {
-  readonly eventConnectionState: ApiEventConnectionState;
-};
+type BackgroundJobEventState = Record<never, never>;
 
-type Listener = () => void;
+type BackgroundJobEventStoreSnapshot =
+  ApiEventStoreSnapshot<BackgroundJobEventState>;
 
 type BackgroundJobEventStreamFactory = () => Stream.Stream<
   BackgroundJobEventStreamEvent,
@@ -50,41 +48,15 @@ export type MakeBackgroundJobEventStoreOptions = {
   readonly queryClient?: QueryClient;
 };
 
-export type BackgroundJobEventStore = {
-  readonly getSnapshot: () => BackgroundJobEventStoreSnapshot;
-  readonly start: () => void;
-  readonly stop: () => void;
-  readonly subscribe: (listener: Listener) => () => void;
-};
+export type BackgroundJobEventStore =
+  ManualApiEventStore<BackgroundJobEventStoreSnapshot>;
 
-const initialSnapshot: BackgroundJobEventStoreSnapshot = {
-  eventConnectionState: API_EVENT_CONNECTION_STATE.DISCONNECTED,
-};
+const initialState: BackgroundJobEventState = {};
 
 export function makeBackgroundJobEventStore({
   makeEventStream = makeBackgroundJobEventStream,
   queryClient = defaultQueryClient,
 }: MakeBackgroundJobEventStoreOptions = {}): BackgroundJobEventStore {
-  let snapshot = initialSnapshot;
-
-  const listeners = new Set<Listener>();
-
-  function emit(): void {
-    listeners.forEach((listener) => {
-      listener();
-    });
-  }
-
-  function setConnectionState(
-    eventConnectionState: ApiEventConnectionState,
-  ): E.Effect<void> {
-    return E.sync(() => {
-      snapshot = { ...snapshot, eventConnectionState };
-
-      emit();
-    });
-  }
-
   const refreshFinishedJobQueries = E.fnUntraced(function* ({
     next,
     previous,
@@ -135,50 +107,15 @@ export function makeBackgroundJobEventStore({
     }),
   );
 
-  const handleBackgroundJobEvent =
-    Match.type<BackgroundJobEventStreamEvent>().pipe(
-      Match.when({ type: "CONNECTION_STATE_CHANGED" }, (event) => {
-        return setConnectionState(event.state);
-      }),
-      Match.when({ type: "MESSAGE_RECEIVED" }, (event) => {
-        return handleSnapshot(event.message.snapshot);
-      }),
-      Match.exhaustive,
-    );
-
-  const { start, stop } = makeRestartableBrowserProgram(() => {
-    return makeEventStream().pipe(
-      Stream.runForEach(handleBackgroundJobEvent),
-      E.catch((error) => {
-        return E.gen(function* () {
-          yield* E.logError("Background job event stream failed.", {
-            error,
-          });
-
-          yield* setConnectionState(API_EVENT_CONNECTION_STATE.ERROR);
-        });
-      }),
-    );
+  return makeApiEventStore({
+    initialState,
+    label: "Background job",
+    lifecycle: "manual",
+    makeEventStream,
+    onMessage: ({ message }) => {
+      return handleSnapshot(message.snapshot);
+    },
   });
-
-  function subscribe(listener: Listener): () => void {
-    listeners.add(listener);
-
-    return () => {
-      listeners.delete(listener);
-    };
-  }
-
-  function getSnapshot(): BackgroundJobEventStoreSnapshot {
-    return snapshot;
-  }
-
-  return {
-    getSnapshot,
-    start,
-    stop,
-    subscribe,
-  };
 }
 
 export const backgroundJobEventStore = makeBackgroundJobEventStore();

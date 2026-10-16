@@ -1,123 +1,57 @@
-import * as E from "effect/Effect";
-import * as Match from "effect/Match";
-import * as Stream from "effect/Stream";
+import type * as Stream from "effect/Stream";
+import type * as Socket from "effect/socket/Socket";
 
 import { type LiveSplitApiStatus } from "@frt/shared/live-split/live-split-api-schema.ts";
 
 import {
-  API_EVENT_CONNECTION_STATE,
-  type ApiEventConnectionState,
-} from "@/renderer/api/common.ts";
-import {
+  type LiveSplitEventStreamError,
   type LiveSplitEventStreamEvent,
   makeLiveSplitEventStream,
 } from "@/renderer/api/live-split/live-split-event-stream.ts";
-import { makeRestartableBrowserProgram } from "@/renderer/runtimes/make-restartable-browser-program.ts";
+import {
+  type ApiEventStore,
+  type ApiEventStoreSnapshot,
+  makeApiEventStore,
+} from "@/renderer/stores/make-api-event-store.ts";
 
-export type LiveSplitEventStoreSnapshot = {
-  readonly eventConnectionState: ApiEventConnectionState;
+type LiveSplitEventState = {
   readonly serverStatus: LiveSplitApiStatus | null;
 };
 
-export type LiveSplitEventStore = {
-  readonly getSnapshot: () => LiveSplitEventStoreSnapshot;
-  readonly subscribe: (listener: Listener) => () => void;
+export type LiveSplitEventStoreSnapshot =
+  ApiEventStoreSnapshot<LiveSplitEventState>;
+
+type LiveSplitEventStreamFactory = () => Stream.Stream<
+  LiveSplitEventStreamEvent,
+  LiveSplitEventStreamError,
+  Socket.WebSocketConstructor
+>;
+
+export type MakeLiveSplitEventStoreOptions = {
+  readonly makeEventStream?: LiveSplitEventStreamFactory;
 };
 
-type Listener = () => void;
+export type LiveSplitEventStore = ApiEventStore<LiveSplitEventStoreSnapshot>;
 
-const initialSnapshot: LiveSplitEventStoreSnapshot = {
-  eventConnectionState: API_EVENT_CONNECTION_STATE.DISCONNECTED,
+const initialState: LiveSplitEventState = {
   serverStatus: null,
 };
 
-function makeLiveSplitEventStore(): LiveSplitEventStore {
-  let snapshot = initialSnapshot;
-
-  const listeners = new Set<Listener>();
-
-  function emit(): void {
-    listeners.forEach((listener) => {
-      listener();
-    });
-  }
-
-  function updateSnapshot(
-    update: (
-      currentSnapshot: LiveSplitEventStoreSnapshot,
-    ) => LiveSplitEventStoreSnapshot,
-  ): E.Effect<void> {
-    return E.sync(() => {
-      snapshot = update(snapshot);
-
-      emit();
-    });
-  }
-
-  const handleLiveSplitEvent = Match.type<LiveSplitEventStreamEvent>().pipe(
-    Match.when({ type: "CONNECTION_STATE_CHANGED" }, (event) => {
-      return updateSnapshot((currentSnapshot) => {
-        return {
-          ...currentSnapshot,
-          eventConnectionState: event.state,
-        };
-      });
-    }),
-    Match.when({ type: "MESSAGE_RECEIVED" }, (event) => {
-      return updateSnapshot((currentSnapshot) => {
-        return {
-          ...currentSnapshot,
-          serverStatus: event.message.status,
-        };
-      });
-    }),
-    Match.exhaustive,
-  );
-
-  const { start, stop } = makeRestartableBrowserProgram(() => {
-    return makeLiveSplitEventStream().pipe(
-      Stream.runForEach(handleLiveSplitEvent),
-      E.catch((error) => {
-        return E.gen(function* () {
-          yield* E.logError("LiveSplit event stream failed.", {
-            error,
-          });
-
-          yield* updateSnapshot((currentSnapshot) => {
-            return {
-              ...currentSnapshot,
-              eventConnectionState: API_EVENT_CONNECTION_STATE.ERROR,
-            };
-          });
-        });
-      }),
-    );
+export function makeLiveSplitEventStore({
+  makeEventStream = makeLiveSplitEventStream,
+}: MakeLiveSplitEventStoreOptions = {}): LiveSplitEventStore {
+  return makeApiEventStore({
+    initialState,
+    label: "LiveSplit",
+    lifecycle: "while-subscribed",
+    makeEventStream,
+    reduce: (state, message) => {
+      return {
+        ...state,
+        serverStatus: message.status,
+      };
+    },
   });
-
-  function subscribe(listener: Listener): () => void {
-    listeners.add(listener);
-
-    if (listeners.size === 1) {
-      start();
-    }
-
-    return () => {
-      listeners.delete(listener);
-
-      if (listeners.size === 0) {
-        stop();
-      }
-    };
-  }
-
-  function getSnapshot(): LiveSplitEventStoreSnapshot {
-    return snapshot;
-  }
-
-  return {
-    getSnapshot,
-    subscribe,
-  };
 }
 
 export const liveSplitEventStore = makeLiveSplitEventStore();
