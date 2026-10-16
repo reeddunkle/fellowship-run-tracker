@@ -6,7 +6,6 @@ import * as Ref from "effect/Ref";
 import * as Stream from "effect/Stream";
 
 import {
-  FellowshipLogsGatewayGraphQLResponseError,
   FellowshipLogsGatewayReportChangedError,
   FellowshipLogsGatewayRequestError,
 } from "@frt/api/errors/fellowship-logs-gateway-error.ts";
@@ -17,7 +16,6 @@ import {
   makeFellowshipLogsGatewayResponseKey,
 } from "@frt/api/services/fellowship-logs-gateway/cache/fellowship-logs-gateway-cache-policy.ts";
 import { FellowshipLogsGatewayResponseCache } from "@frt/api/services/fellowship-logs-gateway/cache/fellowship-logs-gateway-response-cache-service.ts";
-import { streamFellowshipLogsGatewayEvents } from "@frt/api/services/fellowship-logs-gateway/events/stream-fellowship-logs-gateway-events.ts";
 import { makeFellowshipLogsGatewayHttpQuery } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-http-query.ts";
 import {
   deriveDungeonRunMetadata,
@@ -325,44 +323,9 @@ export const makeFellowshipLogsGatewayFromQuery = E.fnUntraced(function* (
     );
   };
 
-  const getReport: FellowshipLogsGatewayShape["getReport"] = E.fn(
-    "FellowshipLogsGateway.getReport",
-  )(function* (options) {
-    const reportPages = yield* Stream.runCollect(streamReportPages(options));
-
-    const firstReportPage = reportPages[0];
-
-    if (firstReportPage === undefined) {
-      return yield* new FellowshipLogsGatewayGraphQLResponseError({
-        errors: [],
-        reason: "MissingReportPages",
-      });
-    }
-
-    const events = reportPages.flatMap((reportPage) => {
-      return reportPage.events.data;
-    });
-
-    return {
-      ...firstReportPage,
-      events: {
-        data: events,
-        nextPageTimestamp: null,
-      },
-    };
-  });
-
-  const streamEvents: FellowshipLogsGatewayShape["streamEvents"] = (
-    options,
-  ) => {
-    return streamFellowshipLogsGatewayEvents(streamReportPages(options));
-  };
-
   return {
     getDungeonRunMetadata,
     getRateLimitData,
-    getReport,
-    streamEvents,
     streamReportPages,
   } satisfies FellowshipLogsGatewayShape;
 });

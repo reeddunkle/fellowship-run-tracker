@@ -6,11 +6,11 @@ import { describe, expect, test } from "vitest";
 import { FellowshipLogsDungeonRunImporter } from "@frt/api/application/fellowship-logs-dungeon-run-importer/fellowship-logs-dungeon-run-importer-service.ts";
 import { FellowshipLogsGateway } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
 import {
+  CONTROLLED_PAGE_COUNT,
   type FellowshipLogsFetchControl,
   makeControlledFellowshipLogsFixtureLayer,
   makeFellowshipLogsFetchControl,
   RECORDED_FIGHT,
-  RECORDED_FIGHT_PAGE_COUNT,
 } from "@frt/api/tests/common/layers/controlled-fellowship-logs-fixture-layer.ts";
 import { makePersistenceTestLayer } from "@frt/api/tests/common/layers/persistence-test-layer.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
@@ -139,7 +139,7 @@ describe("FellowshipLogsDungeonRunImporter with the Fellowship Logs cache", () =
     );
 
     // Every page was fetched exactly once across both attempts.
-    expect(control.pagesFetched).toBe(RECORDED_FIGHT_PAGE_COUNT);
+    expect(control.pagesFetched).toBe(CONTROLLED_PAGE_COUNT);
 
     expect(resumed).toEqual(straightThrough);
     expect(resumed.observations.length).toBeGreaterThan(0);
@@ -166,7 +166,7 @@ describe("FellowshipLogsDungeonRunImporter with the Fellowship Logs cache", () =
     expect(requestsForSecondImport).toEqual([]);
     expect(cached).toEqual({
       FIGHT: 1,
-      REPORT_PAGE: RECORDED_FIGHT_PAGE_COUNT,
+      REPORT_PAGE: CONTROLLED_PAGE_COUNT,
     });
   });
 
@@ -184,7 +184,7 @@ describe("FellowshipLogsDungeonRunImporter with the Fellowship Logs cache", () =
       return yield* countCachedResponses;
     }).pipe(E.provide(makeTestLayer(control)), runTest);
 
-    expect(control.pagesFetched).toBe(RECORDED_FIGHT_PAGE_COUNT * 2);
+    expect(control.pagesFetched).toBe(CONTROLLED_PAGE_COUNT * 2);
 
     // The fight itself is kept briefly, but none of its pages.
     expect(cached).toEqual({ FIGHT: 1 });
@@ -228,6 +228,6 @@ describe("FellowshipLogsDungeonRunImporter with the Fellowship Logs cache", () =
     }).pipe(E.provide(makeTestLayer(control)), runTest);
 
     expect(imported.dungeonRunId).toEqual(expect.any(String));
-    expect(control.pagesFetched).toBe(RECORDED_FIGHT_PAGE_COUNT);
+    expect(control.pagesFetched).toBe(CONTROLLED_PAGE_COUNT);
   });
 });

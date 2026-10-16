@@ -36,33 +36,31 @@ Review tasks come before the tasks that existed before the review.
 
 ### From the architecture review
 
-1. [fixture-gateway-on-query-seam.md](fixture-gateway-on-query-seam.md). Strong. Removes about 300 lines of fixture code.
-2. [extract-tracking-session.md](extract-tracking-session.md). Worth exploring.
-3. [derive-test-wiring-from-production.md](derive-test-wiring-from-production.md). Worth exploring.
-4. [simplify-renderer-action-providers.md](simplify-renderer-action-providers.md). Worth exploring.
-5. [move-settings-to-react-query.md](move-settings-to-react-query.md). Worth exploring.
-6. [combat-log-parser-locality.md](combat-log-parser-locality.md). Worth exploring.
-7. [app-state-key-schema-table.md](app-state-key-schema-table.md). Worth exploring.
-8. [decide-wire-schema-placement.md](decide-wire-schema-placement.md). Worth exploring. Ends in an ADR.
-9. [shared-boilerplate-helpers.md](shared-boilerplate-helpers.md). Worth exploring. Each section can land on its own.
-10. [clean-up-detached-window.md](clean-up-detached-window.md). Worth exploring.
-11. [renderer-api-client-seam.md](renderer-api-client-seam.md). Worth exploring. Split out of the quick wins.
-12. [electron-app-lifecycle-module.md](electron-app-lifecycle-module.md). Speculative.
+1. [extract-tracking-session.md](extract-tracking-session.md). Worth exploring.
+2. [derive-test-wiring-from-production.md](derive-test-wiring-from-production.md). Worth exploring.
+3. [simplify-renderer-action-providers.md](simplify-renderer-action-providers.md). Worth exploring.
+4. [move-settings-to-react-query.md](move-settings-to-react-query.md). Worth exploring.
+5. [combat-log-parser-locality.md](combat-log-parser-locality.md). Worth exploring.
+6. [app-state-key-schema-table.md](app-state-key-schema-table.md). Worth exploring.
+7. [decide-wire-schema-placement.md](decide-wire-schema-placement.md). Worth exploring. Ends in an ADR.
+8. [shared-boilerplate-helpers.md](shared-boilerplate-helpers.md). Worth exploring. Each section can land on its own.
+9. [clean-up-detached-window.md](clean-up-detached-window.md). Worth exploring.
+10. [renderer-api-client-seam.md](renderer-api-client-seam.md). Worth exploring. Split out of the quick wins.
+11. [electron-app-lifecycle-module.md](electron-app-lifecycle-module.md). Speculative.
 
 ### Existing tasks
 
-13. [batch-dungeon-run-observation-inserts.md](batch-dungeon-run-observation-inserts.md).
-14. [disconnect-livesplit-when-disabled.md](disconnect-livesplit-when-disabled.md).
+12. [batch-dungeon-run-observation-inserts.md](batch-dungeon-run-observation-inserts.md).
+13. [disconnect-livesplit-when-disabled.md](disconnect-livesplit-when-disabled.md).
 
 ### Found since the review
 
-15. [restore-fellowship-logs-fixture-tests.md](restore-fellowship-logs-fixture-tests.md). Eight `apps/api` tests fail without a 13-page fixture capture.
+14. [restore-fellowship-logs-fixture-tests.md](restore-fellowship-logs-fixture-tests.md). The fixture tests fail on a fresh clone because the capture is git-ignored.
 
 ## Dependencies
 
-- Task 4 and task 5 should agree on how the renderer runs mutations.
-- Task 11 depends on how tasks 4 and 5 settle the renderer's use of react-query.
-- Task 1 and task 15 change the same fixture-reading code. Do one before the other, not in parallel.
+- Task 3 and task 4 should agree on how the renderer runs mutations.
+- Task 10 depends on how tasks 3 and 4 settle the renderer's use of react-query.
 
 ## When a task is finished or rejected
 

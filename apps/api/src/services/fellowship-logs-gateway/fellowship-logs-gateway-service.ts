@@ -7,7 +7,6 @@ import type * as Stream from "effect/Stream";
 
 import { appConfig } from "@frt/api/app-config.ts";
 import {
-  type FellowshipLogsGatewayEventDecodeError,
   type FellowshipLogsGatewayGraphQLResponseError,
   type FellowshipLogsGatewayRateLimitExceededError,
   type FellowshipLogsGatewayRateLimitRejectedError,
@@ -22,14 +21,16 @@ import { AppSettingsStore } from "@frt/api/services/app-settings-store/app-setti
 import { FellowshipLogsAnalytics } from "@frt/api/services/fellowship-logs-analytics/fellowship-logs-analytics-service.ts";
 import { FellowshipLogsGatewayResponseCache } from "@frt/api/services/fellowship-logs-gateway/cache/fellowship-logs-gateway-response-cache-service.ts";
 import { type DungeonId } from "@frt/shared/fellowship/validation/fellowship-common.ts";
-import { type FellowshipEvent } from "@frt/shared/fellowship/validation/fellowship-event-schema.ts";
 import { type FellowshipLogsFightId } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
 import { type FellowshipLogsRateLimitSnapshot } from "@frt/shared/fellowship-logs/fellowship-logs-rate-limit-schema.ts";
 import { type FellowshipLogsReportCode } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
+import { makeFellowshipLogsGatewayFileQuery } from "./fellowship-logs-gateway-file-query.ts";
 import { FELLOWSHIP_LOGS_FIXTURE_DIRECTORY } from "./fellowship-logs-gateway-fixture-paths.ts";
-import { makeFellowshipLogsGatewayFixture } from "./make-fellowship-logs-gateway-fixture.ts";
-import { makeFellowshipLogsGateway } from "./make-fellowship-logs-gateway-service.ts";
+import {
+  makeFellowshipLogsGateway,
+  makeFellowshipLogsGatewayFromQuery,
+} from "./make-fellowship-logs-gateway-service.ts";
 import {
   type FellowshipLogsGatewayGraphQLRequestSchema,
   type FellowshipLogsGatewayGraphQLResponse,
@@ -85,10 +86,6 @@ export type FellowshipLogsGatewayRequestOperationError =
   | FellowshipLogsGatewayReportChangedError
   | FellowshipLogsGatewayRequestError;
 
-type FellowshipLogsGatewayError =
-  | FellowshipLogsGatewayEventDecodeError
-  | FellowshipLogsGatewayRequestOperationError;
-
 type GetRateLimitDataOptions = {
   readonly force?: boolean;
 };
@@ -108,23 +105,12 @@ export type FellowshipLogsGatewayShape = {
     FellowshipLogsGatewayRequestOperationError
   >;
 
-  readonly getReport: (
-    options: GetFellowshipLogsGatewayReportOptions,
-  ) => E.Effect<
-    FellowshipLogsGatewayReport,
-    FellowshipLogsGatewayRequestOperationError
-  >;
-
   readonly streamReportPages: (
     options: StreamFellowshipLogsReportOptions,
   ) => Stream.Stream<
     FellowshipLogsGatewayReport,
     FellowshipLogsGatewayRequestOperationError
   >;
-
-  readonly streamEvents: (
-    options: StreamFellowshipLogsReportOptions,
-  ) => Stream.Stream<FellowshipEvent, FellowshipLogsGatewayError>;
 };
 
 export class FellowshipLogsGateway extends Context.Service<
@@ -144,11 +130,12 @@ export class FellowshipLogsGateway extends Context.Service<
 
   static readonly fixtureLayer = Layer.effect(
     this,
-    makeFellowshipLogsGatewayFixture({
+    makeFellowshipLogsGatewayFileQuery({
       fixtureDirectory: FELLOWSHIP_LOGS_FIXTURE_DIRECTORY,
-    }),
+    }).pipe(E.flatMap(makeFellowshipLogsGatewayFromQuery)),
   ).pipe(
     Layer.provide(FellowshipLogsAnalytics.layer),
+    Layer.provide(FellowshipLogsGatewayResponseCache.layer),
     Layer.provide(NodePlatformLayer),
   );
 

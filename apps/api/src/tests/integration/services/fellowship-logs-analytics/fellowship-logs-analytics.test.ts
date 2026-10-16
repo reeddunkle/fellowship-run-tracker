@@ -1,19 +1,20 @@
 import * as E from "effect/Effect";
+import * as Stream from "effect/Stream";
 import { describe, expect, test } from "vitest";
 
 import { FellowshipLogsGateway } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
 import {
+  CONTROLLED_PAGE_COUNT,
   makeControlledFellowshipLogsFixtureLayer,
   makeFellowshipLogsFetchControl,
   RECORDED_FIGHT,
-  RECORDED_FIGHT_PAGE_COUNT,
 } from "@frt/api/tests/common/layers/controlled-fellowship-logs-fixture-layer.ts";
 import { makePersistenceTestLayer } from "@frt/api/tests/common/layers/persistence-test-layer.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { FellowshipLogsRequestDAO } from "@frt/db/daos/fellowship-logs-request/fellowship-logs-request-dao.ts";
 
-const getReport = FellowshipLogsGateway.use((gateway) => {
-  return gateway.getReport(RECORDED_FIGHT);
+const fetchReportPages = FellowshipLogsGateway.use((gateway) => {
+  return Stream.runDrain(gateway.streamReportPages(RECORDED_FIGHT));
 });
 
 describe("FellowshipLogsAnalytics", () => {
@@ -21,8 +22,8 @@ describe("FellowshipLogsAnalytics", () => {
     const control = makeFellowshipLogsFetchControl();
 
     const summary = await E.gen(function* () {
-      yield* getReport.pipe(
-        E.andThen(getReport),
+      yield* fetchReportPages.pipe(
+        E.andThen(fetchReportPages),
         E.provide(makeControlledFellowshipLogsFixtureLayer(control)),
       );
 
@@ -31,7 +32,7 @@ describe("FellowshipLogsAnalytics", () => {
       return yield* requestDAO.getSummary();
     }).pipe(E.provide(makePersistenceTestLayer()), runTest);
 
-    const requestsPerReport = RECORDED_FIGHT_PAGE_COUNT + 1;
+    const requestsPerReport = CONTROLLED_PAGE_COUNT + 1;
 
     expect(summary).toMatchObject({
       apiRequestCount: requestsPerReport,

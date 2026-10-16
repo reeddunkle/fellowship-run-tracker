@@ -238,7 +238,7 @@ export const makeFellowshipLogsGatewayRateLimitDataTracker = E.gen(
   },
 );
 
-export function readAndTrackGraphQLResponse(
+function readAndTrackGraphQLResponse(
   tracker: FellowshipLogsGatewayRateLimitDataTracker,
   { costKey, operation, skipCapacityCheck = false }: TrackResponseOptions,
 ) {

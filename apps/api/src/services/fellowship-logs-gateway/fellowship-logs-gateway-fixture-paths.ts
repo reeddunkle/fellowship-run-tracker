@@ -14,11 +14,17 @@ export const FELLOWSHIP_LOGS_FIXTURE_DIRECTORY =
     ? nodePath.join(import.meta.dirname, "../../../fixtures/fellowship-logs")
     : nodePath.resolve(fixtureDirectoryOverride);
 
+export function getFellowshipLogsGatewayReportFixtureDirectoryPrefix(
+  reportCode: string,
+) {
+  return `${reportCode}-fights-`;
+}
+
 function getFellowshipLogsGatewayFixtureDirectoryName({
   fightId,
   reportCode,
 }: GetFellowshipLogsGatewayReportOptions) {
-  return `${reportCode}-fights-${fightId}`;
+  return `${getFellowshipLogsGatewayReportFixtureDirectoryPrefix(reportCode)}${fightId}`;
 }
 
 export function getFellowshipLogsGatewayReportFixtureDirectory({

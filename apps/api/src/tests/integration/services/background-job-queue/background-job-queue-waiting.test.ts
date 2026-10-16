@@ -18,10 +18,10 @@ import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
 import { BackgroundJobQueue } from "@frt/api/services/background-job-queue/background-job-queue-service.ts";
 import { BackgroundJobRunner } from "@frt/api/services/background-job-runner/background-job-runner-service.ts";
 import {
+  CONTROLLED_PAGE_COUNT,
   type FellowshipLogsFetchControl,
   makeControlledFellowshipLogsFixtureLayer,
   makeFellowshipLogsFetchControl,
-  RECORDED_FIGHT_PAGE_COUNT,
 } from "@frt/api/tests/common/layers/controlled-fellowship-logs-fixture-layer.ts";
 import { makePersistenceTestLayer } from "@frt/api/tests/common/layers/persistence-test-layer.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
@@ -414,7 +414,7 @@ describe("BackgroundJobQueue waiting jobs", () => {
 
     // The pages fetched before running out came from the cache the second
     // time, so each page was fetched once.
-    expect(control.pagesFetched).toBe(RECORDED_FIGHT_PAGE_COUNT);
+    expect(control.pagesFetched).toBe(CONTROLLED_PAGE_COUNT);
     expect(finished.result).toMatchObject({
       dungeonRunId: expect.any(String),
     });

@@ -25,7 +25,6 @@ export type FellowshipLogsGatewayGraphQLResponseErrorReason =
   | "FightMissingDifficultyLevel"
   | "FightNotFound"
   | "MissingData"
-  | "MissingReportPages"
   | "ReportNotFound";
 
 export class FellowshipLogsGatewayGraphQLResponseError extends Data.TaggedError(
@@ -48,7 +47,6 @@ export class FellowshipLogsGatewayGraphQLResponseError extends Data.TaggedError(
       FightMissingDifficultyLevel: `Fellowship Logs ${fight} in ${report} does not have a dungeon difficulty level.`,
       FightNotFound: `Fellowship Logs ${fight} was not found in ${report}.`,
       MissingData: "Fellowship Logs returned no GraphQL data.",
-      MissingReportPages: "Fellowship Logs returned no report pages.",
       ReportNotFound: `Fellowship Logs ${report} was not found.`,
     };
 

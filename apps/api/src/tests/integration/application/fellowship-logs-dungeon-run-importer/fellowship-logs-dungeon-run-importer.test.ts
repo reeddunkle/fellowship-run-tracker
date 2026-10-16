@@ -4,6 +4,7 @@ import { describe, expect, test } from "vitest";
 
 import { FellowshipLogsDungeonRunImporter } from "@frt/api/application/fellowship-logs-dungeon-run-importer/fellowship-logs-dungeon-run-importer-service.ts";
 import { makeFellowshipLogsDungeonRunImporterIntegrationTestHarness } from "@frt/api/tests/common/harnesses/fellowship-logs-dungeon-run-importer-integration-test-harness.ts";
+import { makeFellowshipLogsFetchControl } from "@frt/api/tests/common/layers/controlled-fellowship-logs-fixture-layer.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { MainDatabase } from "@frt/db/databases/main-database.ts";
 import { FellowshipLogsFightIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
@@ -35,7 +36,9 @@ describe("FellowshipLogsDungeonRunImporter", () => {
       });
     }).pipe(
       E.provide(
-        makeFellowshipLogsDungeonRunImporterIntegrationTestHarness().layer,
+        makeFellowshipLogsDungeonRunImporterIntegrationTestHarness({
+          fellowshipLogsFetchControl: makeFellowshipLogsFetchControl(),
+        }).layer,
       ),
       runTest,
     );
