@@ -11,9 +11,11 @@ import {
 import { FellowshipLogsAnalytics } from "@frt/api/services/fellowship-logs-analytics/fellowship-logs-analytics-service.ts";
 import { FellowshipLogsGatewayResponseCache } from "@frt/api/services/fellowship-logs-gateway/cache/fellowship-logs-gateway-response-cache-service.ts";
 import { withFellowshipLogsGatewayPointsSpent } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-points-spent.ts";
-import { type Query } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
 import { makeFellowshipLogsGatewayFromQuery } from "@frt/api/services/fellowship-logs-gateway/make-fellowship-logs-gateway-service.ts";
-import { makeFellowshipLogsGatewayGraphQLResponseSchema } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-graphql-schema.ts";
+import {
+  makeFellowshipLogsGatewayGraphQLResponseSchema,
+  type Query,
+} from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-graphql-schema.ts";
 import { ignoredFellowshipLogsAnalytics } from "@frt/api/tests/common/mocks/fellowship-logs-analytics-mock.ts";
 import { passThroughFellowshipLogsGatewayResponseCache } from "@frt/api/tests/common/mocks/fellowship-logs-gateway-response-cache-mock.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";

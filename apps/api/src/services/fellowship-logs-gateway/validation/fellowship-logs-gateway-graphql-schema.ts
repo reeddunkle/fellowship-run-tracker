@@ -1,5 +1,10 @@
+import type * as E from "effect/Effect";
 import * as Schema from "effect/Schema";
 
+import {
+  type FellowshipLogsGatewayRateLimitRejectedError,
+  type FellowshipLogsGatewayRequestError,
+} from "@frt/api/errors/fellowship-logs-gateway-error.ts";
 import { NonEmptyStringSchema } from "@frt/shared/util/common-schemas.ts";
 
 const FellowshipLogsGatewayGraphQLVariablesSchema = Schema.Record(
@@ -59,4 +64,13 @@ export function makeFellowshipLogsGatewayGraphQLResponseSchema<Data>(
 
 export type FellowshipLogsGatewayGraphQLResponse<Data> = Schema.Schema.Type<
   ReturnType<typeof makeFellowshipLogsGatewayGraphQLResponseSchema<Data>>
+>;
+
+export type Query = <ResponseData>(
+  request: FellowshipLogsGatewayGraphQLRequest,
+  responseSchema: Schema.Decoder<ResponseData, never>,
+) => E.Effect<
+  FellowshipLogsGatewayGraphQLResponse<ResponseData>,
+  | FellowshipLogsGatewayRateLimitRejectedError
+  | FellowshipLogsGatewayRequestError
 >;

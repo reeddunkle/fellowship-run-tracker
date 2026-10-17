@@ -2,14 +2,12 @@ import * as Context from "effect/Context";
 import type * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
-import type * as Schema from "effect/Schema";
 import type * as Stream from "effect/Stream";
 
 import { appConfig } from "@frt/api/app-config.ts";
 import {
   type FellowshipLogsGatewayGraphQLResponseError,
   type FellowshipLogsGatewayRateLimitExceededError,
-  type FellowshipLogsGatewayRateLimitRejectedError,
   type FellowshipLogsGatewayReportChangedError,
   type FellowshipLogsGatewayRequestError,
 } from "@frt/api/errors/fellowship-logs-gateway-error.ts";
@@ -31,10 +29,6 @@ import {
   makeFellowshipLogsGateway,
   makeFellowshipLogsGatewayFromQuery,
 } from "./make-fellowship-logs-gateway-service.ts";
-import {
-  type FellowshipLogsGatewayGraphQLRequestSchema,
-  type FellowshipLogsGatewayGraphQLResponse,
-} from "./validation/fellowship-logs-gateway-graphql-schema.ts";
 import { type FellowshipLogsGatewayAccessToken } from "./validation/fellowship-logs-gateway-oauth-schema.ts";
 import { type FellowshipLogsGatewayReport } from "./validation/fellowship-logs-gateway-report-schema.ts";
 
@@ -53,16 +47,7 @@ export type GetCredentials = () => E.Effect<
   FellowshipLogsGatewayRequestError
 >;
 
-export type Query = <ResponseData>(
-  request: typeof FellowshipLogsGatewayGraphQLRequestSchema.Type,
-  responseSchema: Schema.Decoder<ResponseData, never>,
-) => E.Effect<
-  FellowshipLogsGatewayGraphQLResponse<ResponseData>,
-  | FellowshipLogsGatewayRateLimitRejectedError
-  | FellowshipLogsGatewayRequestError
->;
-
-export type GetFellowshipLogsGatewayReportOptions = {
+type GetFellowshipLogsGatewayReportOptions = {
   readonly fightId: FellowshipLogsFightId;
   readonly reportCode: FellowshipLogsReportCode;
 };

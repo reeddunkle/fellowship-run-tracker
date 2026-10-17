@@ -1,0 +1,25 @@
+{
+  "data": {
+    "reportData": {
+      "report": {
+        "endTime": 1787718669595,
+        "fights": [
+          {
+            "difficultyLevel": 92,
+            "encounterID": 100006,
+            "endTime": 14985927,
+            "id": 15,
+            "inProgress": false,
+            "startTime": 14257085
+          }
+        ],
+        "startTime": 1787683579106
+      }
+    },
+    "rateLimitData": {
+      "limitPerHour": 3600,
+      "pointsResetIn": 3060,
+      "pointsSpentThisHour": 97.4
+    }
+  }
+}

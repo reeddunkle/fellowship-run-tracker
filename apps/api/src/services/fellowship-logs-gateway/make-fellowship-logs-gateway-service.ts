@@ -29,7 +29,6 @@ import {
   type FellowshipLogsGatewayCredentials,
   type FellowshipLogsGatewayShape,
   type GetCredentials,
-  type Query,
 } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
 import { normalizeFellowshipLogsGatewayReport } from "@frt/api/services/fellowship-logs-gateway/normalize-fellowship-logs-gateway-report.ts";
 import {
@@ -46,6 +45,7 @@ import {
   REPORT_SELECTION,
   REPORT_VARIABLES,
 } from "@frt/api/services/fellowship-logs-gateway/query/report-query.ts";
+import { type Query } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-graphql-schema.ts";
 import { type FellowshipLogsFightId } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
 import { FellowshipLogsRateLimitResponseDataSchema } from "@frt/shared/fellowship-logs/fellowship-logs-rate-limit-schema.ts";
 import { type FellowshipLogsReportCode } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";

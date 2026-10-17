@@ -3,7 +3,13 @@ import nodePath from "node:path";
 
 import type * as Path from "effect/Path";
 
-import { type GetFellowshipLogsGatewayReportOptions } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
+import { type FellowshipLogsFightId } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
+import { type FellowshipLogsReportCode } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
+
+type FellowshipLogsGatewayFixtureFight = {
+  readonly fightId: FellowshipLogsFightId;
+  readonly reportCode: FellowshipLogsReportCode;
+};
 
 // [KEEP] Read while modules load, before any Effect runtime (and `Config`) exists.
 // @effect-diagnostics-next-line processEnv:off
@@ -23,7 +29,7 @@ export function getFellowshipLogsGatewayReportFixtureDirectoryPrefix(
 function getFellowshipLogsGatewayFixtureDirectoryName({
   fightId,
   reportCode,
-}: GetFellowshipLogsGatewayReportOptions) {
+}: FellowshipLogsGatewayFixtureFight) {
   return `${getFellowshipLogsGatewayReportFixtureDirectoryPrefix(reportCode)}${fightId}`;
 }
 
@@ -33,7 +39,7 @@ export function getFellowshipLogsGatewayReportFixtureDirectory({
   path,
 }: {
   readonly fixtureDirectory: string;
-  readonly options: GetFellowshipLogsGatewayReportOptions;
+  readonly options: FellowshipLogsGatewayFixtureFight;
   readonly path: Path.Path;
 }) {
   return path.resolve(

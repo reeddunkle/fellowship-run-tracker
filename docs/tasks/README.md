@@ -53,10 +53,6 @@ Review tasks come before the tasks that existed before the review.
 12. [batch-dungeon-run-observation-inserts.md](batch-dungeon-run-observation-inserts.md).
 13. [disconnect-livesplit-when-disabled.md](disconnect-livesplit-when-disabled.md).
 
-### Found since the review
-
-14. [restore-fellowship-logs-fixture-tests.md](restore-fellowship-logs-fixture-tests.md). The fixture tests fail on a fresh clone because the capture is git-ignored.
-
 ## Dependencies
 
 - Task 3 and task 4 should agree on how the renderer runs mutations.

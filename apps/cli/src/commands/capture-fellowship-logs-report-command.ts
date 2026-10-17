@@ -26,10 +26,7 @@ import {
   DUNGEON_RUN_METADATA_VARIABLES,
 } from "@frt/api/services/fellowship-logs-gateway/query/get-dungeon-run-metadata-query.ts";
 import { makeQuery } from "@frt/api/services/fellowship-logs-gateway/query/make-query.ts";
-import {
-  RATE_LIMIT_DATA_QUERY,
-  RATE_LIMIT_DATA_SELECTION,
-} from "@frt/api/services/fellowship-logs-gateway/query/rate-limit-data-query.ts";
+import { RATE_LIMIT_DATA_SELECTION } from "@frt/api/services/fellowship-logs-gateway/query/rate-limit-data-query.ts";
 import {
   REPORT_SELECTION,
   REPORT_VARIABLES,
@@ -37,7 +34,6 @@ import {
 import { FellowshipLogsGatewayDungeonRunMetadataResponseDataSchema } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-dungeon-run-metadata-schema.ts";
 import { FellowshipLogsGatewayReportResponseDataSchema } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-report-schema.ts";
 import { FellowshipLogsFightIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
-import { FellowshipLogsRateLimitResponseDataSchema } from "@frt/shared/fellowship-logs/fellowship-logs-rate-limit-schema.ts";
 import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 import { NonEmptyStringSchema } from "@frt/shared/util/common-schemas.ts";
 
@@ -83,11 +79,6 @@ const captureFellowshipLogsReport = E.fn("captureFellowshipLogsReport")(
     const resolvedOutputDirectory = path.resolve(
       outputFilePath ?? defaultOutputDirectory,
     );
-
-    const resolvedFixtureDirectory =
-      outputFilePath === undefined
-        ? path.resolve(FELLOWSHIP_LOGS_FIXTURE_DIRECTORY)
-        : path.dirname(resolvedOutputDirectory);
 
     const exists = yield* fileSystem.exists(resolvedOutputDirectory);
 
@@ -147,27 +138,6 @@ const captureFellowshipLogsReport = E.fn("captureFellowshipLogsReport")(
       fightId,
       fights: report.fights,
       reportCode,
-    });
-
-    const rateLimitResponse = yield* query(
-      {
-        query: RATE_LIMIT_DATA_QUERY,
-      },
-      FellowshipLogsRateLimitResponseDataSchema,
-    );
-
-    const rateLimitOutputPath = path.join(
-      resolvedFixtureDirectory,
-      "rate-limit-data.json",
-    );
-
-    yield* fileSystem.writeFileString(
-      rateLimitOutputPath,
-      stringifyFixture(rateLimitResponse),
-    );
-
-    yield* E.logInfo("Captured Fellowship Logs rate limit fixture.", {
-      outputFilePath: rateLimitOutputPath,
     });
 
     const reportPageStream = Stream.paginate(fight.startTime, (startTime) => {

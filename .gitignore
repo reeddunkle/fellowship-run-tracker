@@ -1,7 +1,10 @@
 # Root generated only
 /generated/
 
-apps/api/fixtures/
+apps/api/fixtures/*
+!apps/api/fixtures/fellowship-logs/
+apps/api/fixtures/fellowship-logs/*
+!apps/api/fixtures/fellowship-logs/XdfFZzgHBJNr6m3v-fights-15/
 
 .env
 

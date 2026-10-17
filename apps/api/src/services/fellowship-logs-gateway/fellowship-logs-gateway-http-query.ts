@@ -12,12 +12,12 @@ import {
   type CachedAccessToken,
   type FellowshipLogsGatewayCredentials,
   type GetCredentials,
-  type Query,
 } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
 import { makeRequestPacer } from "@frt/api/services/fellowship-logs-gateway/make-request-pacer.ts";
 import {
   FellowshipLogsGatewayGraphQLRequestSchema,
   makeFellowshipLogsGatewayGraphQLResponseSchema,
+  type Query,
 } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-graphql-schema.ts";
 import {
   type FellowshipLogsGatewayAccessToken,

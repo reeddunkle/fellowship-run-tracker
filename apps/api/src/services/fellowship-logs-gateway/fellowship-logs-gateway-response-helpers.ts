@@ -13,11 +13,11 @@ import {
 } from "@frt/api/errors/fellowship-logs-gateway-error.ts";
 import { FellowshipLogsAnalytics } from "@frt/api/services/fellowship-logs-analytics/fellowship-logs-analytics-service.ts";
 import { addFellowshipLogsGatewayPointsSpent } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-points-spent.ts";
-import { type Query } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
 import {
   type FellowshipLogsGatewayGraphQLError,
   type FellowshipLogsGatewayGraphQLRequest,
   type FellowshipLogsGatewayGraphQLResponse,
+  type Query,
 } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-graphql-schema.ts";
 import { type FellowshipLogsRequestOperation } from "@frt/db/validation/fellowship-logs-request/fellowship-logs-request-schema.ts";
 import {

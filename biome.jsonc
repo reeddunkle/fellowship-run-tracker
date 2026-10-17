@@ -50,7 +50,7 @@
     "includes": [
       "**/*.{js,cjs,mjs,ts,tsx,json,jsonc,md,css}",
       "!apps/electron/src/renderer/router/routeTree.gen.ts",
-      "!apps/api/src/services/fellowship-logs/fixtures/**/*.{json}",
+      "!apps/api/fixtures/**/*.{json}",
       "!packages/db/src/catalogs/generated/**/*.{ts}",
       "!packages/json-schemas/generated/**/*.{json}"
     ]

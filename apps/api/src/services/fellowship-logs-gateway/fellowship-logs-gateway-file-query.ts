@@ -16,12 +16,12 @@ import {
   getFellowshipLogsGatewayReportFixtureDirectory,
   getFellowshipLogsGatewayReportFixtureDirectoryPrefix,
 } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-fixture-paths.ts";
-import { type Query } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
 import { normalizeFellowshipLogsGatewayReport } from "@frt/api/services/fellowship-logs-gateway/normalize-fellowship-logs-gateway-report.ts";
 import { FellowshipLogsGatewayDungeonRunMetadataResponseDataSchema } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-dungeon-run-metadata-schema.ts";
 import {
   type FellowshipLogsGatewayGraphQLRequest,
   makeFellowshipLogsGatewayGraphQLResponseSchema,
+  type Query,
 } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-graphql-schema.ts";
 import { FellowshipLogsGatewayReportResponseDataSchema } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-report-schema.ts";
 import { FellowshipLogsFightIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
