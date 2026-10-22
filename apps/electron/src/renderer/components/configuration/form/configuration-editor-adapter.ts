@@ -6,6 +6,7 @@ import {
   type SaveConfigurationApiRequest,
 } from "@frt/shared/configuration/configuration-api-schema.ts";
 import { FELLOWSHIP_EVENT } from "@frt/shared/fellowship/constants/fellowship-event.ts";
+import { ADVENTURE_DUNGEON_LEVEL } from "@frt/shared/fellowship/validation/fellowship-common.ts";
 import { type FellowshipRequirement } from "@frt/shared/fellowship/validation/fellowship-configuration-file-schema.ts";
 import { formatComparisonTime } from "@frt/shared/milestone/comparison-time-form-schema.ts";
 
@@ -34,7 +35,10 @@ export function createConfigurationEditorValue(
     adventureDifficulty: configuration.adventureDifficulty,
     dungeonCategory: configuration.dungeonCategory,
     dungeonId: configuration.dungeonId,
-    dungeonLevel: configuration.dungeonLevel,
+    dungeonLevel:
+      configuration.dungeonCategory === "ADVENTURE"
+        ? ADVENTURE_DUNGEON_LEVEL
+        : configuration.dungeonLevel,
     label: configuration.label,
     milestones: configuration.milestones.map((milestone) => {
       return {
@@ -107,7 +111,10 @@ export function saveConfigurationApiRequest(
       adventureDifficulty: value.adventureDifficulty,
       dungeonCategory: value.dungeonCategory,
       dungeonId: value.dungeonId,
-      dungeonLevel: value.dungeonLevel,
+      dungeonLevel:
+        value.dungeonCategory === "ADVENTURE"
+          ? ADVENTURE_DUNGEON_LEVEL
+          : value.dungeonLevel,
       milestones: value.milestones.map((milestone) => {
         return {
           comparisonTime: milestone.comparisonTime,

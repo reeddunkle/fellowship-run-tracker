@@ -168,7 +168,7 @@ export function ConfigurationSidebar() {
                                         <span>
                                           {levelGroup.dungeonCategory ===
                                           "ADVENTURE"
-                                            ? `Adventure ${levelGroup.dungeonLevel} · ${levelGroup.adventureDifficulty ?? "Unknown"}`
+                                            ? `Adventure · ${levelGroup.adventureDifficulty ?? "Unknown"}`
                                             : `Eternal ${levelGroup.dungeonLevel}`}
                                         </span>
                                       </SidebarMenuSubButton>

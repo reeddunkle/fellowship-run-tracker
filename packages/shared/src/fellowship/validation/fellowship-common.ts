@@ -7,6 +7,7 @@ import {
 } from "@frt/shared/util/common-schemas.ts";
 
 export const ETERNAL_DUNGEON_LEVEL_OFFSET = 20;
+export const ADVENTURE_DUNGEON_LEVEL = 1;
 
 export const DungeonCategorySchema = Schema.Literals(["ADVENTURE", "ETERNAL"]);
 

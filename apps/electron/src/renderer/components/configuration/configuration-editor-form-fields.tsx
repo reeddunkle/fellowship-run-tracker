@@ -1,5 +1,6 @@
 import { PlusIcon } from "lucide-react";
 
+import { ADVENTURE_DUNGEON_LEVEL } from "@frt/shared/fellowship/validation/fellowship-common.ts";
 import { type RequirementEventType } from "@frt/shared/fellowship/validation/requirement-event-type-schema.ts";
 import { Button } from "@frt/ui/primitives/button.tsx";
 import { Field, FieldError, FieldLabel } from "@frt/ui/primitives/field.tsx";
@@ -189,6 +190,14 @@ export function ConfigurationEditorFormFields({
                                 "adventureDifficulty",
                                 category === "ADVENTURE" ? "HARD" : undefined,
                               );
+                              form.setFieldValue(
+                                "dungeonLevel",
+                                category === "ADVENTURE"
+                                  ? ADVENTURE_DUNGEON_LEVEL
+                                  : state.values.dungeonId === "30"
+                                    ? pinnacleOptions[0].value
+                                    : undefined,
+                              );
                             }}
                             value={field.state.value ?? "ETERNAL"}
                           >
@@ -240,59 +249,56 @@ export function ConfigurationEditorFormFields({
                       }}
                     </form.AppField>
                   ) : null}
-                  <form.AppField name="dungeonLevel">
-                    {(field) => {
-                      const isPinnacleDungeon = state.values.dungeonId === "30";
+                  {state.values.dungeonCategory !== "ADVENTURE" ? (
+                    <form.AppField name="dungeonLevel">
+                      {(field) => {
+                        const isPinnacleDungeon =
+                          state.values.dungeonId === "30";
 
-                      if (!isPinnacleDungeon) {
+                        if (!isPinnacleDungeon) {
+                          return (
+                            <field.NumberField label="Eternal level" min={1} />
+                          );
+                        }
+
+                        const isInvalid =
+                          field.state.meta.isBlurred &&
+                          !field.state.meta.isValid;
+
                         return (
-                          <field.NumberField
-                            label={
-                              state.values.dungeonCategory === "ADVENTURE"
-                                ? "Adventure level"
-                                : "Eternal level"
-                            }
-                            min={1}
-                          />
+                          <Field data-invalid={isInvalid}>
+                            <FieldLabel htmlFor={field.name}>
+                              Eternal level
+                            </FieldLabel>
+                            <NativeSelect
+                              aria-invalid={isInvalid}
+                              id={field.name}
+                              name={field.name}
+                              onBlur={field.handleBlur}
+                              onChange={(event) => {
+                                field.handleChange(Number(event.target.value));
+                              }}
+                              value={field.state.value}
+                            >
+                              {pinnacleOptions.map((option) => {
+                                return (
+                                  <NativeSelectOption
+                                    key={option.value}
+                                    value={option.value}
+                                  >
+                                    {option.label}
+                                  </NativeSelectOption>
+                                );
+                              })}
+                            </NativeSelect>
+                            {isInvalid ? (
+                              <FieldError errors={field.state.meta.errors} />
+                            ) : null}
+                          </Field>
                         );
-                      }
-
-                      const isInvalid =
-                        field.state.meta.isBlurred && !field.state.meta.isValid;
-
-                      return (
-                        <Field data-invalid={isInvalid}>
-                          <FieldLabel htmlFor={field.name}>
-                            Eternal level
-                          </FieldLabel>
-                          <NativeSelect
-                            aria-invalid={isInvalid}
-                            id={field.name}
-                            name={field.name}
-                            onBlur={field.handleBlur}
-                            onChange={(event) => {
-                              field.handleChange(Number(event.target.value));
-                            }}
-                            value={field.state.value}
-                          >
-                            {pinnacleOptions.map((option) => {
-                              return (
-                                <NativeSelectOption
-                                  key={option.value}
-                                  value={option.value}
-                                >
-                                  {option.label}
-                                </NativeSelectOption>
-                              );
-                            })}
-                          </NativeSelect>
-                          {isInvalid ? (
-                            <FieldError errors={field.state.meta.errors} />
-                          ) : null}
-                        </Field>
-                      );
-                    }}
-                  </form.AppField>
+                      }}
+                    </form.AppField>
+                  ) : null}
                 </div>
               </div>
               <form.AppField mode="array" name="milestones">
