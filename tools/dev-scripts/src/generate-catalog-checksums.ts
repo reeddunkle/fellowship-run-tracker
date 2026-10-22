@@ -12,11 +12,8 @@ import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 import * as Order from "effect/Order";
 
-import { FELLOWSHIP_ABILITY } from "@frt/db/catalogs/ability/fellowship-ability-catalog.ts";
 import { CATALOG_CHECKSUMS_FILE_PATH } from "@frt/db/catalogs/catalog-paths.ts";
-import { FELLOWSHIP_DUNGEON } from "@frt/db/catalogs/dungeon/fellowship-dungeon-catalog.ts";
-import { FELLOWSHIP_ENCOUNTER } from "@frt/db/catalogs/encounter/fellowship-encounter-catalog.ts";
-import { loadFellowshipUnitCatalog } from "@frt/db/catalogs/unit/load-fellowship-unit-catalog.ts";
+import { loadEffectiveFellowshipCatalogs } from "@frt/db/catalogs/load-effective-fellowship-catalogs.ts";
 import { encodeJson } from "@frt/shared/util/common-schemas.ts";
 
 const OUTPUT_FILE_PATH = CATALOG_CHECKSUMS_FILE_PATH;
@@ -74,19 +71,13 @@ const hashCatalog = E.fn("hashCatalog")(function* (
 const generateCatalogChecksums = E.gen(function* () {
   const fileSystem = yield* FileSystem.FileSystem;
 
-  const unitCatalog = yield* loadFellowshipUnitCatalog();
+  const catalogs = yield* loadEffectiveFellowshipCatalogs;
 
   const checksums = {
-    ability: yield* hashCatalog(
-      yield* sortByJson(Object.values(FELLOWSHIP_ABILITY)),
-    ),
-    dungeon: yield* hashCatalog(
-      yield* sortByJson(Object.values(FELLOWSHIP_DUNGEON)),
-    ),
-    encounter: yield* hashCatalog(
-      yield* sortByJson(Object.values(FELLOWSHIP_ENCOUNTER)),
-    ),
-    unit: yield* hashCatalog(yield* sortByJson(unitCatalog)),
+    ability: yield* hashCatalog(yield* sortByJson(catalogs.abilities)),
+    dungeon: yield* hashCatalog(yield* sortByJson(catalogs.dungeons)),
+    encounter: yield* hashCatalog(yield* sortByJson(catalogs.encounters)),
+    unit: yield* hashCatalog(yield* sortByJson(catalogs.units)),
   } as const;
 
   const encodedChecksums = yield* encodeJson(checksums);

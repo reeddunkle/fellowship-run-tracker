@@ -5,16 +5,21 @@ import { FELLOWSHIP_EVENT } from "@frt/shared/fellowship/constants/fellowship-ev
 import {
   AbsoluteDungeonLevelFromLogSchema,
   AbsoluteDungeonLevelSchema,
+  AdventureDifficultySchema,
   DungeonAffixIdsSchema,
+  DungeonCategorySchema,
   DungeonIdSchema,
   DungeonLevelSchema,
   DungeonNameSchema,
+  getAdventureDifficultyFromLogId,
+  getAdventureDifficultyLogId,
+  getDungeonCategoryFromAbsoluteDungeonLevel,
   getDungeonLevelFromAbsoluteDungeonLevel,
   TimestampSchema,
 } from "@frt/shared/fellowship/validation/fellowship-common.ts";
 import {
-  BooleanFlagSchema,
   EmptyStringSchema,
+  IntegerFromStringSchema,
   JsonIntegerArraySchema,
   JsonStringSchema,
 } from "@frt/shared/util/common-schemas.ts";
@@ -26,21 +31,22 @@ const DungeonStartLogLineSchema = Schema.Tuple([
   Schema.String, // dungeonId
   AbsoluteDungeonLevelFromLogSchema, // absoluteDungeonLevel
   JsonIntegerArraySchema, // affixIds
-  BooleanFlagSchema, // unmappedFlag
+  IntegerFromStringSchema,
   Schema.DateTimeUtcFromString, // startedAt
   EmptyStringSchema, // unmappedEmptyString
 ]);
 
 const DungeonStartEventSchema = Schema.Struct({
   absoluteDungeonLevel: AbsoluteDungeonLevelSchema,
+  adventureDifficulty: Schema.UndefinedOr(AdventureDifficultySchema),
   affixIds: DungeonAffixIdsSchema,
+  dungeonCategory: DungeonCategorySchema,
   dungeonId: DungeonIdSchema,
   dungeonLevel: Schema.UndefinedOr(DungeonLevelSchema),
   dungeonName: DungeonNameSchema,
   startedAt: TimestampSchema,
   timestamp: TimestampSchema,
   type: Schema.Literal(FELLOWSHIP_EVENT.DUNGEON_START),
-  unmappedFlag: Schema.Boolean,
 });
 
 export const DungeonStartEventFromLogSchema = DungeonStartLogLineSchema.pipe(
@@ -53,12 +59,17 @@ export const DungeonStartEventFromLogSchema = DungeonStartLogLineSchema.pipe(
         dungeonId,
         absoluteDungeonLevel,
         affixIds,
-        unmappedFlag,
+        adventureDifficultyId,
         startedAt,
       ]) => {
         return {
           absoluteDungeonLevel,
+          adventureDifficulty: getAdventureDifficultyFromLogId(
+            adventureDifficultyId,
+          ),
           affixIds: affixIds.map(String),
+          dungeonCategory:
+            getDungeonCategoryFromAbsoluteDungeonLevel(absoluteDungeonLevel),
           dungeonId,
           dungeonLevel:
             getDungeonLevelFromAbsoluteDungeonLevel(absoluteDungeonLevel),
@@ -66,7 +77,6 @@ export const DungeonStartEventFromLogSchema = DungeonStartLogLineSchema.pipe(
           startedAt,
           timestamp,
           type,
-          unmappedFlag,
         };
       },
     ),
@@ -78,7 +88,7 @@ export const DungeonStartEventFromLogSchema = DungeonStartLogLineSchema.pipe(
         event.dungeonId,
         event.absoluteDungeonLevel,
         event.affixIds.map(Number),
-        event.unmappedFlag,
+        getAdventureDifficultyLogId(event.adventureDifficulty),
         event.startedAt,
         "",
       ] as const;

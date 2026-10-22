@@ -31,6 +31,8 @@ export function createConfigurationEditorValue(
   configuration: ConfigurationApiConfiguration,
 ): ConfigurationEditorValue {
   return {
+    adventureDifficulty: configuration.adventureDifficulty,
+    dungeonCategory: configuration.dungeonCategory,
     dungeonId: configuration.dungeonId,
     dungeonLevel: configuration.dungeonLevel,
     label: configuration.label,
@@ -102,6 +104,8 @@ export function saveConfigurationApiRequest(
 ): SaveConfigurationApiRequest {
   return {
     configuration: {
+      adventureDifficulty: value.adventureDifficulty,
+      dungeonCategory: value.dungeonCategory,
       dungeonId: value.dungeonId,
       dungeonLevel: value.dungeonLevel,
       milestones: value.milestones.map((milestone) => {

@@ -9,7 +9,9 @@ import {
 } from "@frt/shared/configuration/configuration-api-schema.ts";
 
 type ConfigurationLevelGroup = {
+  readonly adventureDifficulty: ConfigurationApiConfiguration["adventureDifficulty"];
   readonly configurations: ConfigurationApiConfigurationList;
+  readonly dungeonCategory: ConfigurationApiConfiguration["dungeonCategory"];
   readonly dungeonLevel: ConfigurationApiConfiguration["dungeonLevel"];
 };
 
@@ -53,18 +55,32 @@ export function groupConfigurations(
     ([dungeonId, dungeonConfigurations]) => {
       const configurationsByLevel = A.groupBy(
         dungeonConfigurations,
-        (configuration) => String(configuration.dungeonLevel),
+        (configuration) => {
+          return [
+            configuration.dungeonCategory ?? "ETERNAL",
+            configuration.adventureDifficulty ?? "",
+            configuration.dungeonLevel,
+          ].join(":");
+        },
       );
 
       const levels = A.sort(
         Record.toEntries(configurationsByLevel).map(
-          ([dungeonLevel, levelConfigurations]) => {
+          ([, levelConfigurations]) => {
+            const firstConfiguration = levelConfigurations[0];
+
+            if (firstConfiguration === undefined) {
+              throw new Error("Expected a configuration level group.");
+            }
+
             return {
+              adventureDifficulty: firstConfiguration.adventureDifficulty,
               configurations: sortConfigurations(
                 levelConfigurations,
                 ConfigurationUpdatedAtDescendingOrder,
               ),
-              dungeonLevel: Number(dungeonLevel),
+              dungeonCategory: firstConfiguration.dungeonCategory,
+              dungeonLevel: firstConfiguration.dungeonLevel,
             } satisfies ConfigurationLevelGroup;
           },
         ),

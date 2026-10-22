@@ -273,7 +273,7 @@ describe("Databases", () => {
       new DatabaseNewerThanAppError({
         database: "Main",
         databaseVersion: 999,
-        supportedDatabaseVersion: 1,
+        supportedDatabaseVersion: 2,
       }),
     );
   });

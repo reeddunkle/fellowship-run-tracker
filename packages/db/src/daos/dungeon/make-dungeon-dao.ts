@@ -24,9 +24,12 @@ export const makeDungeonDAO = E.gen(function* () {
           id,
           map_id AS mapId,
           name,
+          status,
           updated_at AS updatedAt
         FROM
           dungeon
+        WHERE
+          status = 'ACTIVE'
         ORDER BY
           name
       `;
@@ -43,6 +46,7 @@ export const makeDungeonDAO = E.gen(function* () {
           id,
           map_id AS mapId,
           name,
+          status,
           updated_at AS updatedAt
         FROM
           dungeon

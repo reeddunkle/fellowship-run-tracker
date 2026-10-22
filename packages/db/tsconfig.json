@@ -31,5 +31,5 @@
 
   "references": [{ "path": "../shared" }],
 
-  "include": ["src/**/*.ts", "src/catalogs/unit/fellowship-unit-catalog.json"]
+  "include": ["src/**/*.ts", "src/catalogs/**/*.json"]
 }

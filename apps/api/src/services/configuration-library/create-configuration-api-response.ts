@@ -58,7 +58,9 @@ export function createConfigurationApiResponse({
   updatedAt,
 }: PersistedConfiguration): ConfigurationApiConfiguration {
   return {
+    adventureDifficulty: configuration.adventureDifficulty,
     createdAt,
+    dungeonCategory: configuration.dungeonCategory,
     dungeonId: configuration.dungeonId,
     dungeonLevel: configuration.dungeonLevel,
     fingerprint,

@@ -40,6 +40,12 @@ const pinnacleOptions = [
   },
 ] as const;
 
+const adventureDifficultyOptions = [
+  { label: "Easy", value: "EASY" },
+  { label: "Medium", value: "MEDIUM" },
+  { label: "Hard", value: "HARD" },
+] as const;
+
 type ConfigurationEditorFormFieldsProps = {
   readonly dungeonOptions: ReadonlyArray<DungeonOption>;
   readonly eventTypes: ReadonlyArray<RequirementEventType>;
@@ -113,7 +119,7 @@ export function ConfigurationEditorFormFields({
                     }}
                   </form.AppField>
                 </div>
-                <div className="grid justify-start gap-4 md:grid-cols-[minmax(20rem,32rem)_10rem]">
+                <div className="grid justify-start gap-4 md:grid-cols-[minmax(20rem,32rem)_10rem_10rem_10rem]">
                   <form.AppField name="dungeonId">
                     {(field) => {
                       const isInvalid =
@@ -165,13 +171,89 @@ export function ConfigurationEditorFormFields({
                       );
                     }}
                   </form.AppField>
+                  <form.AppField name="dungeonCategory">
+                    {(field) => {
+                      return (
+                        <Field>
+                          <FieldLabel htmlFor={field.name}>Category</FieldLabel>
+                          <NativeSelect
+                            id={field.name}
+                            name={field.name}
+                            onChange={(event) => {
+                              const category = event.target.value as
+                                | "ADVENTURE"
+                                | "ETERNAL";
+
+                              field.handleChange(category);
+                              form.setFieldValue(
+                                "adventureDifficulty",
+                                category === "ADVENTURE" ? "HARD" : undefined,
+                              );
+                            }}
+                            value={field.state.value ?? "ETERNAL"}
+                          >
+                            <NativeSelectOption value="ETERNAL">
+                              Eternal
+                            </NativeSelectOption>
+                            <NativeSelectOption value="ADVENTURE">
+                              Adventure
+                            </NativeSelectOption>
+                          </NativeSelect>
+                        </Field>
+                      );
+                    }}
+                  </form.AppField>
+                  {state.values.dungeonCategory === "ADVENTURE" ? (
+                    <form.AppField name="adventureDifficulty">
+                      {(field) => {
+                        return (
+                          <Field>
+                            <FieldLabel htmlFor={field.name}>
+                              Difficulty
+                            </FieldLabel>
+                            <NativeSelect
+                              id={field.name}
+                              name={field.name}
+                              onChange={(event) => {
+                                field.handleChange(
+                                  event.target.value as
+                                    | "EASY"
+                                    | "MEDIUM"
+                                    | "HARD",
+                                );
+                              }}
+                              value={field.state.value ?? "HARD"}
+                            >
+                              {adventureDifficultyOptions.map((option) => {
+                                return (
+                                  <NativeSelectOption
+                                    key={option.value}
+                                    value={option.value}
+                                  >
+                                    {option.label}
+                                  </NativeSelectOption>
+                                );
+                              })}
+                            </NativeSelect>
+                          </Field>
+                        );
+                      }}
+                    </form.AppField>
+                  ) : null}
                   <form.AppField name="dungeonLevel">
                     {(field) => {
                       const isPinnacleDungeon = state.values.dungeonId === "30";
 
                       if (!isPinnacleDungeon) {
                         return (
-                          <field.NumberField label="Eternal level" min={1} />
+                          <field.NumberField
+                            label={
+                              state.values.dungeonCategory === "ADVENTURE"
+                                ? "Adventure level"
+                                : "Eternal level"
+                            }
+                            min={1}
+                          />
                         );
                       }
 

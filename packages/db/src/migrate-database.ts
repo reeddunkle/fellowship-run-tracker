@@ -8,6 +8,7 @@ import { type SqlError } from "effect/sql/SqlError";
 import { DatabaseNewerThanAppError } from "@frt/db/errors/database-newer-than-app-error.ts";
 import { createInitialAnalyticsSchema } from "@frt/db/migrations/analytics/0001-initial/index.ts";
 import { createInitialMainSchema } from "@frt/db/migrations/main/0001-initial/index.ts";
+import { addCatalogStatus } from "@frt/db/migrations/main/0002-catalog-status.ts";
 import { createInitialStateSchema } from "@frt/db/migrations/state/0001-initial/index.ts";
 
 type MigrateDatabase = E.Effect<
@@ -85,6 +86,7 @@ export const migrateMainDatabase: MigrateDatabase = migrateDatabase({
   database: "Main",
   migrations: {
     "1_initial": createInitialMainSchema,
+    "2_catalog_status": addCatalogStatus,
   },
 });
 

@@ -3,7 +3,7 @@ import * as E from "effect/Effect";
 import * as Option from "effect/Option";
 
 import { CATALOG_CHECKSUMS } from "@frt/db/catalogs/generated/catalog-checksums.ts";
-import { loadFellowshipUnitCatalog } from "@frt/db/catalogs/unit/load-fellowship-unit-catalog.ts";
+import { loadEffectiveFellowshipCatalogs } from "@frt/db/catalogs/load-effective-fellowship-catalogs.ts";
 import { CatalogSyncDAO } from "@frt/db/daos/catalog-sync/catalog-sync-dao.ts";
 import { MainDatabase } from "@frt/db/databases/main-database.ts";
 
@@ -23,13 +23,13 @@ export const syncUnitCatalog = E.fn("syncUnitCatalog")(function* () {
     return;
   }
 
-  const unitCatalog = yield* loadFellowshipUnitCatalog();
+  const catalogs = yield* loadEffectiveFellowshipCatalogs;
 
   yield* sql.withTransaction(
     E.gen(function* () {
       const now = DateTime.toEpochMillis(yield* DateTime.now);
 
-      for (const unit of unitCatalog) {
+      for (const unit of catalogs.units) {
         yield* sql`
           INSERT INTO
             unit (
@@ -64,7 +64,15 @@ export const syncUnitCatalog = E.fn("syncUnitCatalog")(function* () {
             OR unit.status IS NOT excluded.status
             OR unit.variant IS NOT excluded.variant
         `;
+      }
 
+      yield* sql`
+        DELETE FROM dungeon_unit
+        WHERE
+          1 = 1
+      `;
+
+      for (const unit of catalogs.units) {
         for (const dungeonId of unit.dungeonIds) {
           yield* sql`
             INSERT INTO
@@ -76,10 +84,23 @@ export const syncUnitCatalog = E.fn("syncUnitCatalog")(function* () {
                 ${now},
                 ${now}
               )
-            ON CONFLICT (dungeon_id, unit_id) DO NOTHING
           `;
         }
       }
+
+      yield* sql`
+        UPDATE unit
+        SET
+          status = 'INACTIVE',
+          updated_at = ${now}
+        WHERE
+          id NOT IN ${sql.in(
+            catalogs.units.map((unit) => {
+              return unit.id;
+            }),
+          )}
+          AND status IS NOT 'INACTIVE'
+      `;
 
       yield* catalogSyncDAO.setChecksum({
         catalog: CATALOG,

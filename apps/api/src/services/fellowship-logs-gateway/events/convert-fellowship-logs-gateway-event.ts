@@ -5,7 +5,10 @@ import { type FellowshipLogsGatewayConvertibleEvent } from "@frt/api/services/fe
 import { type FellowshipLogsGatewayReport } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-report-schema.ts";
 import { FELLOWSHIP_EVENT } from "@frt/shared/fellowship/constants/fellowship-event.ts";
 import { type DungeonStartEvent } from "@frt/shared/fellowship/validation/events/dungeon-start.ts";
-import { getDungeonLevelFromAbsoluteDungeonLevel } from "@frt/shared/fellowship/validation/fellowship-common.ts";
+import {
+  getDungeonCategoryFromAbsoluteDungeonLevel,
+  getDungeonLevelFromAbsoluteDungeonLevel,
+} from "@frt/shared/fellowship/validation/fellowship-common.ts";
 import { type FellowshipEvent } from "@frt/shared/fellowship/validation/fellowship-event-schema.ts";
 
 type FellowshipLogsGatewayReportActor = NonNullable<
@@ -79,7 +82,10 @@ export function convertFellowshipLogsGatewayEvent({
 
         return {
           absoluteDungeonLevel,
+          adventureDifficulty: undefined,
           affixIds: fellowshipLogsDungeonStartEvent.affixes.map(String),
+          dungeonCategory:
+            getDungeonCategoryFromAbsoluteDungeonLevel(absoluteDungeonLevel),
           dungeonId: String(fellowshipLogsDungeonStartEvent.encounterID),
           dungeonLevel:
             getDungeonLevelFromAbsoluteDungeonLevel(absoluteDungeonLevel),
@@ -87,7 +93,6 @@ export function convertFellowshipLogsGatewayEvent({
           startedAt: timestamp,
           timestamp,
           type: FELLOWSHIP_EVENT.DUNGEON_START,
-          unmappedFlag: false,
         } satisfies FellowshipEvent;
       },
     ),
@@ -102,7 +107,9 @@ export function convertFellowshipLogsGatewayEvent({
 
         return {
           absoluteDungeonLevel: dungeonStartEvent.absoluteDungeonLevel,
+          adventureDifficulty: dungeonStartEvent.adventureDifficulty,
           affixIds: dungeonStartEvent.affixIds,
+          dungeonCategory: dungeonStartEvent.dungeonCategory,
           dungeonId: dungeonStartEvent.dungeonId,
           dungeonLevel: dungeonStartEvent.dungeonLevel,
           dungeonName: dungeonStartEvent.dungeonName,
@@ -111,7 +118,6 @@ export function convertFellowshipLogsGatewayEvent({
           type: FELLOWSHIP_EVENT.DUNGEON_END,
           unmapped: {
             flag1: false,
-            flag2: false,
             flag3: false,
             numericField1: 0,
             numericField2: 0,

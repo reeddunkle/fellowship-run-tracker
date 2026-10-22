@@ -4,6 +4,7 @@ import { syncAbilityCatalog } from "@frt/db/catalog-sync/sync-ability-catalog.ts
 import { syncDungeonCatalog } from "@frt/db/catalog-sync/sync-dungeon-catalog.ts";
 import { syncEncounterCatalog } from "@frt/db/catalog-sync/sync-encounter-catalog.ts";
 import { syncUnitCatalog } from "@frt/db/catalog-sync/sync-unit-catalog.ts";
+import { MainDatabase } from "@frt/db/databases/main-database.ts";
 
 // [KEEP] Catalog groups run sequentially; catalogs within a group can sync concurrently.
 const syncGroups = [
@@ -12,16 +13,22 @@ const syncGroups = [
   [syncAbilityCatalog()],
 ] as const;
 
-export const syncCatalogs = E.forEach(
-  syncGroups,
-  (group) => {
-    return E.all(group, {
-      concurrency: "unbounded",
-      discard: true,
-    });
-  },
-  {
-    concurrency: 1,
-    discard: true,
-  },
-);
+export const syncCatalogs = E.gen(function* () {
+  const sql = yield* MainDatabase;
+
+  yield* sql.withTransaction(
+    E.forEach(
+      syncGroups,
+      (group) => {
+        return E.all(group, {
+          concurrency: "unbounded",
+          discard: true,
+        });
+      },
+      {
+        concurrency: 1,
+        discard: true,
+      },
+    ),
+  );
+});

@@ -2,6 +2,8 @@ import * as Schema from "effect/Schema";
 
 import { FELLOWSHIP_EVENT } from "@frt/shared/fellowship/constants/fellowship-event.ts";
 import {
+  AdventureDifficultySchema,
+  DungeonCategorySchema,
   DungeonIdSchema,
   DungeonLevelSchema,
 } from "@frt/shared/fellowship/validation/fellowship-common.ts";
@@ -71,6 +73,8 @@ export type FellowshipMilestoneDefinition =
   typeof FellowshipMilestoneDefinitionSchema.Type;
 
 export const FellowshipConfigurationFileSchema = Schema.Struct({
+  adventureDifficulty: Schema.optional(AdventureDifficultySchema),
+  dungeonCategory: Schema.optional(DungeonCategorySchema),
   dungeonId: DungeonIdSchema,
   dungeonLevel: DungeonLevelSchema,
   milestones: Schema.Array(FellowshipMilestoneDefinitionSchema),

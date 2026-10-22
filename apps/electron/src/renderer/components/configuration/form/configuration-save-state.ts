@@ -31,6 +31,8 @@ function getCanonicalJson(
   configuration: ConfigurationApiConfiguration,
 ): string {
   return serializeNormalizedCanonicalConfiguration({
+    adventureDifficulty: configuration.adventureDifficulty,
+    dungeonCategory: configuration.dungeonCategory,
     dungeonId: configuration.dungeonId,
     dungeonLevel: configuration.dungeonLevel,
     milestones: configuration.milestones,

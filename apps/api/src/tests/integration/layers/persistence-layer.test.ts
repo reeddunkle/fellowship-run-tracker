@@ -3,11 +3,8 @@ import { describe, expect, test } from "vitest";
 
 import { makePersistenceLayer } from "@frt/api/layers/persistence-layer.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
-import { FELLOWSHIP_ABILITY } from "@frt/db/catalogs/ability/fellowship-ability-catalog.ts";
-import { FELLOWSHIP_DUNGEON } from "@frt/db/catalogs/dungeon/fellowship-dungeon-catalog.ts";
-import { FELLOWSHIP_ENCOUNTER } from "@frt/db/catalogs/encounter/fellowship-encounter-catalog.ts";
 import { CATALOG_CHECKSUMS } from "@frt/db/catalogs/generated/catalog-checksums.ts";
-import { loadFellowshipUnitCatalog } from "@frt/db/catalogs/unit/load-fellowship-unit-catalog.ts";
+import { loadEffectiveFellowshipCatalogs } from "@frt/db/catalogs/load-effective-fellowship-catalogs.ts";
 import { MainDatabase } from "@frt/db/databases/main-database.ts";
 import { makeTestDatabaseOptions } from "@frt/db/tests/common/make-test-database-options.ts";
 
@@ -15,7 +12,7 @@ describe("PersistenceLayer", () => {
   test("syncs every catalog table from its source catalog", async () => {
     const program = E.gen(function* () {
       const sql = yield* MainDatabase;
-      const unitCatalog = yield* loadFellowshipUnitCatalog();
+      const catalogs = yield* loadEffectiveFellowshipCatalogs;
 
       const [counts] = yield* sql<{
         readonly abilityCount: number;
@@ -86,13 +83,11 @@ describe("PersistenceLayer", () => {
           catalog
       `;
 
-      const abilities = Object.values(FELLOWSHIP_ABILITY);
-
-      const dungeonUnitCount = unitCatalog.reduce((total, unit) => {
+      const dungeonUnitCount = catalogs.units.reduce((total, unit) => {
         return total + unit.dungeonIds.length;
       }, 0);
 
-      const inactiveUnitCount = unitCatalog.filter((unit) => {
+      const inactiveUnitCount = catalogs.units.filter((unit) => {
         return unit.status === "INACTIVE";
       }).length;
 
@@ -108,13 +103,13 @@ describe("PersistenceLayer", () => {
         });
 
       expect(counts).toEqual({
-        abilityCount: abilities.length,
-        abilityUnitCount: abilities.length,
-        dungeonCount: Object.keys(FELLOWSHIP_DUNGEON).length,
+        abilityCount: catalogs.abilities.length,
+        abilityUnitCount: catalogs.abilities.length,
+        dungeonCount: catalogs.dungeons.length,
         dungeonUnitCount,
-        encounterCount: Object.keys(FELLOWSHIP_ENCOUNTER).length,
+        encounterCount: catalogs.encounters.length,
         inactiveUnitCount,
-        unitCount: unitCatalog.length,
+        unitCount: catalogs.units.length,
       });
 
       expect(catalogSyncs).toEqual(expectedCatalogSyncs);

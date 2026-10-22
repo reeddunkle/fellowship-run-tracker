@@ -3,6 +3,8 @@ import * as Schema from "effect/Schema";
 
 import { ConfigurationLabelSchema } from "@frt/shared/configuration/configuration-label-schema.ts";
 import {
+  AdventureDifficultySchema,
+  DungeonCategorySchema,
   DungeonIdSchema,
   DungeonLevelSchema,
 } from "@frt/shared/fellowship/validation/fellowship-common.ts";
@@ -29,6 +31,8 @@ const MilestoneEditorSchema = Schema.Struct({
 });
 
 export const ConfigurationEditorSchema = Schema.Struct({
+  adventureDifficulty: Schema.optional(AdventureDifficultySchema),
+  dungeonCategory: Schema.optional(DungeonCategorySchema),
   dungeonId: DungeonIdSchema,
   dungeonLevel: DungeonLevelSchema,
   label: ConfigurationLabelSchema,

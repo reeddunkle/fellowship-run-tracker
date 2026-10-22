@@ -18,6 +18,8 @@ import {
 } from "./configuration-form-schema.ts";
 
 export const EMPTY_CONFIGURATION_EDITOR_VALUE: ConfigurationEditorValue = {
+  adventureDifficulty: undefined,
+  dungeonCategory: "ETERNAL",
   dungeonId: "",
   dungeonLevel: undefined,
   label: "",

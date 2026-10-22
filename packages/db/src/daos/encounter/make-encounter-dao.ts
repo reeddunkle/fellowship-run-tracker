@@ -24,9 +24,12 @@ export const makeEncounterDAO = E.gen(function* () {
           dungeon_id AS dungeonId,
           id,
           name,
+          status,
           updated_at AS updatedAt
         FROM
           encounter
+        WHERE
+          status = 'ACTIVE'
         ORDER BY
           id
       `;
@@ -43,6 +46,7 @@ export const makeEncounterDAO = E.gen(function* () {
           dungeon_id AS dungeonId,
           id,
           name,
+          status,
           updated_at AS updatedAt
         FROM
           encounter

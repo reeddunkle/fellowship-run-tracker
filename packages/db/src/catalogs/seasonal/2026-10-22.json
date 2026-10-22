@@ -1,0 +1,194 @@
+{
+  "metadata": {
+    "source": "CombatLog221026_092111.txt",
+    "reason": "October 2026 season catalog bridge"
+  },
+  "dungeons": {
+    "additions": [
+      {
+        "dungeonId": "36",
+        "mapId": "41",
+        "name": "Crown of the Wild"
+      }
+    ],
+    "patches": []
+  },
+  "encounters": {
+    "additions": [
+      {
+        "dungeonId": "36",
+        "encounterId": "40",
+        "name": "Scrofa, Wild Incarnate"
+      }
+    ],
+    "patches": []
+  },
+  "units": {
+    "additions": [
+      {
+        "dungeonIds": ["12"],
+        "groupKey": null,
+        "id": "120",
+        "name": "Chains",
+        "status": "ACTIVE",
+        "variant": null
+      },
+      {
+        "dungeonIds": ["31"],
+        "groupKey": null,
+        "id": "260",
+        "name": "Sibling of Earth",
+        "status": "ACTIVE",
+        "variant": null
+      },
+      {
+        "dungeonIds": ["6"],
+        "groupKey": null,
+        "id": "264",
+        "name": "Ruinous Star",
+        "status": "ACTIVE",
+        "variant": null
+      },
+      {
+        "dungeonIds": ["31"],
+        "groupKey": null,
+        "id": "324",
+        "name": "Clot Spawn",
+        "status": "ACTIVE",
+        "variant": null
+      },
+      {
+        "dungeonIds": ["31"],
+        "groupKey": null,
+        "id": "337",
+        "name": "Sanguine Sybling",
+        "status": "ACTIVE",
+        "variant": null
+      },
+      {
+        "dungeonIds": ["36"],
+        "groupKey": null,
+        "id": "339",
+        "name": "Raptor Fledgling",
+        "status": "ACTIVE",
+        "variant": null
+      },
+      {
+        "dungeonIds": ["36"],
+        "groupKey": null,
+        "id": "340",
+        "name": "Savage Spiritualist",
+        "status": "ACTIVE",
+        "variant": null
+      },
+      {
+        "dungeonIds": ["24", "36"],
+        "groupKey": null,
+        "id": "341",
+        "name": "Thornclaw Grizzly",
+        "status": "ACTIVE",
+        "variant": null
+      },
+      {
+        "dungeonIds": ["24", "36"],
+        "groupKey": null,
+        "id": "342",
+        "name": "Raging Razorback",
+        "status": "ACTIVE",
+        "variant": null
+      },
+      {
+        "dungeonIds": ["36"],
+        "groupKey": null,
+        "id": "343",
+        "name": "Wyldspeaker",
+        "status": "ACTIVE",
+        "variant": null
+      },
+      {
+        "dungeonIds": ["36"],
+        "groupKey": null,
+        "id": "344",
+        "name": "Fangstrider",
+        "status": "ACTIVE",
+        "variant": null
+      },
+      {
+        "dungeonIds": ["36"],
+        "groupKey": null,
+        "id": "345",
+        "name": "Groveblade",
+        "status": "ACTIVE",
+        "variant": null
+      },
+      {
+        "dungeonIds": ["36"],
+        "groupKey": null,
+        "id": "346",
+        "name": "Spear Centurion",
+        "status": "ACTIVE",
+        "variant": null
+      },
+      {
+        "dungeonIds": ["36"],
+        "groupKey": null,
+        "id": "347",
+        "name": "Feral Spiritclaw",
+        "status": "ACTIVE",
+        "variant": null
+      },
+      {
+        "dungeonIds": ["36"],
+        "groupKey": null,
+        "id": "348",
+        "name": "Elder Stormbane",
+        "status": "ACTIVE",
+        "variant": null
+      },
+      {
+        "dungeonIds": ["36"],
+        "groupKey": null,
+        "id": "349",
+        "name": "Scrofa, Wild Incarnate",
+        "status": "ACTIVE",
+        "variant": null
+      }
+    ],
+    "patches": [
+      { "id": "13", "name": "Gold Hoarder" },
+      { "id": "32", "name": "Skulking Cutthroat" },
+      { "id": "36", "name": "Urrak Vinetwister" },
+      { "id": "37", "name": "Cruel Slaver" },
+      { "id": "39", "name": "Hoofed Outrunner" },
+      { "id": "40", "name": "Bloodrite Chanter" },
+      { "id": "42", "name": "Savage Hunter" },
+      { "id": "94", "name": "Water Surger" },
+      { "id": "100", "name": "Lost Empyrean Soul" },
+      { "id": "107", "name": "Witch of the Tides" },
+      { "id": "115", "name": "Greedspawned Demon" },
+      { "id": "116", "name": "Spectre of Avarice" },
+      { "id": "118", "name": "Gilded Fiend" },
+      { "id": "128", "name": "Rose of the Garden" },
+      { "id": "154", "name": "Glacial Colossus" },
+      { "id": "160", "name": "Raging Ice Elemental" },
+      { "id": "183", "name": "Toxic Blossom" },
+      { "id": "185", "name": "Mounted Raider" },
+      { "id": "186", "name": "Hellspawned Bulgore" },
+      { "id": "189", "name": "Vile Executioner" },
+      { "id": "191", "name": "Diabolical Hellcaller" },
+      { "id": "192", "name": "Ritual Devotee" },
+      { "id": "193", "name": "Profane Defiler" },
+      { "id": "201", "name": "Bloodfang Panther" },
+      { "id": "266", "name": "Speaker of Vexira" },
+      { "id": "267", "name": "Infected Eggbearer" },
+      { "id": "313", "name": "Elder Glacial Bear" },
+      { "id": "326", "name": "Heart of Corruption" },
+      { "id": "327", "name": "Forgotten Champion" },
+      { "id": "328", "name": "Forlorn Acolyte" },
+      { "id": "331", "name": "Sanguine Oracle" },
+      { "id": "333", "name": "Crimson Zealot" },
+      { "id": "334", "name": "Ravenous Brood" },
+      { "id": "336", "name": "Ascended Bloodweaver" }
+    ]
+  }
+}

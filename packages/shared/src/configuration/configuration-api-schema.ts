@@ -4,6 +4,8 @@ import { ConfigurationFingerprintSchema } from "@frt/shared/configuration/config
 import { ConfigurationIdSchema } from "@frt/shared/configuration/configuration-id-schema.ts";
 import { ConfigurationLabelSchema } from "@frt/shared/configuration/configuration-label-schema.ts";
 import {
+  AdventureDifficultySchema,
+  DungeonCategorySchema,
   DungeonIdSchema,
   DungeonLevelSchema,
 } from "@frt/shared/fellowship/validation/fellowship-common.ts";
@@ -52,7 +54,9 @@ export type ConfigurationApiMilestone =
   typeof ConfigurationApiMilestoneSchema.Type;
 
 export const ConfigurationApiConfigurationSchema = Schema.Struct({
+  adventureDifficulty: Schema.optional(AdventureDifficultySchema),
   createdAt: Schema.DateTimeUtcFromString,
+  dungeonCategory: Schema.optional(DungeonCategorySchema),
   dungeonId: DungeonIdSchema,
   dungeonLevel: DungeonLevelSchema,
   fingerprint: ConfigurationFingerprintSchema,

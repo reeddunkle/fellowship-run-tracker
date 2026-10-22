@@ -8,7 +8,11 @@ import {
   type FellowshipMilestoneConfiguration,
 } from "@frt/shared/fellowship/configurations/configuration-types.ts";
 import { getRequirementLookup } from "@frt/shared/fellowship/requirements/requirement-lookup.ts";
-import { type DungeonId } from "@frt/shared/fellowship/validation/fellowship-common.ts";
+import {
+  type AdventureDifficulty,
+  type DungeonCategory,
+  type DungeonId,
+} from "@frt/shared/fellowship/validation/fellowship-common.ts";
 import { type FellowshipRequirement } from "@frt/shared/fellowship/validation/fellowship-configuration-file-schema.ts";
 
 type CanonicalMilestone = {
@@ -16,12 +20,16 @@ type CanonicalMilestone = {
 };
 
 type CanonicalConfiguration = {
+  readonly adventureDifficulty?: AdventureDifficulty | undefined;
+  readonly dungeonCategory?: DungeonCategory | undefined;
   readonly dungeonId: DungeonId;
   readonly dungeonLevel: number;
   readonly milestones: ReadonlyArray<CanonicalMilestone>;
 };
 
 export type CanonicalConfigurationInput = {
+  readonly adventureDifficulty?: AdventureDifficulty | undefined;
+  readonly dungeonCategory?: DungeonCategory | undefined;
   readonly dungeonId: DungeonId;
   readonly dungeonLevel: number;
   readonly milestones: ReadonlyArray<{
@@ -30,6 +38,8 @@ export type CanonicalConfigurationInput = {
 };
 
 type CanonicalConfigurationDefinitionInput = {
+  readonly adventureDifficulty?: AdventureDifficulty | undefined;
+  readonly dungeonCategory?: DungeonCategory | undefined;
   readonly dungeonId: DungeonId;
   readonly dungeonLevel: number;
   readonly requirements: ReadonlyArray<ConfigurationDefinitionRequirement>;
@@ -81,6 +91,8 @@ function canonicalizeConfiguration(
   configuration: FellowshipMilestoneConfiguration,
 ): CanonicalConfiguration {
   return canonicalizeNormalizedConfiguration({
+    adventureDifficulty: configuration.adventureDifficulty,
+    dungeonCategory: configuration.dungeonCategory,
     dungeonId: configuration.dungeonId,
     dungeonLevel: configuration.dungeonLevel,
     milestones: A.map(configuration.milestones, (milestone) => {
@@ -121,6 +133,8 @@ function canonicalizeConfigurationDefinition(
   );
 
   return canonicalizeNormalizedConfigurationDefinition({
+    adventureDifficulty: configuration.adventureDifficulty,
+    dungeonCategory: configuration.dungeonCategory,
     dungeonId: configuration.dungeonId,
     dungeonLevel: configuration.dungeonLevel,
     requirements: Array.from(requirementsByIdentity.values()),
@@ -146,6 +160,8 @@ function canonicalizeNormalizedConfiguration(
   );
 
   return {
+    adventureDifficulty: configuration.adventureDifficulty,
+    dungeonCategory: configuration.dungeonCategory,
     dungeonId: configuration.dungeonId,
     dungeonLevel: configuration.dungeonLevel,
     milestones,
@@ -161,6 +177,8 @@ function canonicalizeNormalizedConfigurationDefinition(
   );
 
   return {
+    adventureDifficulty: definition.adventureDifficulty,
+    dungeonCategory: definition.dungeonCategory,
     dungeonId: definition.dungeonId,
     dungeonLevel: definition.dungeonLevel,
     requirements,

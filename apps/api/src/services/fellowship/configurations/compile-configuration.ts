@@ -222,6 +222,8 @@ export const compileConfiguration: (
     const { milestonesById, requirementsByEvent } = createIndexes(milestones);
 
     return {
+      adventureDifficulty: configuration.adventureDifficulty,
+      dungeonCategory: configuration.dungeonCategory,
       dungeonId: configuration.dungeonId,
       dungeonLevel: configuration.dungeonLevel,
       milestones,

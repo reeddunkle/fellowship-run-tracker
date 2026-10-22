@@ -74,5 +74,11 @@ export function getRequirementTargetLabel({
     Match.exhaustive,
   );
 
-  return label ?? `Custom (${targetId})`;
+  if (label !== undefined) {
+    return label;
+  }
+
+  return eventType === FELLOWSHIP_EVENT.UNIT_DEATH
+    ? `Unknown unit (ID ${targetId})`
+    : `Custom (${targetId})`;
 }

@@ -2,6 +2,7 @@ import * as A from "effect/Array";
 import * as E from "effect/Effect";
 import * as Match from "effect/Match";
 import * as Order from "effect/Order";
+import * as Schema from "effect/Schema";
 
 import {
   createConfigurationDefinitionFingerprint,
@@ -23,9 +24,14 @@ import { type ConfigurationLabel } from "@frt/shared/configuration/configuration
 import { type FellowshipMilestoneConfiguration } from "@frt/shared/fellowship/configurations/configuration-types.ts";
 import { FELLOWSHIP_EVENT } from "@frt/shared/fellowship/constants/fellowship-event.ts";
 import { getRequirementLookup } from "@frt/shared/fellowship/requirements/requirement-lookup.ts";
+import {
+  AdventureDifficultySchema,
+  DungeonCategorySchema,
+} from "@frt/shared/fellowship/validation/fellowship-common.ts";
 import { type FellowshipRequirement } from "@frt/shared/fellowship/validation/fellowship-configuration-file-schema.ts";
 import { type RequirementEventType } from "@frt/shared/fellowship/validation/requirement-event-type-schema.ts";
 import { isNonEmptyArray } from "@frt/shared/util/is-non-empty-array.ts";
+import { parseJson } from "@frt/shared/util/parse-json.ts";
 
 import { type PersistedConfiguration } from "./configuration-dao.ts";
 
@@ -42,6 +48,11 @@ type RequirementIdentity = {
   readonly targetId: string;
   readonly type: RequirementEventType;
 };
+
+const CanonicalConfigurationIdentitySchema = Schema.Struct({
+  adventureDifficulty: Schema.optional(AdventureDifficultySchema),
+  dungeonCategory: Schema.optional(DungeonCategorySchema),
+});
 
 type RequirementIdentityKey = readonly [
   type: RequirementIdentity["type"],
@@ -394,8 +405,19 @@ export const createPersistedConfiguration: (
     });
   });
 
+  const canonicalConfiguration = yield* parseJson({
+    contents: configuration.canonicalJson,
+    onError: mapConfigurationDAOError,
+  });
+
+  const identity = yield* Schema.decodeUnknownEffect(
+    CanonicalConfigurationIdentitySchema,
+  )(canonicalConfiguration).pipe(E.mapError(mapConfigurationDAOError));
+
   return {
     configuration: {
+      adventureDifficulty: identity.adventureDifficulty,
+      dungeonCategory: identity.dungeonCategory,
       dungeonId: configurationDefinition.dungeonId,
       dungeonLevel: configurationDefinition.dungeonLevel,
       milestones: configurationMilestones,

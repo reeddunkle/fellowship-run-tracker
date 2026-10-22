@@ -5,9 +5,11 @@ import { FELLOWSHIP_EVENT } from "@frt/shared/fellowship/constants/fellowship-ev
 import {
   AbsoluteDungeonLevelFromLogSchema,
   AbsoluteDungeonLevelSchema,
+  DungeonCategorySchema,
   DungeonIdSchema,
   DungeonLevelSchema,
   DungeonNameSchema,
+  getDungeonCategoryFromAbsoluteDungeonLevel,
   getDungeonLevelFromAbsoluteDungeonLevel,
   TimestampSchema,
 } from "@frt/shared/fellowship/validation/fellowship-common.ts";
@@ -27,6 +29,7 @@ const ZoneChangeLogLineSchema = Schema.Tuple([
 
 const ZoneChangeEventSchema = Schema.Struct({
   absoluteDungeonLevel: AbsoluteDungeonLevelSchema,
+  dungeonCategory: DungeonCategorySchema,
   dungeonId: DungeonIdSchema,
   dungeonLevel: Schema.UndefinedOr(DungeonLevelSchema),
   dungeonName: DungeonNameSchema,
@@ -40,6 +43,8 @@ export const ZoneChangeEventFromLogSchema = ZoneChangeLogLineSchema.pipe(
       ([timestamp, type, dungeonName, dungeonId, absoluteDungeonLevel]) => {
         return {
           absoluteDungeonLevel,
+          dungeonCategory:
+            getDungeonCategoryFromAbsoluteDungeonLevel(absoluteDungeonLevel),
           dungeonId,
           dungeonLevel:
             getDungeonLevelFromAbsoluteDungeonLevel(absoluteDungeonLevel),

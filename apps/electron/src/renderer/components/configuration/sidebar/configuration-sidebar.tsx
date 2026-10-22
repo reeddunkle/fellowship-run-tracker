@@ -156,7 +156,7 @@ export function ConfigurationSidebar() {
                               <Collapsible
                                 className="group/level"
                                 defaultOpen
-                                key={levelGroup.dungeonLevel}
+                                key={`${levelGroup.dungeonCategory ?? "ETERNAL"}:${levelGroup.adventureDifficulty ?? ""}:${levelGroup.dungeonLevel}`}
                               >
                                 <SidebarMenuSubItem>
                                   <CollapsibleTrigger
@@ -166,7 +166,10 @@ export function ConfigurationSidebar() {
                                       >
                                         <ChevronRightIcon className="transition-transform group-data-[state=open]/level:rotate-90" />
                                         <span>
-                                          Eternal {levelGroup.dungeonLevel}
+                                          {levelGroup.dungeonCategory ===
+                                          "ADVENTURE"
+                                            ? `Adventure ${levelGroup.dungeonLevel} · ${levelGroup.adventureDifficulty ?? "Unknown"}`
+                                            : `Eternal ${levelGroup.dungeonLevel}`}
                                         </span>
                                       </SidebarMenuSubButton>
                                     }

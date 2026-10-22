@@ -1,6 +1,35 @@
 {
   "type": "object",
   "properties": {
+    "adventureDifficulty": {
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "EASY",
+            "MEDIUM",
+            "HARD"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "dungeonCategory": {
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "ADVENTURE",
+            "ETERNAL"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "dungeonId": {
       "type": "string",
       "minLength": 1

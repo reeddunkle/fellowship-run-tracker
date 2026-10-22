@@ -1,11 +1,17 @@
 import type * as HashMap from "effect/HashMap";
 
 import { type RequirementTargetId } from "@frt/shared/fellowship/requirements/requirement-lookup.ts";
-import { type DungeonId } from "@frt/shared/fellowship/validation/fellowship-common.ts";
+import {
+  type AdventureDifficulty,
+  type DungeonCategory,
+  type DungeonId,
+} from "@frt/shared/fellowship/validation/fellowship-common.ts";
 import { type FellowshipMilestoneDefinition } from "@frt/shared/fellowship/validation/fellowship-configuration-file-schema.ts";
 import { type RequirementEventType } from "@frt/shared/fellowship/validation/requirement-event-type-schema.ts";
 
 export type FellowshipMilestoneConfiguration = {
+  readonly adventureDifficulty?: AdventureDifficulty | undefined;
+  readonly dungeonCategory?: DungeonCategory | undefined;
   readonly dungeonId: DungeonId;
   readonly dungeonLevel: number;
   readonly milestones: ReadonlyArray<FellowshipMilestoneDefinition>;
@@ -19,6 +25,8 @@ export type ConfigurationDefinitionRequirement = {
 };
 
 export type FellowshipConfigurationDefinition = {
+  readonly adventureDifficulty?: AdventureDifficulty | undefined;
+  readonly dungeonCategory?: DungeonCategory | undefined;
   readonly dungeonId: DungeonId;
   readonly dungeonLevel: number;
   readonly requirements: ReadonlyArray<ConfigurationDefinitionRequirement>;

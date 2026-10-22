@@ -2,8 +2,8 @@ import * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { FELLOWSHIP_ABILITY } from "@frt/db/catalogs/ability/fellowship-ability-catalog.ts";
 import { CATALOG_CHECKSUMS } from "@frt/db/catalogs/generated/catalog-checksums.ts";
+import { loadEffectiveFellowshipCatalogs } from "@frt/db/catalogs/load-effective-fellowship-catalogs.ts";
 import { CatalogSyncDAO } from "@frt/db/daos/catalog-sync/catalog-sync-dao.ts";
 import { MainDatabase } from "@frt/db/databases/main-database.ts";
 
@@ -23,11 +23,13 @@ export const syncAbilityCatalog = E.fn("syncAbilityCatalog")(function* () {
     return;
   }
 
+  const catalogs = yield* loadEffectiveFellowshipCatalogs;
+
   yield* sql.withTransaction(
     E.gen(function* () {
       const now = DateTime.toEpochMillis(yield* DateTime.now);
 
-      for (const ability of Object.values(FELLOWSHIP_ABILITY)) {
+      for (const ability of catalogs.abilities) {
         yield* sql`
           INSERT INTO
             ability (id, name, created_at, updated_at)
