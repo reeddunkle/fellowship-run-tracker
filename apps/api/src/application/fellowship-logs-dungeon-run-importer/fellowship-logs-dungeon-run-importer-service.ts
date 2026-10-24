@@ -10,8 +10,10 @@ import {
   type FellowshipLogsDungeonRunImportRunNotFoundError,
 } from "@frt/api/errors/fellowship-logs-dungeon-run-import-error.ts";
 import {
+  type FellowshipLogsGatewayAccessError,
   type FellowshipLogsGatewayEventDecodeError,
   type FellowshipLogsGatewayGraphQLResponseError,
+  type FellowshipLogsGatewayPointPolicyError,
   type FellowshipLogsGatewayRateLimitExceededError,
   type FellowshipLogsGatewayReportChangedError,
   type FellowshipLogsGatewayRequestError,
@@ -49,8 +51,10 @@ type ImportFellowshipLogsDungeonRunError =
   | FellowshipLogsDungeonRunImportDungeonLevelNotFoundError
   | FellowshipLogsDungeonRunImportRunNotFinishedError
   | FellowshipLogsDungeonRunImportRunNotFoundError
+  | FellowshipLogsGatewayAccessError
   | FellowshipLogsGatewayEventDecodeError
   | FellowshipLogsGatewayGraphQLResponseError
+  | FellowshipLogsGatewayPointPolicyError
   | FellowshipLogsGatewayRateLimitExceededError
   | FellowshipLogsGatewayReportChangedError
   | FellowshipLogsGatewayRequestError;

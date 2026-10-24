@@ -5,6 +5,10 @@ import { BackgroundJobFailureSchema } from "@frt/shared/background-job/backgroun
 import { BackgroundJobIdSchema } from "@frt/shared/background-job/background-job-id-schema.ts";
 import { BackgroundJobStatusSchema } from "@frt/shared/background-job/background-job-status-schema.ts";
 import {
+  BackgroundJobWaitingKindSchema,
+  BackgroundJobWaitingReasonSchema,
+} from "@frt/shared/background-job/background-job-waiting-reason-schema.ts";
+import {
   NonEmptyStringSchema,
   NonNegativeIntegerSchema,
 } from "@frt/shared/util/common-schemas.ts";
@@ -14,6 +18,7 @@ export class BackgroundJobModel extends Model.Class<BackgroundJobModel>(
 )({
   attempts: NonNegativeIntegerSchema,
   availableAt: Schema.NullOr(Schema.DateTimeUtcFromMillis),
+  bindingKey: Schema.NullOr(NonEmptyStringSchema),
   createdAt: Model.DateTimeInsertFromNumber,
   error: BackgroundJobFailureSchema.pipe(Schema.fromJsonString, Schema.NullOr),
   finishedAt: Schema.NullOr(Schema.DateTimeUtcFromMillis),
@@ -27,4 +32,6 @@ export class BackgroundJobModel extends Model.Class<BackgroundJobModel>(
   status: BackgroundJobStatusSchema,
   traceparent: Schema.NullOr(NonEmptyStringSchema),
   updatedAt: Model.DateTimeUpdateFromNumber,
+  waitingKind: Schema.NullOr(BackgroundJobWaitingKindSchema),
+  waitingReason: Schema.NullOr(BackgroundJobWaitingReasonSchema),
 }) {}

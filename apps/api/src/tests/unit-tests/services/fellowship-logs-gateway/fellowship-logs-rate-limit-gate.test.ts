@@ -1,5 +1,6 @@
 import * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
+import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import * as TestClock from "effect/testing/TestClock";
 import { describe, expect, test } from "vitest";
@@ -10,7 +11,10 @@ import {
 } from "@frt/api/errors/fellowship-logs-gateway-error.ts";
 import { FellowshipLogsAnalytics } from "@frt/api/services/fellowship-logs-analytics/fellowship-logs-analytics-service.ts";
 import { FellowshipLogsGatewayResponseCache } from "@frt/api/services/fellowship-logs-gateway/cache/fellowship-logs-gateway-response-cache-service.ts";
-import { withFellowshipLogsGatewayPointsSpent } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-points-spent.ts";
+import {
+  withFellowshipLogsGatewayPointsSpent,
+  withFellowshipLogsGatewayWorkflowCost,
+} from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-points-spent.ts";
 import { makeFellowshipLogsGatewayFromQuery } from "@frt/api/services/fellowship-logs-gateway/make-fellowship-logs-gateway-service.ts";
 import {
   makeFellowshipLogsGatewayGraphQLResponseSchema,
@@ -45,12 +49,18 @@ function makeRateLimitData(pointsSpentThisHour: number) {
   };
 }
 
-function makeMetadataResponse(pointsSpentThisHour: number): StubResponse {
+function makeMetadataResponse(
+  pointsSpentThisHour: number,
+  poolData: Readonly<Record<string, unknown>> = {},
+): StubResponse {
   return {
     _tag: "Response",
     body: {
       data: {
-        rateLimitData: makeRateLimitData(pointsSpentThisHour),
+        rateLimitData: {
+          ...makeRateLimitData(pointsSpentThisHour),
+          ...poolData,
+        },
         reportData: {
           report: {
             endTime: 2000,
@@ -343,5 +353,322 @@ describe("Fellowship Logs rate-limit gate", () => {
     );
 
     expect(pointsSpent).toBe(30);
+  });
+
+  test("starts fresh for another connection instead of using the previous one's points", async () => {
+    const { query, sent } = makeStubQuery([
+      makeMetadataResponse(LIMIT_PER_HOUR),
+      makeMetadataResponse(10),
+    ]);
+    const current = { connectionIdentity: "first" };
+
+    const result = await runWithTestClock(
+      E.gen(function* () {
+        const fellowshipLogsGateway = yield* makeFellowshipLogsGatewayFromQuery(
+          query,
+          () =>
+            E.succeed({
+              connectionIdentity: current.connectionIdentity,
+              spending: "DEFAULT",
+            }),
+        );
+
+        yield* fellowshipLogsGateway.getDungeonRunMetadata(RUN);
+        const firstSnapshot = yield* fellowshipLogsGateway.getRateLimitData();
+
+        current.connectionIdentity = "second";
+        const secondSnapshotBeforeRequest =
+          yield* fellowshipLogsGateway.getRateLimitData();
+
+        yield* fellowshipLogsGateway.getDungeonRunMetadata(RUN);
+
+        return { firstSnapshot, secondSnapshotBeforeRequest };
+      }),
+    );
+
+    expect(result.firstSnapshot?.pointsSpentThisHour).toBe(LIMIT_PER_HOUR);
+    expect(result.secondSnapshotBeforeRequest).toBeNull();
+    expect(sent.count).toBe(2);
+  });
+
+  test("estimates no points for a refused request it couldn't measure", async () => {
+    const { query } = makeStubQuery([
+      makeRateLimitResponse(100),
+      makeRateLimitResponse(130),
+      {
+        _tag: "Response",
+        body: {
+          data: null,
+          errors: [
+            {
+              message:
+                "cannot require only user points be spent without authenticating a user and opting into the new point system",
+            },
+          ],
+        },
+      },
+    ]);
+
+    const cost = await runWithTestClock(
+      E.gen(function* () {
+        const fellowshipLogsGateway =
+          yield* makeFellowshipLogsGatewayFromQuery(query);
+
+        yield* fellowshipLogsGateway.getRateLimitData({ force: true });
+        yield* fellowshipLogsGateway.getRateLimitData({ force: true });
+
+        const [, workflowCost] = yield* withFellowshipLogsGatewayWorkflowCost(
+          fellowshipLogsGateway.getRateLimitData({ force: true }).pipe(E.flip),
+        );
+
+        return workflowCost;
+      }),
+    );
+
+    expect(cost).toMatchObject({ apiRequestCount: 1, estimatedPoints: 0 });
+  });
+});
+
+describe("Fellowship Logs user-points-only rate-limit gate", () => {
+  const userPointsOnly = () =>
+    E.succeed({
+      connectionIdentity: "connection",
+      spending: "USER_POINTS_ONLY",
+    } as const);
+
+  function runTwoLookups(
+    first: StubResponse,
+    getRequestContext: Parameters<typeof makeFellowshipLogsGatewayFromQuery>[1],
+  ) {
+    const { query, sent } = makeStubQuery([first, makeMetadataResponse(10)]);
+
+    const error = runWithTestClock(
+      E.gen(function* () {
+        const fellowshipLogsGateway = yield* makeFellowshipLogsGatewayFromQuery(
+          query,
+          getRequestContext,
+        );
+
+        yield* fellowshipLogsGateway.getDungeonRunMetadata(RUN);
+
+        return yield* fellowshipLogsGateway
+          .getDungeonRunMetadata(RUN)
+          .pipe(E.flip, E.option);
+      }),
+    );
+
+    return { error, sent };
+  }
+
+  test("holds back a strict request once user points are used up, until the user reset", async () => {
+    const { error, sent } = runTwoLookups(
+      makeMetadataResponse(10, {
+        userHasRemainingPoints: false,
+        userPointsResetIn: 120,
+      }),
+      userPointsOnly,
+    );
+
+    expect(await error).toEqual(
+      Option.some(
+        expect.objectContaining({
+          _tag: "FellowshipLogsGatewayRateLimitExceededError",
+          reason: "UserPointsExhausted",
+          resetsAt: DateTime.makeUnsafe(120 * 1_000),
+        }),
+      ),
+    );
+    expect(sent.count).toBe(1);
+  });
+
+  test("holds back a strict request when no application point is free for the hold", async () => {
+    const { error, sent } = runTwoLookups(
+      makeMetadataResponse(LIMIT_PER_HOUR - 0.5, {
+        userHasRemainingPoints: true,
+      }),
+      userPointsOnly,
+    );
+
+    expect(await error).toEqual(
+      Option.some(
+        expect.objectContaining({
+          reason: "ApplicationHoldUnavailable",
+          resetsAt: DateTime.makeUnsafe(RESET_IN_SECONDS * 1_000),
+        }),
+      ),
+    );
+    expect(sent.count).toBe(1);
+  });
+
+  test("lets default spending fall back to application points when user points are used up", async () => {
+    const { error, sent } = runTwoLookups(
+      makeMetadataResponse(10, {
+        userHasRemainingPoints: false,
+        userPointsResetIn: 120,
+      }),
+      undefined,
+    );
+
+    expect(await error).toEqual(Option.none());
+    expect(sent.count).toBe(2);
+  });
+
+  test("reports a rejection of a strict request against the user pool's reset", async () => {
+    const { query } = makeStubQuery([
+      makeMetadataResponse(10, {
+        userHasRemainingPoints: true,
+        userPointsResetIn: 120,
+      }),
+      { _tag: "Rejected" },
+    ]);
+
+    const error = await runWithTestClock(
+      E.gen(function* () {
+        const fellowshipLogsGateway = yield* makeFellowshipLogsGatewayFromQuery(
+          query,
+          userPointsOnly,
+        );
+
+        yield* fellowshipLogsGateway.getDungeonRunMetadata(RUN);
+
+        return yield* fellowshipLogsGateway
+          .getDungeonRunMetadata(RUN)
+          .pipe(E.flip);
+      }),
+    );
+
+    expect(error).toMatchObject({
+      _tag: "FellowshipLogsGatewayRateLimitExceededError",
+      reason: "UserPointsRejectedByApi",
+      resetsAt: DateTime.makeUnsafe(120 * 1_000),
+    });
+  });
+
+  test("blames a strict rejection on the application hold when that pool can't cover it", async () => {
+    const { query } = makeStubQuery([
+      {
+        _tag: "Response",
+        body: {
+          data: {
+            rateLimitData: {
+              ...makeRateLimitData(LIMIT_PER_HOUR - 0.5),
+              userHasRemainingPoints: true,
+              userPointsResetIn: 120,
+            },
+          },
+          errors: [{ message: "Rate limit exceeded." }],
+        },
+      },
+    ]);
+
+    const error = await runWithTestClock(
+      E.gen(function* () {
+        const fellowshipLogsGateway = yield* makeFellowshipLogsGatewayFromQuery(
+          query,
+          userPointsOnly,
+        );
+
+        return yield* fellowshipLogsGateway
+          .getRateLimitData({ force: true })
+          .pipe(E.flip);
+      }),
+    );
+
+    expect(error).toMatchObject({
+      reason: "ApplicationHoldUnavailable",
+      resetsAt: DateTime.makeUnsafe(RESET_IN_SECONDS * 1_000),
+    });
+  });
+
+  test("lets a strict request through while user points remain", async () => {
+    const { error, sent } = runTwoLookups(
+      makeMetadataResponse(10, {
+        databaseLimitPerHour: 250,
+        databasePointsSpentThisHour: 0,
+        userHasRemainingPoints: true,
+        userPointsResetIn: 0,
+      }),
+      userPointsOnly,
+    );
+
+    expect(await error).toEqual(Option.none());
+    expect(sent.count).toBe(2);
+  });
+});
+
+describe("Fellowship Logs gateway workflow cost", () => {
+  test("adds up the provider's per-request split across requests", async () => {
+    const { query } = makeStubQuery([
+      makeMetadataResponse(10, {
+        currentRequest: { application: 0, total: 4, user: 4 },
+      }),
+      makeMetadataResponse(10, {
+        currentRequest: { application: 1, total: 6.5, user: 5.5 },
+      }),
+    ]);
+
+    const [, cost] = await runWithTestClock(
+      E.gen(function* () {
+        const fellowshipLogsGateway =
+          yield* makeFellowshipLogsGatewayFromQuery(query);
+
+        return yield* withFellowshipLogsGatewayWorkflowCost(
+          fellowshipLogsGateway
+            .getDungeonRunMetadata(RUN)
+            .pipe(E.andThen(fellowshipLogsGateway.getDungeonRunMetadata(RUN))),
+        );
+      }),
+    );
+
+    expect(cost).toEqual({
+      apiRequestCount: 2,
+      applicationPoints: 1,
+      cacheHitCount: 0,
+      estimatedPoints: 0,
+      totalPoints: 10.5,
+      unmeasuredRequestCount: 0,
+      userPoints: 9.5,
+    });
+  });
+
+  test("returns independent costs for concurrent lookups of the same fight", async () => {
+    const { query } = makeStubQuery([
+      makeMetadataResponse(10, {
+        currentRequest: { application: 0, total: 4, user: 4 },
+      }),
+      makeMetadataResponse(10, {
+        currentRequest: { application: 0, total: 4, user: 4 },
+      }),
+    ]);
+
+    const result = await runWithTestClock(
+      E.gen(function* () {
+        const fellowshipLogsGateway =
+          yield* makeFellowshipLogsGatewayFromQuery(query);
+
+        return yield* E.all(
+          [
+            fellowshipLogsGateway.getDungeonRunMetadata(RUN),
+            fellowshipLogsGateway.getDungeonRunMetadata(RUN),
+          ],
+          { concurrency: "unbounded" },
+        );
+      }),
+    );
+
+    expect(result).toEqual([
+      expect.objectContaining({
+        workflowCost: expect.objectContaining({
+          apiRequestCount: 1,
+          totalPoints: 4,
+        }),
+      }),
+      expect.objectContaining({
+        workflowCost: expect.objectContaining({
+          apiRequestCount: 1,
+          totalPoints: 4,
+        }),
+      }),
+    ]);
   });
 });

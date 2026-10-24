@@ -8,10 +8,14 @@ import { app } from "electron";
 
 import { appPaths } from "@frt/api/helpers/app-paths.ts";
 import { SESSION_LOG_FILE_PATH } from "@frt/api/logging/log-file-path.ts";
-import { redactUserPaths } from "@frt/api/logging/redact-user-paths.ts";
 
 import { flushBeforeFatalExit } from "@/application/fatal-exit-flush.ts";
 import { showFatalErrorDialog } from "@/application/show-fatal-error-dialog.ts";
+import {
+  type CrashLogLevel,
+  formatCrashError,
+  formatCrashLogEntry,
+} from "@/crash-log-entry.ts";
 
 /*
  * Electron main process entry point. The application is loaded with a dynamic
@@ -22,8 +26,6 @@ import { showFatalErrorDialog } from "@/application/show-fatal-error-dialog.ts";
  * Keep this module free of Effect imports so it works when those fail to load.
  */
 
-type LogLevel = "ERROR" | "FATAL";
-
 const FATAL_EXIT_FLUSH_TIMEOUT_MILLISECONDS = 2_000;
 
 const MAX_LOGGED_UNHANDLED_REJECTIONS = 20;
@@ -32,30 +34,10 @@ const loggedUnhandledRejections = new Set<string>();
 
 let isExiting = false;
 
-function formatError(error: unknown) {
-  if (error instanceof Error) {
-    return error.stack ?? error.message;
-  }
-
-  return String(error);
-}
-
 // Matches the shape of `formatLogEntry` entries written by `AppLoggerLayer`.
-function writeLog(level: LogLevel, message: string, error: unknown) {
+function writeLog(level: CrashLogLevel, message: string, error: unknown) {
   // @effect-diagnostics-next-line globalDate:off
   const now = new Date();
-
-  const entry = {
-    annotations: {},
-    cause: formatError(error),
-    fiberId: null,
-    level,
-    message,
-    spanId: null,
-    spans: {},
-    timestamp: now.toISOString(),
-    traceId: null,
-  };
 
   try {
     mkdirSync(appPaths.logs, {
@@ -64,7 +46,7 @@ function writeLog(level: LogLevel, message: string, error: unknown) {
 
     appendFileSync(
       SESSION_LOG_FILE_PATH,
-      `${redactUserPaths(JSON.stringify(entry))}\n`,
+      `${formatCrashLogEntry(level, message, error, now)}\n`,
     );
   } catch (logError) {
     // @effect-diagnostics-next-line globalConsole:off
@@ -84,7 +66,7 @@ function exitWithFatalError(message: string, error: unknown) {
   void flushBeforeFatalExit(FATAL_EXIT_FLUSH_TIMEOUT_MILLISECONDS)
     .then(() => {
       return showFatalErrorDialog({
-        detail: `${message}\n\n${formatError(error)}`,
+        detail: `${message}\n\n${formatCrashError(error)}`,
         title: "Fellowship Run Tracker",
       });
     })
@@ -94,7 +76,7 @@ function exitWithFatalError(message: string, error: unknown) {
 }
 
 function logUnhandledRejection(reason: unknown) {
-  const formattedReason = formatError(reason);
+  const formattedReason = formatCrashError(reason);
 
   if (
     loggedUnhandledRejections.has(formattedReason) ||

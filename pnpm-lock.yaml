@@ -169,11 +169,11 @@ catalogs:
       version: 2.3.4
   effect:
     '@effect/platform-node':
-      specifier: 4.0.1
-      version: 4.0.1
+      specifier: 4.0.5
+      version: 4.0.5
     '@effect/sql-sqlite-node':
-      specifier: 4.0.1
-      version: 4.0.1
+      specifier: 4.0.5
+      version: 4.0.5
     '@effect/tsgo':
       specifier: 0.49.0
       version: 0.49.0
@@ -181,8 +181,8 @@ catalogs:
       specifier: 0.49.0
       version: 0.49.0
     effect:
-      specifier: 4.0.1
-      version: 4.0.1
+      specifier: 4.0.5
+      version: 4.0.5
   electron:
     '@electron-forge/cli':
       specifier: ^7.10.2
@@ -358,7 +358,7 @@ catalogs:
 
 overrides:
   '@electron/rebuild': ^4.2.0
-  '@effect/platform-node-shared': 4.0.1
+  '@effect/platform-node-shared': 4.0.5
 
 importers:
 
@@ -426,7 +426,7 @@ importers:
     dependencies:
       '@effect/platform-node':
         specifier: catalog:effect
-        version: 4.0.1(effect@4.0.1)(redis@6.2.1)
+        version: 4.0.5(effect@4.0.5)(redis@6.2.1)
       '@frt/api-contract':
         specifier: workspace:*
         version: link:../../packages/api-contract
@@ -438,7 +438,7 @@ importers:
         version: link:../../packages/shared
       effect:
         specifier: catalog:effect
-        version: 4.0.1
+        version: 4.0.5
       env-paths:
         specifier: catalog:runtime
         version: 4.0.0
@@ -466,7 +466,7 @@ importers:
     dependencies:
       '@effect/platform-node':
         specifier: catalog:effect
-        version: 4.0.1(effect@4.0.1)(redis@6.2.1)
+        version: 4.0.5(effect@4.0.5)(redis@6.2.1)
       '@frt/api':
         specifier: workspace:*
         version: link:../api
@@ -478,7 +478,7 @@ importers:
         version: link:../../packages/shared
       effect:
         specifier: catalog:effect
-        version: 4.0.1
+        version: 4.0.5
     devDependencies:
       '@effect/tsgo':
         specifier: catalog:effect
@@ -530,7 +530,7 @@ importers:
         version: 4.4.0
       effect:
         specifier: catalog:effect
-        version: 4.0.1
+        version: 4.0.5
       lucide-react:
         specifier: catalog:ui
         version: 1.46.0(react@19.3.0)
@@ -546,7 +546,7 @@ importers:
     devDependencies:
       '@effect/platform-node':
         specifier: catalog:effect
-        version: 4.0.1(effect@4.0.1)(redis@6.2.1)
+        version: 4.0.5(effect@4.0.5)(redis@6.2.1)
       '@effect/tsgo':
         specifier: catalog:effect
         version: 0.49.0
@@ -627,7 +627,7 @@ importers:
         version: link:../shared
       effect:
         specifier: catalog:effect
-        version: 4.0.1
+        version: 4.0.5
     devDependencies:
       '@effect/tsgo':
         specifier: catalog:effect
@@ -646,16 +646,16 @@ importers:
     dependencies:
       '@effect/platform-node':
         specifier: catalog:effect
-        version: 4.0.1(effect@4.0.1)(redis@6.2.1)
+        version: 4.0.5(effect@4.0.5)(redis@6.2.1)
       '@effect/sql-sqlite-node':
         specifier: catalog:effect
-        version: 4.0.1(effect@4.0.1)
+        version: 4.0.5(effect@4.0.5)
       '@frt/shared':
         specifier: workspace:*
         version: link:../shared
       effect:
         specifier: catalog:effect
-        version: 4.0.1
+        version: 4.0.5
     devDependencies:
       '@biomejs/biome':
         specifier: catalog:biome
@@ -686,7 +686,7 @@ importers:
     devDependencies:
       '@effect/platform-node':
         specifier: catalog:effect
-        version: 4.0.1(effect@4.0.1)(redis@6.2.1)
+        version: 4.0.5(effect@4.0.5)(redis@6.2.1)
       '@effect/tsgo':
         specifier: catalog:effect
         version: 0.49.0
@@ -701,7 +701,7 @@ importers:
         version: 24.13.6
       effect:
         specifier: catalog:effect
-        version: 4.0.1
+        version: 4.0.5
       tsx:
         specifier: catalog:typescript
         version: 4.23.15
@@ -713,7 +713,7 @@ importers:
     dependencies:
       effect:
         specifier: catalog:effect
-        version: 4.0.1
+        version: 4.0.5
     devDependencies:
       '@effect/tsgo':
         specifier: catalog:effect
@@ -741,7 +741,7 @@ importers:
         version: 2.1.1
       effect:
         specifier: catalog:effect
-        version: 4.0.1
+        version: 4.0.5
       lucide-react:
         specifier: catalog:ui
         version: 1.46.0(react@19.3.0)
@@ -781,7 +781,7 @@ importers:
     dependencies:
       '@effect/platform-node':
         specifier: catalog:effect
-        version: 4.0.1(effect@4.0.1)(redis@6.2.1)
+        version: 4.0.5(effect@4.0.5)(redis@6.2.1)
       '@frt/api':
         specifier: workspace:*
         version: link:../../apps/api
@@ -793,7 +793,7 @@ importers:
         version: link:../../packages/shared
       effect:
         specifier: catalog:effect
-        version: 4.0.1
+        version: 4.0.5
     devDependencies:
       '@effect/tsgo':
         specifier: catalog:effect
@@ -1121,23 +1121,23 @@ packages:
   '@dotenvx/primitives@0.8.0':
     resolution: {integrity: sha512-VYJy0uhFm9zTJ1TxBaW/pA8bjbOM/OttaNMwZ1RHG4JKyRG7DhSdiqD1ipQoAyoD22olUtxbP78W9xY3Wd11bg==}
 
-  '@effect/platform-node-shared@4.0.1':
-    resolution: {integrity: sha512-VanaejudEhKJ4mpmqnEzdncVUhN6sGSO9ZDND54mRxAlZxj+4dYAWjDTYAy9o4tJo9aALeP2U8cVcOFzEdSeLg==}
+  '@effect/platform-node-shared@4.0.5':
+    resolution: {integrity: sha512-a8rCdEkfZBGe9C6bsIjxVZuRp73svIyK5IHwHdDAVsvZXjrbkxusfI+rZ8WlX31RP1mKizwI/E72GQTNfdMWHw==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
-      effect: ^4.0.1
+      effect: ^4.0.5
 
-  '@effect/platform-node@4.0.1':
-    resolution: {integrity: sha512-FT0Fu5LO0/XP9zBpj0HqrtJNLluK4StNKqf6TSulUsjp8FPBsDVXGJiDuyoN5J2yVMT7tgvhxSwaDcObWVRIaQ==}
+  '@effect/platform-node@4.0.5':
+    resolution: {integrity: sha512-v4KD5fWvEUa4QmWFpZFbBsRhmfnTP6ETCME2r9ifyXVDPjhfpxpTZl41prjgQFMqZBHdWWCl7YC5ImbXv5ui5g==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
-      effect: ^4.0.1
+      effect: ^4.0.5
       redis: '>=5.0.0 <7.0.0'
 
-  '@effect/sql-sqlite-node@4.0.1':
-    resolution: {integrity: sha512-VBlNvfFRxyyiu1viNygxA0ZVGZcpxBHA3+QLobaLQSXgAP0submgo98IzioWTHzdZUc9Xodi7ICci5ehhbD2fQ==}
+  '@effect/sql-sqlite-node@4.0.5':
+    resolution: {integrity: sha512-SHza5qNwiI4dRtUk45wvUfvZq7vB950DW2wD6npzt2aH/tesFfPlZJSDBIvwhazoK+gvDknBOONfKyFZsIF+tg==}
     peerDependencies:
-      effect: ^4.0.1
+      effect: ^4.0.5
 
   '@effect/tsgo-darwin-arm64@0.49.0':
     resolution: {integrity: sha512-UZeNVyLWGdC1XCPJg5y2De+ONZnrtLgcz0nPLvVbVEWBqT437I7XwENvLIhbTU3ncpioQ8QLKn/2yyou6PBnMg==}
@@ -2722,8 +2722,8 @@ packages:
   '@types/wrap-ansi@3.0.0':
     resolution: {integrity: sha512-ltIpx+kM7g/MLRZfkbL7EsCEjfzCcScLpkg37eXEtx5kmrAKBkTJwd1GIAjDSL8wTpM6Hzn5YO4pSb91BEwu1g==}
 
-  '@types/ws@8.18.1':
-    resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
+  '@types/ws@8.18.2':
+    resolution: {integrity: sha512-67MQl+fpWKVTT1NYdnmo3U4sc/xPo/zQBncVnI74qmQa0z/b+1g6iYqNmGCPbxO+zz2aklb08a0oHfegiVd0/w==}
 
   '@types/yauzl@2.10.3':
     resolution: {integrity: sha512-oJoftv0LSuaDZE3Le4DbKX+KS9G36NzOeSap90UIK0yMA/NhKJhqlSGtNDORNRaIbQfzjXDrQa0ytJ6mNRGz/Q==}
@@ -3701,8 +3701,8 @@ packages:
   ee-first@1.1.1:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
 
-  effect@4.0.1:
-    resolution: {integrity: sha512-b1VlQG9g8fwxE5QnIZuPoOP/0MsqHJSRKxUijjoM80E5q95FXrX5yWtY5XI8G+GJsBQAVSDbLS458z9a++uVvw==}
+  effect@4.0.5:
+    resolution: {integrity: sha512-BY4/28NlpOd99yzmV741xbVGmp+1U7tks4oB7F/Png64bTa5tm5eCA6W0RiXsnuLDDoJpjfVSo4Dnq4BZb/89Q==}
 
   electron-to-chromium@1.5.428:
     resolution: {integrity: sha512-1JxbaFJj1bRKurj1uY3l4xxpU9kOUAUjcIgApj0qu1Pao5GhoIWI8iL0BeMYJ2njig1hBx0A7eKD9VGjH9wlHw==}
@@ -6658,28 +6658,28 @@ snapshots:
 
   '@dotenvx/primitives@0.8.0': {}
 
-  '@effect/platform-node-shared@4.0.1(effect@4.0.1)':
+  '@effect/platform-node-shared@4.0.5(effect@4.0.5)':
     dependencies:
-      '@types/ws': 8.18.1
-      effect: 4.0.1
+      '@types/ws': 8.18.2
+      effect: 4.0.5
       ws: 8.22.0
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
 
-  '@effect/platform-node@4.0.1(effect@4.0.1)(redis@6.2.1)':
+  '@effect/platform-node@4.0.5(effect@4.0.5)(redis@6.2.1)':
     dependencies:
-      '@effect/platform-node-shared': 4.0.1(effect@4.0.1)
-      effect: 4.0.1
+      '@effect/platform-node-shared': 4.0.5(effect@4.0.5)
+      effect: 4.0.5
       redis: 6.2.1
       undici: 8.11.2
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
 
-  '@effect/sql-sqlite-node@4.0.1(effect@4.0.1)':
+  '@effect/sql-sqlite-node@4.0.5(effect@4.0.5)':
     dependencies:
-      effect: 4.0.1
+      effect: 4.0.5
 
   '@effect/tsgo-darwin-arm64@0.49.0':
     optional: true
@@ -8245,7 +8245,7 @@ snapshots:
 
   '@types/wrap-ansi@3.0.0': {}
 
-  '@types/ws@8.18.1':
+  '@types/ws@8.18.2':
     dependencies:
       '@types/node': 26.6.2
 
@@ -9180,7 +9180,7 @@ snapshots:
 
   ee-first@1.1.1: {}
 
-  effect@4.0.1: {}
+  effect@4.0.5: {}
 
   electron-to-chromium@1.5.428: {}
 

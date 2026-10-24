@@ -33,12 +33,14 @@ const RATE_LIMIT_DATA = {
 };
 
 const REPORT_PAGE_QUERY = makeQuery({
+  capability: "USER_POINT_ELIGIBLE",
   name: "GetDungeonRunReport",
   selections: [REPORT_SELECTION, RATE_LIMIT_DATA_SELECTION],
   variables: REPORT_VARIABLES,
 });
 
 const UNKNOWN_OPERATION_QUERY = makeQuery({
+  capability: "UNCLASSIFIED",
   name: "GetSomethingElse",
   selections: [RATE_LIMIT_DATA_SELECTION],
 });

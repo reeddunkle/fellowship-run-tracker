@@ -10,25 +10,32 @@ import {
 } from "@frt/api/api/websocket/websocket-client-shutdown-service.ts";
 import { FellowshipTracker } from "@frt/api/application/fellowship-tracker/fellowship-tracker-service.ts";
 import { ApiLifecycleLayer } from "@frt/api/layers/api-lifecycle-layer.ts";
-import { ApiServicesLayer } from "@frt/api/layers/api-services-layer.ts";
-import { BackgroundJobQueue } from "@frt/api/services/background-job-queue/background-job-queue-service.ts";
+import {
+  type ApiRuntimeServiceLayers,
+  makeApiServicesLayer,
+} from "@frt/api/layers/api-services-layer.ts";
+import { ProtectedValueStorage } from "@frt/api/services/protected-value-storage/protected-value-storage-service.ts";
+import { SystemBrowser } from "@frt/api/services/system-browser/system-browser-service.ts";
 
-const ApiServicesWithBackgroundJobQueueLayer = ApiServicesLayer.pipe(
-  Layer.provideMerge(BackgroundJobQueue.layer),
-);
+export const makeApiLayer = (runtimeServiceLayers: ApiRuntimeServiceLayers) => {
+  const ApiRuntimeLayer = Layer.mergeAll(
+    makeApiServicesLayer(runtimeServiceLayers),
+    FellowshipTracker.layer,
+    DungeonRunWebSocketBroadcaster.layer,
+    NodeApiHttpServerLayer,
+    WebSocketClientShutdown.layer,
+  );
 
-const ApiRuntimeLayer = Layer.mergeAll(
-  ApiServicesWithBackgroundJobQueueLayer,
-  FellowshipTracker.layer,
-  DungeonRunWebSocketBroadcaster.layer,
-  NodeApiHttpServerLayer,
-  WebSocketClientShutdown.layer,
-);
+  const ApiRuntimeWithWebSocketChannelLayer = WebSocketChannel.layer.pipe(
+    Layer.provideMerge(ApiRuntimeLayer),
+  );
 
-const ApiRuntimeWithWebSocketChannelLayer = WebSocketChannel.layer.pipe(
-  Layer.provideMerge(ApiRuntimeLayer),
-);
+  return shutdownWebSocketClientsFirst(
+    Layer.mergeAll(ApiServer, ApiLifecycleLayer),
+  ).pipe(Layer.provide(ApiRuntimeWithWebSocketChannelLayer));
+};
 
-export const ApiLayer = shutdownWebSocketClientsFirst(
-  Layer.mergeAll(ApiServer, ApiLifecycleLayer),
-).pipe(Layer.provide(ApiRuntimeWithWebSocketChannelLayer));
+export const ApiLayer = makeApiLayer({
+  protectedValueStorageLayer: ProtectedValueStorage.localLayer,
+  systemBrowserLayer: SystemBrowser.unavailableLayer,
+});

@@ -11,7 +11,6 @@ import * as Schema from "effect/Schema";
 import { FellowshipTracker } from "@frt/api/application/fellowship-tracker/fellowship-tracker-service.ts";
 import { ApiServicesLayer } from "@frt/api/layers/api-services-layer.ts";
 import { AppSettingsStore } from "@frt/api/services/app-settings-store/app-settings-store-service.ts";
-import { BackgroundJobQueue } from "@frt/api/services/background-job-queue/background-job-queue-service.ts";
 import { EncryptionKeyDirectory } from "@frt/api/services/encryption/encryption-key-directory.ts";
 import { replayFellowshipLogFile } from "@frt/api/services/fellowship/utilities/replay-fellowship-log-file.ts";
 import { getBaseUrl } from "@frt/api/tests/common/get-base-url.ts";
@@ -73,7 +72,6 @@ export const makeLiveTrackingTestHarness = E.fnUntraced(function* () {
     AppSettingsStore.layer,
     FellowshipTracker.layer,
   ).pipe(
-    Layer.provideMerge(BackgroundJobQueue.layer),
     Layer.provideMerge(
       makePersistenceTestLayer(path.join(directory, "database.db")),
     ),

@@ -8,6 +8,7 @@ import { DungeonRunApi } from "@frt/api-contract/http/groups/dungeon-run/dungeon
 import { DungeonsApi } from "@frt/api-contract/http/groups/dungeons/dungeons-api.ts";
 import { EncountersApi } from "@frt/api-contract/http/groups/encounters/encounters-api.ts";
 import { FellowshipLogsApi } from "@frt/api-contract/http/groups/fellowship-logs/fellowship-logs-api.ts";
+import { FellowshipLogsConnectionApi } from "@frt/api-contract/http/groups/fellowship-logs-connection/fellowship-logs-connection-api.ts";
 import { LiveSplitApi } from "@frt/api-contract/http/groups/live-split/live-split-api.ts";
 import { MetaApi } from "@frt/api-contract/http/groups/meta/meta-api.ts";
 import { TrackingApi } from "@frt/api-contract/http/groups/tracking/tracking-api.ts";
@@ -22,6 +23,7 @@ export const AppHttpApi = HttpApi.make("app").add(
   DungeonsApi,
   EncountersApi,
   FellowshipLogsApi,
+  FellowshipLogsConnectionApi,
   LiveSplitApi,
   MetaApi,
   TrackingApi,

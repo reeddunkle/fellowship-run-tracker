@@ -31,6 +31,7 @@ import {
   useDismissBackgroundJob,
   useRetryBackgroundJob,
 } from "@/renderer/api/background-job/background-job-mutations.ts";
+import { ResumeImportWithCurrentConnection } from "@/renderer/components/fellowship-logs/resume-import-with-current-connection.tsx";
 import { useNowMilliseconds } from "@/renderer/stores/clock/use-now-milliseconds.ts";
 import { formatRelativeDateTimeFromMilliseconds } from "@/util/format-date-time.ts";
 
@@ -225,6 +226,10 @@ export function BackgroundJobRow({
           job={job}
           queuePosition={queuePosition}
         />
+        {job.status === "WAITING" &&
+        job.waitingReason === "PROFILE_CHANGE_CONFIRMATION_REQUIRED" ? (
+          <ResumeImportWithCurrentConnection jobId={job.id} />
+        ) : null}
       </ItemContent>
       <ItemActions>
         <BackgroundJobActions job={job} />

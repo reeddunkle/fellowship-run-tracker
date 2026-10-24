@@ -1,11 +1,11 @@
 import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
-import { app } from "electron";
+import { app, safeStorage, shell } from "electron";
 
 import { appPaths } from "@frt/api/helpers/app-paths.ts";
 import { getDatabaseOptions } from "@frt/api/helpers/get-database-options.ts";
-import { ApiLayer } from "@frt/api/layers/api-layer.ts";
+import { makeApiLayer } from "@frt/api/layers/api-layer.ts";
 import { NodePathLayer } from "@frt/api/layers/node-platform-layer.ts";
 import { makePersistenceLayer } from "@frt/api/layers/persistence-layer.ts";
 import { logCause } from "@frt/api/logging/log-cause.ts";
@@ -13,6 +13,8 @@ import { AppVersion } from "@frt/api/services/app-version/app-version-service.ts
 import { AppObservabilityLayer } from "@frt/api/services/observability/app-observability-layer.ts";
 
 import { makeAppStateLayer } from "@/services/app-state/app-state-service-layer.ts";
+import { makeElectronProtectedValueStorageLayer } from "@/services/protected-value-storage/electron-protected-value-storage.ts";
+import { makeElectronSystemBrowserLayer } from "@/services/system-browser/electron-system-browser.ts";
 import { WindowState } from "@/services/window-state/window-state-service.ts";
 
 const ElectronApplicationLayer = Layer.unwrap(
@@ -20,6 +22,12 @@ const ElectronApplicationLayer = Layer.unwrap(
     yield* E.promise(() => app.whenReady());
 
     const databaseOptions = yield* getDatabaseOptions();
+
+    const ApiLayer = makeApiLayer({
+      protectedValueStorageLayer:
+        makeElectronProtectedValueStorageLayer(safeStorage),
+      systemBrowserLayer: makeElectronSystemBrowserLayer(shell),
+    });
 
     return Layer.mergeAll(
       ApiLayer.pipe(Layer.provide(makePersistenceLayer(databaseOptions))),

@@ -12,8 +12,10 @@ import { type BackgroundJobModel } from "@frt/db/models/background-job-model.ts"
 import { type BackgroundJobFailure } from "@frt/shared/background-job/background-job-failure-schema.ts";
 import { type BackgroundJobId } from "@frt/shared/background-job/background-job-id-schema.ts";
 import { type BackgroundJobStatus } from "@frt/shared/background-job/background-job-status-schema.ts";
+import { type BackgroundJobWaitingReason } from "@frt/shared/background-job/background-job-waiting-reason-schema.ts";
 
 type InsertBackgroundJobOptions = {
+  readonly bindingKey?: string;
   readonly idempotencyKey: string | null;
   readonly kind: string;
   readonly payload: Schema.Json;
@@ -38,9 +40,29 @@ type ClaimNextBackgroundJobOptions = {
 type GetNextAvailableAtOptions = ClaimNextBackgroundJobOptions;
 
 type MarkBackgroundJobWaitingOptions = {
-  readonly availableAt: DateTime.Utc;
+  readonly availableAt: DateTime.Utc | null;
   readonly id: BackgroundJobId;
   readonly reason: BackgroundJobFailure;
+  readonly waitingReason: BackgroundJobWaitingReason;
+};
+
+type HoldWaitingBackgroundJobsOptions = {
+  readonly fromWaitingReasons: A.NonEmptyReadonlyArray<BackgroundJobWaitingReason>;
+  readonly queue: string;
+  readonly toWaitingReason: BackgroundJobWaitingReason;
+  readonly unlessBindingKey: string | null;
+};
+
+type ResumeWaitingBackgroundJobOptions = {
+  readonly bindingKey: string;
+  readonly id: BackgroundJobId;
+  readonly waitingReasons: A.NonEmptyReadonlyArray<BackgroundJobWaitingReason>;
+};
+
+type ResumeWaitingBackgroundJobsOptions = {
+  readonly bindingKey?: string;
+  readonly queue: string;
+  readonly waitingReasons: A.NonEmptyReadonlyArray<BackgroundJobWaitingReason>;
 };
 
 type DeleteBackgroundJobOptions = {
@@ -95,6 +117,10 @@ export type BackgroundJobDAOShape = {
     options: GetNextAvailableAtOptions,
   ) => E.Effect<Option.Option<DateTime.Utc>, BackgroundJobDAOError>;
 
+  readonly holdWaiting: (
+    options: HoldWaitingBackgroundJobsOptions,
+  ) => E.Effect<number, BackgroundJobDAOError>;
+
   readonly incrementalVacuum: () => E.Effect<void, BackgroundJobDAOError>;
 
   readonly insert: (
@@ -120,6 +146,14 @@ export type BackgroundJobDAOShape = {
   readonly recoverRunning: (
     options: RecoverRunningBackgroundJobsOptions,
   ) => E.Effect<void, BackgroundJobDAOError>;
+
+  readonly resumeWaitingJob: (
+    options: ResumeWaitingBackgroundJobOptions,
+  ) => E.Effect<BackgroundJobModel, BackgroundJobDAOError>;
+
+  readonly resumeWaiting: (
+    options: ResumeWaitingBackgroundJobsOptions,
+  ) => E.Effect<number, BackgroundJobDAOError>;
 
   readonly retry: (
     options: BackgroundJobIdOptions,

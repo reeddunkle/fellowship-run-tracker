@@ -22,6 +22,7 @@ import { BackgroundJobQueue } from "@frt/api/services/background-job-queue/backg
 import { BackgroundJobRunner } from "@frt/api/services/background-job-runner/background-job-runner-service.ts";
 import { makeFellowshipLogsDungeonRunImporterIntegrationTestHarness } from "@frt/api/tests/common/harnesses/fellowship-logs-dungeon-run-importer-integration-test-harness.ts";
 import { makePersistenceTestLayer } from "@frt/api/tests/common/layers/persistence-test-layer.ts";
+import { IgnoredFellowshipLogsImportCostLayer } from "@frt/api/tests/common/mocks/fellowship-logs-import-cost-mock.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import {
   BackgroundJobDAO,
@@ -41,6 +42,7 @@ import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fell
 
 const BackgroundJobRunnerTestLive = BackgroundJobRunner.layerNoDeps.pipe(
   Layer.provide(NodePlatformLayer),
+  Layer.provide(IgnoredFellowshipLogsImportCostLayer),
 );
 
 const REPORT_CODE = Schema.decodeSync(FellowshipLogsReportCodeSchema)(

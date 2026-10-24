@@ -1,50 +1,38 @@
 import * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
 import * as Option from "effect/Option";
-import * as Redacted from "effect/Redacted";
 import * as Ref from "effect/Ref";
 import * as Stream from "effect/Stream";
 
-import {
-  FellowshipLogsGatewayReportChangedError,
-  FellowshipLogsGatewayRequestError,
-} from "@frt/api/errors/fellowship-logs-gateway-error.ts";
-import { AppSettingsStore } from "@frt/api/services/app-settings-store/app-settings-store-service.ts";
+import { FellowshipLogsGatewayReportChangedError } from "@frt/api/errors/fellowship-logs-gateway-error.ts";
 import {
   getFightResponseExpiresAt,
   getReportPageResponseExpiresAt,
   makeFellowshipLogsGatewayResponseKey,
 } from "@frt/api/services/fellowship-logs-gateway/cache/fellowship-logs-gateway-cache-policy.ts";
 import { FellowshipLogsGatewayResponseCache } from "@frt/api/services/fellowship-logs-gateway/cache/fellowship-logs-gateway-response-cache-service.ts";
+import { makeConnectionGatewayAccessSource } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-access.ts";
 import { makeFellowshipLogsGatewayHttpQuery } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-http-query.ts";
+import { DEFAULT_FELLOWSHIP_LOGS_GATEWAY_REQUEST_CONTEXT } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-point-policy.ts";
+import {
+  addFellowshipLogsGatewayWorkflowCost,
+  withFellowshipLogsGatewayWorkflowCost,
+} from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-points-spent.ts";
 import {
   deriveDungeonRunMetadata,
   findFightOrFail,
+  type GetFellowshipLogsGatewayRequestContext,
   getReportOrFail,
   getReportPageProgress,
   makeFellowshipLogsGatewayRateLimitDataTracker,
   makeTrackedQuery,
 } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-response-helpers.ts";
-import {
-  type FellowshipLogsGatewayCredentials,
-  type FellowshipLogsGatewayShape,
-  type GetCredentials,
-} from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
+import { type FellowshipLogsGatewayShape } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
 import { normalizeFellowshipLogsGatewayReport } from "@frt/api/services/fellowship-logs-gateway/normalize-fellowship-logs-gateway-report.ts";
-import {
-  DUNGEON_RUN_METADATA_SELECTION,
-  DUNGEON_RUN_METADATA_VARIABLES,
-} from "@frt/api/services/fellowship-logs-gateway/query/get-dungeon-run-metadata-query.ts";
+import { DUNGEON_RUN_METADATA_QUERY } from "@frt/api/services/fellowship-logs-gateway/query/get-dungeon-run-metadata-query.ts";
 import { GET_FIGHT_QUERY } from "@frt/api/services/fellowship-logs-gateway/query/get-fight-query.ts";
-import { makeQuery } from "@frt/api/services/fellowship-logs-gateway/query/make-query.ts";
-import {
-  RATE_LIMIT_DATA_QUERY,
-  RATE_LIMIT_DATA_SELECTION,
-} from "@frt/api/services/fellowship-logs-gateway/query/rate-limit-data-query.ts";
-import {
-  REPORT_SELECTION,
-  REPORT_VARIABLES,
-} from "@frt/api/services/fellowship-logs-gateway/query/report-query.ts";
+import { RATE_LIMIT_DATA_QUERY } from "@frt/api/services/fellowship-logs-gateway/query/rate-limit-data-query.ts";
+import { REPORT_QUERY } from "@frt/api/services/fellowship-logs-gateway/query/report-query.ts";
 import { type Query } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-graphql-schema.ts";
 import { type FellowshipLogsFightId } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
 import { FellowshipLogsRateLimitResponseDataSchema } from "@frt/shared/fellowship-logs/fellowship-logs-rate-limit-schema.ts";
@@ -64,64 +52,67 @@ type GetReportPageOptions = {
 
 export const makeFellowshipLogsGatewayFromQuery = E.fnUntraced(function* (
   query: Query,
+  getRequestContext: GetFellowshipLogsGatewayRequestContext = () =>
+    E.succeed(DEFAULT_FELLOWSHIP_LOGS_GATEWAY_REQUEST_CONTEXT),
 ) {
   const responseCache = yield* FellowshipLogsGatewayResponseCache;
   const rateLimitTracker = yield* makeFellowshipLogsGatewayRateLimitDataTracker;
-  const trackedQuery = makeTrackedQuery(query, rateLimitTracker);
+  const trackedQuery = makeTrackedQuery(
+    query,
+    rateLimitTracker,
+    getRequestContext,
+  );
 
-  const getDungeonRunMetadata: FellowshipLogsGatewayShape["getDungeonRunMetadata"] =
-    E.fn("FellowshipLogsGateway.getDungeonRunMetadata")(function* ({
+  const lookUpDungeonRunMetadata = E.fn(
+    "FellowshipLogsGateway.lookUpDungeonRunMetadata",
+  )(function* ({
+    fightId,
+    reportCode,
+  }: {
+    readonly fightId: FellowshipLogsFightId;
+    readonly reportCode: FellowshipLogsReportCode;
+  }) {
+    const responseData = yield* responseCache.cached(
+      {
+        fightId,
+        getExpiresAt: (data, now) => {
+          return getFightResponseExpiresAt({ data, fightId, now });
+        },
+        key: makeFellowshipLogsGatewayResponseKey("DUNGEON_RUN_METADATA", [
+          reportCode,
+          fightId,
+        ]),
+        operation: "DUNGEON_RUN_METADATA",
+        reportCode,
+        schema: FellowshipLogsGatewayDungeonRunMetadataResponseDataSchema,
+      },
+      trackedQuery(
+        {
+          query: DUNGEON_RUN_METADATA_QUERY,
+          variables: {
+            fightId,
+            reportCode,
+          },
+        },
+        FellowshipLogsGatewayDungeonRunMetadataResponseDataSchema,
+        { operation: "DUNGEON_RUN_METADATA" },
+      ),
+    );
+
+    const metadata = yield* deriveDungeonRunMetadata({
       fightId,
       reportCode,
-    }) {
-      const responseData = yield* responseCache.cached(
-        {
-          fightId,
-          getExpiresAt: (data, now) => {
-            return getFightResponseExpiresAt({ data, fightId, now });
-          },
-          key: makeFellowshipLogsGatewayResponseKey("DUNGEON_RUN_METADATA", [
-            reportCode,
-            fightId,
-          ]),
-          operation: "DUNGEON_RUN_METADATA",
-          reportCode,
-          schema: FellowshipLogsGatewayDungeonRunMetadataResponseDataSchema,
-        },
-        trackedQuery(
-          {
-            query: makeQuery({
-              name: "GetDungeonRunMetadata",
-              selections: [
-                DUNGEON_RUN_METADATA_SELECTION,
-                RATE_LIMIT_DATA_SELECTION,
-              ],
-              variables: DUNGEON_RUN_METADATA_VARIABLES,
-            }),
-            variables: {
-              fightId,
-              reportCode,
-            },
-          },
-          FellowshipLogsGatewayDungeonRunMetadataResponseDataSchema,
-          { operation: "DUNGEON_RUN_METADATA" },
-        ),
-      );
-
-      const metadata = yield* deriveDungeonRunMetadata({
-        fightId,
-        reportCode,
-        responseData,
-      });
-
-      return {
-        dungeonId: metadata.dungeonId,
-        dungeonLevel: metadata.dungeonLevel,
-        endedAt: DateTime.makeUnsafe(metadata.endedAtMilliseconds),
-        isInProgress: metadata.isInProgress,
-        startedAt: DateTime.makeUnsafe(metadata.startedAtMilliseconds),
-      };
+      responseData,
     });
+
+    return {
+      dungeonId: metadata.dungeonId,
+      dungeonLevel: metadata.dungeonLevel,
+      endedAt: DateTime.makeUnsafe(metadata.endedAtMilliseconds),
+      isInProgress: metadata.isInProgress,
+      startedAt: DateTime.makeUnsafe(metadata.startedAtMilliseconds),
+    };
+  });
 
   const getRateLimitData: FellowshipLogsGatewayShape["getRateLimitData"] = E.fn(
     "FellowshipLogsGateway.getRateLimitData",
@@ -136,7 +127,9 @@ export const makeFellowshipLogsGatewayFromQuery = E.fnUntraced(function* (
       );
     }
 
-    return yield* rateLimitTracker.getLastKnown();
+    const { connectionIdentity } = yield* getRequestContext();
+
+    return yield* rateLimitTracker.getLastKnown(connectionIdentity);
   });
 
   const getFight = E.fn("FellowshipLogsGateway.getFight")(function* ({
@@ -194,11 +187,7 @@ export const makeFellowshipLogsGatewayFromQuery = E.fnUntraced(function* (
   }: GetReportPageOptions) {
     const fetchReportPage = trackedQuery(
       {
-        query: makeQuery({
-          name: "GetDungeonRunReport",
-          selections: [REPORT_SELECTION, RATE_LIMIT_DATA_SELECTION],
-          variables: REPORT_VARIABLES,
-        }),
+        query: REPORT_QUERY,
         variables: {
           endTime,
           reportCode,
@@ -323,6 +312,20 @@ export const makeFellowshipLogsGatewayFromQuery = E.fnUntraced(function* (
     );
   };
 
+  const getDungeonRunMetadata: FellowshipLogsGatewayShape["getDungeonRunMetadata"] =
+    (options) => {
+      return withFellowshipLogsGatewayWorkflowCost(
+        lookUpDungeonRunMetadata(options),
+      ).pipe(
+        E.tap(([, cost]) => {
+          return addFellowshipLogsGatewayWorkflowCost(cost);
+        }),
+        E.map(([metadata, workflowCost]) => {
+          return { ...metadata, workflowCost };
+        }),
+      );
+    };
+
   return {
     getDungeonRunMetadata,
     getRateLimitData,
@@ -330,35 +333,14 @@ export const makeFellowshipLogsGatewayFromQuery = E.fnUntraced(function* (
   } satisfies FellowshipLogsGatewayShape;
 });
 
-const makeFellowshipLogsGatewayFromCredentials = E.fnUntraced(function* (
-  getCredentials: GetCredentials,
-) {
-  const query = yield* makeFellowshipLogsGatewayHttpQuery(getCredentials);
-
-  return yield* makeFellowshipLogsGatewayFromQuery(query);
-});
-
 export const makeFellowshipLogsGateway = E.gen(function* () {
-  const appSettingsStore = yield* AppSettingsStore;
-
-  const getCredentials = E.fnUntraced(function* () {
-    const settings = yield* appSettingsStore.get();
-
-    if (
-      settings.fellowshipLogsClientId === null ||
-      settings.fellowshipLogsClientSecret === null
-    ) {
-      return yield* new FellowshipLogsGatewayRequestError({
-        cause: new Error("Fellowship Logs credentials are not configured."),
-        operation: "GetAccessToken",
-      });
-    }
-
-    return {
-      clientId: settings.fellowshipLogsClientId,
-      clientSecret: Redacted.value(settings.fellowshipLogsClientSecret),
-    } satisfies FellowshipLogsGatewayCredentials;
+  const accessSource = yield* makeConnectionGatewayAccessSource({
+    refuseWithoutPointSystemOptIn: true,
   });
+  const query = yield* makeFellowshipLogsGatewayHttpQuery(accessSource);
 
-  return yield* makeFellowshipLogsGatewayFromCredentials(getCredentials);
+  return yield* makeFellowshipLogsGatewayFromQuery(
+    query,
+    accessSource.getRequestContext,
+  );
 });

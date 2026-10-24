@@ -18,7 +18,10 @@ import {
   getDungeonRunMetadata,
   getRateLimitData,
   queueDungeonRunImport,
+  type ResumeImportJobWithCurrentConnectionArgs,
+  resumeImportJobWithCurrentConnection,
 } from "@/renderer/api/fellowship-logs/fellowship-logs-client.ts";
+import { invalidateFellowshipLogsConnectionStatus } from "@/renderer/api/fellowship-logs-connection/fellowship-logs-connection-invalidation.ts";
 import { browserRuntime } from "@/renderer/runtimes/browser-runtime.ts";
 
 import {
@@ -27,13 +30,10 @@ import {
 } from "./fellowship-logs-client.ts";
 import {
   invalidateDungeonRunHistory,
-  invalidateFellowshipLogsRateLimitData,
+  invalidateFellowshipLogsPointData,
   invalidateImportedDungeonRuns,
 } from "./fellowship-logs-invalidation.ts";
-import {
-  getFellowshipLogsDungeonRunsQueryOptions,
-  getFellowshipLogsLastKnownRateLimitDataQueryOptions,
-} from "./fellowship-logs-queries.ts";
+import { getFellowshipLogsDungeonRunsQueryOptions } from "./fellowship-logs-queries.ts";
 
 type ImportedDungeonRunsMutationContext = {
   readonly previousImportedDungeonRuns:
@@ -53,7 +53,13 @@ function getDungeonRunMetadataMutationOptions(queryClient: QueryClient) {
     mutationKey: ["fellowship-logs", "dungeon-run-metadata"],
     onSettled: () => {
       return browserRuntime.runPromise(
-        invalidateFellowshipLogsRateLimitData(queryClient),
+        E.all(
+          [
+            invalidateFellowshipLogsPointData(queryClient),
+            invalidateFellowshipLogsConnectionStatus(queryClient),
+          ],
+          { discard: true },
+        ),
       );
     },
   });
@@ -87,14 +93,33 @@ function refreshFellowshipLogsRateLimitDataMutationOptions(
     mutationKey: ["fellowship-logs", "rate-limit-data", "refresh"],
     onError: () => {
       return browserRuntime.runPromise(
-        invalidateFellowshipLogsRateLimitData(queryClient),
+        invalidateFellowshipLogsPointData(queryClient),
       );
     },
-    onSuccess: (rateLimitData) => {
-      queryClient.setQueryData(
-        getFellowshipLogsLastKnownRateLimitDataQueryOptions().queryKey,
-        rateLimitData,
+    onSuccess: () => {
+      return browserRuntime.runPromise(
+        invalidateFellowshipLogsPointData(queryClient),
       );
+    },
+  });
+}
+
+function resumeImportJobWithCurrentConnectionMutationOptions(
+  queryClient: QueryClient,
+) {
+  return mutationOptions({
+    mutationFn: (args: ResumeImportJobWithCurrentConnectionArgs) => {
+      return browserRuntime.runPromise(
+        resumeImportJobWithCurrentConnection(args),
+      );
+    },
+    mutationKey: ["fellowship-logs", "import-jobs", "resume"],
+    onSuccess: (resumedJob) => {
+      updateCachedBackgroundJobs(queryClient, (jobs) => {
+        return jobs.map((job) => {
+          return job.id === resumedJob.id ? resumedJob : job;
+        });
+      });
     },
   });
 }
@@ -201,4 +226,12 @@ export function useDeleteImportedDungeonRun() {
     deleteImportedDungeonRunMutationOptions(queryClient),
   );
   return { delete: mutate, error, isPending, variables };
+}
+
+export function useResumeImportJobWithCurrentConnection() {
+  const queryClient = useQueryClient();
+  const { mutate, error, isError, isPending, reset } = useMutation(
+    resumeImportJobWithCurrentConnectionMutationOptions(queryClient),
+  );
+  return { error, isError, isPending, reset, resume: mutate };
 }

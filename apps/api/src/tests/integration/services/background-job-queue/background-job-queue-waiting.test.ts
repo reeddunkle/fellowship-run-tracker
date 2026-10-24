@@ -13,10 +13,16 @@ import {
   FellowshipLogsDungeonRunImporter,
   type FellowshipLogsDungeonRunImporterShape,
 } from "@frt/api/application/fellowship-logs-dungeon-run-importer/fellowship-logs-dungeon-run-importer-service.ts";
-import { FellowshipLogsGatewayRateLimitExceededError } from "@frt/api/errors/fellowship-logs-gateway-error.ts";
+import {
+  FellowshipLogsGatewayAccessError,
+  FellowshipLogsGatewayPointPolicyError,
+  FellowshipLogsGatewayRateLimitExceededError,
+} from "@frt/api/errors/fellowship-logs-gateway-error.ts";
 import { NodePlatformLayer } from "@frt/api/layers/node-platform-layer.ts";
 import { BackgroundJobQueue } from "@frt/api/services/background-job-queue/background-job-queue-service.ts";
 import { BackgroundJobRunner } from "@frt/api/services/background-job-runner/background-job-runner-service.ts";
+import { ExpectedFellowshipLogsConnectionIdentity } from "@frt/api/services/fellowship-logs-connection/fellowship-logs-connection-identity.ts";
+import { type FellowshipLogsGatewayWaitCause } from "@frt/api/services/fellowship-logs-gateway/get-fellowship-logs-gateway-wait.ts";
 import {
   CONTROLLED_PAGE_COUNT,
   type FellowshipLogsFetchControl,
@@ -24,6 +30,7 @@ import {
   makeFellowshipLogsFetchControl,
 } from "@frt/api/tests/common/layers/controlled-fellowship-logs-fixture-layer.ts";
 import { makePersistenceTestLayer } from "@frt/api/tests/common/layers/persistence-test-layer.ts";
+import { IgnoredFellowshipLogsImportCostLayer } from "@frt/api/tests/common/mocks/fellowship-logs-import-cost-mock.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { BackgroundJobDAO } from "@frt/db/daos/background-job/background-job-dao.ts";
 import { type BackgroundJobModel } from "@frt/db/models/background-job-model.ts";
@@ -38,6 +45,7 @@ import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fell
 
 const BackgroundJobRunnerTestLive = BackgroundJobRunner.layerNoDeps.pipe(
   Layer.provide(NodePlatformLayer),
+  Layer.provide(IgnoredFellowshipLogsImportCostLayer),
 );
 
 const REPORT_CODE = Schema.decodeSync(FellowshipLogsReportCodeSchema)(
@@ -418,5 +426,248 @@ describe("BackgroundJobQueue waiting jobs", () => {
     expect(finished.result).toMatchObject({
       dungeonRunId: expect.any(String),
     });
+  });
+});
+
+function makeFailingOnceImporter(error: FellowshipLogsGatewayWaitCause) {
+  const calls: Array<number> = [];
+  const expectedIdentities: Array<string | null> = [];
+
+  const importReport: FellowshipLogsDungeonRunImporterShape["importReport"] = ({
+    fightId,
+  }) => {
+    calls.push(fightId);
+
+    return E.gen(function* () {
+      expectedIdentities.push(yield* ExpectedFellowshipLogsConnectionIdentity);
+
+      return calls.length === 1
+        ? yield* error
+        : yield* succeed({ fightId, isOwnRun: true, reportCode: REPORT_CODE });
+    });
+  };
+
+  return { calls, expectedIdentities, importReport };
+}
+
+describe("BackgroundJobQueue condition waits", () => {
+  test("parks an import until the connection is fixed, holding the queue without retrying", async () => {
+    const { calls, importReport } = makeFailingOnceImporter(
+      new FellowshipLogsGatewayAccessError({
+        cause: null,
+        reason: "NotConnected",
+      }),
+    );
+
+    const result = await withTempDatabase((databaseFilename) => {
+      return E.gen(function* () {
+        const backgroundJobQueue = yield* BackgroundJobQueue;
+
+        const offeredFirst = yield* backgroundJobQueue.offer(makeImportJob());
+        const offeredSecond = yield* backgroundJobQueue.offer(
+          makeImportJob(OTHER_FIGHT_ID),
+        );
+
+        const waiting = yield* waitForJob(
+          offeredFirst.job.id,
+          hasStatus("WAITING"),
+        );
+
+        yield* giveWorkerAChanceToResumeEarly();
+
+        const callsWhileWaiting = [...calls];
+        const secondWhileWaiting = Option.getOrThrow(
+          yield* getJob(offeredSecond.job.id),
+        );
+        const ignoredCount = yield* backgroundJobQueue.resumeWaiting({
+          queue: "fellowship-logs-import",
+          waitingReasons: ["POINT_SYSTEM_OPT_IN_REQUIRED"],
+        });
+        const resumedCount = yield* backgroundJobQueue.resumeWaiting({
+          queue: "fellowship-logs-import",
+          waitingReasons: ["CONNECTION_REQUIRED"],
+        });
+
+        return {
+          callsWhileWaiting,
+          first: yield* waitForJob(offeredFirst.job.id, hasStatus("SUCCEEDED")),
+          ignoredCount,
+          resumedCount,
+          second: yield* waitForJob(
+            offeredSecond.job.id,
+            hasStatus("SUCCEEDED"),
+          ),
+          secondWhileWaiting,
+          visible: yield* backgroundJobQueue.listVisible(),
+          waiting,
+        };
+      }).pipe(
+        E.provide(
+          makeBackgroundJobQueueTestLayer({ databaseFilename, importReport }),
+        ),
+      );
+    });
+
+    expect(result.waiting.waitingReason).toBe("CONNECTION_REQUIRED");
+    expect(result.waiting.availableAt).toBeNull();
+    expect(result.waiting.attempts).toBe(0);
+    expect(result.callsWhileWaiting).toEqual([FIGHT_ID]);
+    expect(result.secondWhileWaiting.status).toBe("QUEUED");
+    expect(result.ignoredCount).toBe(0);
+    expect(result.resumedCount).toBe(1);
+    expect(result.first.attempts).toBe(1);
+    expect(result.first.waitingReason).toBeNull();
+    expect(result.second.status).toBe("SUCCEEDED");
+    expect(calls).toEqual([FIGHT_ID, FIGHT_ID, OTHER_FIGHT_ID]);
+  });
+
+  test.each([
+    {
+      error: new FellowshipLogsGatewayAccessError({
+        cause: null,
+        reason: "ReauthorizationRequired",
+      }),
+      hasResetTime: false,
+      waitingReason: "REAUTHORIZATION_REQUIRED",
+    },
+    {
+      error: new FellowshipLogsGatewayAccessError({
+        cause: null,
+        reason: "LocalProtectionAcknowledgementRequired",
+      }),
+      hasResetTime: false,
+      waitingReason: "LOCAL_PROTECTION_ACKNOWLEDGEMENT_REQUIRED",
+    },
+    {
+      error: new FellowshipLogsGatewayAccessError({
+        cause: null,
+        reason: "ConnectionChanged",
+      }),
+      hasResetTime: false,
+      waitingReason: "PROFILE_CHANGE_CONFIRMATION_REQUIRED",
+    },
+    {
+      error: new FellowshipLogsGatewayPointPolicyError({
+        reason: "PointSystemOptInRequired",
+      }),
+      hasResetTime: false,
+      waitingReason: "POINT_SYSTEM_OPT_IN_REQUIRED",
+    },
+    {
+      error: new FellowshipLogsGatewayRateLimitExceededError({
+        reason: "UserPointsExhausted",
+        resetsAt: DateTime.makeUnsafe("2999-01-01T00:00:00.000Z"),
+      }),
+      hasResetTime: true,
+      waitingReason: "USER_QUOTA_RESET",
+    },
+    {
+      error: new FellowshipLogsGatewayRateLimitExceededError({
+        reason: "ApplicationHoldUnavailable",
+        resetsAt: DateTime.makeUnsafe("2999-01-01T00:00:00.000Z"),
+      }),
+      hasResetTime: true,
+      waitingReason: "SHARED_APPLICATION_CAPACITY_UNAVAILABLE",
+    },
+  ])(
+    "parks an import refused by $error._tag $error.reason as $waitingReason",
+    async ({ error, hasResetTime, waitingReason }) => {
+      const { calls, importReport } = makeFailingOnceImporter(error);
+
+      const waiting = await withTempDatabase((databaseFilename) => {
+        return E.gen(function* () {
+          const backgroundJobQueue = yield* BackgroundJobQueue;
+          const { job } = yield* backgroundJobQueue.offer(makeImportJob());
+
+          return yield* waitForJob(job.id, hasStatus("WAITING"));
+        }).pipe(
+          E.provide(
+            makeBackgroundJobQueueTestLayer({ databaseFilename, importReport }),
+          ),
+        );
+      });
+
+      expect(waiting.waitingReason).toBe(waitingReason);
+      expect(waiting.availableAt !== null).toBe(hasResetTime);
+      expect(waiting.error?.tag).toBe(error._tag);
+      expect(calls).toEqual([FIGHT_ID]);
+    },
+  );
+
+  test("fails an import the active policy can never run, without retrying", async () => {
+    const { calls, importReport } = makeFailingOnceImporter(
+      new FellowshipLogsGatewayPointPolicyError({ reason: "NotUserEligible" }),
+    );
+
+    const failed = await withTempDatabase((databaseFilename) => {
+      return E.gen(function* () {
+        const backgroundJobQueue = yield* BackgroundJobQueue;
+        const { job } = yield* backgroundJobQueue.offer(makeImportJob());
+
+        return yield* waitForJob(job.id, hasStatus("FAILED"));
+      }).pipe(
+        E.provide(
+          makeBackgroundJobQueueTestLayer({ databaseFilename, importReport }),
+        ),
+      );
+    });
+
+    expect(failed.error?.tag).toBe("FellowshipLogsGatewayPointPolicyError");
+    expect(failed.waitingReason).toBeNull();
+    expect(calls).toEqual([FIGHT_ID]);
+  });
+
+  test("runs a quota wait held for a profile change only once it is resumed with the new connection", async () => {
+    const { calls, expectedIdentities, importReport } = makeFailingOnceImporter(
+      new FellowshipLogsGatewayRateLimitExceededError({
+        reason: "UserPointsExhausted",
+        resetsAt: DateTime.makeUnsafe("2999-01-01T00:00:00.000Z"),
+      }),
+    );
+
+    const result = await withTempDatabase((databaseFilename) => {
+      return E.gen(function* () {
+        const backgroundJobQueue = yield* BackgroundJobQueue;
+        const { job } = yield* backgroundJobQueue.offer(makeImportJob(), {
+          bindingKey: "old",
+        });
+
+        yield* waitForJob(job.id, hasStatus("WAITING"));
+
+        const heldCount = yield* backgroundJobQueue.holdWaiting({
+          fromWaitingReasons: ["USER_QUOTA_RESET"],
+          queue: "fellowship-logs-import",
+          toWaitingReason: "PROFILE_CHANGE_CONFIRMATION_REQUIRED",
+          unlessBindingKey: "new",
+        });
+        const held = Option.getOrThrow(yield* getJob(job.id));
+
+        yield* backgroundJobQueue.resumeWaitingJob({
+          bindingKey: "new",
+          id: job.id,
+          waitingReasons: ["PROFILE_CHANGE_CONFIRMATION_REQUIRED"],
+        });
+
+        return {
+          held,
+          heldCount,
+          succeeded: yield* waitForJob(job.id, hasStatus("SUCCEEDED")),
+        };
+      }).pipe(
+        E.provide(
+          makeBackgroundJobQueueTestLayer({ databaseFilename, importReport }),
+        ),
+      );
+    });
+
+    expect(result.heldCount).toBe(1);
+    expect(result.held.waitingReason).toBe(
+      "PROFILE_CHANGE_CONFIRMATION_REQUIRED",
+    );
+    expect(result.held.availableAt).toBeNull();
+    expect(result.succeeded.status).toBe("SUCCEEDED");
+    expect(result.succeeded.bindingKey).toBe("new");
+    expect(calls).toEqual([FIGHT_ID, FIGHT_ID]);
+    expect(expectedIdentities).toEqual(["old", "new"]);
   });
 });

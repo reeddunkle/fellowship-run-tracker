@@ -1,5 +1,6 @@
 import * as E from "effect/Effect";
 import * as Logger from "effect/Logger";
+import * as Redacted from "effect/Redacted";
 import { describe, expect, test } from "vitest";
 
 import { formatLogEntry } from "@frt/api/logging/format-log-entry.ts";
@@ -22,6 +23,17 @@ function captureLogEntries<A>(effect: E.Effect<A>) {
 }
 
 describe("formatLogEntry", () => {
+  test("does not serialize redacted marker secrets", async () => {
+    const markerSecret = "marker-log-secret-3c31bbd8";
+    const { entries } = await captureLogEntries(
+      E.logError("Provider request failed.", {
+        clientSecret: Redacted.make(markerSecret),
+      }),
+    );
+
+    expect(JSON.stringify(entries)).not.toContain(markerSecret);
+  });
+
   test("adds the current span's trace and span ids", async () => {
     const { entries, value: span } = await captureLogEntries(
       E.gen(function* () {

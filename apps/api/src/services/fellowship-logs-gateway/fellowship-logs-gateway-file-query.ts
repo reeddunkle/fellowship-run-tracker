@@ -267,7 +267,7 @@ export const makeFellowshipLogsGatewayFileQuery = E.fnUntraced(function* ({
   };
 
   const readResponseBody = (request: FellowshipLogsGatewayGraphQLRequest) => {
-    const operationName = getOperationName(request.query);
+    const operationName = getOperationName(request.query.document);
 
     if (operationName === undefined) {
       return readRateLimitDataBody();

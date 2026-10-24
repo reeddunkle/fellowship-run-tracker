@@ -1,13 +1,13 @@
 import * as Match from "effect/Match";
 
 import { type BackgroundJobApiItem } from "@frt/shared/background-job/background-job-api-schema.ts";
-
-import {
-  getWaitingImportMessage,
-  WAITING_FOR_POINTS_MESSAGE,
-} from "@/renderer/api/fellowship-logs/fellowship-logs-rate-limit-messages.ts";
+import { getBackgroundJobWaitingKind } from "@frt/shared/background-job/background-job-waiting-reason-schema.ts";
 
 import { getImportJobFailureMessage } from "./get-import-job-failure-message.ts";
+import {
+  getImportJobWaitingMessage,
+  WAITING_BEHIND_PAUSED_IMPORT_MESSAGE,
+} from "./get-import-job-waiting-message.ts";
 
 export function getBackgroundJobFailureMessage(
   job: BackgroundJobApiItem,
@@ -28,7 +28,8 @@ export function getBackgroundJobWaitingMessage(
   return Match.value(job).pipe(
     Match.discriminatorsExhaustive("kind")({
       ImportFellowshipLogsDungeonRun: (importJob) => {
-        return getWaitingImportMessage(
+        return getImportJobWaitingMessage(
+          importJob.waitingReason,
           importJob.availableAtMilliseconds,
           nowMilliseconds,
         );
@@ -65,7 +66,7 @@ export function getBackgroundJobQueuedDescription({
   readonly queuePosition: number;
 }): string {
   if (isQueueWaiting) {
-    return WAITING_FOR_POINTS_MESSAGE;
+    return WAITING_BEHIND_PAUSED_IMPORT_MESSAGE;
   }
 
   return queuePosition === 1 ? "Up next" : `#${queuePosition} in line`;
@@ -81,7 +82,11 @@ export function getBackgroundJobQueueContext(
 ): BackgroundJobQueueContext {
   return {
     isQueueWaiting: jobs.some((job) => {
-      return job.status === "WAITING";
+      return (
+        job.status === "WAITING" &&
+        (job.waitingReason === null ||
+          getBackgroundJobWaitingKind(job.waitingReason) !== "HOLD")
+      );
     }),
     queuedJobIds: jobs
       .filter((job) => {

@@ -77,18 +77,10 @@ function invalidateRouterSafely(router: ReturnType<typeof useRouter>) {
 }
 
 function applyAppSettingsUpdate(
-  currentAppSettings: AppSettingsApiAppSettings,
   update: AppSettingsApiUpdate,
 ): AppSettingsApiAppSettings {
-  const hasFellowshipLogsClientSecret =
-    update.fellowshipLogsClientSecret === undefined
-      ? currentAppSettings.hasFellowshipLogsClientSecret
-      : update.fellowshipLogsClientSecret !== null;
-
   return {
     fellowshipLogDirectory: update.fellowshipLogDirectory,
-    fellowshipLogsClientId: update.fellowshipLogsClientId,
-    hasFellowshipLogsClientSecret,
     isLiveSplitEnabled: update.isLiveSplitEnabled,
     liveSplitHost: update.liveSplitHost,
     liveSplitPort: update.liveSplitPort,
@@ -110,9 +102,7 @@ export function SettingsProvider({
       appSettingsUpdate: AppSettingsApiUpdate,
     ): Promise<SaveSettingsActionState> => {
       const optimisticallyUpdateAppSettings = E.sync(() => {
-        updateOptimisticAppSettings(
-          applyAppSettingsUpdate(optimisticAppSettings, appSettingsUpdate),
-        );
+        updateOptimisticAppSettings(applyAppSettingsUpdate(appSettingsUpdate));
       });
 
       return optimisticallyUpdateAppSettings.pipe(

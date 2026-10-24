@@ -51,9 +51,16 @@ function runWithBackgroundJob<A, Error>(
 
 describe("background job routes", () => {
   test("GET /background-jobs returns the snapshot", async () => {
-    const snapshot = await runWithBackgroundJob({}, (client) => {
-      return client.backgroundJob.getBackgroundJobs();
-    });
+    const snapshot = await runWithBackgroundJob(
+      {
+        getSnapshot: () => {
+          return E.succeed({ jobs: [], revision: 0, sessionId: "test" });
+        },
+      },
+      (client) => {
+        return client.backgroundJob.getBackgroundJobs();
+      },
+    );
 
     expect(snapshot).toEqual({ jobs: [], revision: 0, sessionId: "test" });
   });

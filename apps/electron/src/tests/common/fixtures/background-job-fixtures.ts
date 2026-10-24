@@ -31,6 +31,7 @@ export function makeImportJob(
     result: null,
     startedAtMilliseconds: null,
     status,
+    waitingReason: status === "WAITING" ? "APPLICATION_QUOTA_RESET" : null,
     ...overrides,
   };
 }

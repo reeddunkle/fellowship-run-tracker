@@ -2,8 +2,7 @@ import * as E from "effect/Effect";
 import * as SqlClient from "effect/sql/SqlClient";
 
 /* [KEEP]
- * Version 1 of the state database. Until this version ships, edit it in
- * place. After that, this folder is frozen and schema changes go in a new
+ * Version 1 of the state database is frozen. Schema changes go in a new
  * migration.
  */
 export const createInitialStateSchema = E.gen(function* () {
@@ -25,7 +24,15 @@ export const createInitialStateSchema = E.gen(function* () {
         )
       ),
       idempotency_key TEXT,
-      available_at INTEGER CHECK ((status = 'WAITING') = (available_at IS NOT NULL)),
+      waiting_kind TEXT CHECK (
+        waiting_kind IS NULL
+        OR waiting_kind IN ('CONDITION', 'HOLD', 'RESET')
+      ),
+      waiting_reason TEXT CHECK (
+        waiting_reason IS NULL
+        OR waiting_reason <> ''
+      ),
+      available_at INTEGER,
       attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0),
       error TEXT CHECK (
         error IS NULL
@@ -38,8 +45,19 @@ export const createInitialStateSchema = E.gen(function* () {
       started_at INTEGER,
       finished_at INTEGER,
       traceparent TEXT,
+      binding_key TEXT,
       created_at INTEGER NOT NULL,
-      updated_at INTEGER NOT NULL
+      updated_at INTEGER NOT NULL,
+      CHECK ((status = 'WAITING') = (waiting_kind IS NOT NULL)),
+      CHECK ((waiting_kind IS NULL) = (waiting_reason IS NULL)),
+      CHECK (
+        waiting_kind IS NULL
+        OR (waiting_kind = 'RESET') = (available_at IS NOT NULL)
+      ),
+      CHECK (
+        available_at IS NULL
+        OR status = 'WAITING'
+      )
     ) STRICT
   `;
 

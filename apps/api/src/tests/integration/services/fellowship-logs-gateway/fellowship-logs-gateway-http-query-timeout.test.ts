@@ -8,13 +8,21 @@ import * as TestClock from "effect/testing/TestClock";
 import { describe, expect, test } from "vitest";
 
 import { FellowshipLogsGatewayRequestError } from "@frt/api/errors/fellowship-logs-gateway-error.ts";
+import { makeClientCredentialsGatewayAccessSource } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-access.ts";
 import {
   makeFellowshipLogsGatewayHttpQuery,
   REQUEST_TIMEOUT,
 } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-http-query.ts";
+import { FellowshipLogsGatewayRequestPacer } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-request-pacer.ts";
+import { makeQuery } from "@frt/api/services/fellowship-logs-gateway/query/make-query.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 
 const OkResponseSchema = Schema.Struct({ ok: Schema.Boolean });
+
+const OK_QUERY = makeQuery({
+  capability: "UNCLASSIFIED",
+  selections: ["ok"],
+});
 
 type HangingEndpoint = "query" | "token";
 
@@ -55,12 +63,15 @@ function makeFirstCallHangingHttpClientLayer(hangingEndpoint: HangingEndpoint) {
 
 function runQueriesAfterFirstCallHangs(hangingEndpoint: HangingEndpoint) {
   return E.gen(function* () {
-    const query = yield* makeFellowshipLogsGatewayHttpQuery(() => {
-      return E.succeed({ clientId: "client", clientSecret: "secret" });
-    });
+    const query = yield* makeFellowshipLogsGatewayHttpQuery(
+      makeClientCredentialsGatewayAccessSource({
+        clientId: "client",
+        clientSecret: "secret",
+      }),
+    );
 
     const hangingQuery = yield* E.forkChild(
-      query({ query: "{ ok }" }, OkResponseSchema).pipe(E.flip),
+      query({ query: OK_QUERY }, OkResponseSchema).pipe(E.flip),
     );
 
     yield* TestClock.adjust(REQUEST_TIMEOUT);
@@ -68,7 +79,7 @@ function runQueriesAfterFirstCallHangs(hangingEndpoint: HangingEndpoint) {
     const timeoutError = yield* Fiber.join(hangingQuery);
 
     const nextQuery = yield* E.forkChild(
-      query({ query: "{ ok }" }, OkResponseSchema),
+      query({ query: OK_QUERY }, OkResponseSchema),
     );
 
     yield* TestClock.adjust("1 second");
@@ -80,6 +91,7 @@ function runQueriesAfterFirstCallHangs(hangingEndpoint: HangingEndpoint) {
     E.provide(
       Layer.mergeAll(
         makeFirstCallHangingHttpClientLayer(hangingEndpoint),
+        FellowshipLogsGatewayRequestPacer.layer,
         TestClock.layer(),
       ),
     ),

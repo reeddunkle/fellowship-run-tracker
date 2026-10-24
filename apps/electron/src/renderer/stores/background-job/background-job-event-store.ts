@@ -17,9 +17,11 @@ import {
 } from "@/renderer/api/background-job/background-job-queries.ts";
 import {
   invalidateDungeonRunHistory,
-  invalidateFellowshipLogsRateLimitData,
+  invalidateFellowshipLogsImportCostEstimate,
+  invalidateFellowshipLogsPointData,
   invalidateImportedDungeonRuns,
 } from "@/renderer/api/fellowship-logs/fellowship-logs-invalidation.ts";
+import { invalidateFellowshipLogsConnectionStatus } from "@/renderer/api/fellowship-logs-connection/fellowship-logs-connection-invalidation.ts";
 import { queryClient as defaultQueryClient } from "@/renderer/query/query-client.ts";
 import {
   type ApiEventStoreSnapshot,
@@ -71,7 +73,12 @@ export function makeBackgroundJobEventStore({
       return;
     }
 
-    yield* invalidateFellowshipLogsRateLimitData(queryClient);
+    yield* invalidateFellowshipLogsPointData(queryClient);
+    yield* invalidateFellowshipLogsImportCostEstimate(queryClient);
+
+    if (waitingJobs.length > 0) {
+      yield* invalidateFellowshipLogsConnectionStatus(queryClient);
+    }
 
     const hasSucceededImport = finishedJobs.some((job) => {
       return (

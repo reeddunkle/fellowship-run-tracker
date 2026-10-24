@@ -1,58 +1,19 @@
 import { type StandardSchemaV1 } from "@standard-schema/spec";
 import * as Schema from "effect/Schema";
-import * as SchemaTransformation from "effect/SchemaTransformation";
 
 import {
   FellowshipLogDirectorySchema,
-  FellowshipLogsClientIdSchema,
-  FellowshipLogsClientSecretSchema,
   LiveSplitHostSchema,
   LiveSplitPortSchema,
 } from "@frt/shared/app-settings/app-settings-schema.ts";
-import {
-  EmptyStringSchema,
-  IntegerFromStringSchema,
-} from "@frt/shared/util/common-schemas.ts";
+import { IntegerFromStringSchema } from "@frt/shared/util/common-schemas.ts";
 
 const LiveSplitPortFromStringSchema = IntegerFromStringSchema.pipe(
   Schema.decodeTo(LiveSplitPortSchema),
 );
 
-const EmptyStringToNullSchema = EmptyStringSchema.pipe(
-  Schema.decodeTo(
-    Schema.Null,
-    SchemaTransformation.transform({
-      decode: () => null,
-      encode: () => "",
-    }),
-  ),
-);
-
-const EmptyStringToUndefinedSchema = EmptyStringSchema.pipe(
-  Schema.decodeTo(
-    Schema.Undefined,
-    SchemaTransformation.transform({
-      decode: () => undefined,
-      encode: () => "",
-    }),
-  ),
-);
-
-const FellowshipLogsClientSecretFromStringSchema = Schema.Union([
-  EmptyStringToUndefinedSchema,
-  FellowshipLogsClientSecretSchema,
-  Schema.Null,
-]);
-
-const FellowshipLogsClientIdFromStringSchema = Schema.Union([
-  EmptyStringToNullSchema,
-  FellowshipLogsClientIdSchema,
-]);
-
 export const SettingsFormSchema = Schema.Struct({
   fellowshipLogDirectory: FellowshipLogDirectorySchema,
-  fellowshipLogsClientId: FellowshipLogsClientIdFromStringSchema,
-  fellowshipLogsClientSecret: FellowshipLogsClientSecretFromStringSchema,
   isLiveSplitEnabled: Schema.Boolean,
   liveSplitHost: LiveSplitHostSchema,
   liveSplitPort: LiveSplitPortFromStringSchema,

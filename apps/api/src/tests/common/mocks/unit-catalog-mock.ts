@@ -1,20 +1,16 @@
-import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import {
   UnitCatalog,
   type UnitCatalogShape,
 } from "@frt/api/services/unit-catalog/unit-catalog-service.ts";
+import { unexpectedEffectCall } from "@frt/api/tests/common/mocks/unexpected-service-call.ts";
 
 export type MakeUnitCatalogMockOptions = Partial<UnitCatalogShape>;
 
 export function makeUnitCatalogMock({
-  getAll = () => {
-    return E.succeed([]);
-  },
-  getById = () => {
-    return E.succeedNone;
-  },
+  getAll = unexpectedEffectCall("UnitCatalog", "getAll"),
+  getById = unexpectedEffectCall("UnitCatalog", "getById"),
 }: MakeUnitCatalogMockOptions = {}) {
   return Layer.succeed(UnitCatalog, {
     getAll,

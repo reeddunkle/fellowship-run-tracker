@@ -252,19 +252,22 @@ export const makeBackgroundJobQueue = E.gen(function* () {
     );
 
     if (Option.isSome(deferred)) {
-      const { availableAt, reason } = deferred.value;
+      const { availableAt, reason, waitingReason } = deferred.value;
 
       yield* backgroundJobDAO.markWaiting({
         availableAt,
         id: job.id,
         reason: toBackgroundJobFailure(reason),
+        waitingReason,
       });
 
       return yield* E.logInfo(
         "Background job is waiting before it can continue.",
         {
-          availableAt: DateTime.formatIso(availableAt),
+          availableAt:
+            availableAt === null ? null : DateTime.formatIso(availableAt),
           reason: reason._tag,
+          waitingReason,
         },
       );
     }
@@ -317,6 +320,8 @@ export const makeBackgroundJobQueue = E.gen(function* () {
 
           const forked = yield* backgroundJobRunner
             .run(decoded.success, {
+              bindingKey: claimed.bindingKey,
+              jobId: claimed.id,
               reportProgress,
             })
             .pipe(E.forkChild);
@@ -470,13 +475,14 @@ export const makeBackgroundJobQueue = E.gen(function* () {
   const offer: BackgroundJobQueueShape["offer"] = E.fn(
     "BackgroundJobQueue.offer",
   )(
-    function* (job) {
+    function* (job, options) {
       const queue = BACKGROUND_JOB_QUEUE_BY_KIND[job._tag];
       const payload = yield* Schema.encodeEffect(BackgroundJobPayloadSchema)(
         job,
       );
 
       const { job: row, wasInserted } = yield* backgroundJobDAO.insert({
+        ...(options === undefined ? {} : { bindingKey: options.bindingKey }),
         idempotencyKey: getBackgroundJobIdempotencyKey(job),
         kind: job._tag,
         payload,
@@ -607,6 +613,66 @@ export const makeBackgroundJobQueue = E.gen(function* () {
     },
   );
 
+  const resumeWaiting: BackgroundJobQueueShape["resumeWaiting"] = E.fn(
+    "BackgroundJobQueue.resumeWaiting",
+  )(
+    function* (options) {
+      const resumedCount = yield* backgroundJobDAO.resumeWaiting(options);
+
+      if (resumedCount > 0) {
+        yield* latches[options.queue].open;
+        yield* bumpRevision;
+        yield* E.logInfo("Resumed waiting background jobs.", {
+          resumedCount,
+          waitingReasons: options.waitingReasons,
+        });
+      }
+
+      return resumedCount;
+    },
+    E.mapError((cause) => {
+      return new BackgroundJobQueueError({ cause, operation: "Resume" });
+    }),
+  );
+
+  const holdWaiting: BackgroundJobQueueShape["holdWaiting"] = E.fn(
+    "BackgroundJobQueue.holdWaiting",
+  )(
+    function* (options) {
+      const heldCount = yield* backgroundJobDAO.holdWaiting(options);
+
+      if (heldCount > 0) {
+        yield* bumpRevision;
+        yield* E.logInfo("Held waiting background jobs.", {
+          fromWaitingReasons: options.fromWaitingReasons,
+          heldCount,
+          toWaitingReason: options.toWaitingReason,
+        });
+      }
+
+      return heldCount;
+    },
+    E.mapError((cause) => {
+      return new BackgroundJobQueueError({ cause, operation: "Hold" });
+    }),
+  );
+
+  const resumeWaitingJob: BackgroundJobQueueShape["resumeWaitingJob"] = E.fn(
+    "BackgroundJobQueue.resumeWaitingJob",
+  )(
+    function* (options) {
+      const job = yield* backgroundJobDAO.resumeWaitingJob(options);
+
+      yield* wakeQueue(job.queue);
+      yield* bumpRevision;
+
+      return job;
+    },
+    (effect, { id }) => {
+      return effect.pipe(mapCommandError("Resume", id));
+    },
+  );
+
   const listVisible: BackgroundJobQueueShape["listVisible"] = E.fn(
     "BackgroundJobQueue.listVisible",
   )(
@@ -638,8 +704,11 @@ export const makeBackgroundJobQueue = E.gen(function* () {
     cancel,
     changes: SubscriptionRef.changes(revisionRef),
     dismiss,
+    holdWaiting,
     listVisible,
     offer,
+    resumeWaiting,
+    resumeWaitingJob,
     retry,
     revision: SubscriptionRef.get(revisionRef),
     sessionId,

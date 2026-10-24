@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { CircleCheckIcon } from "lucide-react";
 import { useState } from "react";
 
@@ -10,13 +11,13 @@ import {
   useDungeonRunMetadata,
   useQueueDungeonRunImport,
 } from "@/renderer/api/fellowship-logs/fellowship-logs-mutations.ts";
-import {
-  getOutOfPointsMessage,
-  getQueueWhileOutOfPointsMessage,
-} from "@/renderer/api/fellowship-logs/fellowship-logs-rate-limit-messages.ts";
-import { useFellowshipLogsRateLimitStatus } from "@/renderer/api/fellowship-logs/use-fellowship-logs-rate-limit-status.ts";
+import { getPointPoolsBlock } from "@/renderer/api/fellowship-logs/fellowship-logs-point-messages.ts";
+import { getFellowshipLogsPointPoolsQueryOptions } from "@/renderer/api/fellowship-logs/fellowship-logs-queries.ts";
+import { getFellowshipLogsConnectionStatusQueryOptions } from "@/renderer/api/fellowship-logs-connection/fellowship-logs-connection-queries.ts";
+import { useNowMilliseconds } from "@/renderer/stores/clock/use-now-milliseconds.ts";
 import { useFellowshipDataStore } from "@/renderer/stores/fellowship-data/fellowship-data-store.tsx";
 
+import { getConnectionBlockedMessage } from "./connection/get-connection-blocked-message.ts";
 import { ImportConfirmationCard } from "./import-confirmation/import-confirmation-card.tsx";
 import { type DecodedImportConfirmationFormValue } from "./import-confirmation/import-confirmation-form-schema.ts";
 import { getMetadataErrorMessage } from "./import-url-form/get-metadata-error-message.ts";
@@ -47,7 +48,11 @@ export function ImportDungeonRunSection() {
 
   const metadataMutation = useDungeonRunMetadata();
   const queueMutation = useQueueDungeonRunImport();
-  const { nowMilliseconds, status } = useFellowshipLogsRateLimitStatus();
+  const nowMilliseconds = useNowMilliseconds();
+  const connectionStatusQuery = useQuery(
+    getFellowshipLogsConnectionStatusQueryOptions(),
+  );
+  const pointPoolsQuery = useQuery(getFellowshipLogsPointPoolsQueryOptions());
 
   const reference: FellowshipLogsApiDungeonRunReference | undefined =
     metadataMutation.variables;
@@ -73,6 +78,7 @@ export function ImportDungeonRunSection() {
         dungeonId: metadataMutation.data.dungeonId,
         dungeonLevel: metadataMutation.data.dungeonLevel,
         isOwnRun,
+        lookupWorkflowId: metadataMutation.data.lookupWorkflowId,
       },
       {
         onSuccess: () => {
@@ -85,23 +91,22 @@ export function ImportDungeonRunSection() {
     );
   }
 
-  const outOfPointsMessage =
-    status?.isExhausted === true
-      ? getOutOfPointsMessage(status, nowMilliseconds)
-      : undefined;
+  const connectionBlockedMessage = getConnectionBlockedMessage(
+    connectionStatusQuery.data,
+  );
 
-  const queueNotice =
-    status?.isExhausted === true
-      ? getQueueWhileOutOfPointsMessage(
-          status.resetsAtMilliseconds,
-          nowMilliseconds,
-        )
-      : undefined;
+  const pointPoolsBlock = getPointPoolsBlock(
+    pointPoolsQuery.data,
+    connectionStatusQuery.data?.connection?.profile,
+    nowMilliseconds,
+  );
 
   return (
     <div className="grid gap-4">
       <ImportUrlForm
-        blockedMessage={outOfPointsMessage}
+        blockedMessage={
+          connectionBlockedMessage ?? pointPoolsBlock?.lookupMessage
+        }
         errorMessage={
           metadataMutation.error === null
             ? undefined
@@ -120,7 +125,7 @@ export function ImportDungeonRunSection() {
           isQueueing={queueMutation.isPending}
           key={`${reference.reportCode}:${reference.fightId}`}
           metadata={metadataMutation.data}
-          notice={queueNotice}
+          notice={pointPoolsBlock?.queueNotice}
           onCancel={handleCancel}
           onConfirm={handleConfirm}
           reference={reference}

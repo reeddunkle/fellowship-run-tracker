@@ -16,6 +16,7 @@ const FIGHT_SELECTION = `
 `;
 
 export const GET_FIGHT_QUERY = makeQuery({
+  capability: "USER_POINT_ELIGIBLE",
   name: "GetFight",
   selections: [FIGHT_SELECTION, RATE_LIMIT_DATA_SELECTION],
   variables: ["$reportCode: String!", "$fightId: Int!"],

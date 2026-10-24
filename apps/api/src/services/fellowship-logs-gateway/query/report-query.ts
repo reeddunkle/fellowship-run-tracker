@@ -1,3 +1,6 @@
+import { makeQuery } from "./make-query.ts";
+import { RATE_LIMIT_DATA_SELECTION } from "./rate-limit-data-query.ts";
+
 export const REPORT_SELECTION = `
   reportData {
     report(code: $reportCode) {
@@ -106,3 +109,10 @@ export const REPORT_VARIABLES = [
   "$startTime: Float!",
   "$endTime: Float!",
 ];
+
+export const REPORT_QUERY = makeQuery({
+  capability: "USER_POINT_ELIGIBLE",
+  name: "GetDungeonRunReport",
+  selections: [REPORT_SELECTION, RATE_LIMIT_DATA_SELECTION],
+  variables: REPORT_VARIABLES,
+});

@@ -81,9 +81,12 @@ describe("Databases", () => {
           "configuration",
           "dungeon",
           "dungeon_run",
-          "fellowship_logs_credential",
+          "fellowship_logs_authorization_transaction",
+          "fellowship_logs_connection",
         ]),
       );
+
+      expect(tableNames).not.toContain("fellowship_logs_credential");
 
       expect(tableNames).not.toContain("background_job");
       expect(tableNames).not.toContain("fellowship_logs_request");
@@ -98,16 +101,33 @@ describe("Databases", () => {
       const sql = yield* StateDatabase;
 
       expect(yield* listTables(sql)).toEqual([{ name: "background_job" }]);
+
+      const columnNames = (yield* sql<{ readonly name: string }>`
+        PRAGMA table_info (background_job)
+      `).map((column) => {
+        return column.name;
+      });
+
+      expect(columnNames).toEqual(
+        expect.arrayContaining([
+          "waiting_kind",
+          "waiting_reason",
+          "binding_key",
+        ]),
+      );
+      expect(columnNames).not.toContain("connection_identity");
     }).pipe(E.provide(makeStateDatabaseLayer(":memory:")));
 
     await runTest(program);
   });
 
-  test("the analytics database holds Fellowship Logs requests", async () => {
+  test("the analytics database holds Fellowship Logs requests and import costs", async () => {
     const program = E.gen(function* () {
       const sql = yield* AnalyticsDatabase;
 
       expect(yield* listTables(sql)).toEqual([
+        { name: "fellowship_logs_import_cost" },
+        { name: "fellowship_logs_lookup_workflow" },
         { name: "fellowship_logs_request" },
       ]);
     }).pipe(E.provide(makeAnalyticsDatabaseLayer(":memory:")));
@@ -273,7 +293,7 @@ describe("Databases", () => {
       new DatabaseNewerThanAppError({
         database: "Main",
         databaseVersion: 999,
-        supportedDatabaseVersion: 2,
+        supportedDatabaseVersion: 1,
       }),
     );
   });

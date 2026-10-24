@@ -6,7 +6,9 @@ import type * as Stream from "effect/Stream";
 
 import { appConfig } from "@frt/api/app-config.ts";
 import {
+  type FellowshipLogsGatewayAccessError,
   type FellowshipLogsGatewayGraphQLResponseError,
+  type FellowshipLogsGatewayPointPolicyError,
   type FellowshipLogsGatewayRateLimitExceededError,
   type FellowshipLogsGatewayReportChangedError,
   type FellowshipLogsGatewayRequestError,
@@ -15,9 +17,10 @@ import {
   NodeHttpClientLayer,
   NodePlatformLayer,
 } from "@frt/api/layers/node-platform-layer.ts";
-import { AppSettingsStore } from "@frt/api/services/app-settings-store/app-settings-store-service.ts";
 import { FellowshipLogsAnalytics } from "@frt/api/services/fellowship-logs-analytics/fellowship-logs-analytics-service.ts";
 import { FellowshipLogsGatewayResponseCache } from "@frt/api/services/fellowship-logs-gateway/cache/fellowship-logs-gateway-response-cache-service.ts";
+import { type FellowshipLogsGatewayWorkflowCost } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-points-spent.ts";
+import { FellowshipLogsGatewayRequestPacer } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-request-pacer.ts";
 import { type DungeonId } from "@frt/shared/fellowship/validation/fellowship-common.ts";
 import { type FellowshipLogsFightId } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
 import { type FellowshipLogsRateLimitSnapshot } from "@frt/shared/fellowship-logs/fellowship-logs-rate-limit-schema.ts";
@@ -29,23 +32,7 @@ import {
   makeFellowshipLogsGateway,
   makeFellowshipLogsGatewayFromQuery,
 } from "./make-fellowship-logs-gateway-service.ts";
-import { type FellowshipLogsGatewayAccessToken } from "./validation/fellowship-logs-gateway-oauth-schema.ts";
 import { type FellowshipLogsGatewayReport } from "./validation/fellowship-logs-gateway-report-schema.ts";
-
-export type FellowshipLogsGatewayCredentials = {
-  readonly clientId: string;
-  readonly clientSecret: string;
-};
-
-export type CachedAccessToken = FellowshipLogsGatewayCredentials & {
-  readonly accessToken: FellowshipLogsGatewayAccessToken;
-  readonly expiresAtMilliseconds: number;
-};
-
-export type GetCredentials = () => E.Effect<
-  FellowshipLogsGatewayCredentials,
-  FellowshipLogsGatewayRequestError
->;
 
 type GetFellowshipLogsGatewayReportOptions = {
   readonly fightId: FellowshipLogsFightId;
@@ -63,10 +50,13 @@ export type FellowshipLogsGatewayDungeonRunMetadata = {
   readonly endedAt: DateTime.Utc;
   readonly isInProgress: boolean;
   readonly startedAt: DateTime.Utc;
+  readonly workflowCost: FellowshipLogsGatewayWorkflowCost;
 };
 
 export type FellowshipLogsGatewayRequestOperationError =
+  | FellowshipLogsGatewayAccessError
   | FellowshipLogsGatewayGraphQLResponseError
+  | FellowshipLogsGatewayPointPolicyError
   | FellowshipLogsGatewayRateLimitExceededError
   | FellowshipLogsGatewayReportChangedError
   | FellowshipLogsGatewayRequestError;
@@ -107,9 +97,9 @@ export class FellowshipLogsGateway extends Context.Service<
   static readonly layerNoDeps = Layer.effect(this, makeFellowshipLogsGateway);
 
   static readonly liveLayer = this.layerNoDeps.pipe(
-    Layer.provide(AppSettingsStore.layer),
     Layer.provide(FellowshipLogsAnalytics.layer),
     Layer.provide(FellowshipLogsGatewayResponseCache.layer),
+    Layer.provide(FellowshipLogsGatewayRequestPacer.layer),
     Layer.provide(NodeHttpClientLayer),
   );
 

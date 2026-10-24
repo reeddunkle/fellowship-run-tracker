@@ -18,8 +18,7 @@ type TrackingEventState = {
   readonly trackingStatus: TrackingApiStatus | null;
 };
 
-export type TrackingEventStoreSnapshot =
-  ApiEventStoreSnapshot<TrackingEventState>;
+type TrackingEventStoreSnapshot = ApiEventStoreSnapshot<TrackingEventState>;
 
 type TrackingEventStreamFactory = () => Stream.Stream<
   TrackingEventStreamEvent,

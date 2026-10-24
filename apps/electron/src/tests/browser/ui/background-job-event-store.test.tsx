@@ -11,7 +11,7 @@ import { getBackgroundJobsQueryOptions } from "@/renderer/api/background-job/bac
 import { API_EVENT_CONNECTION_STATE } from "@/renderer/api/common.ts";
 import {
   getFellowshipLogsDungeonRunsQueryOptions,
-  getFellowshipLogsLastKnownRateLimitDataQueryOptions,
+  getFellowshipLogsPointPoolsQueryOptions,
 } from "@/renderer/api/fellowship-logs/fellowship-logs-queries.ts";
 import { makeBackgroundJobEventStore } from "@/renderer/stores/background-job/background-job-event-store.ts";
 import { makeImportJob } from "@/tests/common/fixtures/background-job-fixtures.ts";
@@ -121,7 +121,7 @@ describe("BackgroundJobEventStore", () => {
     });
   });
 
-  test("refreshes imported runs and rate limit data when an import succeeds", async () => {
+  test("refreshes imported runs and point pools when an import succeeds", async () => {
     const queryClient = new QueryClient();
     const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
 
@@ -146,7 +146,7 @@ describe("BackgroundJobEventStore", () => {
     });
 
     expect(invalidateQueries).toHaveBeenCalledWith({
-      queryKey: getFellowshipLogsLastKnownRateLimitDataQueryOptions().queryKey,
+      queryKey: getFellowshipLogsPointPoolsQueryOptions().queryKey,
     });
   });
 

@@ -30,16 +30,3 @@ export const FellowshipLogDirectorySchema = NonEmptyStringSchema.pipe(
 );
 
 export type FellowshipLogDirectory = typeof FellowshipLogDirectorySchema.Type;
-
-export const FellowshipLogsClientIdSchema = NonEmptyStringSchema.pipe(
-  Schema.brand("FellowshipLogsClientId"),
-);
-
-export type FellowshipLogsClientId = typeof FellowshipLogsClientIdSchema.Type;
-
-export const FellowshipLogsClientSecretSchema = NonEmptyStringSchema.pipe(
-  Schema.brand("FellowshipLogsClientSecret"),
-);
-
-export type FellowshipLogsClientSecret =
-  typeof FellowshipLogsClientSecretSchema.Type;

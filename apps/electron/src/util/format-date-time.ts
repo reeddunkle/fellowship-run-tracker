@@ -6,6 +6,10 @@ const LocalDateTimeFormatter = new Intl.DateTimeFormat(undefined, {
   timeStyle: "short",
 });
 
+const LocalTimeFormatter = new Intl.DateTimeFormat(undefined, {
+  timeStyle: "short",
+});
+
 function toDate(dateTime: DateTime.Utc): Date {
   // @effect-diagnostics-next-line globalDate:off
   return new Date(DateTime.toEpochMillis(dateTime));
@@ -13,6 +17,10 @@ function toDate(dateTime: DateTime.Utc): Date {
 
 export function formatLocalDateTime(dateTime: DateTime.Utc): string {
   return LocalDateTimeFormatter.format(toDate(dateTime));
+}
+
+export function formatLocalTimeFromMilliseconds(milliseconds: number): string {
+  return LocalTimeFormatter.format(milliseconds);
 }
 
 export function formatRelativeDateTimeFromMilliseconds(

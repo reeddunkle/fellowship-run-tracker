@@ -7,16 +7,24 @@ import {
   type FellowshipLogsApiImportedDungeonRun,
   type FellowshipLogsApiLastKnownRateLimitData,
 } from "@frt/shared/fellowship-logs/fellowship-logs-api-schema.ts";
+import { type FellowshipLogsApiPointPools } from "@frt/shared/fellowship-logs/fellowship-logs-connection-api-schema.ts";
+import { type FellowshipLogsLookupWorkflowId } from "@frt/shared/fellowship-logs/fellowship-logs-lookup-workflow-id-schema.ts";
 import { type FellowshipLogsRateLimitSnapshot } from "@frt/shared/fellowship-logs/fellowship-logs-rate-limit-schema.ts";
+import {
+  type FellowshipLogsPointPools,
+  getFellowshipLogsPointPools,
+} from "@frt/shared/fellowship-logs/get-fellowship-logs-point-pools.ts";
 
 export function createFellowshipLogsDungeonRunMetadataApiResponse(
   metadata: FellowshipLogsGatewayDungeonRunMetadata,
+  lookupWorkflowId: FellowshipLogsLookupWorkflowId,
 ): FellowshipLogsApiDungeonRunMetadata {
   return {
     dungeonId: metadata.dungeonId,
     dungeonLevel: metadata.dungeonLevel,
     endedAtMilliseconds: DateTime.toEpochMillis(metadata.endedAt),
     isInProgress: metadata.isInProgress,
+    lookupWorkflowId,
     startedAtMilliseconds: DateTime.toEpochMillis(metadata.startedAt),
   };
 }
@@ -24,7 +32,14 @@ export function createFellowshipLogsDungeonRunMetadataApiResponse(
 export function createFellowshipLogsRateLimitDataApiResponse(
   rateLimitData: FellowshipLogsRateLimitSnapshot | null,
 ): FellowshipLogsApiLastKnownRateLimitData {
-  return rateLimitData;
+  return rateLimitData === null
+    ? null
+    : {
+        limitPerHour: rateLimitData.limitPerHour,
+        observedAtMilliseconds: rateLimitData.observedAtMilliseconds,
+        pointsResetIn: rateLimitData.pointsResetIn,
+        pointsSpentThisHour: rateLimitData.pointsSpentThisHour,
+      };
 }
 
 export function createFellowshipLogsImportedDungeonRunApiResponse(
@@ -42,5 +57,41 @@ export function createFellowshipLogsImportedDungeonRunApiResponse(
     reportCode: row.reportCode,
     startedAtMilliseconds:
       row.startedAt === null ? null : DateTime.toEpochMillis(row.startedAt),
+  };
+}
+
+function createFellowshipLogsPointPoolApiResponse({
+  hasRemainingPoints,
+  limitPerHour,
+  pointsRemaining,
+  resetSource,
+  resetsAtMilliseconds,
+}: FellowshipLogsPointPools[keyof FellowshipLogsPointPools]) {
+  return {
+    hasRemainingPoints,
+    limitPerHour,
+    pointsRemaining,
+    resetSource,
+    resetsAtMilliseconds,
+  };
+}
+
+export function createFellowshipLogsPointPoolsApiResponse(
+  rateLimitData: FellowshipLogsRateLimitSnapshot | null,
+  nowMilliseconds: number,
+): FellowshipLogsApiPointPools {
+  if (rateLimitData === null) {
+    return null;
+  }
+
+  const pools = getFellowshipLogsPointPools(rateLimitData, nowMilliseconds);
+
+  return {
+    observedAtMilliseconds: rateLimitData.observedAtMilliseconds,
+    pools: {
+      APPLICATION: createFellowshipLogsPointPoolApiResponse(pools.APPLICATION),
+      DATABASE: createFellowshipLogsPointPoolApiResponse(pools.DATABASE),
+      USER: createFellowshipLogsPointPoolApiResponse(pools.USER),
+    },
   };
 }

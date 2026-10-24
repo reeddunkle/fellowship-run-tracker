@@ -1,16 +1,14 @@
 import * as Data from "effect/Data";
 import type * as DateTime from "effect/DateTime";
 
-import { type FellowshipLogsGatewayRateLimitExceededError } from "@frt/api/errors/fellowship-logs-gateway-error.ts";
-
-export type BackgroundJobDeferredErrorReason =
-  FellowshipLogsGatewayRateLimitExceededError;
+import { type BackgroundJobWaitingReason } from "@frt/shared/background-job/background-job-waiting-reason-schema.ts";
 
 export class BackgroundJobDeferredError extends Data.TaggedError(
   "BackgroundJobDeferredError",
 )<{
-  readonly availableAt: DateTime.Utc;
-  readonly reason: BackgroundJobDeferredErrorReason;
+  readonly availableAt: DateTime.Utc | null;
+  readonly reason: Error & { readonly _tag: string };
+  readonly waitingReason: BackgroundJobWaitingReason;
 }> {
   // [KEEP] Sets the standard `Error.cause`, which `Cause.pretty` renders as a
   // nested `[cause]:` chain, so logs show the reason and anything beneath it.

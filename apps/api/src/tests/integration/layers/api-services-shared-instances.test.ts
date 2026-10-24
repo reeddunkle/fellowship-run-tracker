@@ -30,13 +30,12 @@ const FixtureModeConfigLayer = ConfigProvider.layerAdd(
  */
 describe("API services layer", () => {
   test("shows rate limit data spent by a background import", async () => {
-    const rateLimitData = await E.gen(function* () {
+    const pointPools = await E.gen(function* () {
       const fileSystem = yield* FileSystem.FileSystem;
       const path = yield* Path.Path;
 
       const directory = yield* fileSystem.makeTempDirectoryScoped();
       const ApiServicesTestLayer = ApiServicesLayer.pipe(
-        Layer.provideMerge(BackgroundJobQueue.layer),
         Layer.provideMerge(
           makePersistenceTestLayer(path.join(directory, "database.db")),
         ),
@@ -83,10 +82,10 @@ describe("API services layer", () => {
           E.timeout("10 seconds"),
         );
 
-        return yield* fellowshipLogs.getLastKnownRateLimitData();
+        return yield* fellowshipLogs.getPointPools();
       }).pipe(E.provide(ApiServicesTestLayer));
     }).pipe(E.scoped, E.provide(NodePlatformLayer), runTest);
 
-    expect(rateLimitData).not.toBeNull();
+    expect(pointPools).not.toBeNull();
   });
 });

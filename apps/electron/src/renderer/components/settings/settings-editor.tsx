@@ -1,25 +1,9 @@
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
-import {
-  CheckCircle2Icon,
-  RefreshCwIcon,
-  SaveIcon,
-  Trash2Icon,
-  XCircleIcon,
-} from "lucide-react";
+import { SaveIcon } from "lucide-react";
 
 import { type AppSettingsApiUpdate } from "@frt/shared/app-settings/app-settings-api-schema.ts";
-import {
-  SectionDescription,
-  SectionHeader,
-  SectionTitle,
-} from "@frt/ui/composites/section.tsx";
 import { StatusText } from "@frt/ui/composites/status-text.tsx";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@frt/ui/primitives/alert.tsx";
 import { Button } from "@frt/ui/primitives/button.tsx";
 import { Card, CardContent } from "@frt/ui/primitives/card.tsx";
 import { Checkbox } from "@frt/ui/primitives/checkbox.tsx";
@@ -33,9 +17,6 @@ import { DirectoryInput } from "@frt/ui/primitives/file-input.tsx";
 import { Input } from "@frt/ui/primitives/input.tsx";
 import { Separator } from "@frt/ui/primitives/separator.tsx";
 
-import { useRefreshFellowshipLogsRateLimitData } from "@/renderer/api/fellowship-logs/fellowship-logs-mutations.ts";
-import { FellowshipLogsRateLimitData } from "@/renderer/components/fellowship-logs/fellowship-logs-rate-limit-data.tsx";
-import { FellowshipLogsRateLimitRefreshErrorMessage } from "@/renderer/components/fellowship-logs/fellowship-logs-rate-limit-refresh-error-message.tsx";
 import {
   useAppSettings,
   useSettingsActions,
@@ -106,12 +87,6 @@ function createAppSettingsUpdate(
 ): AppSettingsApiUpdate {
   return {
     fellowshipLogDirectory: value.fellowshipLogDirectory,
-    fellowshipLogsClientId: value.fellowshipLogsClientId,
-    ...(value.fellowshipLogsClientSecret === undefined
-      ? {}
-      : {
-          fellowshipLogsClientSecret: value.fellowshipLogsClientSecret,
-        }),
     isLiveSplitEnabled: value.isLiveSplitEnabled,
     liveSplitHost: value.liveSplitHost,
     liveSplitPort: value.liveSplitPort,
@@ -122,11 +97,6 @@ export function SettingsEditor() {
   const { getDirectoryPath, save } = useSettingsActions();
   const { error, isSaving } = useSettingsSaveStatus();
   const appSettings = useAppSettings();
-
-  const refreshRateLimitDataMutation = useRefreshFellowshipLogsRateLimitData();
-
-  const isRefreshingRateLimitData = refreshRateLimitDataMutation.isPending;
-  const rateLimitData = refreshRateLimitDataMutation.data ?? null;
 
   const defaultValues = createSettingsFormValue(appSettings);
 
@@ -245,164 +215,6 @@ export function SettingsEditor() {
                   );
                 }}
               </form.Subscribe>
-            </FieldGroup>
-            <Separator className="@3xl:col-span-2" />
-            <FieldGroup className="col-start-1 min-w-0">
-              <SectionHeader>
-                <SectionTitle>Fellowship Logs</SectionTitle>
-                <SectionDescription>
-                  Configure your Fellowship Logs API credentials.
-                </SectionDescription>
-              </SectionHeader>
-              <form.Field name="fellowshipLogsClientId">
-                {(field) => {
-                  return (
-                    <Field>
-                      <FieldLabel htmlFor={field.name}>Client ID</FieldLabel>
-                      <Input
-                        autoComplete="off"
-                        id={field.name}
-                        name={field.name}
-                        onBlur={field.handleBlur}
-                        onChange={(event) => {
-                          field.handleChange(event.target.value);
-                        }}
-                        placeholder="Fellowship Logs client ID"
-                        spellCheck={false}
-                        value={field.state.value}
-                      />
-                      <FieldError errors={field.state.meta.errors} />
-                    </Field>
-                  );
-                }}
-              </form.Field>
-              <form.Field name="fellowshipLogsClientSecret">
-                {(field) => {
-                  const hasStoredSecret =
-                    appSettings.hasFellowshipLogsClientSecret &&
-                    field.state.value === "";
-
-                  const willClearStoredSecret =
-                    appSettings.hasFellowshipLogsClientSecret &&
-                    field.state.value === null;
-
-                  const willReplaceStoredSecret =
-                    appSettings.hasFellowshipLogsClientSecret &&
-                    typeof field.state.value === "string" &&
-                    field.state.value.length > 0;
-
-                  const willChangeStoredSecret =
-                    willClearStoredSecret || willReplaceStoredSecret;
-
-                  return (
-                    <Field>
-                      <FieldLabel htmlFor={field.name}>
-                        Client secret
-                      </FieldLabel>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          autoComplete="off"
-                          className="min-w-0"
-                          id={field.name}
-                          name={field.name}
-                          onBlur={field.handleBlur}
-                          onChange={(event) => {
-                            const value = event.target.value;
-
-                            field.handleChange(
-                              value.length === 0 ? null : value,
-                            );
-                          }}
-                          placeholder={
-                            hasStoredSecret
-                              ? "•••••••• (saved)"
-                              : "Fellowship Logs client secret"
-                          }
-                          spellCheck={false}
-                          type="password"
-                          value={field.state.value ?? ""}
-                        />
-                        {willChangeStoredSecret ? (
-                          <Button
-                            aria-label="Keep saved client secret"
-                            onClick={() => {
-                              form.resetField("fellowshipLogsClientSecret");
-                            }}
-                            type="button"
-                            variant="outline"
-                          >
-                            Undo
-                          </Button>
-                        ) : appSettings.hasFellowshipLogsClientSecret ? (
-                          <Button
-                            aria-label="Clear saved client secret"
-                            onClick={() => {
-                              field.handleChange(null);
-                            }}
-                            size="icon"
-                            title="Clear saved client secret"
-                            type="button"
-                            variant="destructive"
-                          >
-                            <Trash2Icon />
-                          </Button>
-                        ) : null}
-                      </div>
-                      {hasStoredSecret ? (
-                        <p className="text-xs text-muted-foreground">
-                          You currently have a secret saved.
-                        </p>
-                      ) : willClearStoredSecret ? (
-                        <p className="text-xs text-destructive">
-                          Saving will clear your existing client secret.
-                        </p>
-                      ) : willReplaceStoredSecret ? (
-                        <p className="text-xs text-warning">
-                          Saving will update your existing client secret.
-                        </p>
-                      ) : null}
-                      <p className="text-xs text-muted-foreground">
-                        Your client secret is only used to make Fellowship Logs
-                        requests on your behalf. It is stored encrypted on your
-                        computer.
-                      </p>
-                      <FieldError errors={field.state.meta.errors} />
-                    </Field>
-                  );
-                }}
-              </form.Field>
-              <div className="flex items-center gap-3">
-                <Button
-                  disabled={isRefreshingRateLimitData}
-                  onClick={() => {
-                    refreshRateLimitDataMutation.refresh();
-                  }}
-                  type="button"
-                  variant="outline"
-                >
-                  <RefreshCwIcon />
-                  {isRefreshingRateLimitData ? "Testing..." : "Test connection"}
-                </Button>
-              </div>
-              {refreshRateLimitDataMutation.isError ? (
-                <Alert variant="destructive">
-                  <XCircleIcon />
-                  <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>
-                    <FellowshipLogsRateLimitRefreshErrorMessage
-                      error={refreshRateLimitDataMutation.error}
-                    />
-                  </AlertDescription>
-                </Alert>
-              ) : rateLimitData !== null ? (
-                <div className="grid gap-2">
-                  <StatusText size="xs" variant="success">
-                    <CheckCircle2Icon />
-                    Success
-                  </StatusText>
-                  <FellowshipLogsRateLimitData rateLimitData={rateLimitData} />
-                </div>
-              ) : null}
             </FieldGroup>
             <Separator className="@3xl:col-span-2" />
             <form.Subscribe selector={selectSettingsEditorFormState}>

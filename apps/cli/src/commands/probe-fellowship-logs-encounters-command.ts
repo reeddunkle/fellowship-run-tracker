@@ -2,6 +2,7 @@ import * as Command from "effect/cli/Command";
 import * as Flag from "effect/cli/Flag";
 import * as E from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
+import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Path from "effect/Path";
 import * as Schema from "effect/Schema";
@@ -9,13 +10,17 @@ import * as Schema from "effect/Schema";
 import { appConfig } from "@frt/api/app-config.ts";
 import { FellowshipLogsGatewayRequestError } from "@frt/api/errors/fellowship-logs-gateway-error.ts";
 import { NodeHttpClientLayer } from "@frt/api/layers/node-platform-layer.ts";
+import {
+  type FellowshipLogsGatewayCredentials,
+  makeClientCredentialsGatewayAccessSource,
+} from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-access.ts";
 import { makeFellowshipLogsGatewayHttpQuery } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-http-query.ts";
+import { FellowshipLogsGatewayRequestPacer } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-request-pacer.ts";
 import {
   findFightOrFail,
   getGraphQLResponseData,
   getReportOrFail,
 } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-response-helpers.ts";
-import { type FellowshipLogsGatewayCredentials } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
 import {
   DUNGEON_RUN_METADATA_SELECTION,
   DUNGEON_RUN_METADATA_VARIABLES,
@@ -171,9 +176,9 @@ const probeFellowshipLogsEncounters = E.fn("probeFellowshipLogsEncounters")(
   }: ProbeOptions) {
     const fileSystem = yield* FileSystem.FileSystem;
     const path = yield* Path.Path;
-    const query = yield* makeFellowshipLogsGatewayHttpQuery(() => {
-      return E.succeed(credentials);
-    });
+    const query = yield* makeFellowshipLogsGatewayHttpQuery(
+      makeClientCredentialsGatewayAccessSource(credentials),
+    );
     const resolvedOutputDirectory = path.resolve(outputDirectory);
 
     yield* fileSystem.makeDirectory(resolvedOutputDirectory, {
@@ -183,6 +188,7 @@ const probeFellowshipLogsEncounters = E.fn("probeFellowshipLogsEncounters")(
     const metadataResponse = yield* query(
       {
         query: makeQuery({
+          capability: "UNCLASSIFIED",
           name: "GetRawEventCensusBounds",
           selections: [DUNGEON_RUN_METADATA_SELECTION],
           variables: DUNGEON_RUN_METADATA_VARIABLES,
@@ -235,6 +241,7 @@ const probeFellowshipLogsEncounters = E.fn("probeFellowshipLogsEncounters")(
       const response = yield* query(
         {
           query: makeQuery({
+            capability: "UNCLASSIFIED",
             name: "CensusRawEventTypes",
             selections: [RAW_EVENT_SELECTION, RATE_LIMIT_DATA_SELECTION],
             variables: RAW_EVENT_VARIABLES,
@@ -391,5 +398,10 @@ export const probeFellowshipLogsEncountersCommand = Command.make(
   Command.withDescription(
     "Capture every normalized event type in a Fellowship Logs dungeon run.",
   ),
-  Command.provide(NodeHttpClientLayer),
+  Command.provide(
+    Layer.mergeAll(
+      NodeHttpClientLayer,
+      FellowshipLogsGatewayRequestPacer.layer,
+    ),
+  ),
 );

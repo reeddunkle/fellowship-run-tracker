@@ -5,13 +5,21 @@ import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 import { describe, expect, test } from "vitest";
 
+import { makeClientCredentialsGatewayAccessSource } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-access.ts";
 import { makeFellowshipLogsGatewayHttpQuery } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-http-query.ts";
+import { FellowshipLogsGatewayRequestPacer } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-request-pacer.ts";
+import { makeQuery } from "@frt/api/services/fellowship-logs-gateway/query/make-query.ts";
 import { makeRecordingTracer } from "@frt/api/tests/common/make-recording-tracer.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 
 const CLIENT_ID = "test-client-id";
 const CLIENT_SECRET = "test-client-secret-value";
 const ACCESS_TOKEN = "test-access-token-value";
+
+const OK_QUERY = makeQuery({
+  capability: "UNCLASSIFIED",
+  selections: ["ok"],
+});
 
 function jsonResponse(body: unknown) {
   return new Response(JSON.stringify(body), {
@@ -36,15 +44,27 @@ describe("Fellowship Logs gateway spans", () => {
     const { spans, tracer } = makeRecordingTracer();
 
     await E.gen(function* () {
-      const query = yield* makeFellowshipLogsGatewayHttpQuery(() => {
-        return E.succeed({ clientId: CLIENT_ID, clientSecret: CLIENT_SECRET });
-      });
+      const query = yield* makeFellowshipLogsGatewayHttpQuery(
+        makeClientCredentialsGatewayAccessSource({
+          clientId: CLIENT_ID,
+          clientSecret: CLIENT_SECRET,
+        }),
+      );
 
-      yield* query({ query: "{ ok }" }, Schema.Struct({ ok: Schema.Boolean }));
+      yield* query({ query: OK_QUERY }, Schema.Struct({ ok: Schema.Boolean }));
     }).pipe(
       E.withSpan("test-request"),
       E.withTracer(tracer),
-      E.provide(StubHttpClientLayer),
+      E.provideService(
+        HttpClient.TracerHeaderFilter,
+        (headerName) => headerName === "authorization",
+      ),
+      E.provide(
+        Layer.mergeAll(
+          StubHttpClientLayer,
+          FellowshipLogsGatewayRequestPacer.layer,
+        ),
+      ),
       runTest,
     );
 
@@ -58,9 +78,7 @@ describe("Fellowship Logs gateway spans", () => {
       }),
     );
 
-    expect(spans.some((span) => span.name.startsWith("http.client"))).toBe(
-      true,
-    );
+    expect(spans.some((span) => span.kind === "client")).toBe(true);
     expect(recorded).toContain('"http.request.header.authorization"');
     expect(recorded).not.toContain(CLIENT_SECRET);
     expect(recorded).not.toContain(ACCESS_TOKEN);

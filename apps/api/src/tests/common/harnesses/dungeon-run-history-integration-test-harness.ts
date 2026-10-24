@@ -63,10 +63,10 @@ export const seedDungeonRunWithObservations = E.fnUntraced(function* ({
   const dungeonRunStore = yield* DungeonRunStore;
 
   if (!isOwnRun) {
-    const { randomUUIDv4 } = yield* Crypto.Crypto;
+    const crypto = yield* Crypto.Crypto;
     const reportCode = yield* Schema.decodeEffect(
       FellowshipLogsReportCodeSchema,
-    )(yield* randomUUIDv4);
+    )(yield* crypto.randomUUIDv4({ format: "hex" }).pipe(E.orDie));
 
     return yield* dungeonRunStore.importFellowshipLogs({
       dungeonId,

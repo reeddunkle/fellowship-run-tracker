@@ -1,5 +1,6 @@
 import * as E from "effect/Effect";
 
+import { type BackgroundJobId } from "@frt/shared/background-job/background-job-id-schema.ts";
 import { type DungeonRunId } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 import {
   type FellowshipLogsApiDungeonRunReference,
@@ -14,14 +15,6 @@ export const getRateLimitData = E.fn(
   const client = yield* AppApiClient;
 
   return yield* client.fellowshipLogs.getFellowshipLogsRateLimitData();
-});
-
-export const getLastKnownRateLimitData = E.fn(
-  "FellowshipLogsApiClient.getLastKnownRateLimitData",
-)(function* () {
-  const client = yield* AppApiClient;
-
-  return yield* client.fellowshipLogs.getFellowshipLogsLastKnownRateLimitData();
 });
 
 export const getAnalytics = E.fn("FellowshipLogsApiClient.getAnalytics")(
@@ -74,4 +67,34 @@ export const deleteImportedDungeonRun = E.fn(
       dungeonRunId,
     },
   });
+});
+
+export const getPointPools = E.fn("FellowshipLogsApiClient.getPointPools")(
+  function* () {
+    const client = yield* AppApiClient;
+
+    return yield* client.fellowshipLogs.getFellowshipLogsPointPools();
+  },
+);
+
+export const getImportCostEstimate = E.fn(
+  "FellowshipLogsApiClient.getImportCostEstimate",
+)(function* () {
+  const client = yield* AppApiClient;
+
+  return yield* client.fellowshipLogs.getFellowshipLogsImportCostEstimate();
+});
+
+export type ResumeImportJobWithCurrentConnectionArgs = {
+  readonly jobId: BackgroundJobId;
+};
+
+export const resumeImportJobWithCurrentConnection = E.fn(
+  "FellowshipLogsApiClient.resumeImportJobWithCurrentConnection",
+)(function* ({ jobId }: ResumeImportJobWithCurrentConnectionArgs) {
+  const client = yield* AppApiClient;
+
+  return yield* client.fellowshipLogs.resumeFellowshipLogsImportJobWithCurrentConnection(
+    { params: { jobId } },
+  );
 });

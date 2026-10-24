@@ -16,6 +16,7 @@ function makeJob(
   return new BackgroundJobModel({
     attempts: 1,
     availableAt: null,
+    bindingKey: null,
     createdAt: CREATED_AT,
     error: null,
     finishedAt: null,
@@ -36,6 +37,8 @@ function makeJob(
     status: "RUNNING",
     traceparent: null,
     updatedAt: STARTED_AT,
+    waitingKind: null,
+    waitingReason: null,
     ...overrides,
   });
 }

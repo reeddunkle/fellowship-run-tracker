@@ -22,12 +22,7 @@ import {
 import { makeFellowshipLogsGatewayFromQuery } from "@frt/api/services/fellowship-logs-gateway/make-fellowship-logs-gateway-service.ts";
 import { normalizeFellowshipLogsGatewayReport } from "@frt/api/services/fellowship-logs-gateway/normalize-fellowship-logs-gateway-report.ts";
 import { GET_FIGHT_QUERY } from "@frt/api/services/fellowship-logs-gateway/query/get-fight-query.ts";
-import { makeQuery } from "@frt/api/services/fellowship-logs-gateway/query/make-query.ts";
-import { RATE_LIMIT_DATA_SELECTION } from "@frt/api/services/fellowship-logs-gateway/query/rate-limit-data-query.ts";
-import {
-  REPORT_SELECTION,
-  REPORT_VARIABLES,
-} from "@frt/api/services/fellowship-logs-gateway/query/report-query.ts";
+import { REPORT_QUERY } from "@frt/api/services/fellowship-logs-gateway/query/report-query.ts";
 import { FellowshipLogsGatewayDungeonRunMetadataResponseDataSchema } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-dungeon-run-metadata-schema.ts";
 import { FellowshipLogsGatewayFightResponseDataSchema } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-fight-schema.ts";
 import {
@@ -67,12 +62,6 @@ export function makeFellowshipLogsFetchControl(): FellowshipLogsFetchControl {
     requests: [],
   };
 }
-
-const RECORDED_REPORT_PAGE_QUERY = makeQuery({
-  name: "GetDungeonRunReport",
-  selections: [REPORT_SELECTION, RATE_LIMIT_DATA_SELECTION],
-  variables: REPORT_VARIABLES,
-});
 
 const EventTimestampSchema = Schema.Struct({
   timestamp: Schema.Finite,
@@ -126,7 +115,7 @@ const makeRecordedFightQuery = E.fnUntraced(function* (
   const readRecordedReportPage = E.fnUntraced(function* (startTime: number) {
     const response = yield* fileQuery(
       {
-        query: RECORDED_REPORT_PAGE_QUERY,
+        query: REPORT_QUERY,
         variables: { reportCode: RECORDED_FIGHT.reportCode, startTime },
       },
       FellowshipLogsGatewayReportResponseDataSchema,
@@ -282,7 +271,7 @@ const makeRecordedFightQuery = E.fnUntraced(function* (
   };
 
   const query: Query = E.fnUntraced(function* (request, responseSchema) {
-    const queryName = getQueryName(request.query);
+    const queryName = getQueryName(request.query.document);
 
     control.requests.push(queryName);
 

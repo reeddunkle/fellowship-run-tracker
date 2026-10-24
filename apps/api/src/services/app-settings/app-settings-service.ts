@@ -1,7 +1,6 @@
 import * as Context from "effect/Context";
 import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Redacted from "effect/Redacted";
 
 import { createAppSettingsApiResponse } from "@frt/api/services/app-settings/create-app-settings-api-response.ts";
 import {
@@ -30,19 +29,8 @@ const makeAppSettings = E.gen(function* () {
 
   const set: AppSettingsShape["set"] = E.fn("AppSettings.set")(
     function* (appSettings) {
-      const currentAppSettings = yield* appSettingsStore.get();
-
-      const fellowshipLogsClientSecret =
-        appSettings.fellowshipLogsClientSecret === undefined
-          ? currentAppSettings.fellowshipLogsClientSecret
-          : appSettings.fellowshipLogsClientSecret === null
-            ? null
-            : Redacted.make(appSettings.fellowshipLogsClientSecret);
-
       const updatedAppSettings = {
         fellowshipLogDirectory: appSettings.fellowshipLogDirectory,
-        fellowshipLogsClientId: appSettings.fellowshipLogsClientId,
-        fellowshipLogsClientSecret,
         isLiveSplitEnabled: appSettings.isLiveSplitEnabled,
         liveSplitHost: appSettings.liveSplitHost,
         liveSplitPort: appSettings.liveSplitPort,

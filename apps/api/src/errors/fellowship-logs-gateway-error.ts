@@ -20,6 +20,50 @@ export class FellowshipLogsGatewayRequestError extends Data.TaggedError(
   }
 }
 
+const ACCESS_REASON_DESCRIPTIONS = {
+  ConnectionChanged:
+    "The Fellowship Logs connection changed since this import was queued.",
+  LocalProtectionAcknowledgementRequired:
+    "Fellowship Logs credentials cannot be stored until local-key protection is acknowledged.",
+  NotConnected: "Fellowship Logs is not connected.",
+  ReauthorizationRequired: "Sign in to Fellowship Logs again.",
+} as const;
+
+export class FellowshipLogsGatewayAccessError extends Data.TaggedError(
+  "FellowshipLogsGatewayAccessError",
+)<{
+  readonly cause: unknown;
+  readonly reason: keyof typeof ACCESS_REASON_DESCRIPTIONS;
+}> {
+  override get message() {
+    return ACCESS_REASON_DESCRIPTIONS[this.reason];
+  }
+}
+
+const POINT_POLICY_REASON_DESCRIPTIONS = {
+  DirectiveNotApplicable:
+    "The request was not sent because it cannot be limited to user points.",
+  NonUserPointsRequired:
+    "Fellowship Logs refused part of the request because it would spend points other than user points.",
+  NotUserEligible:
+    "The request was not sent because it selects fields that spend points other than user points.",
+  PointSystemOptInRequired:
+    "Fellowship Logs requires opting into its new point system before requests can spend only user points.",
+} as const;
+
+export type FellowshipLogsGatewayPointPolicyErrorReason =
+  keyof typeof POINT_POLICY_REASON_DESCRIPTIONS;
+
+export class FellowshipLogsGatewayPointPolicyError extends Data.TaggedError(
+  "FellowshipLogsGatewayPointPolicyError",
+)<{
+  readonly reason: FellowshipLogsGatewayPointPolicyErrorReason;
+}> {
+  override get message() {
+    return POINT_POLICY_REASON_DESCRIPTIONS[this.reason];
+  }
+}
+
 export type FellowshipLogsGatewayGraphQLResponseErrorReason =
   | "ErrorsReturned"
   | "FightMissingDifficultyLevel"
@@ -63,8 +107,11 @@ export class FellowshipLogsGatewayRateLimitRejectedError extends Data.TaggedErro
 }
 
 export type FellowshipLogsGatewayRateLimitExceededErrorReason =
+  | "ApplicationHoldUnavailable"
   | "PreflightExhausted"
-  | "RejectedByApi";
+  | "RejectedByApi"
+  | "UserPointsExhausted"
+  | "UserPointsRejectedByApi";
 
 export class FellowshipLogsGatewayRateLimitExceededError extends Data.TaggedError(
   "FellowshipLogsGatewayRateLimitExceededError",
@@ -79,8 +126,11 @@ export class FellowshipLogsGatewayRateLimitExceededError extends Data.TaggedErro
       FellowshipLogsGatewayRateLimitExceededErrorReason,
       string
     > = {
+      ApplicationHoldUnavailable: `Fellowship Logs has no application point free for the request hold until ${resetsAt}; the request was not sent.`,
       PreflightExhausted: `Fellowship Logs points are used up until ${resetsAt}; the request was not sent.`,
       RejectedByApi: `Fellowship Logs rejected the request because points are used up until ${resetsAt}.`,
+      UserPointsExhausted: `Your Fellowship Logs user points are used up until ${resetsAt}; the request was not sent.`,
+      UserPointsRejectedByApi: `Fellowship Logs rejected the request because your user points are used up until ${resetsAt}.`,
     };
 
     return messages[this.reason];

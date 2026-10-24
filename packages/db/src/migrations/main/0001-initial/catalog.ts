@@ -18,6 +18,7 @@ export const createCatalogTables = E.gen(function* () {
       id TEXT PRIMARY KEY NOT NULL,
       map_id TEXT NOT NULL,
       name TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'INACTIVE')),
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
     ) STRICT
@@ -80,6 +81,7 @@ export const createCatalogTables = E.gen(function* () {
       dungeon_id TEXT NOT NULL,
       id TEXT NOT NULL,
       name TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'INACTIVE')),
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL,
       PRIMARY KEY (dungeon_id, id),

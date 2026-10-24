@@ -59,6 +59,3 @@ export const FellowshipSeasonalCatalogSchema = Schema.Struct({
     patches: Schema.Array(UnitCatalogPatchSchema),
   }),
 });
-
-export type FellowshipSeasonalCatalog =
-  typeof FellowshipSeasonalCatalogSchema.Type;

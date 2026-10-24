@@ -13,6 +13,7 @@ import {
   type FellowshipLogsGatewayCachedRequest,
   type FellowshipLogsGatewayResponseCacheShape,
 } from "@frt/api/services/fellowship-logs-gateway/cache/fellowship-logs-gateway-response-cache-service.ts";
+import { addFellowshipLogsGatewayCacheHit } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-points-spent.ts";
 import { FellowshipLogsResponseDAO } from "@frt/db/daos/fellowship-logs-response/fellowship-logs-response-dao.ts";
 
 const gzipAsync = promisify(gzip);
@@ -151,6 +152,7 @@ export const makeFellowshipLogsGatewayResponseCache = E.gen(function* () {
         pointsSpent: null,
         source: "CACHE",
       });
+      yield* addFellowshipLogsGatewayCacheHit();
 
       return cachedData.value;
     }

@@ -42,6 +42,7 @@ function createBackgroundJobApiItemFields({
     progress,
     startedAtMilliseconds: toMillisecondsOrNull(job.startedAt),
     status: job.status,
+    waitingReason: job.waitingReason,
   };
 }
 

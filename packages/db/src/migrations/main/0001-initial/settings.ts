@@ -26,15 +26,4 @@ export const createSettingsTables = E.gen(function* () {
       updated_at INTEGER NOT NULL
     ) STRICT
   `;
-
-  // [KEEP] The secret is stored encrypted.
-  yield* sql`
-    CREATE TABLE fellowship_logs_credential (
-      id INTEGER PRIMARY KEY NOT NULL CHECK (id = 1),
-      client_id TEXT,
-      client_secret TEXT,
-      created_at INTEGER NOT NULL,
-      updated_at INTEGER NOT NULL
-    ) STRICT
-  `;
 });

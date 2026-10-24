@@ -9,6 +9,10 @@ const projectRoot = path.resolve(import.meta.dirname);
 export default defineConfig({
   optimizeDeps: {
     include: [
+      "@base-ui/react/dialog",
+      "@base-ui/react/radio",
+      "@base-ui/react/radio-group",
+      "@base-ui/react/tabs",
       "@tanstack/react-query",
       "@tanstack/react-router",
       "date-fns",

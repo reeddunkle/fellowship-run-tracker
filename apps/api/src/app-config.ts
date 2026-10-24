@@ -7,8 +7,6 @@ import {
 import { APP_CONFIG_DEFAULTS } from "@frt/shared/app-config/app-config-defaults.ts";
 import {
   FellowshipLogDirectorySchema,
-  FellowshipLogsClientIdSchema,
-  FellowshipLogsClientSecretSchema,
   LiveSplitHostSchema,
   LiveSplitPortSchema,
 } from "@frt/shared/app-settings/app-settings-schema.ts";
@@ -16,6 +14,10 @@ import {
   ElectronRendererHostSchema,
   ElectronRendererPortSchema,
 } from "@frt/shared/electron-renderer/electron-renderer-env-schema.ts";
+import {
+  FellowshipLogsClientIdSchema,
+  FellowshipLogsClientSecretSchema,
+} from "@frt/shared/fellowship-logs/fellowship-logs-client-credentials-schema.ts";
 
 export const appConfig = {
   electronRendererHost: Config.schema(
@@ -55,6 +57,10 @@ export const appConfig = {
   fellowshipLogsClientSecret: Config.schema(
     FellowshipLogsClientSecretSchema,
     "FELLOWSHIP_LOGS_CLIENT_SECRET",
+  ).pipe(Config.option),
+  fellowshipLogsOAuthClientId: Config.schema(
+    FellowshipLogsClientIdSchema,
+    "FELLOWSHIP_LOGS_OAUTH_CLIENT_ID",
   ).pipe(Config.option),
   fellowshipLogsSimulateImports: Config.Boolean(
     "FELLOWSHIP_LOGS_SIMULATE_IMPORTS",

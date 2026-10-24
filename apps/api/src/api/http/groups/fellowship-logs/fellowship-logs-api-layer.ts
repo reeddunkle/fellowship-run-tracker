@@ -1,18 +1,29 @@
-import * as DateTime from "effect/DateTime";
 import * as E from "effect/Effect";
 import * as HttpApiBuilder from "effect/http-api/HttpApiBuilder";
 import * as HttpApiError from "effect/http-api/HttpApiError";
 import type * as Layer from "effect/Layer";
+import * as Match from "effect/Match";
 
+import {
+  type FellowshipLogsGatewayApiError,
+  mapFellowshipLogsGatewayApiError,
+} from "@frt/api/api/http/groups/fellowship-logs/map-fellowship-logs-gateway-api-error.ts";
+import {
+  type FellowshipLogsConnectionError,
+  type FellowshipLogsNotConnectedError,
+} from "@frt/api/errors/fellowship-logs-connection-error.ts";
 import {
   FellowshipLogs,
   type QueueFellowshipLogsDungeonRunImportError,
+  type ResumeImportJobWithCurrentConnectionError,
 } from "@frt/api/services/fellowship-logs/fellowship-logs-service.ts";
 import { type FellowshipLogsGatewayRequestOperationError } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
 import {
   FellowshipLogsApiAlreadyImportedError,
+  FellowshipLogsApiConnectionRequiredError,
   FellowshipLogsApiDungeonLevelNotFoundError,
-  FellowshipLogsApiRateLimitExceededError,
+  FellowshipLogsApiReportAccessDeniedError,
+  FellowshipLogsApiRunNotFoundError,
 } from "@frt/api-contract/errors/fellowship-logs-api-error.ts";
 import { AppHttpApi } from "@frt/api-contract/http/http-api.ts";
 import { type DungeonRunDAOError } from "@frt/db/errors/dungeon-run-dao-error.ts";
@@ -24,23 +35,65 @@ function mapFellowshipLogsMetadataApiError({
   reportCode,
 }: FellowshipLogsApiDungeonRunReference) {
   return (
-    error: FellowshipLogsGatewayRequestOperationError,
+    error:
+      | FellowshipLogsConnectionError
+      | FellowshipLogsGatewayRequestOperationError
+      | FellowshipLogsNotConnectedError,
   ): E.Effect<
     never,
+    | FellowshipLogsApiConnectionRequiredError
     | FellowshipLogsApiDungeonLevelNotFoundError
-    | FellowshipLogsApiRateLimitExceededError
+    | FellowshipLogsApiReportAccessDeniedError
+    | FellowshipLogsApiRunNotFoundError
+    | FellowshipLogsGatewayApiError
     | HttpApiError.InternalServerError
   > => {
-    const run = { fightId, reportCode };
+    if (error._tag === "FellowshipLogsNotConnectedError") {
+      return E.fail(
+        new FellowshipLogsApiConnectionRequiredError({
+          reason: "NOT_CONNECTED",
+        }),
+      );
+    }
+
+    if (error._tag === "FellowshipLogsConnectionError") {
+      return logInternalServerError(error);
+    }
 
     if (
       error._tag === "FellowshipLogsGatewayGraphQLResponseError" &&
       error.reason === "FightMissingDifficultyLevel"
     ) {
-      return E.fail(new FellowshipLogsApiDungeonLevelNotFoundError(run));
+      return E.fail(
+        new FellowshipLogsApiDungeonLevelNotFoundError({ fightId, reportCode }),
+      );
     }
 
-    return mapFellowshipLogsRateLimitApiError(error);
+    if (
+      error._tag === "FellowshipLogsGatewayGraphQLResponseError" &&
+      error.reason === "ErrorsReturned" &&
+      error.errors.some(({ message }) => {
+        return /permission to view this report/iu.test(message);
+      })
+    ) {
+      return E.fail(
+        new FellowshipLogsApiReportAccessDeniedError({
+          fightId,
+          reportCode,
+        }),
+      );
+    }
+
+    if (
+      error._tag === "FellowshipLogsGatewayGraphQLResponseError" &&
+      (error.reason === "FightNotFound" || error.reason === "ReportNotFound")
+    ) {
+      return E.fail(
+        new FellowshipLogsApiRunNotFoundError({ fightId, reportCode }),
+      );
+    }
+
+    return mapFellowshipLogsGatewayApiError(error);
   };
 }
 
@@ -48,7 +101,9 @@ function mapQueueFellowshipLogsDungeonRunImportError(
   error: QueueFellowshipLogsDungeonRunImportError,
 ): E.Effect<
   never,
-  FellowshipLogsApiAlreadyImportedError | HttpApiError.InternalServerError
+  | FellowshipLogsApiAlreadyImportedError
+  | FellowshipLogsApiConnectionRequiredError
+  | HttpApiError.InternalServerError
 > {
   if (error._tag === "FellowshipLogsDungeonRunImportAlreadyImportedError") {
     return E.fail(
@@ -57,6 +112,12 @@ function mapQueueFellowshipLogsDungeonRunImportError(
         fightId: error.fightId,
         reportCode: error.reportCode,
       }),
+    );
+  }
+
+  if (error._tag === "FellowshipLogsNotConnectedError") {
+    return E.fail(
+      new FellowshipLogsApiConnectionRequiredError({ reason: "NOT_CONNECTED" }),
     );
   }
 
@@ -74,36 +135,6 @@ const logInternalServerError: (
     return yield* new HttpApiError.InternalServerError();
   },
 );
-
-const logGatewayFailure: (
-  error: FellowshipLogsGatewayRequestOperationError,
-) => E.Effect<never, HttpApiError.InternalServerError> = E.fnUntraced(
-  function* (error) {
-    yield* E.logWarning("Fellowship Logs request failed.", {
-      errorTag: error._tag,
-      message: error.message,
-    });
-
-    return yield* new HttpApiError.InternalServerError();
-  },
-);
-
-function mapFellowshipLogsRateLimitApiError(
-  error: FellowshipLogsGatewayRequestOperationError,
-): E.Effect<
-  never,
-  FellowshipLogsApiRateLimitExceededError | HttpApiError.InternalServerError
-> {
-  if (error._tag === "FellowshipLogsGatewayRateLimitExceededError") {
-    return E.fail(
-      new FellowshipLogsApiRateLimitExceededError({
-        resetsAtMilliseconds: DateTime.toEpochMillis(error.resetsAt),
-      }),
-    );
-  }
-
-  return logGatewayFailure(error);
-}
 
 const mapGetFellowshipLogsDungeonRunsError: (
   error: DungeonRunStoreError,
@@ -133,6 +164,30 @@ function mapDeleteFellowshipLogsDungeonRunError(
   });
 }
 
+function mapResumeImportJobWithCurrentConnectionError(
+  error: ResumeImportJobWithCurrentConnectionError,
+): E.Effect<
+  never,
+  | FellowshipLogsApiConnectionRequiredError
+  | HttpApiError.InternalServerError
+  | HttpApiError.NotFound
+> {
+  return Match.value(error).pipe(
+    Match.tagsExhaustive({
+      BackgroundJobQueueError: logInternalServerError,
+      BackgroundJobQueueNotFoundError: () =>
+        E.fail(new HttpApiError.NotFound()),
+      FellowshipLogsConnectionError: logInternalServerError,
+      FellowshipLogsNotConnectedError: () =>
+        E.fail(
+          new FellowshipLogsApiConnectionRequiredError({
+            reason: "NOT_CONNECTED",
+          }),
+        ),
+    }),
+  );
+}
+
 const FellowshipLogsApiHandlersInferred = HttpApiBuilder.group(
   AppHttpApi,
   "fellowshipLogs",
@@ -148,18 +203,29 @@ const FellowshipLogsApiHandlersInferred = HttpApiBuilder.group(
       .handle("getFellowshipLogsRateLimitData", () => {
         return fellowshipLogs
           .getRateLimitData()
-          .pipe(E.catch(mapFellowshipLogsRateLimitApiError));
+          .pipe(E.catch(mapFellowshipLogsGatewayApiError));
       })
-      .handle("getFellowshipLogsLastKnownRateLimitData", () => {
+      .handle("getFellowshipLogsPointPools", () => {
         return fellowshipLogs
-          .getLastKnownRateLimitData()
+          .getPointPools()
           .pipe(E.catch(logInternalServerError));
+      })
+      .handle("getFellowshipLogsImportCostEstimate", () => {
+        return fellowshipLogs.getImportCostEstimate();
       })
       .handle("queueFellowshipLogsDungeonRunImport", ({ payload }) => {
         return fellowshipLogs
           .queueDungeonRunImport(payload)
           .pipe(E.catch(mapQueueFellowshipLogsDungeonRunImportError));
       })
+      .handle(
+        "resumeFellowshipLogsImportJobWithCurrentConnection",
+        ({ params }) => {
+          return fellowshipLogs
+            .resumeImportJobWithCurrentConnection({ jobId: params.jobId })
+            .pipe(E.catch(mapResumeImportJobWithCurrentConnectionError));
+        },
+      )
       .handle("getFellowshipLogsDungeonRuns", () => {
         return fellowshipLogs
           .getImportedDungeonRuns()

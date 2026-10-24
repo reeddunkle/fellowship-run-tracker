@@ -241,7 +241,7 @@ describe("configuration routes", () => {
 
   test("GET /configurations/:id returns 404 when the configuration does not exist", async () => {
     const { status, text } = await runWithConfigurationLibrary(
-      {},
+      { getById: () => E.succeedNone },
       ({ urls }) => {
         return requestWithTextBody(
           urls.configurations.getConfiguration({

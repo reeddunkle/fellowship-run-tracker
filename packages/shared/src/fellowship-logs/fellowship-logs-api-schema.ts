@@ -7,7 +7,8 @@ import {
 import { DungeonRunIdSchema } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 import { DungeonIdSchema } from "@frt/shared/fellowship/validation/fellowship-common.ts";
 import { FellowshipLogsFightIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
-import { FellowshipLogsRateLimitSnapshotSchema } from "@frt/shared/fellowship-logs/fellowship-logs-rate-limit-schema.ts";
+import { FellowshipLogsLookupWorkflowIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-lookup-workflow-id-schema.ts";
+import { FellowshipLogsApplicationRateLimitSnapshotSchema } from "@frt/shared/fellowship-logs/fellowship-logs-rate-limit-schema.ts";
 import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 import {
   NonNegativeIntegerSchema,
@@ -44,6 +45,7 @@ export const FellowshipLogsApiDungeonRunMetadataSchema = Schema.Struct({
   dungeonLevel: PositiveIntegerSchema,
   endedAtMilliseconds: NonNegativeIntegerSchema,
   isInProgress: Schema.Boolean,
+  lookupWorkflowId: FellowshipLogsLookupWorkflowIdSchema,
   startedAtMilliseconds: NonNegativeIntegerSchema,
 });
 
@@ -51,10 +53,7 @@ export type FellowshipLogsApiDungeonRunMetadata =
   typeof FellowshipLogsApiDungeonRunMetadataSchema.Type;
 
 const FellowshipLogsApiRateLimitDataSchema =
-  FellowshipLogsRateLimitSnapshotSchema;
-
-export type FellowshipLogsApiRateLimitData =
-  typeof FellowshipLogsApiRateLimitDataSchema.Type;
+  FellowshipLogsApplicationRateLimitSnapshotSchema;
 
 export const FellowshipLogsApiLastKnownRateLimitDataSchema = Schema.NullOr(
   FellowshipLogsApiRateLimitDataSchema,

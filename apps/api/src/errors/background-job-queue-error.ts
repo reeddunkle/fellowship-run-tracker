@@ -5,8 +5,10 @@ import { type BackgroundJobId } from "@frt/shared/background-job/background-job-
 const BACKGROUND_JOB_QUEUE_OPERATION_DESCRIPTIONS = {
   Cancel: "cancel a background job",
   Dismiss: "dismiss a background job",
+  Hold: "hold waiting background jobs",
   List: "list background jobs",
   Offer: "queue a background job",
+  Resume: "resume waiting background jobs",
   Retry: "retry a background job",
 } as const;
 

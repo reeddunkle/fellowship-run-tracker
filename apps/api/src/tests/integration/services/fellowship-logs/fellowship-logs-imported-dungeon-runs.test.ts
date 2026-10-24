@@ -13,11 +13,19 @@ import {
 import { getBackgroundJobIdempotencyKey } from "@frt/api/services/background-job-queue/get-background-job-idempotency-key.ts";
 import { FellowshipLogs } from "@frt/api/services/fellowship-logs/fellowship-logs-service.ts";
 import { FellowshipLogsAnalytics } from "@frt/api/services/fellowship-logs-analytics/fellowship-logs-analytics-service.ts";
+import { EMPTY_FELLOWSHIP_LOGS_GATEWAY_WORKFLOW_COST } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-points-spent.ts";
+import {
+  FellowshipLogsImportCost,
+  type FellowshipLogsImportCostShape,
+} from "@frt/api/services/fellowship-logs-import-cost/fellowship-logs-import-cost-service.ts";
 import { makeFellowshipLogsDungeonRunImporterIntegrationTestHarness } from "@frt/api/tests/common/harnesses/fellowship-logs-dungeon-run-importer-integration-test-harness.ts";
+import { makeFellowshipLogsConnectionMock } from "@frt/api/tests/common/mocks/fellowship-logs-connection-mock.ts";
+import { IgnoredFellowshipLogsImportCostLayer } from "@frt/api/tests/common/mocks/fellowship-logs-import-cost-mock.ts";
 import { runTest } from "@frt/api/tests/common/run-test.ts";
 import { BackgroundJobDAO } from "@frt/db/daos/background-job/background-job-dao.ts";
 import { MOCK_DUNGEON_ID } from "@frt/db/tests/common/fixtures/configuration-fixtures.ts";
 import { FellowshipLogsFightIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
+import { FellowshipLogsLookupWorkflowIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-lookup-workflow-id-schema.ts";
 import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 
 const REPORT_CODE = Schema.decodeSync(FellowshipLogsReportCodeSchema)(
@@ -25,6 +33,12 @@ const REPORT_CODE = Schema.decodeSync(FellowshipLogsReportCodeSchema)(
 );
 
 const FIGHT_ID = Schema.decodeSync(FellowshipLogsFightIdSchema)(15);
+const LOOKUP_WORKFLOW_ID = Schema.decodeSync(
+  FellowshipLogsLookupWorkflowIdSchema,
+)("00000000-0000-4000-8000-000000000001");
+const OTHER_LOOKUP_WORKFLOW_ID = Schema.decodeSync(
+  FellowshipLogsLookupWorkflowIdSchema,
+)("00000000-0000-4000-8000-000000000002");
 
 const QUEUE_OPTIONS = {
   dungeonId: MOCK_DUNGEON_ID,
@@ -49,6 +63,7 @@ const BackgroundJobServiceTestLive = Layer.effect(
       cancel: unexpectedCall("cancel"),
       changes: Stream.empty,
       dismiss: unexpectedCall("dismiss"),
+      holdWaiting: unexpectedCall("holdWaiting"),
       listVisible: unexpectedCall("listVisible"),
       offer: E.fnUntraced(function* (job) {
         const { job: row, wasInserted } = yield* backgroundJobDAO.insert({
@@ -61,6 +76,8 @@ const BackgroundJobServiceTestLive = Layer.effect(
 
         return { job: row, wasAlreadyQueued: !wasInserted };
       }, E.orDie),
+      resumeWaiting: unexpectedCall("resumeWaiting"),
+      resumeWaitingJob: unexpectedCall("resumeWaitingJob"),
       retry: unexpectedCall("retry"),
       revision: E.succeed(0),
       sessionId: "test",
@@ -68,7 +85,9 @@ const BackgroundJobServiceTestLive = Layer.effect(
   }),
 );
 
-function makeTestLayer() {
+function makeTestLayer(
+  importCostLayer: Layer.Layer<FellowshipLogsImportCost> = IgnoredFellowshipLogsImportCostLayer,
+) {
   const harness = makeFellowshipLogsDungeonRunImporterIntegrationTestHarness();
 
   const FellowshipLogsTestLive = FellowshipLogs.layerNoDeps.pipe(
@@ -77,6 +96,8 @@ function makeTestLayer() {
         harness.layer,
         BackgroundJobServiceTestLive.pipe(Layer.provide(harness.layer)),
         FellowshipLogsAnalytics.layer.pipe(Layer.provide(harness.layer)),
+        importCostLayer,
+        makeFellowshipLogsConnectionMock(),
       ),
     ),
   );
@@ -144,19 +165,52 @@ describe("FellowshipLogs imported dungeon runs", () => {
 
 describe("FellowshipLogs.queueDungeonRunImport", () => {
   test("queues an import and reports a repeat as already queued", async () => {
+    const claimedWorkflowIds: Array<string> = [];
+    const importCost: FellowshipLogsImportCostShape = {
+      claimLookupWorkflow: ({ workflowId }) => {
+        claimedWorkflowIds.push(workflowId);
+        return E.succeedSome(EMPTY_FELLOWSHIP_LOGS_GATEWAY_WORKFLOW_COST);
+      },
+      getEstimate: () => E.die("Unexpected import cost estimate."),
+      measure: () => (effect) => {
+        return effect.pipe(
+          E.map((value) => {
+            return [
+              value,
+              EMPTY_FELLOWSHIP_LOGS_GATEWAY_WORKFLOW_COST,
+            ] as const;
+          }),
+        );
+      },
+      recordLookupWorkflow: () => E.die("Unexpected workflow record."),
+    };
     const program = E.gen(function* () {
       const fellowshipLogs = yield* FellowshipLogs;
 
-      const first = yield* fellowshipLogs.queueDungeonRunImport(QUEUE_OPTIONS);
-      const second = yield* fellowshipLogs.queueDungeonRunImport(QUEUE_OPTIONS);
+      const first = yield* fellowshipLogs.queueDungeonRunImport({
+        ...QUEUE_OPTIONS,
+        lookupWorkflowId: LOOKUP_WORKFLOW_ID,
+      });
+      const second = yield* fellowshipLogs.queueDungeonRunImport({
+        ...QUEUE_OPTIONS,
+        lookupWorkflowId: OTHER_LOOKUP_WORKFLOW_ID,
+      });
 
       expect(first.wasAlreadyQueued).toBe(false);
       expect(first.job.status).toBe("QUEUED");
       expect(first.job.kind).toBe("ImportFellowshipLogsDungeonRun");
-      expect(first.job.payload).toEqual(QUEUE_OPTIONS);
+      expect(first.job.payload).toEqual({
+        ...QUEUE_OPTIONS,
+        lookupWorkflowId: LOOKUP_WORKFLOW_ID,
+      });
       expect(second.wasAlreadyQueued).toBe(true);
       expect(second.job.id).toBe(first.job.id);
-    }).pipe(E.provide(makeTestLayer()));
+      expect(claimedWorkflowIds).toEqual([LOOKUP_WORKFLOW_ID]);
+    }).pipe(
+      E.provide(
+        makeTestLayer(Layer.succeed(FellowshipLogsImportCost, importCost)),
+      ),
+    );
 
     await runTest(program);
   });

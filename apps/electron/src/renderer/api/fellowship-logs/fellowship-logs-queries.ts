@@ -4,8 +4,9 @@ import { browserRuntime } from "@/renderer/runtimes/browser-runtime.ts";
 
 import {
   getAnalytics,
+  getImportCostEstimate,
   getImportedDungeonRuns,
-  getLastKnownRateLimitData,
+  getPointPools,
 } from "./fellowship-logs-client.ts";
 
 export function getFellowshipLogsDungeonRunsQueryOptions() {
@@ -18,12 +19,22 @@ export function getFellowshipLogsDungeonRunsQueryOptions() {
   });
 }
 
-export function getFellowshipLogsLastKnownRateLimitDataQueryOptions() {
+export function getFellowshipLogsPointPoolsQueryOptions() {
   return queryOptions({
     queryFn: () => {
-      return browserRuntime.runPromise(getLastKnownRateLimitData());
+      return browserRuntime.runPromise(getPointPools());
     },
-    queryKey: ["fellowship-logs", "rate-limit-data", "last-known"],
+    queryKey: ["fellowship-logs", "point-pools"],
+    staleTime: Infinity,
+  });
+}
+
+export function getFellowshipLogsImportCostEstimateQueryOptions() {
+  return queryOptions({
+    queryFn: () => {
+      return browserRuntime.runPromise(getImportCostEstimate());
+    },
+    queryKey: ["fellowship-logs", "import-cost-estimate"],
     staleTime: Infinity,
   });
 }
@@ -47,9 +58,14 @@ export function useImportedDungeonRunsSuspense() {
   return data;
 }
 
-export function useFellowshipLogsRateLimitDataSuspense() {
+export function useFellowshipLogsPointPoolsSuspense() {
+  const { data } = useSuspenseQuery(getFellowshipLogsPointPoolsQueryOptions());
+  return data;
+}
+
+export function useFellowshipLogsImportCostEstimateSuspense() {
   const { data } = useSuspenseQuery(
-    getFellowshipLogsLastKnownRateLimitDataQueryOptions(),
+    getFellowshipLogsImportCostEstimateQueryOptions(),
   );
   return data;
 }

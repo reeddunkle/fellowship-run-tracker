@@ -36,7 +36,8 @@
     },
     "dungeonLevel": {
       "type": "integer",
-      "minimum": 1
+      "minimum": 1,
+      "maximum": 9007199254740991
     },
     "milestones": {
       "type": "array",
@@ -47,7 +48,8 @@
             "anyOf": [
               {
                 "type": "integer",
-                "minimum": 0
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               {
                 "type": "null"
@@ -72,11 +74,13 @@
                       },
                       "requiredCount": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "maximum": 9007199254740991
                       },
                       "startOccurrence": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "maximum": 9007199254740991
                       },
                       "type": {
                         "type": "string",
@@ -98,11 +102,13 @@
                     "properties": {
                       "requiredCount": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "maximum": 9007199254740991
                       },
                       "startOccurrence": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "maximum": 9007199254740991
                       },
                       "type": {
                         "type": "string",
@@ -123,11 +129,13 @@
                     "properties": {
                       "requiredCount": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "maximum": 9007199254740991
                       },
                       "startOccurrence": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "maximum": 9007199254740991
                       },
                       "type": {
                         "type": "string",
@@ -152,11 +160,13 @@
                       },
                       "requiredCount": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "maximum": 9007199254740991
                       },
                       "startOccurrence": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "maximum": 9007199254740991
                       },
                       "type": {
                         "type": "string",
@@ -182,11 +192,13 @@
                       },
                       "requiredCount": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "maximum": 9007199254740991
                       },
                       "startOccurrence": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "maximum": 9007199254740991
                       },
                       "type": {
                         "type": "string",
@@ -208,11 +220,13 @@
                     "properties": {
                       "requiredCount": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "maximum": 9007199254740991
                       },
                       "startOccurrence": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "maximum": 9007199254740991
                       },
                       "type": {
                         "type": "string",
@@ -248,11 +262,13 @@
                     },
                     "requiredCount": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "maximum": 9007199254740991
                     },
                     "startOccurrence": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "maximum": 9007199254740991
                     },
                     "type": {
                       "type": "string",
@@ -274,11 +290,13 @@
                   "properties": {
                     "requiredCount": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "maximum": 9007199254740991
                     },
                     "startOccurrence": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "maximum": 9007199254740991
                     },
                     "type": {
                       "type": "string",
@@ -299,11 +317,13 @@
                   "properties": {
                     "requiredCount": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "maximum": 9007199254740991
                     },
                     "startOccurrence": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "maximum": 9007199254740991
                     },
                     "type": {
                       "type": "string",
@@ -328,11 +348,13 @@
                     },
                     "requiredCount": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "maximum": 9007199254740991
                     },
                     "startOccurrence": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "maximum": 9007199254740991
                     },
                     "type": {
                       "type": "string",
@@ -358,11 +380,13 @@
                     },
                     "requiredCount": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "maximum": 9007199254740991
                     },
                     "startOccurrence": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "maximum": 9007199254740991
                     },
                     "type": {
                       "type": "string",
@@ -384,11 +408,13 @@
                   "properties": {
                     "requiredCount": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "maximum": 9007199254740991
                     },
                     "startOccurrence": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "maximum": 9007199254740991
                     },
                     "type": {
                       "type": "string",

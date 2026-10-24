@@ -2,6 +2,7 @@ import * as Command from "effect/cli/Command";
 import * as Flag from "effect/cli/Flag";
 import * as E from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
+import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Path from "effect/Path";
 import * as Stream from "effect/Stream";
@@ -10,27 +11,23 @@ import { appConfig } from "@frt/api/app-config.ts";
 import { FellowshipLogsGatewayRequestError } from "@frt/api/errors/fellowship-logs-gateway-error.ts";
 import { NodeHttpClientLayer } from "@frt/api/layers/node-platform-layer.ts";
 import {
+  type FellowshipLogsGatewayCredentials,
+  makeClientCredentialsGatewayAccessSource,
+} from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-access.ts";
+import {
   FELLOWSHIP_LOGS_FIXTURE_DIRECTORY,
   getFellowshipLogsGatewayReportFixtureDirectory,
 } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-fixture-paths.ts";
 import { makeFellowshipLogsGatewayHttpQuery } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-http-query.ts";
+import { FellowshipLogsGatewayRequestPacer } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-request-pacer.ts";
 import {
   findFightOrFail,
   getGraphQLResponseData,
   getReportOrFail,
 } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-response-helpers.ts";
-import { type FellowshipLogsGatewayCredentials } from "@frt/api/services/fellowship-logs-gateway/fellowship-logs-gateway-service.ts";
 import { normalizeFellowshipLogsGatewayReport } from "@frt/api/services/fellowship-logs-gateway/normalize-fellowship-logs-gateway-report.ts";
-import {
-  DUNGEON_RUN_METADATA_SELECTION,
-  DUNGEON_RUN_METADATA_VARIABLES,
-} from "@frt/api/services/fellowship-logs-gateway/query/get-dungeon-run-metadata-query.ts";
-import { makeQuery } from "@frt/api/services/fellowship-logs-gateway/query/make-query.ts";
-import { RATE_LIMIT_DATA_SELECTION } from "@frt/api/services/fellowship-logs-gateway/query/rate-limit-data-query.ts";
-import {
-  REPORT_SELECTION,
-  REPORT_VARIABLES,
-} from "@frt/api/services/fellowship-logs-gateway/query/report-query.ts";
+import { DUNGEON_RUN_METADATA_QUERY } from "@frt/api/services/fellowship-logs-gateway/query/get-dungeon-run-metadata-query.ts";
+import { REPORT_QUERY } from "@frt/api/services/fellowship-logs-gateway/query/report-query.ts";
 import { FellowshipLogsGatewayDungeonRunMetadataResponseDataSchema } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-dungeon-run-metadata-schema.ts";
 import { FellowshipLogsGatewayReportResponseDataSchema } from "@frt/api/services/fellowship-logs-gateway/validation/fellowship-logs-gateway-report-schema.ts";
 import { FellowshipLogsFightIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
@@ -62,9 +59,9 @@ const captureFellowshipLogsReport = E.fn("captureFellowshipLogsReport")(
     const fileSystem = yield* FileSystem.FileSystem;
     const path = yield* Path.Path;
 
-    const query = yield* makeFellowshipLogsGatewayHttpQuery(() => {
-      return E.succeed(credentials);
-    });
+    const query = yield* makeFellowshipLogsGatewayHttpQuery(
+      makeClientCredentialsGatewayAccessSource(credentials),
+    );
 
     const defaultOutputDirectory =
       getFellowshipLogsGatewayReportFixtureDirectory({
@@ -94,14 +91,7 @@ const captureFellowshipLogsReport = E.fn("captureFellowshipLogsReport")(
 
     const metadataResponse = yield* query(
       {
-        query: makeQuery({
-          name: "GetDungeonRunMetadata",
-          selections: [
-            DUNGEON_RUN_METADATA_SELECTION,
-            RATE_LIMIT_DATA_SELECTION,
-          ],
-          variables: DUNGEON_RUN_METADATA_VARIABLES,
-        }),
+        query: DUNGEON_RUN_METADATA_QUERY,
         variables: {
           fightId,
           reportCode,
@@ -144,11 +134,7 @@ const captureFellowshipLogsReport = E.fn("captureFellowshipLogsReport")(
       return E.gen(function* () {
         const pageResponse = yield* query(
           {
-            query: makeQuery({
-              name: "GetDungeonRunReport",
-              selections: [REPORT_SELECTION, RATE_LIMIT_DATA_SELECTION],
-              variables: REPORT_VARIABLES,
-            }),
+            query: REPORT_QUERY,
             variables: {
               endTime: fight.endTime,
               reportCode,
@@ -265,5 +251,10 @@ export const captureFellowshipLogsReportCommand = Command.make(
   Command.withDescription(
     "Capture a Fellowship Logs report as JSON test fixtures (uses the client ID and secret from .env).",
   ),
-  Command.provide(NodeHttpClientLayer),
+  Command.provide(
+    Layer.mergeAll(
+      NodeHttpClientLayer,
+      FellowshipLogsGatewayRequestPacer.layer,
+    ),
+  ),
 );

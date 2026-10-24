@@ -18,6 +18,7 @@ import { type DungeonCatalog } from "@frt/api/services/dungeon-catalog/dungeon-c
 import { type DungeonRunHistory } from "@frt/api/services/dungeon-run-history/dungeon-run-history-service.ts";
 import { type EncounterCatalog } from "@frt/api/services/encounter-catalog/encounter-catalog-service.ts";
 import { type FellowshipLogs } from "@frt/api/services/fellowship-logs/fellowship-logs-service.ts";
+import { type FellowshipLogsConnectionManager } from "@frt/api/services/fellowship-logs-connection-manager/fellowship-logs-connection-manager-service.ts";
 import { type LiveSplit } from "@frt/api/services/live-split/live-split-service.ts";
 import { type UnitCatalog } from "@frt/api/services/unit-catalog/unit-catalog-service.ts";
 import { AbilityCatalogMock } from "@frt/api/tests/common/mocks/ability-catalog-mock.ts";
@@ -27,6 +28,7 @@ import { ConfigurationLibraryMock } from "@frt/api/tests/common/mocks/configurat
 import { DungeonCatalogMock } from "@frt/api/tests/common/mocks/dungeon-catalog-mock.ts";
 import { DungeonRunHistoryMock } from "@frt/api/tests/common/mocks/dungeon-run-history-mock.ts";
 import { EncounterCatalogMock } from "@frt/api/tests/common/mocks/encounter-catalog-mock.ts";
+import { FellowshipLogsConnectionManagerMock } from "@frt/api/tests/common/mocks/fellowship-logs-connection-manager-mock.ts";
 import { FellowshipLogsMock } from "@frt/api/tests/common/mocks/fellowship-logs-mock.ts";
 import { FellowshipTrackerMock } from "@frt/api/tests/common/mocks/fellowship-tracker-mock.ts";
 import { LiveSplitMock } from "@frt/api/tests/common/mocks/live-split-mock.ts";
@@ -41,6 +43,7 @@ export type ApiServices =
   | DungeonRunHistory
   | EncounterCatalog
   | FellowshipLogs
+  | FellowshipLogsConnectionManager
   | FellowshipTracker
   | LiveSplit
   | UnitCatalog;
@@ -54,6 +57,7 @@ type ApiServiceTestLayer =
   | Layer.Layer<DungeonRunHistory>
   | Layer.Layer<EncounterCatalog>
   | Layer.Layer<FellowshipLogs>
+  | Layer.Layer<FellowshipLogsConnectionManager>
   | Layer.Layer<FellowshipTracker>
   | Layer.Layer<LiveSplit>
   | Layer.Layer<UnitCatalog>;
@@ -68,6 +72,7 @@ const ApiServicesTest: Layer.Layer<ApiServices> = Layer.mergeAll(
   DungeonCatalogMock,
   DungeonRunHistoryMock,
   EncounterCatalogMock,
+  FellowshipLogsConnectionManagerMock,
   FellowshipLogsMock,
   FellowshipTrackerMock,
   LiveSplitMock,

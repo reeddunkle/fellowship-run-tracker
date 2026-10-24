@@ -1,33 +1,26 @@
-import * as E from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Stream from "effect/Stream";
 
 import {
   FellowshipTracker,
   type FellowshipTrackerShape,
 } from "@frt/api/application/fellowship-tracker/fellowship-tracker-service.ts";
+import {
+  unexpectedEffectCall,
+  unexpectedStreamCall,
+} from "@frt/api/tests/common/mocks/unexpected-service-call.ts";
 
 export type MakeFellowshipTrackerMockOptions = Partial<FellowshipTrackerShape>;
 
 export function makeFellowshipTrackerMock({
-  replayLog = () => {
-    return E.void;
-  },
-  start = () => {
-    return E.void;
-  },
-  startConfiguration = () => {
-    return E.void;
-  },
-  status = E.succeed({
-    _tag: "Idle",
-  }),
-  statusChanges = Stream.make({
-    _tag: "Idle",
-  }),
-  stop = () => {
-    return E.void;
-  },
+  replayLog = unexpectedEffectCall("FellowshipTracker", "replayLog"),
+  start = unexpectedEffectCall("FellowshipTracker", "start"),
+  startConfiguration = unexpectedEffectCall(
+    "FellowshipTracker",
+    "startConfiguration",
+  ),
+  status = unexpectedEffectCall("FellowshipTracker", "status")(),
+  statusChanges = unexpectedStreamCall("FellowshipTracker", "statusChanges"),
+  stop = unexpectedEffectCall("FellowshipTracker", "stop"),
 }: MakeFellowshipTrackerMockOptions = {}) {
   return Layer.succeed(FellowshipTracker, {
     replayLog,

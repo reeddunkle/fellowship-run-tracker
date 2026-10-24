@@ -15,8 +15,9 @@ import { BackgroundJobCategoryList } from "@/renderer/components/background-jobs
 import { AppLayout } from "@/renderer/components/core/app-layout.tsx";
 import { FellowshipDataProvider } from "@/renderer/stores/fellowship-data/fellowship-data-store.tsx";
 
+import { FellowshipLogsConnectionSection } from "./connection/fellowship-logs-connection-section.tsx";
 import { FellowshipLogsAnalyticsSection } from "./fellowship-logs-analytics-section.tsx";
-import { FellowshipLogsRateLimitSection } from "./fellowship-logs-rate-limit-section.tsx";
+import { FellowshipLogsPointsDialog } from "./fellowship-logs-points-section.tsx";
 import { ImportDungeonRunSection } from "./import-dungeon-run-section.tsx";
 import { ImportedDungeonRunsList } from "./imported-dungeon-runs-list.tsx";
 import { SimulatedImportPanel } from "./simulated-import-panel.tsx";
@@ -46,11 +47,13 @@ export function FellowshipLogsPage({
           <PageHeader>
             <PageTitle>Fellowship Logs</PageTitle>
             <PageDescription>
-              Import dungeon runs from Fellowship Logs and manage your rate
-              limit.
+              Connect to Fellowship Logs, import dungeon runs, and see how many
+              points are available.
             </PageDescription>
           </PageHeader>
-          <FellowshipLogsRateLimitSection />
+          <FellowshipLogsPointsDialog>
+            <FellowshipLogsConnectionSection />
+          </FellowshipLogsPointsDialog>
           <FellowshipLogsAnalyticsSection />
           <Separator />
           <Section>

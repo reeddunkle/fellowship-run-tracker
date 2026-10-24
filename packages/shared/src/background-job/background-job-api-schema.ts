@@ -4,9 +4,11 @@ import * as Schema from "effect/Schema";
 import { BackgroundJobFailureSchema } from "@frt/shared/background-job/background-job-failure-schema.ts";
 import { BackgroundJobIdSchema } from "@frt/shared/background-job/background-job-id-schema.ts";
 import { BackgroundJobStatusSchema } from "@frt/shared/background-job/background-job-status-schema.ts";
+import { BackgroundJobWaitingReasonSchema } from "@frt/shared/background-job/background-job-waiting-reason-schema.ts";
 import { DungeonRunIdSchema } from "@frt/shared/dungeon-run/dungeon-run-id-schema.ts";
 import { DungeonIdSchema } from "@frt/shared/fellowship/validation/fellowship-common.ts";
 import { FellowshipLogsFightIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-fight-id-schema.ts";
+import { FellowshipLogsLookupWorkflowIdSchema } from "@frt/shared/fellowship-logs/fellowship-logs-lookup-workflow-id-schema.ts";
 import { FellowshipLogsReportCodeSchema } from "@frt/shared/fellowship-logs/fellowship-logs-report-code-schema.ts";
 import {
   NonNegativeIntegerSchema,
@@ -18,6 +20,7 @@ export const ImportFellowshipLogsDungeonRunJobPayloadSchema = Schema.Struct({
   dungeonLevel: PositiveIntegerSchema,
   fightId: FellowshipLogsFightIdSchema,
   isOwnRun: Schema.Boolean,
+  lookupWorkflowId: Schema.optionalKey(FellowshipLogsLookupWorkflowIdSchema),
   reportCode: FellowshipLogsReportCodeSchema,
 });
 
@@ -43,6 +46,7 @@ const BackgroundJobApiItemFields = {
   progress: Schema.NullOr(BackgroundJobProgressSchema),
   startedAtMilliseconds: Schema.NullOr(NonNegativeIntegerSchema),
   status: BackgroundJobStatusSchema,
+  waitingReason: Schema.NullOr(BackgroundJobWaitingReasonSchema),
 };
 
 export const ImportFellowshipLogsDungeonRunBackgroundJobApiItemSchema =

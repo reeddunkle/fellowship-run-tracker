@@ -6,7 +6,8 @@ import { DUNGEON_RUN_HISTORY_QUERY_KEY_PREFIX } from "@/renderer/api/dungeon-run
 
 import {
   getFellowshipLogsDungeonRunsQueryOptions,
-  getFellowshipLogsLastKnownRateLimitDataQueryOptions,
+  getFellowshipLogsImportCostEstimateQueryOptions,
+  getFellowshipLogsPointPoolsQueryOptions,
 } from "./fellowship-logs-queries.ts";
 
 function invalidateQueries(
@@ -37,11 +38,18 @@ export function invalidateDungeonRunHistory(queryClient: QueryClient) {
   return invalidateQueries(queryClient, DUNGEON_RUN_HISTORY_QUERY_KEY_PREFIX);
 }
 
-export function invalidateFellowshipLogsRateLimitData(
+export function invalidateFellowshipLogsPointData(queryClient: QueryClient) {
+  return invalidateQueries(
+    queryClient,
+    getFellowshipLogsPointPoolsQueryOptions().queryKey,
+  );
+}
+
+export function invalidateFellowshipLogsImportCostEstimate(
   queryClient: QueryClient,
 ) {
   return invalidateQueries(
     queryClient,
-    getFellowshipLogsLastKnownRateLimitDataQueryOptions().queryKey,
+    getFellowshipLogsImportCostEstimateQueryOptions().queryKey,
   );
 }

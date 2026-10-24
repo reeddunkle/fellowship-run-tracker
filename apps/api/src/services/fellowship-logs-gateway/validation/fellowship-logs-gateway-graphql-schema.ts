@@ -2,9 +2,12 @@ import type * as E from "effect/Effect";
 import * as Schema from "effect/Schema";
 
 import {
+  type FellowshipLogsGatewayAccessError,
+  type FellowshipLogsGatewayPointPolicyError,
   type FellowshipLogsGatewayRateLimitRejectedError,
   type FellowshipLogsGatewayRequestError,
 } from "@frt/api/errors/fellowship-logs-gateway-error.ts";
+import { type FellowshipLogsGatewayQuery } from "@frt/api/services/fellowship-logs-gateway/query/make-query.ts";
 import { NonEmptyStringSchema } from "@frt/shared/util/common-schemas.ts";
 
 const FellowshipLogsGatewayGraphQLVariablesSchema = Schema.Record(
@@ -12,15 +15,17 @@ const FellowshipLogsGatewayGraphQLVariablesSchema = Schema.Record(
   Schema.Unknown,
 );
 
-export const FellowshipLogsGatewayGraphQLRequestSchema = Schema.Struct({
+export const FellowshipLogsGatewayGraphQLWireRequestSchema = Schema.Struct({
   query: NonEmptyStringSchema,
   variables: FellowshipLogsGatewayGraphQLVariablesSchema.pipe(
     Schema.optionalKey,
   ),
 });
 
-export type FellowshipLogsGatewayGraphQLRequest =
-  typeof FellowshipLogsGatewayGraphQLRequestSchema.Type;
+export type FellowshipLogsGatewayGraphQLRequest = {
+  readonly query: FellowshipLogsGatewayQuery;
+  readonly variables?: typeof FellowshipLogsGatewayGraphQLVariablesSchema.Type;
+};
 
 const FellowshipLogsGatewayGraphQLErrorLocationSchema = Schema.Struct({
   column: Schema.Int,
@@ -71,6 +76,11 @@ export type Query = <ResponseData>(
   responseSchema: Schema.Decoder<ResponseData, never>,
 ) => E.Effect<
   FellowshipLogsGatewayGraphQLResponse<ResponseData>,
-  | FellowshipLogsGatewayRateLimitRejectedError
-  | FellowshipLogsGatewayRequestError
+  FellowshipLogsGatewayQueryError
 >;
+
+export type FellowshipLogsGatewayQueryError =
+  | FellowshipLogsGatewayAccessError
+  | FellowshipLogsGatewayPointPolicyError
+  | FellowshipLogsGatewayRateLimitRejectedError
+  | FellowshipLogsGatewayRequestError;

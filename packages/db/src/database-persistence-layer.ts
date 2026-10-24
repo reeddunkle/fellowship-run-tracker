@@ -9,7 +9,10 @@ import { CatalogSyncDAO } from "@frt/db/daos/catalog-sync/catalog-sync-dao.ts";
 import { ConfigurationDAO } from "@frt/db/daos/configuration/configuration-dao.ts";
 import { DungeonDAO } from "@frt/db/daos/dungeon/dungeon-dao.ts";
 import { EncounterDAO } from "@frt/db/daos/encounter/encounter-dao.ts";
-import { FellowshipLogsCredentialDAO } from "@frt/db/daos/fellowship-logs-credential/fellowship-logs-credential-dao.ts";
+import { FellowshipLogsAuthorizationTransactionDAO } from "@frt/db/daos/fellowship-logs-authorization-transaction/fellowship-logs-authorization-transaction-dao.ts";
+import { FellowshipLogsConnectionDAO } from "@frt/db/daos/fellowship-logs-connection/fellowship-logs-connection-dao.ts";
+import { FellowshipLogsImportCostDAO } from "@frt/db/daos/fellowship-logs-import-cost/fellowship-logs-import-cost-dao.ts";
+import { FellowshipLogsLookupWorkflowDAO } from "@frt/db/daos/fellowship-logs-lookup-workflow/fellowship-logs-lookup-workflow-dao.ts";
 import { FellowshipLogsRequestDAO } from "@frt/db/daos/fellowship-logs-request/fellowship-logs-request-dao.ts";
 import { FellowshipLogsResponseDAO } from "@frt/db/daos/fellowship-logs-response/fellowship-logs-response-dao.ts";
 import { LiveSplitSettingDAO } from "@frt/db/daos/live-split-setting/live-split-setting-dao.ts";
@@ -28,7 +31,8 @@ const MainDatabaseDAOsLayer = Layer.mergeAll(
   ConfigurationDAO.layer,
   DungeonDAO.layer,
   EncounterDAO.layer,
-  FellowshipLogsCredentialDAO.layer,
+  FellowshipLogsAuthorizationTransactionDAO.layer,
+  FellowshipLogsConnectionDAO.layer,
   LiveSplitSettingDAO.layer,
   UnitDAO.layer,
 );
@@ -57,7 +61,11 @@ export function makeDatabasePersistenceLayer({
       ),
     );
 
-  const AnalyticsPersistenceLayer = FellowshipLogsRequestDAO.layer.pipe(
+  const AnalyticsPersistenceLayer = Layer.mergeAll(
+    FellowshipLogsImportCostDAO.layer,
+    FellowshipLogsLookupWorkflowDAO.layer,
+    FellowshipLogsRequestDAO.layer,
+  ).pipe(
     Layer.provideMerge(makeAnalyticsDatabaseLayer(analyticsDatabaseFilename)),
   );
 
