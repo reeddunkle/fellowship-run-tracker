@@ -51,7 +51,14 @@
     "typecheck:packages": "tsc -b tsconfig.packages.json",
     "ui:add": "shadcn add --cwd apps/electron"
   },
-  "packageManager": "pnpm@12.4.1",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "12.16.1",
+      "onFail": "error"
+    }
+  },
+  "packageManager": "pnpm@12.16.1",
   "engines": {
     "node": "24.20.0"
   },
